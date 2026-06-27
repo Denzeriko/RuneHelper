@@ -46,10 +46,18 @@ vcpkg install cpr:x64-windows
 vcpkg install nlohmann-json:x64-windows
 ```
 
+With static libs:
+```powershell
+vcpkg install opencv:x64-windows-static
+vcpkg install tesseract:x64-windows-static
+vcpkg install cpr:x64-windows-static
+vcpkg install nlohmann-json:x64-windows-static
+```
+
 ## Building
 
 ```powershell
-git clone https://github.com/yourname/RuneHelper.git
+git clone https://github.com/Denzeriko/RuneHelper.git
 cd RuneHelper
 
 cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
