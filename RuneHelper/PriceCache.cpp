@@ -92,7 +92,7 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
 {
     std::unordered_map<std::string, PriceInfo> result;
 
-    const std::string url = "https://poe2scout.com/api/poe2/Leagues/hunt/Items";
+    const std::string url = "https://poe2scout.com/api/poe2/Leagues/runes/Items";
 
     auto r = cpr::Get(
         cpr::Url{ url },

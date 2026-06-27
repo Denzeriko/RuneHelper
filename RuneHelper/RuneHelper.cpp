@@ -99,7 +99,7 @@ int main()
         if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
             break;
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(200));
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     }
 
     return 0;
