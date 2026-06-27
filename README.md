@@ -62,7 +62,7 @@ cmake --build build --config Release
 Prices are fetched from:
 
 ```text
-https://poe2scout.com/api/poe2/Leagues/hunt/Items
+https://poe2scout.com/api/poe2/Leagues/runes/Items
 ```
 
 The cache is stored in:
@@ -77,7 +77,7 @@ The dump is refreshed automatically every 15 minutes.
 
 ```text
 RuneHelper/
-├── main.cpp
+├── RuneHelper.cpp
 ├── OCR.cpp
 ├── OCR.h
 ├── Overlay.cpp
