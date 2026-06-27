@@ -1,5 +1,7 @@
 #include "PriceCache.h"
 
+#include "Helpers.h"
+
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
 
@@ -157,28 +159,28 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
     return result;
 }
 
-    void PriceCache::SaveDump()
+void PriceCache::SaveDump()
+{
+    json j;
+
+    j["dump_updated_at"] = dump_updated_at_;
+    j["items"] = json::object();
+
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    for (const auto& [name, info] : prices_)
     {
-        json j;
-
-        j["dump_updated_at"] = dump_updated_at_;
-        j["items"] = json::object();
-
-        std::lock_guard<std::mutex> lock(mutex_);
-
-        for (const auto& [name, info] : prices_)
-        {
-            j["items"][name] = info.price;
-        }
-
-        std::ofstream file("prices_dump.json");
-        if (file)
-            file << j.dump(4);
+        j["items"][name] = info.price;
     }
+
+    std::ofstream file((GetAppDataDir() / "prices_dump.json"));
+    if (file)
+        file << j.dump(4);
+}
 
 void PriceCache::LoadDump()
 {
-    std::ifstream file("prices_dump.json");
+    std::ifstream file((GetAppDataDir() / "prices_dump.json"));
     if (!file)
         return;
 
