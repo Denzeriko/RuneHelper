@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="RuneHelper.cpp" />
+    <ClCompile Include="NameNormalizer.cpp" />
+    <ClCompile Include="Overlay.h" />
+    <ClCompile Include="ResourceHelper.cpp" />
+    <ClCompile Include="Helpers.cpp" />
+    <ClCompile Include="Overlay.cpp" />
+    <ClCompile Include="PriceCache.cpp" />
+    <ClCompile Include="RegionSelect.cpp" />
+    <ClCompile Include="OCR.cpp" />
+    <ClCompile Include="ScreenCapture.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="nlohmann">
+      <UniqueIdentifier>{c9791873-3a03-48a3-885e-154286a74893}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resource">
+      <UniqueIdentifier>{900cd1dd-4074-45f2-b180-7bedb02ab2af}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="nlohmann\json.hpp">
+      <Filter>nlohmann</Filter>
+    </ClInclude>
+    <ClInclude Include="NameNormalizer.h" />
+    <ClInclude Include="PriceCache.h" />
+    <ClInclude Include="resource.h">
+      <Filter>resource</Filter>
+    </ClInclude>
+    <ClInclude Include="Helpers.h" />
+    <ClInclude Include="RegionSelect.h" />
+    <ClInclude Include="OCR.h" />
+    <ClInclude Include="ScreenCapture.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="ResourceHelper.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="RuneHelper.rc">
+      <Filter>resource</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+</Project>
