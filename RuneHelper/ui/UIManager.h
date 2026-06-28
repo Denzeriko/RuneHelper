@@ -3,9 +3,9 @@
 #include <windows.h>
 #include <d3d11.h>
 
-#include "Config.h"
-#include "ConfigManager.h"
-#include "UpdateChecker.h"
+#include "core/Config.h"
+#include "core/ConfigManager.h"
+#include "core/UpdateChecker.h"
 
 class UIManager
 {

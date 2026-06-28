@@ -7,7 +7,7 @@
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
 
-#include "Version.h"
+#include "core/Version.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
     HWND hWnd,
@@ -583,16 +583,13 @@ void UIManager::DrawSettings()
 LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wp, lp))
-    {
         return true;
-    }
 
     UIManager* self = nullptr;
 
     if (msg == WM_NCCREATE)
     {
         auto cs =reinterpret_cast<CREATESTRUCTW*>(lp);
-
         self = reinterpret_cast<UIManager*>(cs->lpCreateParams);
 
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
@@ -611,9 +608,7 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         if (self && self->device_ != nullptr && wp != SIZE_MINIMIZED)
         {
             self->CleanupRenderTarget();
-
             self->swapChain_->ResizeBuffers(0, LOWORD(lp), HIWORD(lp), DXGI_FORMAT_UNKNOWN, 0);
-
             self->CreateRenderTarget();
         }
 
@@ -650,9 +645,7 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         if (hit != HTCLIENT)
             return hit;
 
-        UIManager* self =
-            reinterpret_cast<UIManager*>(
-                GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+        UIManager* self = reinterpret_cast<UIManager*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 
         if (!self)
             return HTCLIENT;
@@ -670,19 +663,15 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
         RECT rc;
         GetClientRect(hwnd, &rc);
 
-        bool inTitleBar =
-            pt.y >= 0 &&
-            pt.y < titleBarHeight;
+        bool inTitleBar = pt.y >= 0 && pt.y < titleBarHeight;
 
-        bool inButtons =
-            pt.x >= rc.right - buttonsWidth;
+        bool inButtons = pt.x >= rc.right - buttonsWidth;
 
         if (inTitleBar && !inButtons)
             return HTCAPTION;
 
         return HTCLIENT;
     }
-
     }
 
     return DefWindowProcW(hwnd, msg, wp, lp);

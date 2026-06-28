@@ -1,33 +1,37 @@
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 
+#include <atomic>
 #include <chrono>
 #include <iostream>
+#include <mutex>
 #include <optional>
 #include <thread>
-#include <atomic>
-#include <mutex>
 
-#include "Logger.h"
+#include "core/ConfigManager.h"
+#include "core/Helpers.h"
+#include "core/Logger.h"
 
-#include "Helpers.h"
-#include "ConfigManager.h"
-#include "NameNormalizer.h"
-#include "OCR.h"
-#include "Overlay.h"
-#include "PriceCache.h"
-#include "RegionSelect.h"
-#include "ResourceHelper.h"
-#include "ScreenCapture.h"
-#include "UIManager.h"
+#include "ocr/LootParser.h"
+#include "ocr/NameNormalizer.h"
+#include "ocr/OCR.h"
 
-#include "LootParser.h"
+#include "price/PriceCache.h"
+
+#include "ui/Overlay.h"
+#include "ui/UIManager.h"
+
+#include "platform/windows/RegionSelect.h"
+#include "platform/windows/ResourceHelper.h"
+#include "platform/windows/ScreenCapture.h"
 
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
     Logger::Instance().Init();
 
     LOG_INFO("--------------------------");
-    LOG_INFO("RuneHelper started! v1.1.1");
+    LOG_INFO("RuneHelper started!");
 
     ConfigManager configManager;
     configManager.Load();

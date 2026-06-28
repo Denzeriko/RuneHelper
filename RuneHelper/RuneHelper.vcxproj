@@ -18,6 +18,50 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="core\ConfigManager.cpp" />
+    <ClCompile Include="core\Helpers.cpp" />
+    <ClCompile Include="core\Logger.cpp" />
+    <ClCompile Include="core\UpdateChecker.cpp" />
+    <ClCompile Include="ocr\LootParser.cpp" />
+    <ClCompile Include="ocr\NameNormalizer.cpp" />
+    <ClCompile Include="ocr\OCR.cpp" />
+    <ClCompile Include="platform\windows\RegionSelect.cpp" />
+    <ClCompile Include="platform\windows\ResourceHelper.cpp" />
+    <ClCompile Include="platform\windows\ScreenCapture.cpp" />
+    <ClCompile Include="price\PriceCache.cpp" />
+    <ClCompile Include="RuneHelper.cpp" />
+    <ClCompile Include="ui\Overlay.cpp" />
+    <ClCompile Include="ui\UIManager.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="core\Config.h" />
+    <ClInclude Include="core\ConfigManager.h" />
+    <ClInclude Include="core\Helpers.h" />
+    <ClInclude Include="core\Logger.h" />
+    <ClInclude Include="core\UpdateChecker.h" />
+    <ClInclude Include="core\Version.h" />
+    <ClInclude Include="nlohmann\json.hpp" />
+    <ClInclude Include="ocr\LootParser.h" />
+    <ClInclude Include="ocr\NameNormalizer.h" />
+    <ClInclude Include="ocr\OCR.h" />
+    <ClInclude Include="platform\windows\RegionSelect.h" />
+    <ClInclude Include="platform\windows\ResourceHelper.h" />
+    <ClInclude Include="platform\windows\ScreenCapture.h" />
+    <ClInclude Include="price\PriceCache.h" />
+    <ClInclude Include="resources\resource.h" />
+    <ClInclude Include="ui\Overlay.h" />
+    <ClInclude Include="ui\UIManager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resources\eng.traineddata_fast" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="resources\runehelper.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources\RuneHelper.rc" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>18.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
@@ -114,7 +158,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Denz\vcpkg\installed\x64-windows\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;C:\Users\Denz\vcpkg\installed\x64-windows\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
@@ -137,7 +181,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <AdditionalIncludeDirectories>C:\Users\Denz\vcpkg\installed\x64-windows\include\opencv4</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.;C:\Users\Denz\vcpkg\installed\x64-windows\include\opencv4</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
@@ -150,46 +194,6 @@
       <EnableSegmentHeap>true</EnableSegmentHeap>
     </Manifest>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <ClCompile Include="ConfigManager.cpp" />
-    <ClCompile Include="Helpers.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="LootParser.cpp" />
-    <ClCompile Include="NameNormalizer.cpp" />
-    <ClCompile Include="OCR.cpp" />
-    <ClCompile Include="Overlay.cpp" />
-    <ClCompile Include="Overlay.h" />
-    <ClCompile Include="PriceCache.cpp" />
-    <ClCompile Include="RegionSelect.cpp" />
-    <ClCompile Include="ResourceHelper.cpp" />
-    <ClCompile Include="RuneHelper.cpp" />
-    <ClCompile Include="ScreenCapture.cpp" />
-    <ClCompile Include="UIManager.cpp" />
-    <ClCompile Include="UpdateChecker.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="RuneHelper.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="ConfigManager.h" />
-    <ClInclude Include="Helpers.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="LootParser.h" />
-    <ClInclude Include="NameNormalizer.h" />
-    <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="OCR.h" />
-    <ClInclude Include="PriceCache.h" />
-    <ClInclude Include="RegionSelect.h" />
-    <ClInclude Include="resource.h" />
-    <ClInclude Include="ScreenCapture.h" />
-    <ClInclude Include="UIManager.h" />
-    <ClInclude Include="UpdateChecker.h" />
-    <ClInclude Include="Version.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="ResourceHelper.h" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,6 +1,6 @@
 #include "OCR.h"
 
-#include "Logger.h"
+#include "core/Logger.h"
 
 #include <algorithm>
 #include <cctype>

@@ -3,8 +3,6 @@
 #include <optional>
 #include <string>
 
-
-
 namespace LootParser
 {
     struct ParsedLootLineStruct

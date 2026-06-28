@@ -1,57 +1,139 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <ClCompile Include="RuneHelper.cpp" />
-    <ClCompile Include="NameNormalizer.cpp" />
-    <ClCompile Include="Overlay.h" />
-    <ClCompile Include="ResourceHelper.cpp" />
-    <ClCompile Include="Helpers.cpp" />
-    <ClCompile Include="Overlay.cpp" />
-    <ClCompile Include="PriceCache.cpp" />
-    <ClCompile Include="RegionSelect.cpp" />
-    <ClCompile Include="OCR.cpp" />
-    <ClCompile Include="ScreenCapture.cpp" />
-    <ClCompile Include="ConfigManager.cpp" />
-    <ClCompile Include="Logger.cpp" />
-    <ClCompile Include="LootParser.cpp" />
-    <ClCompile Include="UIManager.cpp" />
-    <ClCompile Include="UpdateChecker.cpp" />
+    <Filter Include="core">
+      <UniqueIdentifier>{756d3671-bdbe-4fab-8d42-fc2e06399d14}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ui">
+      <UniqueIdentifier>{5d8993d5-dd6d-4449-a1d5-eadc50579c87}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="resources">
+      <UniqueIdentifier>{d4c60aa7-0326-4fd1-ac10-e4c6b68c8d7d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="price">
+      <UniqueIdentifier>{713378ee-7045-48f5-8784-c5de03793308}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform">
+      <UniqueIdentifier>{35f1b7df-2440-4b09-98ec-c4701dcf3b68}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="platform\windows">
+      <UniqueIdentifier>{cf81a006-b427-4d96-906d-90592f66b24c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ocr">
+      <UniqueIdentifier>{4618206b-69d6-4160-a4af-0ac1aa124480}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="third-party">
+      <UniqueIdentifier>{b416a2b0-df01-47ed-a56f-34be77877f77}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="nlohmann">
-      <UniqueIdentifier>{c9791873-3a03-48a3-885e-154286a74893}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="resource">
-      <UniqueIdentifier>{900cd1dd-4074-45f2-b180-7bedb02ab2af}</UniqueIdentifier>
-    </Filter>
+    <ClCompile Include="RuneHelper.cpp" />
+    <ClCompile Include="ui\Overlay.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="ui\UIManager.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
+    <ClCompile Include="price\PriceCache.cpp">
+      <Filter>price</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\RegionSelect.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\ResourceHelper.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\ScreenCapture.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="ocr\LootParser.cpp">
+      <Filter>ocr</Filter>
+    </ClCompile>
+    <ClCompile Include="ocr\NameNormalizer.cpp">
+      <Filter>ocr</Filter>
+    </ClCompile>
+    <ClCompile Include="ocr\OCR.cpp">
+      <Filter>ocr</Filter>
+    </ClCompile>
+    <ClCompile Include="core\ConfigManager.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Helpers.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\Logger.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
+    <ClCompile Include="core\UpdateChecker.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nlohmann\json.hpp">
-      <Filter>nlohmann</Filter>
+      <Filter>third-party</Filter>
     </ClInclude>
-    <ClInclude Include="NameNormalizer.h" />
-    <ClInclude Include="PriceCache.h" />
-    <ClInclude Include="resource.h">
-      <Filter>resource</Filter>
+    <ClInclude Include="ui\Overlay.h">
+      <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="Helpers.h" />
-    <ClInclude Include="RegionSelect.h" />
-    <ClInclude Include="OCR.h" />
-    <ClInclude Include="ScreenCapture.h" />
-    <ClInclude Include="ConfigManager.h" />
-    <ClInclude Include="Config.h" />
-    <ClInclude Include="Logger.h" />
-    <ClInclude Include="LootParser.h" />
-    <ClInclude Include="UIManager.h" />
-    <ClInclude Include="Version.h" />
-    <ClInclude Include="UpdateChecker.h" />
+    <ClInclude Include="ui\UIManager.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="resources\resource.h">
+      <Filter>resources</Filter>
+    </ClInclude>
+    <ClInclude Include="price\PriceCache.h">
+      <Filter>price</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\windows\RegionSelect.h">
+      <Filter>platform\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\windows\ResourceHelper.h">
+      <Filter>platform\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\windows\ScreenCapture.h">
+      <Filter>platform\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="ocr\LootParser.h">
+      <Filter>ocr</Filter>
+    </ClInclude>
+    <ClInclude Include="ocr\NameNormalizer.h">
+      <Filter>ocr</Filter>
+    </ClInclude>
+    <ClInclude Include="ocr\OCR.h">
+      <Filter>ocr</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Config.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\ConfigManager.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Helpers.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Logger.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\UpdateChecker.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\Version.h">
+      <Filter>core</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ResourceHelper.h" />
+    <None Include="resources\eng.traineddata_fast">
+      <Filter>resources</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="RuneHelper.rc">
-      <Filter>resource</Filter>
+    <Image Include="resources\runehelper.ico">
+      <Filter>resources</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="resources\RuneHelper.rc">
+      <Filter>resources</Filter>
     </ResourceCompile>
   </ItemGroup>
 </Project>

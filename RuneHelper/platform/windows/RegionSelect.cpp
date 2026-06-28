@@ -1,8 +1,12 @@
 #include "RegionSelect.h"
 
-#include "Logger.h"
+#include "core/Logger.h"
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
 #include <windowsx.h>
+
 #include <algorithm>
 
 RegionSelector::~RegionSelector()

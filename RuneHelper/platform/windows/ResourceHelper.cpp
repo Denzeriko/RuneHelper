@@ -1,10 +1,13 @@
 #include "ResourceHelper.h"
-#include "resource.h"
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
+
 #include <fstream>
 
-#include "Logger.h"
+#include "core/Logger.h"
+#include "resources/resource.h"
 
 bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesystem::path& outPath)
 {
