@@ -35,14 +35,18 @@ std::string PrepareTessdata()
     LOG_INFO("PrepareTessdata() -> call");
 
     auto dir = std::filesystem::temp_directory_path() / "RuneHelper" / "tessdata";
-    auto eng = dir / "eng.traineddata_fast";
+    auto eng = dir / "eng.traineddata";
+
+    LOG_INFO("PrepareTessdata() -> path: " + dir.string());
+    LOG_INFO("PrepareTessdata() -> eng path: " + eng.string());
+    LOG_INFO("PrepareTessdata() -> extracting resource...");
 
     if (!std::filesystem::exists(eng))
     {
         ExtractResourceToFile(IDR_ENG_TRAINEDDATA, RT_RCDATA, eng);
     }
 
-    LOG_INFO("PrepareTessdata() -> return");
+    LOG_INFO("PrepareTessdata() -> return " + dir.string());
 
     return dir.string();
 }

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <iostream>
+#include <filesystem>
 
 OCR::~OCR()
 {
@@ -14,18 +15,31 @@ OCR::~OCR()
 
 bool OCR::Init(const std::string& tessdataPath)
 {
-    if (api_.Init(tessdataPath.c_str(), "eng"))
+    LOG_INFO("OCR::Init tessdataPath = " + tessdataPath);
+
+    std::filesystem::path engPath = std::filesystem::path(tessdataPath) / "eng.traineddata";
+
+    if (!std::filesystem::exists(engPath))
     {
-        initialized_ = false;
+        LOG_ERROR("eng.traineddata not found: " + engPath.string());
+        return false;
+    }
+
+    LOG_INFO("eng.traineddata found: " + engPath.string());
+    LOG_INFO("eng.traineddata size: " + std::to_string(std::filesystem::file_size(engPath)));
+
+    int rc = api_.Init(tessdataPath.c_str(), "eng");
+
+    if (rc != 0)
+    {
+        LOG_ERROR("Tesseract api.Init failed, rc=" + std::to_string(rc));
         return false;
     }
 
     initialized_ = true;
-
     LOG_INFO("OCR initialized");
 
     SetupTesseract();
-
     return true;
 }
 
