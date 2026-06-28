@@ -27,7 +27,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
     Logger::Instance().Init();
 
     LOG_INFO("--------------------------");
-    LOG_INFO("RuneHelper started! v1.1.0");
+    LOG_INFO("RuneHelper started! v1.1.1");
 
     ConfigManager configManager;
     configManager.Load();
