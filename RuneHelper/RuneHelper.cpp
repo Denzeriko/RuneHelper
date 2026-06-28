@@ -16,8 +16,16 @@
 
 int main()
 {
+    HWND console = GetConsoleWindow();
+
+    if (console)
+        ShowWindow(console, SW_HIDE);
+
     RegionSelector selector;
     cv::Rect region = selector.Select();
+
+    if (console)
+        ShowWindow(console, SW_SHOW);
 
     if (region.empty())
     {
