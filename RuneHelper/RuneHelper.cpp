@@ -36,27 +36,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
     cv::Rect region;
 
-    if (config.regionW > 0 && config.regionH > 0)
+    if (config.regionW > 0 &&
+        config.regionH > 0)
     {
-        region = cv::Rect(config.regionX, config.regionY, config.regionW, config.regionH);
-    }
-    else
-    {
-        RegionSelector selector;
-        region = selector.Select();
-
-        if (region.empty())
-        {
-            LOG_ERROR("Region not selected");
-            return 0;
-        }
-
-        config.regionX = region.x;
-        config.regionY = region.y;
-        config.regionW = region.width;
-        config.regionH = region.height;
-
-        configManager.Save();
+        region = cv::Rect(
+            config.regionX,
+            config.regionY,
+            config.regionW,
+            config.regionH
+        );
     }
 
     UIManager ui;
@@ -73,6 +61,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
         return 1;
     }
     overlay.SetFontSizeForce(config.overlayFontSize);
+
+    /////
+    UpdateChecker updateChecker;
+    updateChecker.Start();
+
+    ui.SetUpdateChecker(&updateChecker);
+
 
     PriceCache priceCache;
 
@@ -127,12 +122,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 
             while (running)
             {
-                auto now = std::chrono::steady_clock::now();
-
-                if (now - lastRefreshCheck > std::chrono::seconds(10))
+                if (std::chrono::steady_clock::now() - lastRefreshCheck > std::chrono::seconds(10))
                 {
+                    lastRefreshCheck = std::chrono::steady_clock::now();
                     priceCache.RefreshIfNeeded();
-                    lastRefreshCheck = now;
                 }
 
                 if (!config.ocrEnabled)
@@ -147,6 +140,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
                     continue;
                 }
 
+                if (region.empty())
+                {
+                    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
+                    continue;
+                }
+
                 cv::Rect localRegion(config.regionX, config.regionY, config.regionW, config.regionH);
 
                 cv::Mat img = CaptureRegion(localRegion);
@@ -155,6 +155,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
                 {
                     auto loot = ocr.RecognizeLoot(img);
                     std::vector<OverlayText> newTexts;
+
+                    if ((loot.size() < 2) && config.ocrAutoDetect)
+                    {
+                        {
+                            std::lock_guard lock(overlayMutex);
+                            sharedTexts.clear();
+                        }
+
+                        overlayDirty = true;
+                        std::this_thread::sleep_for(std::chrono::milliseconds(config.ocrIntervalMs));
+
+                        continue;
+                    }
 
                     for (const auto& item : loot)
                     {
@@ -214,12 +227,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
         {
             RegionSelector selector;
             cv::Rect newRegion = selector.Select();
+
             if (!newRegion.empty())
             {
-                config.regionX = newRegion.x;
-                config.regionY = newRegion.y;
-                config.regionW = newRegion.width;
-                config.regionH = newRegion.height;
+                region = newRegion;
+
+                config.regionX = region.x;
+                config.regionY = region.y;
+                config.regionW = region.width;
+                config.regionH = region.height;
+
                 configManager.Save();
             }
         }
@@ -241,9 +258,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
             lastTopmost = now;
         }
 
+        RECT previewRect{
+            config.regionX,
+            config.regionY,
+            config.regionX + config.regionW,
+            config.regionY + config.regionH
+        };
+
+        overlay.SetRegionPreview(ui.IsRegionHovered() && config.regionW > 0, previewRect);
+
         std::this_thread::sleep_for(std::chrono::milliseconds(16));
     }
 
     running = false;
+    updateChecker.Stop();
+
     return 0;
 }

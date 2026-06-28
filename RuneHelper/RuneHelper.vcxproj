@@ -115,11 +115,12 @@
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
       <AdditionalIncludeDirectories>C:\Users\Denz\vcpkg\installed\x64-windows\include\opencv4;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <SubSystem>Console</SubSystem>
+      <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>crypt32.lib;ws2_32.lib;wldap32.lib;normaliz.lib;bcrypt.lib;advapi32.lib;user32.lib;gdi32.lib;d3d11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>
       </AdditionalLibraryDirectories>
     </Link>
@@ -164,6 +165,7 @@
     <ClCompile Include="RuneHelper.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="UIManager.cpp" />
+    <ClCompile Include="UpdateChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="RuneHelper.rc" />
@@ -182,6 +184,8 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="ScreenCapture.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="UpdateChecker.h" />
+    <ClInclude Include="Version.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ResourceHelper.h" />

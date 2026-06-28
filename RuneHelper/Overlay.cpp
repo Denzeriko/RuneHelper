@@ -69,6 +69,14 @@ void OverlayWindow::BringToTop()
     );
 }
 
+void OverlayWindow::SetRegionPreview(bool enabled, const RECT& rect)
+{
+    previewEnabled_ = enabled;
+    previewRect_ = rect;
+
+    InvalidateRect(hwnd_, nullptr, TRUE);
+}
+
 void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
 {
     texts_ = std::move(texts);
@@ -195,6 +203,29 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 
         SetBkMode(hdc, TRANSPARENT);
         SetTextColor(hdc, RGB(80, 240, 80));
+
+        if (self->previewEnabled_)
+        {
+            HPEN pen = CreatePen(PS_SOLID, 3, RGB(0, 255, 0));
+            HGDIOBJ oldPen = SelectObject(hdc, pen);
+
+            HBRUSH oldBrush = (HBRUSH)SelectObject(
+                hdc,
+                GetStockObject(HOLLOW_BRUSH)
+            );
+
+            Rectangle(
+                hdc,
+                self->previewRect_.left,
+                self->previewRect_.top,
+                self->previewRect_.right,
+                self->previewRect_.bottom
+            );
+
+            SelectObject(hdc, oldBrush);
+            SelectObject(hdc, oldPen);
+            DeleteObject(pen);
+        }
 
         HFONT oldFont = nullptr;
 

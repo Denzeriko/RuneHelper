@@ -7,6 +7,8 @@
 #include <imgui_impl_win32.h>
 #include <imgui_impl_dx11.h>
 
+#include "Version.h"
+
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
     HWND hWnd,
     UINT msg,
@@ -117,6 +119,11 @@ void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
     ocrFailed_ = ocrFailed;
 }
 
+void UIManager::SetUpdateChecker(UpdateChecker* checker)
+{
+    updateChecker_ = checker;
+}
+
 bool UIManager::IsRunning() const
 {
     return running_;
@@ -134,6 +141,11 @@ bool UIManager::WantsRefreshPrices()
     bool value = wantsRefreshPrices_;
     wantsRefreshPrices_ = false;
     return value;
+}
+
+bool UIManager::IsRegionHovered() const
+{
+    return regionHovered_;
 }
 
 void UIManager::Pump()
@@ -336,7 +348,7 @@ void UIManager::DrawTitleBar()
 
     ImGui::TextUnformatted("RuneHelper");
     ImGui::SameLine();
-    ImGui::TextDisabled("v1.1.0");
+    ImGui::TextDisabled(RUNEHELPER_VERSION);
 
     ImGui::SameLine(ImGui::GetWindowWidth() - 40.0f);
 
@@ -383,57 +395,94 @@ void UIManager::DrawSettings()
     ImGui::Separator();
     //
 
-    ImGui::Text("Status:");
-    ImGui::SameLine();
-    if (ocrInitializing_)
-    {
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "OCR: initializing...");
-    }
-    else if (ocrFailed_)
-    {
-        ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "OCR: failed");
-    }
-    else if (ocrReady_)
-    {
-        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "OCR: ready");
-    }
-    else
-    {
-        ImGui::Text("OCR: waiting...");
-    }
+
 
 
     ImGui::Separator();
+
+    ImGui::Text("Status");
+    ImGui::Separator();
+
+    ImGui::Text("OCR:");
+    ImGui::SameLine();
+    if (ocrInitializing_)
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Initializing...");
+    }
+    else if (ocrFailed_)
+    {
+        ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Failed");
+    }
+    else if (ocrReady_)
+    {
+        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Ready");
+    }
+    else
+    {
+        ImGui::Text("Waiting...");
+    }
+
+    ImGui::Text("Version: %s", RUNEHELPER_VERSION);
+    ImGui::SameLine();
+    if (updateChecker_)
+    {
+        if (updateChecker_->IsChecking())
+        {
+            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Checking for updates...");
+        }
+        else if (updateChecker_->HasUpdate())
+        {
+            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "New version available: %s", updateChecker_->LatestVersion().c_str());
+
+            ImGui::SameLine();
+            if (ImGui::Button("Download"))
+            {
+                ShellExecuteA(nullptr, "open", updateChecker_->DownloadUrl().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            }
+        }
+        else
+        {
+            ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "You are using the latest version");
+        }
+    }
+
+    ImGui::Spacing();
 
     ImGui::Text("Region");
     ImGui::Separator();
 
-    ImGui::Text(
+    /*ImGui::Text(
         "x=%d y=%d w=%d h=%d",
         config_->regionX,
         config_->regionY,
         config_->regionW,
         config_->regionH
-    );
+    );*/
 
     if (ImGui::Button("Select Region"))
-    {
         wantsSelectRegion_ = true;
-    }
 
+    regionHovered_ = ImGui::IsItemHovered(); //show rectangle preview
+
+    ImGui::SameLine();
+
+    if (config_->regionW <= 0)
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "No region selected");
+    else
+        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Region selected");
+       
     ImGui::Spacing();
 
     ImGui::Text("OCR");
     ImGui::Separator();
 
-   
     if (config_->ocrEnabled)
     {
         if (ImGui::Button("Disable OCR"))
             config_->ocrEnabled = false;
 
         ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Enabled");
+        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Enabled");
     }
     else
     {
@@ -444,13 +493,15 @@ void UIManager::DrawSettings()
         ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Disabled");
     }
 
+    ImGui::Checkbox("OCR AutoDetect Menu (Experemental)", &config_->ocrAutoDetect);
+
     //ImGui::SliderFloat("Scale", reinterpret_cast<float*>(&config_->ocrScale), 0.5f, 5.0f);
 
     ImGui::SliderFloat("OCR Threshold", reinterpret_cast<float*>(&config_->ocrThreshold), 0.0f,255.0f);
 
     ImGui::SliderInt("OCR interval ms", &config_->ocrIntervalMs, 100, 2000);
 
-    ImGui::Checkbox("Debug OCR", &config_->debugOCR);
+    //ImGui::Checkbox("Debug OCR", &config_->debugOCR);
 
     ImGui::Spacing();
 

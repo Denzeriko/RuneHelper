@@ -10,6 +10,7 @@ struct AppConfig
     int regionH = 0;
 
     bool ocrEnabled = true;
+    bool ocrAutoDetect = true;
     float ocrScale = 1.0f;
     float ocrThreshold = 130.0f;
     int ocrIntervalMs = 400;

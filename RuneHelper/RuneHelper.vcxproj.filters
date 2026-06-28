@@ -15,6 +15,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="LootParser.cpp" />
     <ClCompile Include="UIManager.cpp" />
+    <ClCompile Include="UpdateChecker.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nlohmann">
@@ -42,6 +43,8 @@
     <ClInclude Include="Logger.h" />
     <ClInclude Include="LootParser.h" />
     <ClInclude Include="UIManager.h" />
+    <ClInclude Include="Version.h" />
+    <ClInclude Include="UpdateChecker.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ResourceHelper.h" />

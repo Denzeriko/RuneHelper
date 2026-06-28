@@ -112,18 +112,23 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
         cpr::Url{ url },
         cpr::Header{
             { "User-Agent", "RuneHelper/1.0" },
-            { "Accept", "application/json" },
-            { "Accept-Encoding", "gzip" }
+            { "Accept", "application/json" }
         },
-        cpr::Timeout{ 5000 },
-        cpr::VerifySsl{ false } //problems happen with ssl, find out why.
+        cpr::Timeout{ 15000 },
+        cpr::VerifySsl{ false }
     );
 
     LOG_INFO("PriceCache::DownloadFullDump() -> HTTP: " + std::to_string(r.status_code));
 
     if (r.error.code != cpr::ErrorCode::OK)
     {
-        LOG_ERROR("PriceCache CPR error:  " + std::to_string(r.status_code));
+        LOG_ERROR(
+            "PriceCache CPR error: code=" +
+            std::to_string(static_cast<int>(r.error.code)) +
+            " message=" + r.error.message +
+            " http=" + std::to_string(r.status_code) +
+            " bytes=" + std::to_string(r.text.size())
+        );
         return {};
     }
 

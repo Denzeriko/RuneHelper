@@ -16,6 +16,7 @@ class OverlayWindow
 public:
     bool Create();
     void BringToTop();
+    void SetRegionPreview(bool enabled, const RECT& rect);
     void SetTexts(std::vector<OverlayText> texts);
     void SetFontSize(int size);
     void SetFontSizeForce(int size);
@@ -23,6 +24,9 @@ public:
 
 private:
     HWND hwnd_ = nullptr;
+
+    bool previewEnabled_ = false;
+    RECT previewRect_{};
 
     HFONT font_ = nullptr;
     int fontSize_ = 24;

@@ -44,6 +44,7 @@ bool ConfigManager::Load()
     config_.regionH = j.value("regionH", config_.regionH);
 
     config_.ocrEnabled = j.value("ocrEnabled", config_.ocrEnabled);
+    config_.ocrAutoDetect = j.value("ocrAutoDetect", config_.ocrAutoDetect);
     config_.ocrScale = j.value("ocrScale", config_.ocrScale);
     config_.ocrThreshold = j.value("ocrThreshold", config_.ocrThreshold);
     config_.ocrIntervalMs = j.value("ocrIntervalMs", config_.ocrIntervalMs);
@@ -75,6 +76,7 @@ bool ConfigManager::Save() const
     j["regionH"] = config_.regionH;
 
     j["ocrEnabled"] = config_.ocrEnabled;
+    j["ocrAutoDetect"] = config_.ocrAutoDetect;
     j["ocrScale"] = config_.ocrScale;
     j["ocrThreshold"] = config_.ocrThreshold;
     j["ocrIntervalMs"] = config_.ocrIntervalMs;

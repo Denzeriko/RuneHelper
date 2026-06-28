@@ -5,6 +5,7 @@
 
 #include "Config.h"
 #include "ConfigManager.h"
+#include "UpdateChecker.h"
 
 class UIManager
 {
@@ -22,8 +23,10 @@ public:
     void Pump();
 
     bool IsRunning() const;
+    void SetUpdateChecker(UpdateChecker* checker);
     bool WantsSelectRegion();
     bool WantsRefreshPrices();
+    bool IsRegionHovered() const;
 
 private:
     HWND hwnd_ = nullptr;
@@ -35,6 +38,7 @@ private:
 
     AppConfig* config_ = nullptr;
     ConfigManager* configManager_ = nullptr;
+    UpdateChecker* updateChecker_ = nullptr;
 
     bool ocrInitializing_ = false;
     bool ocrReady_ = false;
@@ -43,6 +47,8 @@ private:
     bool running_ = false;
     bool wantsSelectRegion_ = false;
     bool wantsRefreshPrices_ = false;
+    bool regionHovered_ = false;
+
 
     bool showSaved_ = false;
     std::chrono::steady_clock::time_point savedAt_;
@@ -59,10 +65,5 @@ private:
     void DrawTitleBar();
     void DrawSettings();
 
-    static LRESULT CALLBACK WndProc(
-        HWND hwnd,
-        UINT msg,
-        WPARAM wp,
-        LPARAM lp
-    );
+    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };
