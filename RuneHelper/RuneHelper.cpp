@@ -151,7 +151,7 @@ int main()
             if (!price)
                 continue;
 
-            std::string displayPrice = LootParser::FormatStackPrice(*price, 3);
+            std::string displayPrice = LootParser::FormatStackPrice(*price, quantity);
 
             OverlayText t;
             t.text = ToWide(displayPrice);
