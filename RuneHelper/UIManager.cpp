@@ -335,6 +335,8 @@ void UIManager::DrawTitleBar()
     ImGui::BeginChild("TitleBar", ImVec2(0, titleBarHeight), false);
 
     ImGui::TextUnformatted("RuneHelper");
+    ImGui::SameLine();
+    ImGui::TextDisabled("v1.1.0");
 
     ImGui::SameLine(ImGui::GetWindowWidth() - 40.0f);
 
@@ -372,7 +374,9 @@ void UIManager::DrawSettings()
         ImGuiWindowFlags_NoMove |
         ImGuiWindowFlags_NoResize |
         ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoTitleBar
+        ImGuiWindowFlags_NoTitleBar |
+        ImGuiWindowFlags_NoScrollbar |
+        ImGuiWindowFlags_NoScrollWithMouse
     );
 
     UIManager::DrawTitleBar();
@@ -464,10 +468,9 @@ void UIManager::DrawSettings()
     ImGui::Text("Prices");
     ImGui::Separator();
 
-    ImGui::InputFloat("Gray      ex", &config_->priceColorLow,       0.0f, 5000.0f);
-    ImGui::InputFloat("Green     ex", &config_->priceColorMedium,    0.0f, 5000.0f);
-    ImGui::InputFloat("Yellow    ex", &config_->priceColorHigh,      0.0f, 5000.0f);
-    ImGui::InputFloat("Red       ex", &config_->priceColorVeryHigh,  0.0f, 5000.0f);
+    ImGui::InputInt("Green     ex", &config_->priceColorMedium,    0, 5000);
+    ImGui::InputInt("Yellow    ex", &config_->priceColorHigh,      0, 5000);
+    ImGui::InputInt("Red       ex", &config_->priceColorVeryHigh,  0, 5000);
     ImGui::Separator();
     ImGui::SliderInt("Refresh minutes", &config_->priceRefreshMinutes, 1, 60);
 
@@ -510,6 +513,18 @@ void UIManager::DrawSettings()
         running_ = false;
         PostQuitMessage(0);
     }
+
+    ImGui::Dummy(ImVec2(0.0f, 10.0f));
+
+    const char* author = "Denz";
+    float textWidth = ImGui::CalcTextSize(author).x;
+    float textHeight = ImGui::CalcTextSize(author).y;
+
+    ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() - textWidth - 15.0f, ImGui::GetWindowHeight() - textHeight - 10.0f));
+
+    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 0.7f));
+    ImGui::TextDisabled("%s", author);
+    ImGui::PopStyleColor();
 
     ImGui::End();
 }

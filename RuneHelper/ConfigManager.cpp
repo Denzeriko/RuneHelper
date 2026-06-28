@@ -52,7 +52,6 @@ bool ConfigManager::Load()
     config_.overlayOffsetY = j.value("overlayOffsetY", config_.overlayOffsetY);
     config_.overlayFontSize = j.value("overlayFontSize", config_.overlayFontSize);
 
-    config_.priceColorLow = j.value("priceColorLow", config_.priceColorLow);
     config_.priceColorMedium = j.value("priceColorMedium", config_.priceColorMedium);
     config_.priceColorHigh = j.value("priceColorHigh", config_.priceColorHigh);
     config_.priceColorVeryHigh = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
@@ -84,7 +83,6 @@ bool ConfigManager::Save() const
     j["overlayOffsetY"] = config_.overlayOffsetY;
     j["overlayFontSize"] = config_.overlayFontSize;
 
-    j["priceColorLow"] = config_.priceColorLow;
     j["priceColorMedium"] = config_.priceColorMedium;
     j["priceColorHigh"] = config_.priceColorHigh;
     j["priceColorVeryHigh"] = config_.priceColorVeryHigh;

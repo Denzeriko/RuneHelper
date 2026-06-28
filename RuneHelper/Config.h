@@ -18,10 +18,9 @@ struct AppConfig
     int overlayOffsetY = 0;
     int overlayFontSize = 24;
 
-    float priceColorLow = 1.0f;
-    float priceColorMedium = 5.0f;
-    float priceColorHigh = 20.0f;
-    float priceColorVeryHigh = 100.0f;
+    int priceColorMedium = 5;
+    int priceColorHigh = 20;
+    int priceColorVeryHigh = 100;
 
     int priceRefreshMinutes = 15;
 
