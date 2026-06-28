@@ -98,12 +98,19 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
 
     auto r = cpr::Get(
         cpr::Url{ url },
-        cpr::Header{{ "User-Agent", "RuneHelper/1.0" }},
+        cpr::Header{
+            { "User-Agent", "RuneHelper/1.0" },
+            { "Accept", "application/json" },
+            { "Accept-Encoding", "gzip" }
+        },
         cpr::Timeout{ 5000 },
         cpr::VerifySsl{ false } //problems happen with ssl, find out why.
     );
 
-    if (r.error)
+    std::cout << "HTTP: " << r.status_code << " bytes=" << r.text.size() << "\n";
+    std::cout << "err " << r.status_code << " bytes=" << r.text.size() << "\n";
+
+    if (r.error.code != cpr::ErrorCode::OK)
     {
         std::cout << "CPR error: " << r.error.message << "\n";
         return {};

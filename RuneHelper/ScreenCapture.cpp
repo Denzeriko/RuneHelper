@@ -36,9 +36,43 @@ cv::Mat CaptureScreen()
     return mat;
 }
 
+cv::Mat CaptureScreen2(const cv::Rect& region)
+{
+    HDC hScreen = GetDC(nullptr);
+    HDC hDC = CreateCompatibleDC(hScreen);
+
+    int width = region.width;
+    int height = region.height;
+
+    HBITMAP hBitmap = CreateCompatibleBitmap(hScreen, width, height);
+    HGDIOBJ oldObj = SelectObject(hDC, hBitmap);
+
+    BitBlt(hDC, 0, 0, width, height, hScreen, region.x, region.y, SRCCOPY);
+
+    BITMAPINFOHEADER bi{};
+    bi.biSize = sizeof(BITMAPINFOHEADER);
+    bi.biWidth = width;
+    bi.biHeight = -height;
+    bi.biPlanes = 1;
+    bi.biBitCount = 24;
+    bi.biCompression = BI_RGB;
+
+    cv::Mat mat(height, width, CV_8UC3);
+
+    GetDIBits(hDC, hBitmap, 0, height, mat.data, reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS);
+
+    SelectObject(hDC, oldObj);
+    DeleteObject(hBitmap);
+    DeleteDC(hDC);
+    ReleaseDC(nullptr, hScreen);
+
+    return mat;
+}
+
 cv::Mat CaptureRegion(const cv::Rect& region)
 {
     cv::Mat screen = CaptureScreen();
+    //cv::Mat screen = CaptureScreen(region);
 
     cv::Rect screenRect(0, 0, screen.cols, screen.rows);
     cv::Rect safeRegion = region & screenRect;
