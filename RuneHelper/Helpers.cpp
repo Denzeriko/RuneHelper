@@ -1,7 +1,10 @@
 #include "Helpers.h"
 #include <windows.h>
 #include <regex>
+#include <string>
 #include <shlobj.h>
+
+#include "Logger.h"
 
 std::string ExtractItemName(const std::string& line)
 {
@@ -34,10 +37,15 @@ std::wstring ToWide(const std::string& s)
 
 std::filesystem::path GetAppDataDir() 
 {
+    LOG_INFO("GetAppDataDir() -> call");
     PWSTR path = nullptr;
 
     if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &path)))
+    {
+        LOG_ERROR("GetAppDataDir() -> SHGetKnownFolderPath -> ERROR");
         return ".";
+    }
+       
 
     std::filesystem::path result(path);
     CoTaskMemFree(path);
@@ -46,6 +54,8 @@ std::filesystem::path GetAppDataDir()
     result /= "RuneHelper";
 
     std::filesystem::create_directories(result);
+
+    LOG_INFO("GetAppDataDir() -> return -> " + result.string());
 
     return result;
 }

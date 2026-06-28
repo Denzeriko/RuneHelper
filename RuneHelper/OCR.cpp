@@ -1,5 +1,7 @@
 #include "OCR.h"
 
+#include "Logger.h"
+
 #include <algorithm>
 #include <cctype>
 #include <iostream>
@@ -19,9 +21,17 @@ bool OCR::Init(const std::string& tessdataPath)
     }
 
     initialized_ = true;
+
+    LOG_INFO("OCR initialized");
+
     SetupTesseract();
 
     return true;
+}
+
+void OCR::SetConfig(const AppConfig* config)
+{
+    config_ = config;
 }
 
 void OCR::SetDebug(bool enabled)
@@ -39,6 +49,8 @@ void OCR::SetupTesseract()
         "tessedit_char_whitelist",
         "0123456789xABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz() -'"
     );
+
+    LOG_INFO("SetupTesseract done");
 }
 
 std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& src)
@@ -53,15 +65,18 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& src)
 
 cv::Mat OCR::Preprocess(const cv::Mat& src)
 {
+    const double scale = config_ ? config_->ocrScale : 1.0;
+    const double thresholdValue = config_ ? config_->ocrThreshold : 130.0;
+
     cv::Mat gray;
     cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
-    cv::resize(gray, gray, {}, 1.0, 1.0, cv::INTER_CUBIC );
+    cv::resize(gray, gray, {}, scale, scale, cv::INTER_CUBIC );
 
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
     cv::erode(gray, gray, kernel);
-    cv::threshold(gray, gray, 130, 255, cv::THRESH_BINARY);
+    cv::threshold(gray, gray, thresholdValue, 255, cv::THRESH_BINARY);
 
-    if (debug_)
+    if (debug_ || (config_ && config_->debugOCR))
         cv::imwrite("ocr_debug.png", gray);
 
     return gray;
@@ -73,7 +88,7 @@ std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
 
     api_.Recognize(nullptr);
 
-    if (debug_)
+    if (debug_ || (config_ && config_->debugOCR))
         DebugTesseract();
 
     std::vector<LootLine> result;

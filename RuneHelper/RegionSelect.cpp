@@ -1,5 +1,7 @@
 #include "RegionSelect.h"
 
+#include "Logger.h"
+
 #include <windowsx.h>
 #include <algorithm>
 
@@ -10,13 +12,18 @@ RegionSelector::~RegionSelector()
 
 cv::Rect RegionSelector::Select()
 {
+    LOG_INFO("RegionSelector::Select() -> call");
+
     done_ = false;
     cancelled_ = false;
     dragging_ = false;
     result_ = {};
 
     if (!CreateOverlayWindow())
+    {
+        LOG_ERROR("RegionSelector::Select() -> CreateOverlayWindow error!");
         return {};
+    }
 
     MSG msg{};
     while (!done_ && GetMessage(&msg, nullptr, 0, 0))
@@ -28,13 +35,21 @@ cv::Rect RegionSelector::Select()
     DestroyOverlayWindow();
 
     if (cancelled_)
+    {
+        LOG_ERROR("RegionSelector::Select() -> cancelled");
         return {};
+    }
+        
+
+    LOG_INFO("RegionSelector::Select() -> return");
 
     return GetSelectedRect();
 }
 
 bool RegionSelector::CreateOverlayWindow()
 {
+    LOG_INFO("RegionSelector::CreateOverlayWindow() -> call");
+
     HINSTANCE hInst = GetModuleHandleW(nullptr);
 
     WNDCLASSW wc{};
@@ -65,13 +80,18 @@ bool RegionSelector::CreateOverlayWindow()
         this
     );
 
-    if (!hwnd_)
+    if (!hwnd_) {
+        LOG_ERROR("RegionSelector::CreateOverlayWindow() -> no HWND!");
         return false;
+    }
+        
 
     SetLayeredWindowAttributes(hwnd_, 0, 120, LWA_ALPHA);
 
     ShowWindow(hwnd_, SW_SHOW);
     UpdateWindow(hwnd_);
+
+    LOG_INFO("RegionSelector::CreateOverlayWindow() -> return");
 
     return true;
 }
@@ -186,11 +206,7 @@ void RegionSelector::OnPaint()
     EndPaint(hwnd_, &ps);
 }
 
-LRESULT CALLBACK RegionSelector::WndProc(
-    HWND hwnd,
-    UINT msg,
-    WPARAM wp,
-    LPARAM lp)
+LRESULT CALLBACK RegionSelector::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     RegionSelector* self = nullptr;
 

@@ -4,8 +4,12 @@
 #include <windows.h>
 #include <fstream>
 
+#include "Logger.h"
+
 bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesystem::path& outPath)
 {
+    LOG_INFO("ExtractResourceToFile() -> call");
+
     HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(resId), resType);
     if (!hRes) return false;
 
@@ -21,11 +25,15 @@ bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesys
     std::ofstream file(outPath, std::ios::binary);
     file.write(reinterpret_cast<const char*>(data), size);
 
+    LOG_INFO("ExtractResourceToFile() -> return true");
+
     return file.good();
 }
 
 std::string PrepareTessdata()
 {
+    LOG_INFO("PrepareTessdata() -> call");
+
     auto dir = std::filesystem::temp_directory_path() / "RuneHelper" / "tessdata";
     auto eng = dir / "eng.traineddata_fast";
 
@@ -33,6 +41,8 @@ std::string PrepareTessdata()
     {
         ExtractResourceToFile(IDR_ENG_TRAINEDDATA, RT_RCDATA, eng);
     }
+
+    LOG_INFO("PrepareTessdata() -> return");
 
     return dir.string();
 }

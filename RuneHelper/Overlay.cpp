@@ -3,6 +3,8 @@
 #include <windows.h>
 #include <vector>
 
+#include "Logger.h"
+
 bool OverlayWindow::Create()
 {
     WNDCLASSW wc{};
@@ -32,13 +34,17 @@ bool OverlayWindow::Create()
         this
     );
 
-    if (!hwnd_)
+    if (!hwnd_) {
+        LOG_ERROR("OverlayWindow::Create() No HWND!");
         return false;
+    }
 
     SetLayeredWindowAttributes(hwnd_, RGB(0, 0, 0), 0, LWA_COLORKEY);
 
     ShowWindow(hwnd_, SW_SHOW);
     UpdateWindow(hwnd_);
+
+    LOG_INFO("OverlayWindow::Create() TRUE");
 
     return true;
 }
@@ -47,6 +53,27 @@ void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
 {
     texts_ = std::move(texts);
     InvalidateRect(hwnd_, nullptr, TRUE);
+    UpdateWindow(hwnd_);
+}
+
+void OverlayWindow::SetFontSize(int size)
+{
+    if (size <= 0)
+        return;
+
+    if (fontSize_ == size)
+        return;
+
+    LOG_INFO("OverlayWindow::SetFontSize");
+
+    fontSize_ = size;
+
+    RecreateFont();
+
+    LOG_INFO("RecreateFont() done");
+
+    if (hwnd_)
+        InvalidateRect(hwnd_, nullptr, TRUE);
 }
 
 void OverlayWindow::PumpMessages()
@@ -59,6 +86,40 @@ void OverlayWindow::PumpMessages()
     }
 }
 
+void OverlayWindow::RecreateFont()
+{
+    if (font_)
+    {
+        DeleteObject(font_);
+        font_ = nullptr;
+    }
+
+    HDC hdc = GetDC(nullptr);
+
+    int dpi = GetDeviceCaps(hdc, LOGPIXELSY);
+
+    ReleaseDC(nullptr, hdc);
+
+    int height = -MulDiv(fontSize_, dpi, 72);
+
+    font_ = CreateFontW(
+        height,
+        0,
+        0,
+        0,
+        FW_BOLD,
+        FALSE,
+        FALSE,
+        FALSE,
+        DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS,
+        CLIP_DEFAULT_PRECIS,
+        CLEARTYPE_QUALITY,
+        DEFAULT_PITCH | FF_DONTCARE,
+        L"Segoe UI"
+    );
+}
+
 LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     OverlayWindow* self = nullptr;
@@ -66,13 +127,16 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
     if (msg == WM_NCCREATE)
     {
         auto cs = reinterpret_cast<CREATESTRUCTW*>(lp);
+
         self = reinterpret_cast<OverlayWindow*>(cs->lpCreateParams);
+
         SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
+
+        self->hwnd_ = hwnd;
     }
     else
     {
-        self = reinterpret_cast<OverlayWindow*>(
-            GetWindowLongPtrW(hwnd, GWLP_USERDATA));
+        self = reinterpret_cast<OverlayWindow*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     }
 
     if (!self)
@@ -85,48 +149,40 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
         PAINTSTRUCT ps;
         HDC hdc = BeginPaint(hwnd, &ps);
 
-        RECT rc;
-        GetClientRect(hwnd, &rc);
+        RECT client;
+        GetClientRect(hwnd, &client);
 
         HBRUSH bg = CreateSolidBrush(RGB(0, 0, 0));
-        FillRect(hdc, &rc, bg);
+        FillRect(hdc, &client, bg);
         DeleteObject(bg);
 
         SetBkMode(hdc, TRANSPARENT);
-        SetTextColor(hdc, RGB(80, 255, 80));
+        SetTextColor(hdc, RGB(80, 240, 80));
 
-        HFONT font = CreateFontW(
-            32, 0, 0, 0,
-            FW_BOLD,
-            FALSE, FALSE, FALSE,
-            DEFAULT_CHARSET,
-            OUT_DEFAULT_PRECIS,
-            CLIP_DEFAULT_PRECIS,
-            CLEARTYPE_QUALITY,
-            DEFAULT_PITCH | FF_DONTCARE,
-            L"Segoe UI"
-        );
+        HFONT oldFont = nullptr;
 
-        HGDIOBJ oldFont = SelectObject(hdc, font);
+        if (self->font_)
+            oldFont = (HFONT)SelectObject(hdc, self->font_);
 
         for (const auto& t : self->texts_)
         {
-            TEXTMETRIC tm;
-            GetTextMetrics(hdc, &tm);
+            RECT r{t.x, t.y - 20, t.x + 300, t.y + 20};
 
-            int textH = tm.tmHeight;
-
-            RECT r{t.x, t.y - textH / 2, t.x + 300, t.y + textH / 2 + 4};
-
-            DrawTextW(hdc, t.text.c_str(), -1, &r, DT_LEFT | DT_TOP | DT_SINGLELINE | DT_NOCLIP);
+            DrawTextW(hdc, t.text.c_str(), -1, &r, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }
 
-        SelectObject(hdc, oldFont);
-        DeleteObject(font);
+        if (oldFont)
+            SelectObject(hdc, oldFont);
 
         EndPaint(hwnd, &ps);
         return 0;
     }
+
+    case WM_ERASEBKGND:
+        return 1;
+
+    case WM_DESTROY:
+        return 0;
     }
 
     return DefWindowProcW(hwnd, msg, wp, lp);

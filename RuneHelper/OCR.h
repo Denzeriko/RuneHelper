@@ -6,6 +6,8 @@
 #include <string>
 #include <vector>
 
+#include "Config.h"
+
 struct LootLine
 {
     std::string text;
@@ -26,20 +28,22 @@ public:
 
     bool Init(const std::string& tessdataPath);
 
-    std::vector<LootLine> RecognizeLoot(const cv::Mat& src);
-
+    void SetConfig(const AppConfig* config);
     void SetDebug(bool enabled);
+
+    std::vector<LootLine> RecognizeLoot(const cv::Mat& src);
 
 private:
     tesseract::TessBaseAPI api_;
     bool initialized_ = false;
     bool debug_ = false;
 
+    const AppConfig* config_ = nullptr;
+
 private:
+    void SetupTesseract();
     cv::Mat Preprocess(const cv::Mat& src);
     std::vector<LootLine> RecognizePrepared(const cv::Mat& img);
-
-    void SetupTesseract();
     void DebugTesseract();
     static void Trim(std::string& s);
 };

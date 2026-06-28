@@ -11,6 +11,8 @@
     <ClCompile Include="RegionSelect.cpp" />
     <ClCompile Include="OCR.cpp" />
     <ClCompile Include="ScreenCapture.cpp" />
+    <ClCompile Include="ConfigManager.cpp" />
+    <ClCompile Include="Logger.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nlohmann">
@@ -33,6 +35,9 @@
     <ClInclude Include="RegionSelect.h" />
     <ClInclude Include="OCR.h" />
     <ClInclude Include="ScreenCapture.h" />
+    <ClInclude Include="ConfigManager.h" />
+    <ClInclude Include="Config.h" />
+    <ClInclude Include="Logger.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ResourceHelper.h" />

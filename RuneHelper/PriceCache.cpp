@@ -1,6 +1,7 @@
 #include "PriceCache.h"
 
 #include "Helpers.h"
+#include "Logger.h"
 
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
@@ -33,6 +34,8 @@ std::string JsonString(const json& j, const char* key)
 
 PriceCache::PriceCache()
 {
+    LOG_INFO("PriceCache::PriceCache() INIT");
+
     LoadDump();
     RefreshIfNeeded();
 }
@@ -66,6 +69,8 @@ const std::unordered_map<std::string, PriceInfo>& PriceCache::GetPrices() const
 
 void PriceCache::RefreshIfNeeded()
 {
+    LOG_INFO("PriceCache::RefreshIfNeeded() -> call");
+
     int64_t now = NowUnix();
 
     if (!prices_.empty() && now - dump_updated_at_ < refresh_seconds_)
@@ -82,7 +87,11 @@ void PriceCache::RefreshIfNeeded()
         dump_updated_at_ = now;
     }
 
+    LOG_INFO("PriceCache::RefreshIfNeeded() -> return");
+
     SaveDump();
+
+    LOG_INFO("PriceCache::RefreshIfNeeded() -> SaveDump() -> return");
 }
 
 int64_t PriceCache::NowUnix()
@@ -92,6 +101,8 @@ int64_t PriceCache::NowUnix()
 
 std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
 {
+    LOG_INFO("PriceCache::DownloadFullDump() -> call");
+
     std::unordered_map<std::string, PriceInfo> result;
 
     const std::string url = "https://poe2scout.com/api/poe2/Leagues/runes/Items";
@@ -107,18 +118,17 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
         cpr::VerifySsl{ false } //problems happen with ssl, find out why.
     );
 
-    std::cout << "HTTP: " << r.status_code << " bytes=" << r.text.size() << "\n";
-    std::cout << "err " << r.status_code << " bytes=" << r.text.size() << "\n";
+    LOG_INFO("PriceCache::DownloadFullDump() -> HTTP: " + std::to_string(r.status_code));
 
     if (r.error.code != cpr::ErrorCode::OK)
     {
-        std::cout << "CPR error: " << r.error.message << "\n";
+        LOG_ERROR("PriceCache CPR error:  " + std::to_string(r.status_code));
         return {};
     }
 
     if (r.status_code != 200)
     {
-        std::cout << "API HTTP error: " << r.status_code << "\n";
+        LOG_ERROR("PriceCache API HTTP error:  " + std::to_string(r.status_code));
         return {};
     }
 
@@ -126,7 +136,7 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
 
     if (j.is_discarded() || !j.is_array())
     {
-        std::cout << "API JSON parse error\n";
+        LOG_ERROR("API JSON parse error");
         return {};
     }
 
@@ -162,12 +172,14 @@ std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
             result[name + " " + type] = info;
     }
 
-    std::cout << "Loaded prices: " << result.size() << "\n";
+    LOG_INFO("Loaded prices:  " + std::to_string(result.size()));
     return result;
 }
 
 void PriceCache::SaveDump()
 {
+    LOG_INFO("PriceCache::SaveDump() -> call");
+
     json j;
 
     j["dump_updated_at"] = dump_updated_at_;
@@ -183,10 +195,14 @@ void PriceCache::SaveDump()
     std::ofstream file((GetAppDataDir() / "prices_dump.json"));
     if (file)
         file << j.dump(4);
+
+    LOG_INFO("PriceCache::SaveDump() -> return");
 }
 
 void PriceCache::LoadDump()
 {
+    LOG_INFO("PriceCache::LoadDump() -> call");
+
     std::ifstream file((GetAppDataDir() / "prices_dump.json"));
     if (!file)
         return;
@@ -210,5 +226,6 @@ void PriceCache::LoadDump()
         };
     }
 
-    std::cout << "Loaded dump prices: " << prices_.size() << "\n";
+    LOG_INFO("Loaded dump prices -> " + std::to_string(prices_.size()));
+    LOG_INFO("PriceCache::LoadDump() -> return");
 }
