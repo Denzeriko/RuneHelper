@@ -150,11 +150,35 @@ int64_t PriceCache::NowUnix()
 std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
 {
     LOG_INFO("PriceCache::DownloadFullDump() -> poe.ninja");
-    auto result = DownloadPoeNinjaDump("Runes");
-    auto currency = DownloadPoeNinjaDump("Currency");
 
-    for (auto& [name, info] : currency)
-        result[name] = std::move(info);
+    std::unordered_map<std::string, PriceInfo> result;
+
+    const std::vector<std::string> categories =
+    {
+        "Runes",
+        "Currency",
+        "UncutGems",
+        "Expedition",
+        "Ritual",
+        "Breach",
+        "Verisium",
+        "Idols",
+        "SoulCores",
+        "Essences",
+        "LineageSupportGems",
+        "Abyss",
+        "Fragments"
+    };
+
+    for (const auto& category : categories)
+    {
+        auto dump = DownloadPoeNinjaDump(category);
+
+        LOG_INFO("Downloaded " + category + ": " + std::to_string(dump.size()));
+
+        for (auto& [name, info] : dump)
+            result[name] = std::move(info);
+    }
 
     LOG_INFO("PriceCache::DownloadFullDump() -> total prices: " + std::to_string(result.size()));
 
