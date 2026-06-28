@@ -19,6 +19,7 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 ## Screenshot
 
 ![RuneHelper screenshot](assets/screenshot.png)
+![RuneHelper screenshot](assets/menu.png)
 
 ## How it works
 
@@ -44,6 +45,7 @@ vcpkg install opencv:x64-windows
 vcpkg install tesseract:x64-windows
 vcpkg install cpr:x64-windows
 vcpkg install nlohmann-json:x64-windows
+vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
 ```
 
 With static libs:
@@ -52,6 +54,7 @@ vcpkg install opencv:x64-windows-static
 vcpkg install tesseract:x64-windows-static
 vcpkg install cpr:x64-windows-static
 vcpkg install nlohmann-json:x64-windows-static
+vcpkg install imgui[dx11-binding,win32-binding]:x64-windows-static
 ```
 
 ## Building
@@ -80,28 +83,6 @@ prices_dump.json
 ```
 
 The dump is refreshed automatically every 15 minutes.
-
-## Project Structure
-
-```text
-RuneHelper/
-├── RuneHelper.cpp
-├── OCR.cpp
-├── OCR.h
-├── Overlay.cpp
-├── Overlay.h
-├── PriceCache.cpp
-├── PriceCache.h
-├── RegionSelect.cpp
-├── RegionSelect.h
-├── ScreenCapture.cpp
-├── ScreenCapture.h
-├── NameNormalizer.cpp
-├── NameNormalizer.h
-├── Helpers.cpp
-├── Helpers.h
-└── ResourceHelper.cpp
-```
 
 ## Known Issues
 
