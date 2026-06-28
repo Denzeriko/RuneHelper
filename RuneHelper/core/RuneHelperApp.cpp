@@ -274,6 +274,9 @@ void RuneHelperApp::UpdateOverlay()
 
 void RuneHelperApp::UpdateRegionPreview()
 {
+    if (!ui_.IsRegionHovered())
+        return;
+
     RECT rect{
         config_->regionX,
         config_->regionY,
@@ -281,7 +284,7 @@ void RuneHelperApp::UpdateRegionPreview()
         config_->regionY + config_->regionH
     };
 
-    overlay_.SetRegionPreview(ui_.IsRegionHovered() && config_->regionW > 0, rect);
+    overlay_.SetRegionPreview(config_->regionW > 0, rect);
 }
 
 void RuneHelperApp::Shutdown()
