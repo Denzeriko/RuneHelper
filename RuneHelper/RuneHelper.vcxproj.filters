@@ -67,6 +67,9 @@
     <ClCompile Include="core\UpdateChecker.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="core\RuneHelperApp.cpp">
+      <Filter>core</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nlohmann\json.hpp">
@@ -118,6 +121,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\Version.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="core\RuneHelperApp.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>

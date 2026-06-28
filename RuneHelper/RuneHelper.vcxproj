@@ -22,6 +22,7 @@
     <ClCompile Include="core\ConfigManager.cpp" />
     <ClCompile Include="core\Helpers.cpp" />
     <ClCompile Include="core\Logger.cpp" />
+    <ClCompile Include="core\RuneHelperApp.cpp" />
     <ClCompile Include="core\UpdateChecker.cpp" />
     <ClCompile Include="ocr\LootParser.cpp" />
     <ClCompile Include="ocr\NameNormalizer.cpp" />
@@ -39,6 +40,7 @@
     <ClInclude Include="core\ConfigManager.h" />
     <ClInclude Include="core\Helpers.h" />
     <ClInclude Include="core\Logger.h" />
+    <ClInclude Include="core\RuneHelperApp.h" />
     <ClInclude Include="core\UpdateChecker.h" />
     <ClInclude Include="core\Version.h" />
     <ClInclude Include="nlohmann\json.hpp" />

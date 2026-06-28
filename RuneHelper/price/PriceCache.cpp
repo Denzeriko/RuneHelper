@@ -74,13 +74,60 @@ void PriceCache::RefreshIfNeeded()
 
     int64_t now = NowUnix();
 
-    if (!prices_.empty() && now - dump_updated_at_ < refresh_seconds_)
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        if (!prices_.empty() &&
+            now - dump_updated_at_ < refresh_seconds_)
+        {
+            return;
+        }
+    }
+
+    ForceRefreshAsync();
+}
+
+void PriceCache::ForceRefreshAsync()
+{
+    bool expected = false;
+
+    if (!refreshInProgress_.compare_exchange_strong(expected, true))
+    {
+        LOG_INFO("Price refresh already in progress");
         return;
+    }
+
+    std::thread([this]()
+        {
+            RefreshWorker();
+        }).detach();
+}
+
+bool PriceCache::IsRefreshInProgress() const
+{
+    return refreshInProgress_.load();
+}
+
+size_t PriceCache::GetPriceCount() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return prices_.size();
+}
+
+void PriceCache::RefreshWorker()
+{
+    LOG_INFO("PriceCache::RefreshWorker() -> start");
+
+    int64_t now = NowUnix();
 
     auto fresh = DownloadFullDump();
 
     if (fresh.empty())
+    {
+        LOG_ERROR("PriceCache refresh failed or empty");
+        refreshInProgress_ = false;
         return;
+    }
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -88,11 +135,11 @@ void PriceCache::RefreshIfNeeded()
         dump_updated_at_ = now;
     }
 
-    LOG_INFO("PriceCache::RefreshIfNeeded() -> return");
-
     SaveDump();
 
-    LOG_INFO("PriceCache::RefreshIfNeeded() -> SaveDump() -> return");
+    refreshInProgress_ = false;
+
+    LOG_INFO("PriceCache::RefreshWorker() -> done");
 }
 
 int64_t PriceCache::NowUnix()
@@ -100,86 +147,141 @@ int64_t PriceCache::NowUnix()
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-std::unordered_map<std::string, PriceInfo>  PriceCache::DownloadFullDump()
+std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
 {
-    LOG_INFO("PriceCache::DownloadFullDump() -> call");
+    LOG_INFO("PriceCache::DownloadFullDump() -> poe.ninja");
+    auto result = DownloadPoeNinjaDump("Runes");
+    auto currency = DownloadPoeNinjaDump("Currency");
 
-    std::unordered_map<std::string, PriceInfo> result;
+    for (auto& [name, info] : currency)
+        result[name] = std::move(info);
 
-    const std::string url = "https://poe2scout.com/api/poe2/Leagues/runes/Items";
+    LOG_INFO("PriceCache::DownloadFullDump() -> total prices: " + std::to_string(result.size()));
+
+    return result;
+}
+
+std::unordered_map<std::string, PriceInfo> PriceCache::DownloadPoeNinjaDump(const std::string& type)
+{
+    const std::string url = "https://poe.ninja/poe2/api/economy/exchange/current/overview?league=Runes+of+Aldur&type=" + type;
+
+    LOG_INFO("PriceCache::DownloadPoeNinjaDump() -> " + url);
 
     auto r = cpr::Get(
         cpr::Url{ url },
         cpr::Header{
             { "User-Agent", "RuneHelper/1.0" },
-            { "Accept", "application/json" }
+            { "Accept", "application/json" },
+            { "Referer", "https://poe.ninja/poe2/economy/runesofaldur/" }
         },
-        cpr::Timeout{ 15000 },
-        cpr::VerifySsl{ false }
+        cpr::Timeout{ 15000 }
     );
 
-    LOG_INFO("PriceCache::DownloadFullDump() -> HTTP: " + std::to_string(r.status_code));
+    LOG_INFO("PriceCache::DownloadPoeNinjaDump() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size()));
 
     if (r.error.code != cpr::ErrorCode::OK)
     {
-        LOG_ERROR(
-            "PriceCache CPR error: code=" +
-            std::to_string(static_cast<int>(r.error.code)) +
-            " message=" + r.error.message +
-            " http=" + std::to_string(r.status_code) +
-            " bytes=" + std::to_string(r.text.size())
-        );
+        LOG_ERROR("PriceCache poe.ninja CPR error: code=" + std::to_string(static_cast<int>(r.error.code)) + " message=" + r.error.message);
         return {};
     }
 
     if (r.status_code != 200)
     {
-        LOG_ERROR("PriceCache API HTTP error:  " + std::to_string(r.status_code));
+        LOG_ERROR("PriceCache poe.ninja HTTP error: " + std::to_string(r.status_code));
         return {};
     }
 
     json j = json::parse(r.text, nullptr, false);
 
-    if (j.is_discarded() || !j.is_array())
+    if (j.is_discarded())
     {
-        LOG_ERROR("API JSON parse error");
+        LOG_ERROR("PriceCache poe.ninja JSON parse failed");
+
         return {};
     }
 
-    for (const auto& item : j)
+    return ParsePoeNinjaDump(j);
+}
+
+std::unordered_map<std::string, PriceInfo> PriceCache::ParsePoeNinjaDump(const json& j)
+{
+    std::unordered_map<std::string, PriceInfo> result;
+
+    if (!j.contains("core") || !j["core"].contains("rates") || !j.contains("items") || !j["items"].is_array() || !j.contains("lines") || !j["lines"].is_array())
     {
-        std::string text = JsonString(item, "Text");
-        std::string name = JsonString(item, "Name");
-        std::string type = JsonString(item, "Type");
-
-        double price = 0.0;
-
-        if (item.contains("CurrentPrice") &&
-            item["CurrentPrice"].is_number())
-        {
-            price = item["CurrentPrice"].get<double>();
-        }
-
-        //if (price <= 0.0) //do we need to see 0.0? or make placeholder with poop emoji
-        //    continue;
-
-        std::ostringstream ss;
-        ss << std::fixed << std::setprecision(1) << price << " ex";
-
-        PriceInfo info{ ss.str() };
-
-        if (!text.empty())
-            result[text] = info;
-
-        if (!name.empty())
-            result[name] = info;
-
-        if (!name.empty() && !type.empty())
-            result[name + " " + type] = info;
+        LOG_ERROR("PriceCache::ParsePoeNinjaDump() invalid JSON structure");
+        return result;
     }
 
-    LOG_INFO("Loaded prices:  " + std::to_string(result.size()));
+    double divineToEx = j["core"]["rates"].value("exalted", 0.0);
+
+    if (divineToEx <= 0.0)
+    {
+        LOG_ERROR("PriceCache::ParsePoeNinjaDump() invalid exalted rate");
+        return result;
+    }
+
+    std::unordered_map<std::string, std::string> idToName;
+
+    for (const auto& item : j["items"])
+    {
+        std::string id = item.value("id", "");
+        std::string name = item.value("name", "");
+
+        if (!id.empty() && !name.empty())
+            idToName[id] = name;
+    }
+
+    for (const auto& line : j["lines"])
+    {
+        std::string id = line.value("id", "");
+
+        if (id.empty())
+            continue;
+
+        auto it = idToName.find(id);
+        if (it == idToName.end())
+            continue;
+
+        double primaryValue =
+            line.value("primaryValue", 0.0);
+
+        if (primaryValue <= 0.0)
+            continue;
+
+        double exValue =
+            primaryValue * divineToEx;
+
+        result[it->second] = PriceInfo{
+            FormatExPrice(exValue)
+        };
+    }
+
+    LOG_INFO("PriceCache::ParsePoeNinjaDump() parsed prices: " + std::to_string(result.size()));
+
     return result;
+}
+
+std::string PriceCache::FormatExPrice(double value)
+{
+    std::ostringstream ss;
+
+    if (value >= 100.0)
+    {
+        ss << std::fixed << std::setprecision(0);
+    }
+    else if (value >= 10.0)
+    {
+        ss << std::fixed << std::setprecision(1);
+    }
+    else
+    {
+        ss << std::fixed << std::setprecision(2);
+    }
+
+    ss << value << " ex";
+
+    return ss.str();
 }
 
 void PriceCache::SaveDump()

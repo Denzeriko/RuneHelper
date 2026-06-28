@@ -27,6 +27,7 @@ public:
     bool WantsSelectRegion();
     bool WantsRefreshPrices();
     bool IsRegionHovered() const;
+    void SetPriceStatus(bool downloading, size_t priceCount);
 
 private:
     HWND hwnd_ = nullptr;
@@ -49,6 +50,8 @@ private:
     bool wantsRefreshPrices_ = false;
     bool regionHovered_ = false;
 
+    bool priceDownloading_ = false;
+    size_t priceCount_ = 0;
 
     bool showSaved_ = false;
     std::chrono::steady_clock::time_point savedAt_;

@@ -139,6 +139,9 @@ bool UIManager::WantsSelectRegion()
 bool UIManager::WantsRefreshPrices()
 {
     bool value = wantsRefreshPrices_;
+
+
+
     wantsRefreshPrices_ = false;
     return value;
 }
@@ -146,6 +149,12 @@ bool UIManager::WantsRefreshPrices()
 bool UIManager::IsRegionHovered() const
 {
     return regionHovered_;
+}
+
+void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
+{
+    priceDownloading_ = downloading;
+    priceCount_ = priceCount;
 }
 
 void UIManager::Pump()
@@ -190,7 +199,7 @@ bool UIManager::CreateAppWindow()
         100,
         100,
         420,
-        525,
+        545,
         nullptr,
         nullptr,
         hInst,
@@ -395,9 +404,6 @@ void UIManager::DrawSettings()
     ImGui::Separator();
     //
 
-
-
-
     ImGui::Separator();
 
     ImGui::Text("Status");
@@ -422,28 +428,29 @@ void UIManager::DrawSettings()
         ImGui::Text("Waiting...");
     }
 
+    ImGui::Text("Prices:");
+    ImGui::SameLine();
+    if (priceDownloading_)
+        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f),"Downloading...");
+    else
+        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Loaded (%zu items)", priceCount_);
+
     ImGui::Text("Version: %s", RUNEHELPER_VERSION);
     ImGui::SameLine();
     if (updateChecker_)
     {
         if (updateChecker_->IsChecking())
-        {
             ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Checking for updates...");
-        }
         else if (updateChecker_->HasUpdate())
         {
             ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "New version available: %s", updateChecker_->LatestVersion().c_str());
 
             ImGui::SameLine();
             if (ImGui::Button("Download"))
-            {
                 ShellExecuteA(nullptr, "open", updateChecker_->DownloadUrl().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
-            }
         }
         else
-        {
             ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "You are using the latest version");
-        }
     }
 
     ImGui::Spacing();
