@@ -13,6 +13,7 @@
     <ClCompile Include="ScreenCapture.cpp" />
     <ClCompile Include="ConfigManager.cpp" />
     <ClCompile Include="Logger.cpp" />
+    <ClCompile Include="LootParser.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="nlohmann">
@@ -38,6 +39,7 @@
     <ClInclude Include="ConfigManager.h" />
     <ClInclude Include="Config.h" />
     <ClInclude Include="Logger.h" />
+    <ClInclude Include="LootParser.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ResourceHelper.h" />

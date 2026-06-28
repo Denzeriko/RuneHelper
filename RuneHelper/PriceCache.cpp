@@ -13,6 +13,7 @@
 #include <optional>
 #include <mutex>
 #include <iostream>
+#include <regex>
 
 using json = nlohmann::json;
 

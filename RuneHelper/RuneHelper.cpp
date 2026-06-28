@@ -17,6 +17,7 @@
 #include "ResourceHelper.h"
 #include "ScreenCapture.h"
 
+#include "LootParser.h"
 
 int main()
 {
@@ -128,7 +129,13 @@ int main()
 
         for (const auto& item : loot)
         {
-            std::string rawName = ExtractItemName(item.text);
+            //std::string rawName = ExtractItemName(item.text);
+
+            LootParser::ParsedLootLineStruct parsed = LootParser::ParseLootLine(item.text);
+
+            std::string rawName = parsed.itemName;
+            int quantity = parsed.quantity;
+
             std::optional<std::string> price = priceCache.GetPrice(rawName);
 
             if (!price)
@@ -144,17 +151,16 @@ int main()
             if (!price)
                 continue;
 
+            std::string displayPrice = LootParser::FormatStackPrice(*price, 3);
+
             OverlayText t;
-            t.text = ToWide(*price);
+            t.text = ToWide(displayPrice);
             t.x = region.x + region.width + config.overlayOffsetX;
             t.y = region.y + (item.y1 + item.y2) / 2 + config.overlayOffsetY;
             overlayTexts.push_back(std::move(t));
         }
 
         overlay.SetTexts(std::move(overlayTexts));
-
-        if (GetAsyncKeyState(VK_ESCAPE) & 0x8000)
-            break;
 
         std::this_thread::sleep_for(std::chrono::milliseconds(config.ocrIntervalMs));
     }
