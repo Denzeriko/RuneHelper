@@ -43,6 +43,7 @@ bool ConfigManager::Load()
     config_.regionW = j.value("regionW", config_.regionW);
     config_.regionH = j.value("regionH", config_.regionH);
 
+    config_.ocrEnabled = j.value("ocrEnabled", config_.ocrEnabled);
     config_.ocrScale = j.value("ocrScale", config_.ocrScale);
     config_.ocrThreshold = j.value("ocrThreshold", config_.ocrThreshold);
     config_.ocrIntervalMs = j.value("ocrIntervalMs", config_.ocrIntervalMs);
@@ -50,6 +51,11 @@ bool ConfigManager::Load()
     config_.overlayOffsetX = j.value("overlayOffsetX", config_.overlayOffsetX);
     config_.overlayOffsetY = j.value("overlayOffsetY", config_.overlayOffsetY);
     config_.overlayFontSize = j.value("overlayFontSize", config_.overlayFontSize);
+
+    config_.priceColorLow = j.value("priceColorLow", config_.priceColorLow);
+    config_.priceColorMedium = j.value("priceColorMedium", config_.priceColorMedium);
+    config_.priceColorHigh = j.value("priceColorHigh", config_.priceColorHigh);
+    config_.priceColorVeryHigh = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
 
     config_.priceRefreshMinutes = j.value("priceRefreshMinutes", config_.priceRefreshMinutes);
     config_.priceProvider = j.value("priceProvider", config_.priceProvider);
@@ -69,6 +75,7 @@ bool ConfigManager::Save() const
     j["regionW"] = config_.regionW;
     j["regionH"] = config_.regionH;
 
+    j["ocrEnabled"] = config_.ocrEnabled;
     j["ocrScale"] = config_.ocrScale;
     j["ocrThreshold"] = config_.ocrThreshold;
     j["ocrIntervalMs"] = config_.ocrIntervalMs;
@@ -76,6 +83,11 @@ bool ConfigManager::Save() const
     j["overlayOffsetX"] = config_.overlayOffsetX;
     j["overlayOffsetY"] = config_.overlayOffsetY;
     j["overlayFontSize"] = config_.overlayFontSize;
+
+    j["priceColorLow"] = config_.priceColorLow;
+    j["priceColorMedium"] = config_.priceColorMedium;
+    j["priceColorHigh"] = config_.priceColorHigh;
+    j["priceColorVeryHigh"] = config_.priceColorVeryHigh;
 
     j["priceRefreshMinutes"] = config_.priceRefreshMinutes;
     j["priceProvider"] = config_.priceProvider;

@@ -84,7 +84,6 @@ bool RegionSelector::CreateOverlayWindow()
         LOG_ERROR("RegionSelector::CreateOverlayWindow() -> no HWND!");
         return false;
     }
-        
 
     SetLayeredWindowAttributes(hwnd_, 0, 120, LWA_ALPHA);
 
@@ -158,7 +157,7 @@ void RegionSelector::OnLeftButtonUp(LPARAM lp)
     result_.bottom = current_.y;
 
     done_ = true;
-    PostQuitMessage(0);
+    DestroyWindow(hwnd_);
 }
 
 void RegionSelector::OnKeyDown(WPARAM wp)
@@ -168,7 +167,7 @@ void RegionSelector::OnKeyDown(WPARAM wp)
 
     cancelled_ = true;
     done_ = true;
-    PostQuitMessage(0);
+    DestroyWindow(hwnd_);
 }
 
 void RegionSelector::OnPaint()

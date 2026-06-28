@@ -23,7 +23,8 @@ bool OverlayWindow::Create()
         WS_EX_TOPMOST |
         WS_EX_LAYERED |
         WS_EX_TRANSPARENT |
-        WS_EX_TOOLWINDOW,
+        WS_EX_TOOLWINDOW |
+        WS_EX_NOACTIVATE,
         wc.lpszClassName,
         L"RuneHelperOverlay",
         WS_POPUP,
@@ -49,6 +50,25 @@ bool OverlayWindow::Create()
     return true;
 }
 
+void OverlayWindow::BringToTop()
+{
+    if (!hwnd_)
+        return;
+
+    SetWindowPos(
+        hwnd_,
+        HWND_TOPMOST,
+        0,
+        0,
+        0,
+        0,
+        SWP_NOMOVE |
+        SWP_NOSIZE |
+        SWP_NOACTIVATE |
+        SWP_SHOWWINDOW
+    );
+}
+
 void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
 {
     texts_ = std::move(texts);
@@ -64,7 +84,24 @@ void OverlayWindow::SetFontSize(int size)
     if (fontSize_ == size)
         return;
 
-    LOG_INFO("OverlayWindow::SetFontSize");
+    LOG_INFO("OverlayWindow::SetFontSize -> call");
+
+    fontSize_ = size;
+
+    RecreateFont();
+
+    LOG_INFO("RecreateFont() done");
+
+    if (hwnd_)
+        InvalidateRect(hwnd_, nullptr, TRUE);
+}
+
+void OverlayWindow::SetFontSizeForce(int size)
+{
+    if (size <= 0)
+        return;
+
+    LOG_INFO("OverlayWindow::SetFontSizeForce -> call");
 
     fontSize_ = size;
 
@@ -166,6 +203,8 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 
         for (const auto& t : self->texts_)
         {
+            SetTextColor(hdc, t.color);
+
             RECT r{t.x, t.y - 20, t.x + 300, t.y + 20};
 
             DrawTextW(hdc, t.text.c_str(), -1, &r, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);

@@ -5,6 +5,7 @@
 #include <shlobj.h>
 
 #include "Logger.h"
+#include "Config.h"
 
 std::string ExtractItemName(const std::string& line)
 {
@@ -58,4 +59,21 @@ std::filesystem::path GetAppDataDir()
     LOG_INFO("GetAppDataDir() -> return -> " + result.string());
 
     return result;
+}
+
+COLORREF GetPriceColor(double priceEx, AppConfig& config)
+{
+    if (priceEx < config.priceColorLow)
+        return RGB(160, 160, 160); // grey
+
+    if (priceEx < config.priceColorMedium)
+        return RGB(80, 255, 80); // green
+
+    if (priceEx < config.priceColorHigh)
+        return RGB(255, 220, 80); // yellow
+
+    if (priceEx < config.priceColorVeryHigh)
+        return RGB(255, 60, 60); // red
+
+    return RGB(160, 160, 160); // gray
 }
