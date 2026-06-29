@@ -8,6 +8,7 @@
 #include <imgui_impl_dx11.h>
 
 #include "core/Version.h"
+#include "core/Helpers.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
     HWND hWnd,
@@ -157,6 +158,35 @@ void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
     priceCount_ = priceCount;
 }
 
+void UIManager::RegisterHotkeys()
+{
+    UnregisterHotkeys();
+    RegisterHotKey(hwnd_, 1, MOD_NOREPEAT, config_->hotkeyToggleOCR);
+    RegisterHotKey(hwnd_, 2, MOD_NOREPEAT, config_->hotkeySingleSnapshot);
+    RegisterHotKey(hwnd_, 3, MOD_NOREPEAT, config_->hotkeySelectRegion);
+}
+
+void UIManager::UnregisterHotkeys()
+{
+    UnregisterHotKey(hwnd_, 1);
+    UnregisterHotKey(hwnd_, 2);
+    UnregisterHotKey(hwnd_, 3);
+}
+
+bool UIManager::WantsToggleOCR()
+{
+    bool v = wantsToggleOCR_;
+    wantsToggleOCR_ = false;
+    return v;
+}
+
+bool UIManager::WantsSingleSnapshot()
+{
+    bool v = wantsSingleSnapshot_;
+    wantsSingleSnapshot_ = false;
+    return v;
+}
+
 void UIManager::Pump()
 {
     if (!running_)
@@ -199,7 +229,7 @@ bool UIManager::CreateAppWindow()
         100,
         100,
         420,
-        545,
+        650,
         nullptr,
         nullptr,
         hInst,
@@ -357,7 +387,7 @@ void UIManager::DrawTitleBar()
 
     ImGui::TextUnformatted("RuneHelper");
     ImGui::SameLine();
-    ImGui::TextDisabled(RUNEHELPER_VERSION);
+    ImGui::TextDisabled("v%s", RUNEHELPER_VERSION);
 
     ImGui::SameLine(ImGui::GetWindowWidth() - 40.0f);
 
@@ -404,10 +434,7 @@ void UIManager::DrawSettings()
     ImGui::Separator();
     //
 
-    ImGui::Separator();
-
-    ImGui::Text("Status");
-    ImGui::Separator();
+    ImGui::SeparatorText("STATUS");
 
     ImGui::Text("OCR:");
     ImGui::SameLine();
@@ -455,8 +482,7 @@ void UIManager::DrawSettings()
 
     ImGui::Spacing();
 
-    ImGui::Text("Region");
-    ImGui::Separator();
+    ImGui::SeparatorText("REGION");
 
     /*ImGui::Text(
         "x=%d y=%d w=%d h=%d",
@@ -480,8 +506,7 @@ void UIManager::DrawSettings()
        
     ImGui::Spacing();
 
-    ImGui::Text("OCR");
-    ImGui::Separator();
+    ImGui::SeparatorText("OCR");
 
     if (config_->ocrEnabled)
     {
@@ -510,10 +535,15 @@ void UIManager::DrawSettings()
 
     //ImGui::Checkbox("Debug OCR", &config_->debugOCR);
 
+    ImGui::SeparatorText("Hotkeys");
+
+    DrawHotkeyButton("Toggle OCR", config_->hotkeyToggleOCR);
+    DrawHotkeyButton("Single Snapshot", config_->hotkeySingleSnapshot);
+    DrawHotkeyButton("Select Region", config_->hotkeySelectRegion);
+
     ImGui::Spacing();
 
-    ImGui::Text("Overlay");
-    ImGui::Separator();
+    ImGui::SeparatorText("OVERLAY");
 
     ImGui::SliderInt("Offset X", &config_->overlayOffsetX, -300, 500);
 
@@ -523,8 +553,7 @@ void UIManager::DrawSettings()
 
     ImGui::Spacing();
 
-    ImGui::Text("Prices");
-    ImGui::Separator();
+    ImGui::SeparatorText("PRICES");
 
     ImGui::InputInt("Green     ex", &config_->priceColorMedium,    0, 5000);
     ImGui::InputInt("Yellow    ex", &config_->priceColorHigh,      0, 5000);
@@ -533,10 +562,10 @@ void UIManager::DrawSettings()
     ImGui::SliderInt("Refresh minutes", &config_->priceRefreshMinutes, 1, 60);
 
     if (ImGui::Button("Refresh Prices Now"))
-    {
         wantsRefreshPrices_ = true;
-    }
 
+    ImGui::Spacing();
+    ImGui::Separator();
     ImGui::Spacing();
 
     if (ImGui::Button("Save Config"))
@@ -558,7 +587,7 @@ void UIManager::DrawSettings()
         if (elapsed < std::chrono::seconds(1))
         {
             ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Saved!");
+            ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Saved!");
         }
         else
             showSaved_ = false;
@@ -585,6 +614,83 @@ void UIManager::DrawSettings()
     ImGui::PopStyleColor();
 
     ImGui::End();
+}
+
+void UIManager::DrawHotkeyButton(const char* label, int& key)
+{
+    ImGui::TextUnformatted(label);
+    ImGui::SameLine(220);
+
+    std::string text;
+
+    if (waitingForHotkey_ == &key)
+        text = "Press any key...";
+    else
+        text = VkToString(key);
+
+    if (ImGui::Button(text.c_str(), ImVec2(180, 0)))
+    {
+        waitingForHotkey_ = &key;
+        hotkeyCaptureSkipFrame_ = true;
+    }
+
+    if (waitingForHotkey_ != &key)
+        return;
+
+    if (hotkeyCaptureSkipFrame_)
+    {
+        hotkeyCaptureSkipFrame_ = false;
+        return;
+    }
+
+    if (GetAsyncKeyState(VK_ESCAPE) & 1)
+    {
+        key = 0;
+
+        waitingForHotkey_ = nullptr;
+
+        if (configManager_)
+            configManager_->Save();
+
+        RegisterHotkeys();
+
+        return;
+    }
+
+    for (int vk = 1; vk < 256; ++vk)
+    {
+        if (IsMouseVk(vk))
+            continue;
+
+        if (GetAsyncKeyState(vk) & 1)
+        {
+            key = vk;
+
+            waitingForHotkey_ = nullptr;
+
+            if (configManager_)
+                configManager_->Save();
+
+            RegisterHotkeys();
+
+            break;
+        }
+    }
+}
+
+bool UIManager::IsMouseVk(int vk)
+{
+    switch (vk)
+    {
+    case VK_LBUTTON:
+    case VK_RBUTTON:
+    case VK_MBUTTON:
+    case VK_XBUTTON1:
+    case VK_XBUTTON2:
+        return true;
+    }
+
+    return false;
 }
 
 LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -678,6 +784,25 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             return HTCAPTION;
 
         return HTCLIENT;
+    }
+    case WM_HOTKEY:
+    {
+        switch (wp)
+        {
+        case 1:
+            self->wantsToggleOCR_ = true;
+            break;
+
+        case 2:
+            self->wantsSingleSnapshot_ = true;
+            break;
+
+        case 3:
+            self->wantsSelectRegion_ = true;
+            break;
+        }
+
+        return 0;
     }
     }
 

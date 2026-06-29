@@ -56,6 +56,9 @@ private:
     std::atomic<bool> ocrFailed_ = false;
     std::atomic<bool> ocrInitializing_ = true;
 
+    std::atomic<bool> singleSnapshotRequested_ = false;
+    std::chrono::steady_clock::time_point singleSnapshotUntil_;
+
     std::atomic<bool> overlayDirty_ = false;
 
     std::jthread initThread_;

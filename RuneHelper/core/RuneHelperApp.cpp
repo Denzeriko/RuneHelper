@@ -58,6 +58,8 @@ bool RuneHelperApp::Init()
 
     ocr_.SetConfig(config_);
 
+    ui_.RegisterHotkeys();
+
     initThread_ = std::jthread(
         [this]
         {
@@ -117,7 +119,13 @@ void RuneHelperApp::OcrWorkerLoop()
             priceCache_.RefreshIfNeeded();
         }
 
-        if (!config_->ocrEnabled)
+        bool runSingleSnapshot = singleSnapshotRequested_.exchange(false);
+        if (runSingleSnapshot)
+            singleSnapshotUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+
+        bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
+
+        if (!config_->ocrEnabled && !runSingleSnapshot && !keepSnapshot)
         {
             {
                 std::lock_guard lock(overlayMutex_);
@@ -126,6 +134,7 @@ void RuneHelperApp::OcrWorkerLoop()
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
+
             continue;
         }
 
@@ -227,7 +236,11 @@ void RuneHelperApp::MainLoop()
 
         overlay_.SetFontSize(config_->overlayFontSize);
 
-        
+        if (ui_.WantsToggleOCR())
+        {
+            config_->ocrEnabled =!config_->ocrEnabled;
+            configManager_.Save();
+        }
 
         static auto lastTop = std::chrono::steady_clock::now();
 
@@ -245,24 +258,40 @@ void RuneHelperApp::MainLoop()
 
 void RuneHelperApp::HandleUIActions()
 {
-    if (!ui_.WantsSelectRegion())
-        return;
+    if (ui_.WantsToggleOCR())
+    {
+        config_->ocrEnabled = !config_->ocrEnabled;
+        configManager_.Save();
+    }
 
-    RegionSelector selector;
+    if (ui_.WantsSingleSnapshot())
+    {
+        singleSnapshotRequested_ = true;
+    }
 
-    cv::Rect newRegion = selector.Select();
+    if (ui_.WantsRefreshPrices())
+    {
+        //priceCache_.ForceRefreshAsync();
+    }
 
-    if (newRegion.empty())
-        return;
+    if (ui_.WantsSelectRegion())
+    {
+        RegionSelector selector;
 
-    region_ = newRegion;
+        cv::Rect newRegion = selector.Select();
 
-    config_->regionX = region_.x;
-    config_->regionY = region_.y;
-    config_->regionW = region_.width;
-    config_->regionH = region_.height;
+        if (!newRegion.empty())
+        {
+            region_ = newRegion;
 
-    configManager_.Save();
+            config_->regionX = region_.x;
+            config_->regionY = region_.y;
+            config_->regionW = region_.width;
+            config_->regionH = region_.height;
+
+            configManager_.Save();
+        }
+    }
 }
 
 void RuneHelperApp::UpdateOverlay()
@@ -296,5 +325,6 @@ void RuneHelperApp::UpdateRegionPreview()
 void RuneHelperApp::Shutdown()
 {
     running_ = false;
+    ui_.RegisterHotkeys();
     updateChecker_.Stop();
 }

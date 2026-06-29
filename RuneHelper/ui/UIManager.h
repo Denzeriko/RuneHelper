@@ -29,6 +29,12 @@ public:
     bool IsRegionHovered() const;
     void SetPriceStatus(bool downloading, size_t priceCount);
 
+    void RegisterHotkeys();
+    void UnregisterHotkeys();
+
+    bool WantsToggleOCR();
+    bool WantsSingleSnapshot();
+
 private:
     HWND hwnd_ = nullptr;
 
@@ -48,6 +54,8 @@ private:
     bool running_ = false;
     bool wantsSelectRegion_ = false;
     bool wantsRefreshPrices_ = false;
+    bool wantsToggleOCR_ = false;
+    bool wantsSingleSnapshot_ = false;
     bool regionHovered_ = false;
 
     bool priceDownloading_ = false;
@@ -55,6 +63,9 @@ private:
 
     bool showSaved_ = false;
     std::chrono::steady_clock::time_point savedAt_;
+
+    int* waitingForHotkey_ = nullptr;
+    bool hotkeyCaptureSkipFrame_ = false;
 
 private:
     bool CreateAppWindow();
@@ -67,6 +78,8 @@ private:
     void Render();
     void DrawTitleBar();
     void DrawSettings();
+    void DrawHotkeyButton(const char* label, int& key);
+    bool IsMouseVk(int vk);
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };

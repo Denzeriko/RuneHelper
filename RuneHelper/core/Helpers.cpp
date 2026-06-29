@@ -74,3 +74,18 @@ COLORREF GetPriceColor(double priceEx, AppConfig& config)
 
     return RGB(160, 160, 160); // gray
 }
+
+std::string VkToString(int vk)
+{
+    if (vk == 0)
+        return "None";
+
+    UINT scan = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
+
+    char name[128]{};
+
+    if (GetKeyNameTextA(scan << 16, name,sizeof(name)))
+        return name;
+
+    return std::to_string(vk);
+}
