@@ -31,6 +31,9 @@ public:
     void SetUpdateChecker(UpdateChecker* checker);
     bool WantsSelectRegion();
     bool WantsRefreshPrices();
+#ifndef _WIN32
+    bool WantsTestOcr();
+#endif
     bool IsRegionHovered() const;
     void SetPriceStatus(bool downloading, size_t priceCount);
 
@@ -55,6 +58,9 @@ private:
     bool running_ = false;
     bool wantsSelectRegion_ = false;
     bool wantsRefreshPrices_ = false;
+#ifndef _WIN32
+    bool wantsTestOcr_ = false;
+#endif
     bool regionHovered_ = false;
 
     bool priceDownloading_ = false;

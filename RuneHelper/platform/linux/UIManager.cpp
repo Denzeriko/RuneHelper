@@ -180,6 +180,9 @@ void UIManager::Pump()
         ImGui::SliderFloat("OCR threshold", &config_->ocrThreshold, 0.0f, 255.0f);
         ImGui::SliderInt("OCR interval ms", &config_->ocrIntervalMs, 100, 2000);
 
+        if (ImGui::Button("Test OCR"))
+            wantsTestOcr_ = true;
+
         ImGui::Separator();
         ImGui::Text("Overlay");
 
@@ -276,6 +279,13 @@ bool UIManager::WantsRefreshPrices()
 {
     bool value = wantsRefreshPrices_;
     wantsRefreshPrices_ = false;
+    return value;
+}
+
+bool UIManager::WantsTestOcr()
+{
+    bool value = wantsTestOcr_;
+    wantsTestOcr_ = false;
     return value;
 }
 
