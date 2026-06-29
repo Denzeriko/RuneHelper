@@ -78,9 +78,6 @@
     <ClInclude Include="ui\Overlay.h">
       <Filter>ui</Filter>
     </ClInclude>
-    <ClInclude Include="ui\UIManager.h">
-      <Filter>ui</Filter>
-    </ClInclude>
     <ClInclude Include="resources\resource.h">
       <Filter>resources</Filter>
     </ClInclude>
@@ -124,6 +121,15 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="core\RuneHelperApp.h">
+      <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\UIManager.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\UIState.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="core\DebugData.h">
       <Filter>core</Filter>
     </ClInclude>
   </ItemGroup>

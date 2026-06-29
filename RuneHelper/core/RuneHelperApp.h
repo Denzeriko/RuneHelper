@@ -17,6 +17,8 @@
 #include "ui/Overlay.h"
 #include "ui/UIManager.h"
 
+#include "core/DebugData.h"
+
 class RuneHelperApp
 {
 public:
@@ -63,4 +65,7 @@ private:
 
     std::jthread initThread_;
     std::jthread ocrThread_;
+
+    std::mutex debugMutex_;
+    DebugData debugData_;
 };

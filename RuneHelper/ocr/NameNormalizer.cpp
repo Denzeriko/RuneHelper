@@ -79,25 +79,28 @@ double Similarity(const std::string& a, const std::string& b)
     return 1.0 - ((double)dist / (double)maxLen);
 }
 
-std::optional<std::string> FindBestItemMatch(const std::string& ocrText, const std::vector<std::string>& dbNames)
+std::optional<MatchResult> FindBestItemMatch(
+    const std::string& input,
+    const std::vector<std::string>& candidates)
 {
-    std::string bestName;
     double bestScore = 0.0;
+    std::string bestName;
 
-    for (const auto& name : dbNames)
+    for (const auto& item : candidates)
     {
-        double score = Similarity(ocrText, name);
+        double score = Similarity(input, item);
 
         if (score > bestScore)
         {
             bestScore = score;
-            bestName = name;
+            bestName = item;
         }
     }
 
-    // 0.70-0.80
-    if (bestScore >= 0.72)
-        return bestName;
+    int confidence = static_cast<int>(bestScore * 100.0);
 
-    return std::nullopt;
+    if (confidence < 72)
+        return std::nullopt;
+
+    return MatchResult{ bestName, confidence };
 }

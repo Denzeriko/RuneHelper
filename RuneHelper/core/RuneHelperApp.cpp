@@ -120,6 +120,7 @@ void RuneHelperApp::OcrWorkerLoop()
         }
 
         bool runSingleSnapshot = singleSnapshotRequested_.exchange(false);
+
         if (runSingleSnapshot)
             singleSnapshotUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(2);
 
@@ -134,7 +135,6 @@ void RuneHelperApp::OcrWorkerLoop()
             }
 
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
-
             continue;
         }
 
@@ -157,6 +157,7 @@ void RuneHelperApp::OcrWorkerLoop()
         {
             auto loot = ocr_.RecognizeLoot(img);
 
+            DebugData debug;
             std::vector<OverlayText> newTexts;
 
             if ((loot.size() < 2) && config_->ocrAutoDetect)
@@ -164,9 +165,13 @@ void RuneHelperApp::OcrWorkerLoop()
                 {
                     std::lock_guard lock(overlayMutex_);
                     sharedTexts_.clear();
+                    overlayDirty_ = true;
                 }
 
-                overlayDirty_ = true;
+                {
+                    std::lock_guard lock(debugMutex_);
+                    debugData_ = std::move(debug);
+                }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
 
@@ -175,6 +180,12 @@ void RuneHelperApp::OcrWorkerLoop()
 
             for (const auto& item : loot)
             {
+                DebugLine debugLine;
+                debugLine.ocrText = item.text;
+                debugLine.matchedText = "-";
+                debugLine.price = "-";
+                debugLine.confidence = 0;
+
                 auto parsed = LootParser::ParseLootLine(item.text);
 
                 std::string rawName = parsed.itemName;
@@ -182,35 +193,56 @@ void RuneHelperApp::OcrWorkerLoop()
 
                 auto price = priceCache_.GetPrice(rawName);
 
-                if (!price)
+                if (price)
+                {
+                    debugLine.matchedText = rawName;
+                    debugLine.confidence = 100;
+                }
+                else
                 {
                     auto guess = FindBestItemMatch(rawName, priceCache_.GetAllItemNames());
 
                     if (guess)
-                        price = priceCache_.GetPrice(*guess);
+                    {
+                        debugLine.matchedText = guess->name;
+                        debugLine.confidence = guess->confidence;
+
+                        price = priceCache_.GetPrice(guess->name);
+                    }
                 }
 
                 if (!price)
+                {
+                    debug.lines.push_back(std::move(debugLine));
                     continue;
+                }
+
+                debugLine.price = *price;
 
                 std::optional<double> value = LootParser::ParsePriceValue(*price);
 
                 double totalValue = value ? (*value * quantity) : 0.0;
 
                 OverlayText t;
-
                 t.color = GetPriceColor(totalValue, *config_);
                 t.text = ToWide(LootParser::FormatStackPrice(*price, quantity));
                 t.x = localRegion.x + localRegion.width + config_->overlayOffsetX;
                 t.y = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
 
                 newTexts.push_back(std::move(t));
+
+                debug.lines.push_back(std::move(debugLine));
             }
 
             {
                 std::lock_guard lock(overlayMutex_);
                 sharedTexts_ = std::move(newTexts);
                 overlayDirty_ = true;
+            }
+
+            {
+                std::lock_guard lock(debugMutex_);
+                debugData_ = std::move(debug);
             }
         }
 
@@ -224,6 +256,11 @@ void RuneHelperApp::MainLoop()
     {
         ui_.SetStatus(ocrInitializing_, ocrReady_, ocrFailed_);
         ui_.SetPriceStatus(priceCache_.IsRefreshInProgress(), priceCache_.GetPriceCount());
+
+        {
+            std::lock_guard lock(debugMutex_);
+            ui_.SetDebugData(debugData_);
+        }
 
         ui_.Pump();
         overlay_.PumpMessages();
