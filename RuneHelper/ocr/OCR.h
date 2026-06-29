@@ -15,6 +15,7 @@ struct LootLine
     int y1 = 0;
     int x2 = 0;
     int y2 = 0;
+    float conf = 0.0f;
 };
 
 class OCR
@@ -42,7 +43,9 @@ private:
 
 private:
     void SetupTesseract();
+    std::vector<double> BuildThresholds() const;
     cv::Mat Preprocess(const cv::Mat& src);
+    cv::Mat Preprocess(const cv::Mat& src, double thresholdValue);
     std::vector<LootLine> RecognizePrepared(const cv::Mat& img);
     void DebugTesseract();
     static void Trim(std::string& s);

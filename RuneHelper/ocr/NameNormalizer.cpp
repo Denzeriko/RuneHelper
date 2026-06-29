@@ -79,9 +79,7 @@ double Similarity(const std::string& a, const std::string& b)
     return 1.0 - ((double)dist / (double)maxLen);
 }
 
-std::optional<MatchResult> FindBestItemMatch(
-    const std::string& input,
-    const std::vector<std::string>& candidates)
+std::optional<MatchResult> FindBestItemMatch(const std::string& input, const std::vector<std::string>& candidates)
 {
     double bestScore = 0.0;
     std::string bestName;

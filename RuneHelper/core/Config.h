@@ -15,6 +15,7 @@ struct AppConfig
     float ocrScale          = 1.0f;
     float ocrThreshold      = 130.0f;
     int ocrIntervalMs       = 400;
+    int ocrPasses           = 2;
 
     int hotkeyToggleOCR         = 0x77; //VK_F8;
     int hotkeySingleSnapshot    = 0x78; //VK_F9;
@@ -30,7 +31,7 @@ struct AppConfig
 
     int priceRefreshMinutes = 15;
 
-    std::string priceProvider = "poe2scout";
+    std::string priceProvider = "";
 
     bool debugOCR = false;
     bool showConsole = false;

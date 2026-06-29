@@ -47,6 +47,7 @@ bool ConfigManager::Load()
     config_.ocrAutoDetect   = j.value("ocrAutoDetect",  config_.ocrAutoDetect);
     config_.ocrScale        = j.value("ocrScale",       config_.ocrScale);
     config_.ocrThreshold    = j.value("ocrThreshold",   config_.ocrThreshold);
+    config_.ocrPasses       = j.value("ocrPasses",      config_.ocrPasses);
     config_.ocrIntervalMs   = j.value("ocrIntervalMs",  config_.ocrIntervalMs);
 
     config_.hotkeyToggleOCR         = j.value("hotkeyToggleOCR",        config_.hotkeyToggleOCR);
@@ -83,6 +84,7 @@ bool ConfigManager::Save() const
     j["ocrAutoDetect"]  = config_.ocrAutoDetect;
     j["ocrScale"]       = config_.ocrScale;
     j["ocrThreshold"]   = config_.ocrThreshold;
+    j["ocrPasses"]      = config_.ocrPasses;
     j["ocrIntervalMs"]  = config_.ocrIntervalMs;
 
     j["overlayOffsetX"]     = config_.overlayOffsetX;

@@ -594,9 +594,14 @@ void UIManager::DrawOcrSection()
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Only shows the overlay when the Runeshape menu is detected.\nMay occasionally fail due to OCR inaccuracies.");
 
+    ImGui::SliderInt("OCR passes", &config_->ocrPasses, 1, 6);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("More passes = better OCR recognize, but higher CPU usage");
+    /*
     ImGui::SliderFloat("OCR Threshold", reinterpret_cast<float*>(&config_->ocrThreshold), 0.0f, 255.0f);
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Image binarization threshold.\nLower values keep more details.\nHigher values remove noise but may lose characters.");
+    */
 
     ImGui::SliderInt("OCR interval (ms)", &config_->ocrIntervalMs, 100, 2000);
     if (ImGui::IsItemHovered())

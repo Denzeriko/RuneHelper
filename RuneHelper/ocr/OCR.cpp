@@ -1,6 +1,7 @@
 #include "OCR.h"
 
 #include "core/Logger.h"
+#include "ocr/NameNormalizer.h"
 
 #include <algorithm>
 #include <cctype>
@@ -67,31 +68,77 @@ void OCR::SetupTesseract()
     LOG_INFO("SetupTesseract done");
 }
 
+std::vector<double> OCR::BuildThresholds() const
+{
+    int passes = config_ ? config_->ocrPasses : 1;
+
+    switch (passes)
+    {
+    case 1:
+        return { 130.0 };
+
+    case 2:
+        return { 60.0, 130.0 };
+
+    case 3:
+        return { 30.0, 60.0, 130.0 };
+
+    case 4:
+        return { 30.0, 60.0, 130.0, 180.0 };
+
+    case 5:
+        return { 20.0, 30.0, 60.0, 130.0, 180.0 };
+
+    case 6:
+        return { 20.0, 30.0, 60.0, 130.0, 180.0, 220.0 };
+
+    default:
+        return { 130.0 };
+    }
+}
+
 std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& src)
 {
     if (!initialized_ || src.empty())
         return {};
 
-    cv::Mat prepared = Preprocess(src);
+    std::vector<LootLine> allLines;
 
-    return RecognizePrepared(prepared);
+    for (double threshold : BuildThresholds())
+    {
+        cv::Mat prepared = Preprocess(src, threshold);
+        auto lines = RecognizePrepared(prepared);
+
+        allLines.insert(allLines.end(), lines.begin(), lines.end());
+    }
+
+    return allLines;
 }
 
 cv::Mat OCR::Preprocess(const cv::Mat& src)
 {
-    const double scale = config_ ? config_->ocrScale : 1.0;
     const double thresholdValue = config_ ? config_->ocrThreshold : 130.0;
+    return Preprocess(src, thresholdValue);
+}
+
+cv::Mat OCR::Preprocess(const cv::Mat& src, double thresholdValue)
+{
+    const double scale = config_ ? config_->ocrScale : 1.0;
 
     cv::Mat gray;
     cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
-    cv::resize(gray, gray, {}, scale, scale, cv::INTER_CUBIC );
+    cv::resize(gray, gray, {}, scale, scale, cv::INTER_CUBIC);
 
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
     cv::erode(gray, gray, kernel);
+
     cv::threshold(gray, gray, thresholdValue, 255, cv::THRESH_BINARY);
 
     if (debug_ || (config_ && config_->debugOCR))
-        cv::imwrite("ocr_debug.png", gray);
+    {
+        std::string filename = "ocr_debug_" + std::to_string((int)thresholdValue) + ".png";
+        cv::imwrite(filename, gray);
+    }
 
     return gray;
 }
@@ -99,7 +146,6 @@ cv::Mat OCR::Preprocess(const cv::Mat& src)
 std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
 {
     api_.SetImage(img.data, img.cols, img.rows, 1, static_cast<int>(img.step));
-
     api_.Recognize(nullptr);
 
     if (debug_ || (config_ && config_->debugOCR))
@@ -113,8 +159,7 @@ std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
 
     do
     {
-        char* text =
-            ri->GetUTF8Text(tesseract::RIL_TEXTLINE);
+        char* text = ri->GetUTF8Text(tesseract::RIL_TEXTLINE);
 
         if (!text)
             continue;
@@ -123,7 +168,6 @@ std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
         delete[] text;
 
         line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-
         line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
 
         Trim(line);
@@ -138,9 +182,10 @@ std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
 
         int x1, y1, x2, y2;
 
-        ri->BoundingBox(tesseract::RIL_TEXTLINE, &x1, &y1, &x2, &y2);
+        if (!ri->BoundingBox(tesseract::RIL_TEXTLINE, &x1, &y1, &x2, &y2))
+            continue;
 
-        result.push_back({line, x1, y1, x2, y2});
+        result.push_back({ line, x1, y1, x2, y2, conf });
 
     } while (ri->Next(tesseract::RIL_TEXTLINE));
 

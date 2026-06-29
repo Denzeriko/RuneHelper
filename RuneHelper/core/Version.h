@@ -1,3 +1,3 @@
 #pragma once
 
-#define RUNEHELPER_VERSION "1.2.2"
+#define RUNEHELPER_VERSION "1.2.3"

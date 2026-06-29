@@ -1,6 +1,7 @@
 #include "RuneHelperApp.h"
 
 #include <chrono>
+#include <unordered_set>
 
 #include "core/Helpers.h"
 #include "core/Logger.h"
@@ -99,6 +100,17 @@ void RuneHelperApp::InitOcr()
     LOG_INFO("OCR ready");
 }
 
+static bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDistance)
+{
+    for (const auto& t : texts)
+    {
+        if (std::abs(t.y - y) < minDistance)
+            return true;
+    }
+
+    return false;
+}
+
 void RuneHelperApp::OcrWorkerLoop()
 {
     while (running_ && !ocrReady_)
@@ -174,7 +186,6 @@ void RuneHelperApp::OcrWorkerLoop()
                 }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
-
                 continue;
             }
 
@@ -206,7 +217,6 @@ void RuneHelperApp::OcrWorkerLoop()
                     {
                         debugLine.matchedText = guess->name;
                         debugLine.confidence = guess->confidence;
-
                         price = priceCache_.GetPrice(guess->name);
                     }
                 }
@@ -220,14 +230,24 @@ void RuneHelperApp::OcrWorkerLoop()
                 debugLine.price = *price;
 
                 std::optional<double> value = LootParser::ParsePriceValue(*price);
-
                 double totalValue = value ? (*value * quantity) : 0.0;
+
+                int overlayY =
+                    localRegion.y +
+                    (item.y1 + item.y2) / 2 +
+                    config_->overlayOffsetY;
+
+                if (HasCloseOverlayText(newTexts, overlayY, 25))
+                {
+                    debug.lines.push_back(std::move(debugLine));
+                    continue;
+                }
 
                 OverlayText t;
                 t.color = GetPriceColor(totalValue, *config_);
                 t.text = ToWide(LootParser::FormatStackPrice(*price, quantity));
                 t.x = localRegion.x + localRegion.width + config_->overlayOffsetX;
-                t.y = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
+                t.y = overlayY;
 
                 newTexts.push_back(std::move(t));
 
