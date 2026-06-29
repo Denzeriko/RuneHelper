@@ -68,6 +68,34 @@ cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
 cmake --build build --config Release
 ```
 
+### Building on Ubuntu
+
+#### Install dependencies
+
+```bash
+sudo apt update
+sudo apt install \
+    build-essential \
+    cmake \
+    pkg-config \
+    libopencv-dev \
+    libtesseract-dev \
+    libleptonica-dev \
+    libcpr-dev
+```
+
+> **Note:** `libtesseract-dev` provides the C++ API, while `libleptonica-dev` is required by Tesseract.
+
+#### Configure and build
+
+```bash
+mkdir -p build
+cd build
+
+cmake ..
+cmake --build . -j$(nproc)
+```
+
 ## Price API
 
 Prices are fetched from:
