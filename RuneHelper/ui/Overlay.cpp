@@ -1,5 +1,7 @@
 #include "Overlay.h"
 
+#ifdef _WIN32
+
 #include <windows.h>
 #include <vector>
 
@@ -257,3 +259,45 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 
     return DefWindowProcW(hwnd, msg, wp, lp);
 }
+#else
+
+#include <utility>
+
+#include "core/Logger.h"
+
+bool OverlayWindow::Create()
+{
+    LOG_ERROR("Linux overlay UI is not implemented");
+    return false;
+}
+
+void OverlayWindow::BringToTop()
+{
+}
+
+void OverlayWindow::SetRegionPreview(bool enabled, const RECT& rect)
+{
+    previewEnabled_ = enabled;
+    previewRect_ = rect;
+}
+
+void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
+{
+    texts_ = std::move(texts);
+}
+
+void OverlayWindow::SetFontSize(int size)
+{
+    fontSize_ = size;
+}
+
+void OverlayWindow::SetFontSizeForce(int size)
+{
+    fontSize_ = size;
+}
+
+void OverlayWindow::PumpMessages()
+{
+}
+
+#endif

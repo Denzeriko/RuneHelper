@@ -1,7 +1,12 @@
 #pragma once
 
+#ifdef _WIN32
 #include <windows.h>
 #include <d3d11.h>
+#endif
+
+#include <chrono>
+#include <cstddef>
 
 #include "core/Config.h"
 #include "core/ConfigManager.h"
@@ -30,12 +35,14 @@ public:
     void SetPriceStatus(bool downloading, size_t priceCount);
 
 private:
+#ifdef _WIN32
     HWND hwnd_ = nullptr;
 
     ID3D11Device* device_ = nullptr;
     ID3D11DeviceContext* deviceContext_ = nullptr;
     IDXGISwapChain* swapChain_ = nullptr;
     ID3D11RenderTargetView* renderTargetView_ = nullptr;
+#endif
 
     AppConfig* config_ = nullptr;
     ConfigManager* configManager_ = nullptr;
@@ -57,6 +64,7 @@ private:
     std::chrono::steady_clock::time_point savedAt_;
 
 private:
+#ifdef _WIN32
     bool CreateAppWindow();
     bool CreateDeviceD3D();
     void CleanupDeviceD3D();
@@ -69,4 +77,5 @@ private:
     void DrawSettings();
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+#endif
 };
