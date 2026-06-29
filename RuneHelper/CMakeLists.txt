@@ -130,6 +130,10 @@ target_include_directories(runehelper PRIVATE
   ${X11_INCLUDE_DIR}
 )
 
+target_compile_definitions(runehelper PRIVATE
+  RUNEHELPER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+)
+
 target_link_libraries(runehelper PRIVATE
   ${OpenCV_LIBS}
   Tesseract::libtesseract
