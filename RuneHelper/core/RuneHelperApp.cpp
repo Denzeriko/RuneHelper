@@ -121,6 +121,11 @@ void RuneHelperApp::OcrWorkerLoop()
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
+    {
+        std::lock_guard lock(cachedNamesMutex_);
+        cachedItemNames_ = BuildCachedItemNames(priceCache_.GetAllItemNames());
+    }
+
     auto lastRefreshCheck = std::chrono::steady_clock::now();
 
     while (running_)
@@ -129,6 +134,10 @@ void RuneHelperApp::OcrWorkerLoop()
         {
             lastRefreshCheck = std::chrono::steady_clock::now();
             priceCache_.RefreshIfNeeded();
+            {
+                std::lock_guard lock(cachedNamesMutex_);
+                cachedItemNames_ = BuildCachedItemNames(priceCache_.GetAllItemNames());
+            }
         }
 
         bool runSingleSnapshot = singleSnapshotRequested_.exchange(false);
@@ -172,7 +181,13 @@ void RuneHelperApp::OcrWorkerLoop()
             DebugData debug;
             std::vector<OverlayText> newTexts;
 
-            if ((loot.size() < 2) && config_->ocrAutoDetect)
+            std::vector<CachedItemName> cachedNames;
+            {
+                std::lock_guard lock(cachedNamesMutex_);
+                cachedNames = cachedItemNames_;
+            }
+
+            /*if ((loot.size() < 2) && config_->ocrAutoDetect) //Broken! Cos OCR Passes making garbage lines and dupes
             {
                 {
                     std::lock_guard lock(overlayMutex_);
@@ -187,7 +202,7 @@ void RuneHelperApp::OcrWorkerLoop()
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
                 continue;
-            }
+            }*/
 
             for (const auto& item : loot)
             {
@@ -211,7 +226,7 @@ void RuneHelperApp::OcrWorkerLoop()
                 }
                 else
                 {
-                    auto guess = FindBestItemMatch(rawName, priceCache_.GetAllItemNames());
+                    auto guess = FindBestItemMatch(rawName, cachedNames);
 
                     if (guess)
                     {
@@ -232,10 +247,7 @@ void RuneHelperApp::OcrWorkerLoop()
                 std::optional<double> value = LootParser::ParsePriceValue(*price);
                 double totalValue = value ? (*value * quantity) : 0.0;
 
-                int overlayY =
-                    localRegion.y +
-                    (item.y1 + item.y2) / 2 +
-                    config_->overlayOffsetY;
+                int overlayY = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
 
                 if (HasCloseOverlayText(newTexts, overlayY, 25))
                 {

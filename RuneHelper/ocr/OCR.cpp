@@ -97,6 +97,75 @@ std::vector<double> OCR::BuildThresholds() const
     }
 }
 
+cv::Mat OCR::PrepareImage(const cv::Mat& img)
+{
+    cv::Mat gray;
+    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+
+    cv::Mat resized;
+    cv::resize(gray, resized, {},  config_->ocrScale, config_->ocrScale, cv::INTER_LINEAR);
+
+    cv::Mat thresh;
+    cv::threshold(resized, thresh, config_->ocrThreshold, 255,  cv::THRESH_BINARY);
+
+    return thresh;
+}
+
+bool OCR::IsSamePreparedImage(const cv::Mat& img)
+{
+    if (lastPrepared_.empty())
+        return false;
+
+    if (lastPrepared_.size() != img.size())
+        return false;
+
+    cv::Mat diff;
+    cv::absdiff(img, lastPrepared_, diff);
+
+    double changed = cv::countNonZero(diff);
+
+    double ratio = changed / static_cast<double>(img.total());
+
+    return ratio < 0.01;
+}
+
+std::vector<LootLine> OCR::RecognizeLoot2(const cv::Mat& img)
+{
+    cv::Mat gray;
+    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+
+    cv::Mat diffPrepared;
+    cv::threshold(gray, diffPrepared, config_->ocrThreshold, 255, cv::THRESH_BINARY);
+
+    if (IsSamePreparedImage(diffPrepared))
+        return lastResult_;
+
+    std::vector<LootLine> best;
+    cv::Mat bestPrepared;
+
+    for (double threshold : BuildThresholds())
+    {
+        cv::Mat prepared;
+        cv::threshold(gray, prepared, threshold, 255, cv::THRESH_BINARY);
+
+        auto result = RecognizePrepared(prepared);
+
+        if (result.size() > best.size())
+        {
+            best = std::move(result);
+            bestPrepared = prepared.clone();
+        }
+
+        if (best.size() >= 3)
+            break;
+    }
+
+    lastPrepared_ = diffPrepared.clone();
+    lastResult_ = best;
+
+    return lastResult_;
+}
+
 std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& src)
 {
     if (!initialized_ || src.empty())

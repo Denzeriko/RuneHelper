@@ -11,6 +11,7 @@
 #include "core/UpdateChecker.h"
 
 #include "ocr/OCR.h"
+#include "ocr/NameNormalizer.h"
 
 #include "price/PriceCache.h"
 
@@ -68,4 +69,7 @@ private:
 
     std::mutex debugMutex_;
     DebugData debugData_;
+
+    std::mutex cachedNamesMutex_;
+    std::vector<CachedItemName> cachedItemNames_;
 };

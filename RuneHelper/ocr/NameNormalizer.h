@@ -1,13 +1,22 @@
+#pragma once
+
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 struct MatchResult
 {
     std::string name;
-    int confidence;
+    int confidence = 0;
 };
 
-std::string NormalizeName(std::string s);
-double Similarity(const std::string& a, const std::string& b);
-std::optional<MatchResult> FindBestItemMatch(const std::string& input, const std::vector<std::string>& candidates);
+struct CachedItemName
+{
+    std::string original;
+    std::string normalized;
+};
+
+std::string NormalizeName(std::string_view s);
+std::vector<CachedItemName> BuildCachedItemNames(const std::vector<std::string>& names);
+std::optional<MatchResult> FindBestItemMatch(std::string_view input, const std::vector<CachedItemName>& candidates, int minConfidence = 72);
