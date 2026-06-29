@@ -1,13 +1,15 @@
 #include "ScreenCapture.h"
 
-#include <stdexcept>
+#include "core/Logger.h"
 
 cv::Mat CaptureScreen()
 {
-    throw std::runtime_error("Linux screen capture is not implemented");
+    LOG_ERROR("Linux screen capture is not implemented");
+    return {};
 }
 
 cv::Mat CaptureRegion(const cv::Rect&)
 {
-    throw std::runtime_error("Linux region capture is not implemented");
+    LOG_ERROR("Linux region capture is not implemented");
+    return {};
 }

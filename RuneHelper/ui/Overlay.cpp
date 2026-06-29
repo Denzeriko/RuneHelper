@@ -267,8 +267,8 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 
 bool OverlayWindow::Create()
 {
-    LOG_ERROR("Linux overlay UI is not implemented");
-    return false;
+    LOG_ERROR("Linux game overlay is not implemented");
+    return true;
 }
 
 void OverlayWindow::BringToTop()

@@ -1,13 +1,15 @@
 #include "ResourceHelper.h"
 
-#include <stdexcept>
+#include "core/Logger.h"
 
 bool ExtractResourceToFile(int, const wchar_t*, const std::filesystem::path&)
 {
-    throw std::runtime_error("Linux resource extraction is not implemented");
+    LOG_ERROR("Linux resource extraction is not implemented");
+    return false;
 }
 
 std::string PrepareTessdata()
 {
-    throw std::runtime_error("Linux tessdata resource preparation is not implemented");
+    LOG_ERROR("Linux tessdata resource preparation is not implemented; using resources directory");
+    return "resources";
 }

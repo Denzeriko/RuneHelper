@@ -1,10 +1,11 @@
 #include "RegionSelect.h"
 
-#include <stdexcept>
+#include "core/Logger.h"
 
 RegionSelector::~RegionSelector() = default;
 
 cv::Rect RegionSelector::Select()
 {
-    throw std::runtime_error("Linux region selection is not implemented");
+    LOG_ERROR("Linux region selection is not implemented");
+    return {};
 }
