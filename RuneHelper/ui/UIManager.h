@@ -1,12 +1,7 @@
 #pragma once
 
-#ifdef _WIN32
 #include <windows.h>
 #include <d3d11.h>
-#endif
-
-#include <chrono>
-#include <cstddef>
 
 #include "core/Config.h"
 #include "core/ConfigManager.h"
@@ -29,25 +24,6 @@ public:
     void Pump();
 
     bool IsRunning() const;
-    void SetUpdateChecker(UpdateChecker* checker);
-    bool WantsSelectRegion();
-    bool WantsRefreshPrices();
-#ifndef _WIN32
-    bool WantsTestOcr();
-    bool WantsResetOcr();
-#endif
-    bool IsRegionHovered() const;
-    void SetPriceStatus(bool downloading, size_t priceCount);
-
-private:
-#ifdef _WIN32
-    HWND hwnd_ = nullptr;
-
-    ID3D11Device* device_ = nullptr;
-    ID3D11DeviceContext* deviceContext_ = nullptr;
-    IDXGISwapChain* swapChain_ = nullptr;
-    ID3D11RenderTargetView* renderTargetView_ = nullptr;
-#endif
 
     void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
 
@@ -60,14 +36,6 @@ private:
     bool WantsToggleOCR();
     bool WantsSingleSnapshot();
 
-    bool running_ = false;
-    bool wantsSelectRegion_ = false;
-    bool wantsRefreshPrices_ = false;
-#ifndef _WIN32
-    bool wantsTestOcr_ = false;
-    bool wantsResetOcr_ = false;
-#endif
-    bool regionHovered_ = false;
     bool IsRegionHovered() const;
 
     void RegisterHotkeys();
@@ -76,7 +44,6 @@ private:
     void SetDebugData(const DebugData& data);
 
 private:
-#ifdef _WIN32
     bool CreateAppWindow();
     bool CreateDeviceD3D();
 
@@ -104,5 +71,23 @@ private:
     static bool IsMouseVk(int vk);
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-#endif
+
+private:
+    HWND hwnd_ = nullptr;
+
+    ID3D11Device* device_ = nullptr;
+    ID3D11DeviceContext* deviceContext_ = nullptr;
+    IDXGISwapChain* swapChain_ = nullptr;
+    ID3D11RenderTargetView* renderTargetView_ = nullptr;
+
+    AppConfig* config_ = nullptr;
+    ConfigManager* configManager_ = nullptr;
+    UpdateChecker* updateChecker_ = nullptr;
+
+    UIState state_;
+
+    DebugData debugData_;
+
+    int* waitingForHotkey_ = nullptr;
+    bool hotkeyCaptureSkipFrame_ = false;
 };

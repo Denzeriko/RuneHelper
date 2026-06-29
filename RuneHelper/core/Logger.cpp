@@ -1,12 +1,9 @@
 #include "Logger.h"
 
-#ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
-#endif
 
 #include <chrono>
-#include <cstdlib>
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
@@ -20,7 +17,6 @@ Logger& Logger::Instance()
 
 bool Logger::Init()
 {
-#ifdef _WIN32
     PWSTR appData = nullptr;
 
     if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &appData)))
@@ -31,25 +27,6 @@ bool Logger::Init()
 
     dir /= "Denz";
     dir /= "RuneHelper";
-#else
-    const char* xdgStateHome = std::getenv("XDG_STATE_HOME");
-    std::filesystem::path dir;
-
-    if (xdgStateHome && *xdgStateHome)
-    {
-        dir = xdgStateHome;
-    }
-    else if (const char* home = std::getenv("HOME"); home && *home)
-    {
-        dir = std::filesystem::path(home) / ".local" / "state";
-    }
-    else
-    {
-        dir = ".";
-    }
-
-    dir /= "RuneHelper";
-#endif
 
     std::filesystem::create_directories(dir);
 
@@ -96,11 +73,7 @@ std::string Logger::TimeNow()
     auto t = std::chrono::system_clock::to_time_t(now);
 
     std::tm tm{};
-#ifdef _WIN32
     localtime_s(&tm, &t);
-#else
-    localtime_r(&t, &tm);
-#endif
 
     std::ostringstream ss;
 

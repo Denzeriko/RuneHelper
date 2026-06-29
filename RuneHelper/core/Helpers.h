@@ -1,9 +1,5 @@
 #pragma once
-#ifdef _WIN32
 #include <windows.h>
-#else
-#include "platform/linux/PlatformTypes.h"
-#endif
 #include <string>
 #include <filesystem>
 #include "ConfigManager.h"

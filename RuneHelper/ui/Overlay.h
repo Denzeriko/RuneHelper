@@ -1,9 +1,5 @@
 #pragma once
-#ifdef _WIN32
 #include <windows.h>
-#else
-#include "platform/linux/PlatformTypes.h"
-#endif
 #include <string>
 #include <vector>
 
@@ -27,34 +23,17 @@ public:
     void PumpMessages();
 
 private:
-#ifdef _WIN32
     HWND hwnd_ = nullptr;
-#else
-    void* display_ = nullptr;
-    unsigned long window_ = 0;
-    void* gc_ = nullptr;
-    int windowX_ = 20;
-    int windowY_ = 20;
-    int windowW_ = 520;
-    int windowH_ = 120;
-#endif
 
     bool previewEnabled_ = false;
     RECT previewRect_{};
 
-#ifdef _WIN32
     HFONT font_ = nullptr;
-#endif
     int fontSize_ = 24;
 
     std::vector<OverlayText> texts_;
 
 private:
-#ifdef _WIN32
     void RecreateFont();
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-#else
-    void ResizeAndMove();
-    void Redraw();
-#endif
 };
