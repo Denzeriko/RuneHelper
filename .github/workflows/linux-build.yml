@@ -1,0 +1,50 @@
+name: Linux build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            git \
+            pkg-config \
+            libopencv-dev \
+            libtesseract-dev \
+            libleptonica-dev \
+            libcurl4-openssl-dev \
+            libglfw3-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
+            libxext-dev
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Package binary
+        run: |
+          mkdir -p dist
+          cp build/runehelper dist/
+          tar -C dist -czf runehelper-linux-x86_64.tar.gz runehelper
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: runehelper-linux-x86_64
+          path: runehelper-linux-x86_64.tar.gz
