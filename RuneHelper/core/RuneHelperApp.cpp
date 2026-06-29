@@ -66,6 +66,8 @@ bool RuneHelperApp::Init()
 
     ocr_.SetConfig(config_);
 
+    ui_.RegisterHotkeys();
+
     initThread_ = std::jthread(
         [this]
         {
@@ -135,7 +137,14 @@ void RuneHelperApp::OcrWorkerLoop()
             priceCache_.RefreshIfNeeded();
         }
 
-        if (!config_->ocrEnabled)
+        bool runSingleSnapshot = singleSnapshotRequested_.exchange(false);
+
+        if (runSingleSnapshot)
+            singleSnapshotUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+
+        bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
+
+        if (!config_->ocrEnabled && !runSingleSnapshot && !keepSnapshot)
         {
             {
                 std::lock_guard lock(overlayMutex_);
@@ -164,6 +173,9 @@ void RuneHelperApp::OcrWorkerLoop()
 
         if (!img.empty())
         {
+            auto loot = ocr_.RecognizeLoot(img);
+
+            DebugData debug;
             std::vector<OverlayText> newTexts;
 
 #ifdef _WIN32
@@ -179,9 +191,13 @@ void RuneHelperApp::OcrWorkerLoop()
                 {
                     std::lock_guard lock(overlayMutex_);
                     sharedTexts_.clear();
+                    overlayDirty_ = true;
                 }
 
-                overlayDirty_ = true;
+                {
+                    std::lock_guard lock(debugMutex_);
+                    debugData_ = std::move(debug);
+                }
 
                 std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
 
@@ -190,6 +206,12 @@ void RuneHelperApp::OcrWorkerLoop()
 
             for (const auto& item : loot)
             {
+                DebugLine debugLine;
+                debugLine.ocrText = item.text;
+                debugLine.matchedText = "-";
+                debugLine.price = "-";
+                debugLine.confidence = 0;
+
                 auto parsed = LootParser::ParseLootLine(item.text);
 
                 std::string rawName = parsed.itemName;
@@ -197,29 +219,45 @@ void RuneHelperApp::OcrWorkerLoop()
 
                 auto price = priceCache_.GetPrice(rawName);
 
-                if (!price)
+                if (price)
+                {
+                    debugLine.matchedText = rawName;
+                    debugLine.confidence = 100;
+                }
+                else
                 {
                     auto guess = FindBestItemMatch(rawName, priceCache_.GetAllItemNames());
 
                     if (guess)
-                        price = priceCache_.GetPrice(*guess);
+                    {
+                        debugLine.matchedText = guess->name;
+                        debugLine.confidence = guess->confidence;
+
+                        price = priceCache_.GetPrice(guess->name);
+                    }
                 }
 
                 if (!price)
+                {
+                    debug.lines.push_back(std::move(debugLine));
                     continue;
+                }
+
+                debugLine.price = *price;
 
                 std::optional<double> value = LootParser::ParsePriceValue(*price);
 
                 double totalValue = value ? (*value * quantity) : 0.0;
 
                 OverlayText t;
-
                 t.color = GetPriceColor(totalValue, *config_);
                 t.text = ToWide(LootParser::FormatStackPrice(*price, quantity));
                 t.x = localRegion.x + localRegion.width + config_->overlayOffsetX;
                 t.y = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
 
                 newTexts.push_back(std::move(t));
+
+                debug.lines.push_back(std::move(debugLine));
             }
 #else
             std::vector<OcrRowDebug> rows;
@@ -309,6 +347,11 @@ void RuneHelperApp::OcrWorkerLoop()
                 sharedTexts_ = std::move(newTexts);
                 overlayDirty_ = true;
             }
+
+            {
+                std::lock_guard lock(debugMutex_);
+                debugData_ = std::move(debug);
+            }
         }
 
         std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
@@ -322,16 +365,27 @@ void RuneHelperApp::MainLoop()
         ui_.SetStatus(ocrInitializing_, ocrReady_, ocrFailed_);
         ui_.SetPriceStatus(priceCache_.IsRefreshInProgress(), priceCache_.GetPriceCount());
 
+        {
+            std::lock_guard lock(debugMutex_);
+            ui_.SetDebugData(debugData_);
+        }
+
         ui_.Pump();
         overlay_.PumpMessages();
 
         HandleUIActions();
 
+        UpdateRegionPreview();
+
         UpdateOverlay();
 
         overlay_.SetFontSize(config_->overlayFontSize);
 
-        UpdateRegionPreview();
+        if (ui_.WantsToggleOCR())
+        {
+            config_->ocrEnabled =!config_->ocrEnabled;
+            configManager_.Save();
+        }
 
         static auto lastTop = std::chrono::steady_clock::now();
 
@@ -519,8 +573,12 @@ void RuneHelperApp::UpdateOverlay()
 
 void RuneHelperApp::UpdateRegionPreview()
 {
-    if (!ui_.IsRegionHovered())
+    if (!ui_.IsRegionHovered() || config_->regionW <= 0)
+    {
+        static RECT empty{};
+        overlay_.SetRegionPreview(false, empty);
         return;
+    }
 
     RECT rect{
         config_->regionX,
@@ -529,11 +587,12 @@ void RuneHelperApp::UpdateRegionPreview()
         config_->regionY + config_->regionH
     };
 
-    overlay_.SetRegionPreview(config_->regionW > 0, rect);
+    overlay_.SetRegionPreview(true, rect);
 }
 
 void RuneHelperApp::Shutdown()
 {
     running_ = false;
+    ui_.RegisterHotkeys();
     updateChecker_.Stop();
 }

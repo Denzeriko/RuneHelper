@@ -73,10 +73,19 @@ void OverlayWindow::BringToTop()
 
 void OverlayWindow::SetRegionPreview(bool enabled, const RECT& rect)
 {
+    bool sameRect =
+        previewRect_.left == rect.left &&
+        previewRect_.top == rect.top &&
+        previewRect_.right == rect.right &&
+        previewRect_.bottom == rect.bottom;
+
+    if (previewEnabled_ == enabled && sameRect)
+        return;
+
     previewEnabled_ = enabled;
     previewRect_ = rect;
 
-    InvalidateRect(hwnd_, nullptr, TRUE);
+    InvalidateRect(hwnd_, nullptr, FALSE);
 }
 
 void OverlayWindow::SetTexts(std::vector<OverlayText> texts)

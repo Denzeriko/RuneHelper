@@ -38,6 +38,7 @@
   <ItemGroup>
     <ClInclude Include="core\Config.h" />
     <ClInclude Include="core\ConfigManager.h" />
+    <ClInclude Include="core\DebugData.h" />
     <ClInclude Include="core\Helpers.h" />
     <ClInclude Include="core\Logger.h" />
     <ClInclude Include="core\RuneHelperApp.h" />
@@ -54,6 +55,7 @@
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="ui\Overlay.h" />
     <ClInclude Include="ui\UIManager.h" />
+    <ClInclude Include="ui\UIState.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="resources\eng.traineddata_fast" />

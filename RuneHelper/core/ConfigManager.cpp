@@ -40,26 +40,30 @@ bool ConfigManager::Load()
     config_.regionW = j.value("regionW", config_.regionW);
     config_.regionH = j.value("regionH", config_.regionH);
 
-    config_.ocrEnabled = j.value("ocrEnabled", config_.ocrEnabled);
-    config_.ocrAutoDetect = j.value("ocrAutoDetect", config_.ocrAutoDetect);
-    config_.ocrScale = j.value("ocrScale", config_.ocrScale);
-    config_.ocrThreshold = j.value("ocrThreshold", config_.ocrThreshold);
-    config_.ocrPsm = j.value("ocrPsm", config_.ocrPsm);
-    config_.ocrIntervalMs = j.value("ocrIntervalMs", config_.ocrIntervalMs);
+    config_.ocrEnabled      = j.value("ocrEnabled",     config_.ocrEnabled);
+    config_.ocrAutoDetect   = j.value("ocrAutoDetect",  config_.ocrAutoDetect);
+    config_.ocrScale        = j.value("ocrScale",       config_.ocrScale);
+    config_.ocrThreshold    = j.value("ocrThreshold",   config_.ocrThreshold);
+    config_.ocrPsm          = j.value("ocrPsm", config_.ocrPsm);
+    config_.ocrIntervalMs   = j.value("ocrIntervalMs",  config_.ocrIntervalMs);
 
-    config_.overlayOffsetX = j.value("overlayOffsetX", config_.overlayOffsetX);
-    config_.overlayOffsetY = j.value("overlayOffsetY", config_.overlayOffsetY);
+    config_.hotkeyToggleOCR         = j.value("hotkeyToggleOCR",        config_.hotkeyToggleOCR);
+    config_.hotkeySingleSnapshot    = j.value("hotkeySingleSnapshot",   config_.hotkeySingleSnapshot);
+    config_.hotkeySelectRegion      = j.value("hotkeySelectRegion",     config_.hotkeySelectRegion);
+
+    config_.overlayOffsetX  = j.value("overlayOffsetX",  config_.overlayOffsetX);
+    config_.overlayOffsetY  = j.value("overlayOffsetY",  config_.overlayOffsetY);
     config_.overlayFontSize = j.value("overlayFontSize", config_.overlayFontSize);
 
-    config_.priceColorMedium = j.value("priceColorMedium", config_.priceColorMedium);
-    config_.priceColorHigh = j.value("priceColorHigh", config_.priceColorHigh);
-    config_.priceColorVeryHigh = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
+    config_.priceColorMedium    = j.value("priceColorMedium",   config_.priceColorMedium);
+    config_.priceColorHigh      = j.value("priceColorHigh",     config_.priceColorHigh);
+    config_.priceColorVeryHigh  = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
 
-    config_.priceRefreshMinutes = j.value("priceRefreshMinutes", config_.priceRefreshMinutes);
-    config_.priceProvider = j.value("priceProvider", config_.priceProvider);
+    config_.priceRefreshMinutes = j.value("priceRefreshMinutes",    config_.priceRefreshMinutes);
+    config_.priceProvider       = j.value("priceProvider",          config_.priceProvider);
 
-    config_.debugOCR = j.value("debugOCR", config_.debugOCR);
-    config_.showConsole = j.value("showConsole", config_.showConsole);
+    config_.debugOCR    = j.value("debugOCR",       config_.debugOCR);
+    config_.showConsole = j.value("showConsole",    config_.showConsole);
 
     return true;
 }
@@ -73,26 +77,30 @@ bool ConfigManager::Save() const
     j["regionW"] = config_.regionW;
     j["regionH"] = config_.regionH;
 
-    j["ocrEnabled"] = config_.ocrEnabled;
-    j["ocrAutoDetect"] = config_.ocrAutoDetect;
-    j["ocrScale"] = config_.ocrScale;
-    j["ocrThreshold"] = config_.ocrThreshold;
-    j["ocrPsm"] = config_.ocrPsm;
-    j["ocrIntervalMs"] = config_.ocrIntervalMs;
+    j["ocrEnabled"]     = config_.ocrEnabled;
+    j["ocrAutoDetect"]  = config_.ocrAutoDetect;
+    j["ocrScale"]       = config_.ocrScale;
+    j["ocrPsm"]         = config_.ocrPsm;
+    j["ocrThreshold"]   = config_.ocrThreshold;
+    j["ocrIntervalMs"]  = config_.ocrIntervalMs;
 
-    j["overlayOffsetX"] = config_.overlayOffsetX;
-    j["overlayOffsetY"] = config_.overlayOffsetY;
-    j["overlayFontSize"] = config_.overlayFontSize;
+    j["overlayOffsetX"]     = config_.overlayOffsetX;
+    j["overlayOffsetY"]     = config_.overlayOffsetY;
+    j["overlayFontSize"]    = config_.overlayFontSize;
 
-    j["priceColorMedium"] = config_.priceColorMedium;
-    j["priceColorHigh"] = config_.priceColorHigh;
-    j["priceColorVeryHigh"] = config_.priceColorVeryHigh;
+    j["hotkeyToggleOCR"]    = config_.hotkeyToggleOCR;
+    j["overlayOffsetY"]     = config_.overlayOffsetY;
+    j["overlayFontSize"]    = config_.overlayFontSize;
 
-    j["priceRefreshMinutes"] = config_.priceRefreshMinutes;
-    j["priceProvider"] = config_.priceProvider;
+    j["priceColorMedium"]       = config_.priceColorMedium;
+    j["hotkeySingleSnapshot"]   = config_.hotkeySingleSnapshot;
+    j["hotkeySelectRegion"]     = config_.hotkeySelectRegion;
 
-    j["debugOCR"] = config_.debugOCR;
-    j["showConsole"] = config_.showConsole;
+    j["priceRefreshMinutes"]    = config_.priceRefreshMinutes;
+    j["priceProvider"]          = config_.priceProvider;
+
+    j["debugOCR"]       = config_.debugOCR;
+    j["showConsole"]    = config_.showConsole;
 
     std::ofstream file(GetConfigPath());
 

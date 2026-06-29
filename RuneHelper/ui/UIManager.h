@@ -11,6 +11,8 @@
 #include "core/Config.h"
 #include "core/ConfigManager.h"
 #include "core/UpdateChecker.h"
+#include "ui/UIState.h"
+#include "core/DebugData.h"
 
 class UIManager
 {
@@ -22,9 +24,8 @@ public:
     UIManager& operator=(const UIManager&) = delete;
 
     bool Init(AppConfig* config, ConfigManager* configManager);
-    void Shutdown();
-    void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
 
+    void Shutdown();
     void Pump();
 
     bool IsRunning() const;
@@ -48,13 +49,16 @@ private:
     ID3D11RenderTargetView* renderTargetView_ = nullptr;
 #endif
 
-    AppConfig* config_ = nullptr;
-    ConfigManager* configManager_ = nullptr;
-    UpdateChecker* updateChecker_ = nullptr;
+    void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
 
-    bool ocrInitializing_ = false;
-    bool ocrReady_ = false;
-    bool ocrFailed_ = false;
+    void SetPriceStatus(bool downloading, size_t priceCount);
+
+    void SetUpdateChecker(UpdateChecker* checker);
+
+    bool WantsSelectRegion();
+    bool WantsRefreshPrices();
+    bool WantsToggleOCR();
+    bool WantsSingleSnapshot();
 
     bool running_ = false;
     bool wantsSelectRegion_ = false;
@@ -64,25 +68,40 @@ private:
     bool wantsResetOcr_ = false;
 #endif
     bool regionHovered_ = false;
+    bool IsRegionHovered() const;
 
-    bool priceDownloading_ = false;
-    size_t priceCount_ = 0;
+    void RegisterHotkeys();
+    void UnregisterHotkeys();
 
-    bool showSaved_ = false;
-    std::chrono::steady_clock::time_point savedAt_;
+    void SetDebugData(const DebugData& data);
 
 private:
 #ifdef _WIN32
     bool CreateAppWindow();
     bool CreateDeviceD3D();
-    void CleanupDeviceD3D();
 
+    void CleanupDeviceD3D();
     void CreateRenderTarget();
     void CleanupRenderTarget();
 
     void Render();
+
     void DrawTitleBar();
     void DrawSettings();
+    void DrawMainTab();
+    void DrawDebugTab();
+
+    void DrawStatusSection();
+    void DrawRegionSection();
+    void DrawOcrSection();
+    void DrawHotkeysSection();
+    void DrawOverlaySection();
+    void DrawPricesSection();
+    void DrawBottomSection();
+
+    void DrawHotkeyButton(const char* label, int& key);
+
+    static bool IsMouseVk(int vk);
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 #endif

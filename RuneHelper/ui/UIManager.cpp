@@ -3,6 +3,7 @@
 #ifdef _WIN32
 
 #include <iostream>
+
 #include <windowsx.h>
 
 #include <imgui.h>
@@ -10,6 +11,8 @@
 #include <imgui_impl_dx11.h>
 
 #include "core/Version.h"
+#include "core/Helpers.h"
+#include "ui/UIState.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(
     HWND hWnd,
@@ -87,14 +90,14 @@ bool UIManager::Init(AppConfig* config, ConfigManager* configManager)
     ImGui_ImplWin32_Init(hwnd_);
     ImGui_ImplDX11_Init(device_, deviceContext_);
 
-    running_ = true;
+    state_.running = true;
 
     return true;
 }
 
 void UIManager::Shutdown()
 {
-    if (!running_ && !hwnd_)
+    if (!state_.running && !hwnd_)
         return;
 
     ImGui_ImplDX11_Shutdown();
@@ -111,14 +114,14 @@ void UIManager::Shutdown()
         hwnd_ = nullptr;
     }
 
-    running_ = false;
+    state_.running = false;
 }
 
 void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
 {
-    ocrInitializing_ = ocrInitializing;
-    ocrReady_ = ocrReady;
-    ocrFailed_ = ocrFailed;
+    state_.ocrInitializing = ocrInitializing;
+    state_.ocrReady = ocrReady;
+    state_.ocrFailed = ocrFailed;
 }
 
 void UIManager::SetUpdateChecker(UpdateChecker* checker)
@@ -128,40 +131,71 @@ void UIManager::SetUpdateChecker(UpdateChecker* checker)
 
 bool UIManager::IsRunning() const
 {
-    return running_;
+    return state_.running;
 }
 
 bool UIManager::WantsSelectRegion()
 {
-    bool value = wantsSelectRegion_;
-    wantsSelectRegion_ = false;
+    bool value = state_.wantsSelectRegion;
+    state_.wantsSelectRegion = false;
     return value;
 }
 
 bool UIManager::WantsRefreshPrices()
 {
-    bool value = wantsRefreshPrices_;
-
-
-
-    wantsRefreshPrices_ = false;
+    bool value = state_.wantsRefreshPrices;
+    state_.wantsRefreshPrices = false;
     return value;
 }
 
 bool UIManager::IsRegionHovered() const
 {
-    return regionHovered_;
+    return state_.regionHovered;
 }
 
 void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
 {
-    priceDownloading_ = downloading;
-    priceCount_ = priceCount;
+    state_.priceDownloading = downloading;
+    state_.priceCount = priceCount;
+}
+
+void UIManager::RegisterHotkeys()
+{
+    UnregisterHotkeys();
+    RegisterHotKey(hwnd_, 1, MOD_NOREPEAT, config_->hotkeyToggleOCR);
+    RegisterHotKey(hwnd_, 2, MOD_NOREPEAT, config_->hotkeySingleSnapshot);
+    RegisterHotKey(hwnd_, 3, MOD_NOREPEAT, config_->hotkeySelectRegion);
+}
+
+void UIManager::UnregisterHotkeys()
+{
+    UnregisterHotKey(hwnd_, 1);
+    UnregisterHotKey(hwnd_, 2);
+    UnregisterHotKey(hwnd_, 3);
+}
+
+void UIManager::SetDebugData(const DebugData& data)
+{
+    debugData_ = std::move(data);
+}
+
+bool UIManager::WantsToggleOCR()
+{
+    bool v = state_.wantsToggleOCR;
+    state_.wantsToggleOCR = false;
+    return v;
+}
+
+bool UIManager::WantsSingleSnapshot()
+{
+    bool v = state_.wantsSingleSnapshot;
+    state_.wantsSingleSnapshot = false;
+    return v;
 }
 
 void UIManager::Pump()
 {
-    if (!running_)
+    if (!state_.running)
         return;
 
     MSG msg;
@@ -172,10 +206,10 @@ void UIManager::Pump()
         DispatchMessage(&msg);
 
         if (msg.message == WM_QUIT)
-            running_ = false;
+            state_.running = false;
     }
 
-    if (!running_)
+    if (!state_.running)
         return;
 
     Render();
@@ -201,7 +235,7 @@ bool UIManager::CreateAppWindow()
         100,
         100,
         420,
-        545,
+        665,
         nullptr,
         nullptr,
         hInst,
@@ -359,7 +393,7 @@ void UIManager::DrawTitleBar()
 
     ImGui::TextUnformatted("RuneHelper");
     ImGui::SameLine();
-    ImGui::TextDisabled(RUNEHELPER_VERSION);
+    ImGui::TextDisabled("v%s", RUNEHELPER_VERSION);
 
     ImGui::SameLine(ImGui::GetWindowWidth() - 40.0f);
 
@@ -374,12 +408,267 @@ void UIManager::DrawTitleBar()
 
     if (ImGui::Button("X", ImVec2(16, 16)))
     {
-        running_ = false;
+        state_.running = false;
         DestroyWindow(hwnd_);
     }
     ImGui::PopStyleColor(3);
 
     ImGui::EndChild();
+}
+
+void UIManager::DrawMainTab()
+{
+    DrawStatusSection();
+    DrawRegionSection();
+    DrawOcrSection();
+    DrawHotkeysSection();
+    DrawOverlaySection();
+    DrawPricesSection();
+    DrawBottomSection();
+}
+
+namespace
+{
+    constexpr ImVec4 kGreen {0.5f, 1.0f, 0.5f, 1.0f};
+    constexpr ImVec4 kYellow{1.0f, 0.8f, 0.2f, 1.0f};
+    constexpr ImVec4 kRed   {1.0f, 0.3f, 0.3f, 1.0f};
+}
+
+void UIManager::DrawDebugTab()
+{
+    ImGui::SeparatorText("OCR DEBUG");
+
+    if (debugData_.lines.empty())
+    {
+        ImGui::TextDisabled("No OCR data yet.");
+        return;
+    }
+
+    if (ImGui::BeginTable("ocr_debug_table", 4,
+        ImGuiTableFlags_Borders |
+        ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_Resizable |
+        ImGuiTableFlags_SizingStretchProp))
+    {
+        ImGui::TableSetupColumn("OCR Text");
+        ImGui::TableSetupColumn("Matched");
+        ImGui::TableSetupColumn("Confidence");
+        ImGui::TableSetupColumn("Price");
+
+        ImGui::TableHeadersRow();
+
+        for (const auto& line : debugData_.lines)
+        {
+            ImGui::TableNextRow();
+
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextWrapped("%s", line.ocrText.c_str());
+
+            ImGui::TableSetColumnIndex(1);
+
+            if (line.matchedText == "-")
+                ImGui::TextDisabled("-");
+            else
+                ImGui::TextWrapped("%s", line.matchedText.c_str());
+
+            ImGui::TableSetColumnIndex(2);
+
+            if (line.confidence >= 90)
+                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "%d%%", line.confidence);
+            else if (line.confidence >= 75)
+                ImGui::TextColored( ImVec4(1.0f, 0.8f, 0.2f, 1.0f),"%d%%", line.confidence);
+            else
+                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%d%%", line.confidence);
+
+            ImGui::TableSetColumnIndex(3);
+
+            if (line.price == "-")
+                ImGui::TextDisabled("-");
+            else
+                ImGui::Text("%s", line.price.c_str());
+        }
+
+        ImGui::EndTable();
+    }
+}
+
+void UIManager::DrawStatusSection()
+{
+    ImGui::SeparatorText("STATUS");
+    if (ImGui::BeginTable("status_table", 2, ImGuiTableFlags_SizingStretchProp))
+    {
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("OCR");
+
+        ImGui::TableSetColumnIndex(1);
+
+        if (state_.ocrInitializing)
+            ImGui::TextColored(kYellow, "Initializing...");
+        else if (state_.ocrFailed)
+            ImGui::TextColored(kRed, "Failed");
+        else if (state_.ocrReady)
+            ImGui::TextColored(kGreen, "Ready");
+        else
+            ImGui::TextDisabled("Waiting...");
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("Prices");
+
+        ImGui::TableSetColumnIndex(1);
+
+        if (state_.priceDownloading)
+            ImGui::TextColored(kYellow, "Downloading...");
+        else
+            ImGui::TextColored(kGreen, "%zu items loaded", state_.priceCount);
+
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextUnformatted("Version");
+
+        ImGui::TableSetColumnIndex(1);
+
+        ImGui::Text("v%s", RUNEHELPER_VERSION);
+
+        if (updateChecker_)
+        {
+            if (updateChecker_->IsChecking())
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(kYellow, "(checking...)");
+            }
+            else if (updateChecker_->HasUpdate())
+            {
+                ImGui::SameLine();
+                ImGui::TextColored(kGreen, "(update available)");
+
+                ImGui::SameLine();
+
+                if (ImGui::SmallButton("Download"))
+                {
+                    ShellExecuteA(
+                        nullptr,
+                        "open",
+                        updateChecker_->DownloadUrl().c_str(),
+                        nullptr,
+                        nullptr,
+                        SW_SHOWNORMAL);
+                }
+            }
+        }
+
+        ImGui::EndTable();
+    }
+
+    ImGui::Spacing();
+}
+
+void UIManager::DrawRegionSection()
+{
+    ImGui::SeparatorText("REGION");
+    if (ImGui::Button("Select Region"))
+        state_.wantsSelectRegion = true;
+
+    state_.regionHovered = ImGui::IsItemHovered();
+
+    ImGui::SameLine();
+    if (config_->regionW > 0)
+        ImGui::TextDisabled("x:%d y:%d w:%d h:%d", config_->regionX, config_->regionY, config_->regionW, config_->regionH);
+    else
+        ImGui::TextColored(kYellow, "No region selected");
+
+    ImGui::Spacing();
+}
+
+void UIManager::DrawOcrSection()
+{
+    ImGui::SeparatorText("OCR");
+    ImGui::Checkbox("Enable OCR", &config_->ocrEnabled);
+    ImGui::SameLine();
+
+    if (config_->ocrEnabled)
+        ImGui::TextColored(kGreen, "Running");
+    else
+        ImGui::TextColored(kRed, "Stopped");
+
+    ImGui::Checkbox("OCR AutoDetect Menu (Experimental)", &config_->ocrAutoDetect);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Only shows the overlay when the Runeshape menu is detected.\nMay occasionally fail due to OCR inaccuracies.");
+
+    ImGui::SliderFloat("OCR Threshold", reinterpret_cast<float*>(&config_->ocrThreshold), 0.0f, 255.0f);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Image binarization threshold.\nLower values keep more details.\nHigher values remove noise but may lose characters.");
+
+    ImGui::SliderInt("OCR interval (ms)", &config_->ocrIntervalMs, 100, 2000);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Lower values = faster updates but higher CPU usage.");
+
+    ImGui::Spacing();
+}
+
+void UIManager::DrawHotkeysSection()
+{
+    ImGui::SeparatorText("HOTKEYS");
+    DrawHotkeyButton("Toggle OCR", config_->hotkeyToggleOCR);
+    DrawHotkeyButton("Single Snapshot", config_->hotkeySingleSnapshot);
+    DrawHotkeyButton("Select Region", config_->hotkeySelectRegion);
+    ImGui::Spacing();
+}
+
+void UIManager::DrawOverlaySection()
+{
+    ImGui::SeparatorText("OVERLAY");
+    ImGui::SliderInt("Offset X", &config_->overlayOffsetX, -300, 500);
+    ImGui::SliderInt("Offset Y", &config_->overlayOffsetY, -200, 200);
+    ImGui::SliderInt("Font Size", &config_->overlayFontSize, 8, 48);
+    ImGui::Spacing();
+}
+
+void UIManager::DrawPricesSection()
+{
+    ImGui::SeparatorText("PRICES");
+    ImGui::InputInt("Green >= ex", &config_->priceColorMedium);
+    ImGui::InputInt("Yellow >= ex", &config_->priceColorHigh);
+    ImGui::InputInt("Red >= ex", &config_->priceColorVeryHigh);
+    ImGui::SliderInt("Refresh minutes", &config_->priceRefreshMinutes, 1, 60);
+
+    if (ImGui::Button("Refresh Prices"))
+        state_.wantsRefreshPrices = true;
+
+    ImGui::Spacing();
+}
+
+void UIManager::DrawBottomSection()
+{
+    ImGui::Separator();
+
+    if (ImGui::Button("Save"))
+    {
+        if (configManager_)
+        {
+            configManager_->Save();
+            state_.showSaved = true;
+            state_.savedAt = std::chrono::steady_clock::now();
+        }
+    }
+
+    if (state_.showSaved)
+    {
+        auto elapsed = std::chrono::steady_clock::now() - state_.savedAt;
+
+        if (elapsed < std::chrono::seconds(1))
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(kGreen, "Saved!");
+        }
+        else
+            state_.showSaved = false;
+    }
+
+    const char* DenzTag = "Denz";
+    ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x -ImGui::CalcTextSize(DenzTag).x);
+    ImGui::TextDisabled("%s", DenzTag);
 }
 
 void UIManager::DrawSettings()
@@ -402,191 +691,103 @@ void UIManager::DrawSettings()
         ImGuiWindowFlags_NoScrollWithMouse
     );
 
-    UIManager::DrawTitleBar();
-    ImGui::Separator();
-    //
+    DrawTitleBar();
 
-    ImGui::Separator();
-
-    ImGui::Text("Status");
-    ImGui::Separator();
-
-    ImGui::Text("OCR:");
-    ImGui::SameLine();
-    if (ocrInitializing_)
+    if (ImGui::BeginTabBar("MainTabs"))
     {
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Initializing...");
-    }
-    else if (ocrFailed_)
-    {
-        ImGui::TextColored(ImVec4(1.0f, 0.2f, 0.2f, 1.0f), "Failed");
-    }
-    else if (ocrReady_)
-    {
-        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Ready");
-    }
-    else
-    {
-        ImGui::Text("Waiting...");
-    }
-
-    ImGui::Text("Prices:");
-    ImGui::SameLine();
-    if (priceDownloading_)
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f),"Downloading...");
-    else
-        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Loaded (%zu items)", priceCount_);
-
-    ImGui::Text("Version: %s", RUNEHELPER_VERSION);
-    ImGui::SameLine();
-    if (updateChecker_)
-    {
-        if (updateChecker_->IsChecking())
-            ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "Checking for updates...");
-        else if (updateChecker_->HasUpdate())
+        if (ImGui::BeginTabItem("RuneHelper"))
         {
-            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "New version available: %s", updateChecker_->LatestVersion().c_str());
-
-            ImGui::SameLine();
-            if (ImGui::Button("Download"))
-                ShellExecuteA(nullptr, "open", updateChecker_->DownloadUrl().c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+            DrawMainTab();
+            ImGui::EndTabItem();
         }
-        else
-            ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "You are using the latest version");
-    }
 
-    ImGui::Spacing();
-
-    ImGui::Text("Region");
-    ImGui::Separator();
-
-    /*ImGui::Text(
-        "x=%d y=%d w=%d h=%d",
-        config_->regionX,
-        config_->regionY,
-        config_->regionW,
-        config_->regionH
-    );*/
-
-    if (ImGui::Button("Select Region"))
-        wantsSelectRegion_ = true;
-
-    regionHovered_ = ImGui::IsItemHovered(); //show rectangle preview
-
-    ImGui::SameLine();
-
-    if (config_->regionW <= 0)
-        ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "No region selected");
-    else
-        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Region selected");
-       
-    ImGui::Spacing();
-
-    ImGui::Text("OCR");
-    ImGui::Separator();
-
-    if (config_->ocrEnabled)
-    {
-        if (ImGui::Button("Disable OCR"))
-            config_->ocrEnabled = false;
-
-        ImGui::SameLine();
-        ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "Enabled");
-    }
-    else
-    {
-        if (ImGui::Button("Enable OCR"))
-            config_->ocrEnabled = true;
-
-        ImGui::SameLine();
-        ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "Disabled");
-    }
-
-    ImGui::Checkbox("OCR AutoDetect Menu (Experemental)", &config_->ocrAutoDetect);
-
-    //ImGui::SliderFloat("Scale", reinterpret_cast<float*>(&config_->ocrScale), 0.5f, 5.0f);
-
-    ImGui::SliderFloat("OCR Threshold", reinterpret_cast<float*>(&config_->ocrThreshold), 0.0f,255.0f);
-
-    ImGui::SliderInt("OCR interval ms", &config_->ocrIntervalMs, 100, 2000);
-
-    //ImGui::Checkbox("Debug OCR", &config_->debugOCR);
-
-    ImGui::Spacing();
-
-    ImGui::Text("Overlay");
-    ImGui::Separator();
-
-    ImGui::SliderInt("Offset X", &config_->overlayOffsetX, -300, 500);
-
-    ImGui::SliderInt("Offset Y", &config_->overlayOffsetY, -200, 200);
-
-    ImGui::SliderInt("Font size", &config_->overlayFontSize, 8, 48);
-
-    ImGui::Spacing();
-
-    ImGui::Text("Prices");
-    ImGui::Separator();
-
-    ImGui::InputInt("Green     ex", &config_->priceColorMedium,    0, 5000);
-    ImGui::InputInt("Yellow    ex", &config_->priceColorHigh,      0, 5000);
-    ImGui::InputInt("Red       ex", &config_->priceColorVeryHigh,  0, 5000);
-    ImGui::Separator();
-    ImGui::SliderInt("Refresh minutes", &config_->priceRefreshMinutes, 1, 60);
-
-    if (ImGui::Button("Refresh Prices Now"))
-    {
-        wantsRefreshPrices_ = true;
-    }
-
-    ImGui::Spacing();
-
-    if (ImGui::Button("Save Config"))
-    {
-        if (configManager_)
+        if (ImGui::BeginTabItem("Debug Menu"))
         {
-            configManager_->Save();
-
-            showSaved_ = true;
-            savedAt_ = std::chrono::steady_clock::now();
+            DrawDebugTab();
+            ImGui::EndTabItem();
         }
+
+        ImGui::EndTabBar();
     }
-
-    if (showSaved_)
-    {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - savedAt_);
-
-        if (elapsed < std::chrono::seconds(1))
-        {
-            ImGui::SameLine();
-            ImGui::TextColored(ImVec4(0.2f, 1.0f, 0.2f, 1.0f), "Saved!");
-        }
-        else
-            showSaved_ = false;
-    }
-
-    ImGui::SameLine();
-
-    if (ImGui::Button("Exit"))
-    {
-        running_ = false;
-        PostQuitMessage(0);
-    }
-
-    ImGui::Dummy(ImVec2(0.0f, 10.0f));
-
-    const char* author = "Denz";
-    float textWidth = ImGui::CalcTextSize(author).x;
-    float textHeight = ImGui::CalcTextSize(author).y;
-
-    ImGui::SetCursorPos(ImVec2(ImGui::GetWindowWidth() - textWidth - 15.0f, ImGui::GetWindowHeight() - textHeight - 10.0f));
-
-    ImGui::PushStyleColor(ImGuiCol_Text, ImVec4(0.5f, 0.5f, 0.5f, 0.7f));
-    ImGui::TextDisabled("%s", author);
-    ImGui::PopStyleColor();
 
     ImGui::End();
+}
+
+void UIManager::DrawHotkeyButton(const char* label, int& key)
+{
+    ImGui::TextUnformatted(label);
+    ImGui::SameLine(220);
+
+    std::string text;
+
+    if (waitingForHotkey_ == &key)
+        text = "Press any key...";
+    else
+        text = VkToString(key);
+
+    if (ImGui::Button(text.c_str(), ImVec2(180, 0)))
+    {
+        waitingForHotkey_ = &key;
+        hotkeyCaptureSkipFrame_ = true;
+    }
+
+    if (waitingForHotkey_ != &key)
+        return;
+
+    if (hotkeyCaptureSkipFrame_)
+    {
+        hotkeyCaptureSkipFrame_ = false;
+        return;
+    }
+
+    if (GetAsyncKeyState(VK_ESCAPE) & 1)
+    {
+        key = 0;
+
+        waitingForHotkey_ = nullptr;
+
+        if (configManager_)
+            configManager_->Save();
+
+        RegisterHotkeys();
+
+        return;
+    }
+
+    for (int vk = 1; vk < 256; ++vk)
+    {
+        if (IsMouseVk(vk))
+            continue;
+
+        if (GetAsyncKeyState(vk) & 1)
+        {
+            key = vk;
+
+            waitingForHotkey_ = nullptr;
+
+            if (configManager_)
+                configManager_->Save();
+
+            RegisterHotkeys();
+
+            break;
+        }
+    }
+}
+
+bool UIManager::IsMouseVk(int vk)
+{
+    switch (vk)
+    {
+    case VK_LBUTTON:
+    case VK_RBUTTON:
+    case VK_MBUTTON:
+    case VK_XBUTTON1:
+    case VK_XBUTTON2:
+        return true;
+    }
+
+    return false;
 }
 
 LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -635,7 +836,7 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     case WM_CLOSE:
     {
         if (self)
-            self->running_ = false;
+            self->state_.running = false;
 
         DestroyWindow(hwnd);
         return 0;
@@ -680,6 +881,25 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
             return HTCAPTION;
 
         return HTCLIENT;
+    }
+    case WM_HOTKEY:
+    {
+        switch (wp)
+        {
+        case 1:
+            self->state_.wantsToggleOCR = true;
+            break;
+
+        case 2:
+            self->state_.wantsSingleSnapshot = true;
+            break;
+
+        case 3:
+            self->state_.wantsSelectRegion = true;
+            break;
+        }
+
+        return 0;
     }
     }
 
