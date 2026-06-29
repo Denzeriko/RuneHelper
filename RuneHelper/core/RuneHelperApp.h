@@ -36,7 +36,10 @@ private:
     void UpdateRegionPreview();
 #ifndef _WIN32
     void RunOcrDebugTest();
+    void ResetOcrEngine();
 #endif
+
+    bool InitOcrEngine();
 
 private:
     ConfigManager configManager_;
@@ -47,6 +50,7 @@ private:
     UpdateChecker updateChecker_;
     PriceCache priceCache_;
     OCR ocr_;
+    std::string tessdataPath_;
 
     cv::Rect region_;
 

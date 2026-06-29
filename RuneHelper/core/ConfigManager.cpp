@@ -44,6 +44,7 @@ bool ConfigManager::Load()
     config_.ocrAutoDetect = j.value("ocrAutoDetect", config_.ocrAutoDetect);
     config_.ocrScale = j.value("ocrScale", config_.ocrScale);
     config_.ocrThreshold = j.value("ocrThreshold", config_.ocrThreshold);
+    config_.ocrPsm = j.value("ocrPsm", config_.ocrPsm);
     config_.ocrIntervalMs = j.value("ocrIntervalMs", config_.ocrIntervalMs);
 
     config_.overlayOffsetX = j.value("overlayOffsetX", config_.overlayOffsetX);
@@ -76,6 +77,7 @@ bool ConfigManager::Save() const
     j["ocrAutoDetect"] = config_.ocrAutoDetect;
     j["ocrScale"] = config_.ocrScale;
     j["ocrThreshold"] = config_.ocrThreshold;
+    j["ocrPsm"] = config_.ocrPsm;
     j["ocrIntervalMs"] = config_.ocrIntervalMs;
 
     j["overlayOffsetX"] = config_.overlayOffsetX;

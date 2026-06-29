@@ -33,6 +33,7 @@ public:
     bool WantsRefreshPrices();
 #ifndef _WIN32
     bool WantsTestOcr();
+    bool WantsResetOcr();
 #endif
     bool IsRegionHovered() const;
     void SetPriceStatus(bool downloading, size_t priceCount);
@@ -60,6 +61,7 @@ private:
     bool wantsRefreshPrices_ = false;
 #ifndef _WIN32
     bool wantsTestOcr_ = false;
+    bool wantsResetOcr_ = false;
 #endif
     bool regionHovered_ = false;
 

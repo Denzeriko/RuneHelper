@@ -178,10 +178,32 @@ void UIManager::Pump()
         ImGui::Checkbox("OCR enabled", &config_->ocrEnabled);
         ImGui::Checkbox("Auto-detect menu", &config_->ocrAutoDetect);
         ImGui::SliderFloat("OCR threshold", &config_->ocrThreshold, 0.0f, 255.0f);
+        const char* psmLabels[] = {
+            "PSM 6 - uniform block",
+            "PSM 7 - single line",
+            "PSM 11 - sparse text"
+        };
+        int psmValues[] = {6, 7, 11};
+        int psmIndex = 2;
+
+        for (int i = 0; i < 3; ++i)
+        {
+            if (config_->ocrPsm == psmValues[i])
+                psmIndex = i;
+        }
+
+        if (ImGui::Combo("OCR PSM", &psmIndex, psmLabels, 3))
+            config_->ocrPsm = psmValues[psmIndex];
+
         ImGui::SliderInt("OCR interval ms", &config_->ocrIntervalMs, 100, 2000);
 
         if (ImGui::Button("Test OCR"))
             wantsTestOcr_ = true;
+
+        ImGui::SameLine();
+
+        if (ImGui::Button("Reset OCR engine"))
+            wantsResetOcr_ = true;
 
         ImGui::Separator();
         ImGui::Text("Overlay");
@@ -286,6 +308,13 @@ bool UIManager::WantsTestOcr()
 {
     bool value = wantsTestOcr_;
     wantsTestOcr_ = false;
+    return value;
+}
+
+bool UIManager::WantsResetOcr()
+{
+    bool value = wantsResetOcr_;
+    wantsResetOcr_ = false;
     return value;
 }
 

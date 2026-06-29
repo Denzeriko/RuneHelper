@@ -13,6 +13,7 @@ struct AppConfig
     bool ocrAutoDetect = true;
     float ocrScale = 1.0f;
     float ocrThreshold = 130.0f;
+    int ocrPsm = 11;
     int ocrIntervalMs = 400;
 
     int overlayOffsetX = 20;
