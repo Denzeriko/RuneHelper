@@ -2,7 +2,7 @@
 
 A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)** to detect item names on the screen and display their current market prices.
 
-![Platform](https://img.shields.io/badge/platform-Windows-blue)
+![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)
 ![Language](https://img.shields.io/badge/language-C%2B%2B20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
@@ -10,25 +10,41 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 
 * Select any loot area on the screen.
 * Real-time OCR using Tesseract.
+* Multi-pass OCR with configurable threshold presets.
 * Fuzzy matching for OCR mistakes.
 * Overlay displaying item prices next to detected items.
 * Automatic price cache updates.
 * Offline cache (`prices_dump.json`) to reduce API requests.
+* Debug window showing OCR and matching results.
 * No game memory reading or injection.
 
 ## Screenshot
 
 ![RuneHelper screenshot](assets/screenshot.png)
-![RuneHelper screenshot](assets/menu.png)
 
 ## How it works
 
 1. Select the loot area on your screen.
 2. RuneHelper periodically captures the selected region.
-3. Tesseract extracts item names.
+3. One or more OCR passes are performed using different threshold values.
 4. OCR mistakes are corrected using fuzzy matching.
 5. Prices are loaded from cache or downloaded from the API.
-6. An overlay is rendered next to the items.
+6. An overlay is rendered next to the detected items.
+
+## OCR Modes
+
+RuneHelper supports multiple OCR passes to improve recognition of different texts.
+
+| Passes | Thresholds                |
+| -----: | ------------------------- |
+|      1 | 130                       |
+|      2 | 60, 130                   |
+|      3 | 30, 60, 130               |
+|      4 | 30, 60, 130, 180          |
+|      5 | 20, 30, 60, 130, 180      |
+|      6 | 20, 30, 60, 130, 180, 220 |
+
+More passes generally improve OCR accuracy but increase CPU usage.
 
 ## Dependencies
 
@@ -37,6 +53,7 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 * Tesseract OCR
 * cpr
 * nlohmann/json
+* ImGui
 
 Installed via vcpkg:
 
@@ -48,32 +65,12 @@ vcpkg install nlohmann-json:x64-windows
 vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
 ```
 
-With static libs:
-```powershell
-vcpkg install opencv:x64-windows-static
-vcpkg install tesseract:x64-windows-static
-vcpkg install cpr:x64-windows-static
-vcpkg install nlohmann-json:x64-windows-static
-vcpkg install imgui[dx11-binding,win32-binding]:x64-windows-static
-```
-
-## Building
-
-```powershell
-git clone https://github.com/Denzeriko/RuneHelper.git
-cd RuneHelper
-
-cmake -B build -DCMAKE_TOOLCHAIN_FILE=C:/vcpkg/scripts/buildsystems/vcpkg.cmake
-
-cmake --build build --config Release
-```
-
 ## Price API
 
 Prices are fetched from:
 
 ```text
-https://poe2scout.com/api/poe2/Leagues/runes/Items
+https://poe.ninja/poe2/api/economy/exchange/current/overview?league=LEAGUE&type=TYPE
 ```
 
 The cache is stored in:
@@ -86,9 +83,8 @@ The dump is refreshed automatically every 15 minutes.
 
 ## Known Issues
 
-* OCR may occasionally misread small italic text.
-* Item names with unusual fonts may require fuzzy matching.
-* Multi-monitor setups are not heavily tested.
+* OCR may occasionally misread text even with high OCR Pass.
+* Higher OCR pass counts may noticeably increase CPU usage.
 
 ## Disclaimer
 
