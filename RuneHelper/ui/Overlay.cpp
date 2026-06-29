@@ -261,18 +261,139 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 }
 #else
 
+#include <algorithm>
+#include <cstdlib>
+#include <string>
 #include <utility>
+
+#include <X11/Xlib.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
 #include "core/Logger.h"
 
+namespace
+{
+Display* AsDisplay(void* display)
+{
+    return static_cast<Display*>(display);
+}
+
+GC AsGc(void* gc)
+{
+    return static_cast<GC>(gc);
+}
+
+std::string ToNarrow(const std::wstring& text)
+{
+    std::string result;
+    result.reserve(text.size());
+
+    for (wchar_t ch : text)
+        result.push_back(ch >= 0 && ch <= 127 ? static_cast<char>(ch) : '?');
+
+    return result;
+}
+
+unsigned long XColorFromColorRef(Display* display, COLORREF color)
+{
+    int screen = DefaultScreen(display);
+    int r = static_cast<int>(color & 0xff);
+    int g = static_cast<int>((color >> 8) & 0xff);
+    int b = static_cast<int>((color >> 16) & 0xff);
+
+    return (static_cast<unsigned long>(r) << 16) |
+           (static_cast<unsigned long>(g) << 8) |
+           static_cast<unsigned long>(b) |
+           (BlackPixel(display, screen) & 0xff000000UL);
+}
+
+bool IsWaylandSession()
+{
+    const char* sessionType = std::getenv("XDG_SESSION_TYPE");
+    return sessionType && std::string(sessionType) == "wayland";
+}
+}
+
 bool OverlayWindow::Create()
 {
-    LOG_ERROR("Linux game overlay is not implemented");
+    if (IsWaylandSession())
+    {
+        LOG_ERROR("Linux overlay requires X11; Wayland is not supported yet");
+        return true;
+    }
+
+    Display* display = XOpenDisplay(nullptr);
+
+    if (!display)
+    {
+        LOG_ERROR("Linux overlay requires X11, but XOpenDisplay failed");
+        return true;
+    }
+
+    int screen = DefaultScreen(display);
+    Window root = RootWindow(display, screen);
+
+    XSetWindowAttributes attrs{};
+    attrs.override_redirect = True;
+    attrs.background_pixel = BlackPixel(display, screen);
+    attrs.border_pixel = BlackPixel(display, screen);
+
+    Window window = XCreateWindow(
+        display,
+        root,
+        windowX_,
+        windowY_,
+        static_cast<unsigned int>(windowW_),
+        static_cast<unsigned int>(windowH_),
+        0,
+        CopyFromParent,
+        InputOutput,
+        CopyFromParent,
+        CWOverrideRedirect | CWBackPixel | CWBorderPixel,
+        &attrs
+    );
+
+    if (!window)
+    {
+        LOG_ERROR("Linux overlay failed to create X11 window");
+        XCloseDisplay(display);
+        return true;
+    }
+
+    XStoreName(display, window, "RuneHelper Debug Overlay");
+
+    Atom opacityAtom = XInternAtom(display, "_NET_WM_WINDOW_OPACITY", False);
+    unsigned long opacity = 0xd0000000UL;
+    XChangeProperty(display, window, opacityAtom, XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&opacity), 1);
+
+    Atom stateAtom = XInternAtom(display, "_NET_WM_STATE", False);
+    Atom aboveAtom = XInternAtom(display, "_NET_WM_STATE_ABOVE", False);
+    XChangeProperty(display, window, stateAtom, XA_ATOM, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&aboveAtom), 1);
+
+    XSelectInput(display, window, ExposureMask | StructureNotifyMask);
+    XMapRaised(display, window);
+
+    GC gc = XCreateGC(display, window, 0, nullptr);
+    XSetForeground(display, gc, WhitePixel(display, screen));
+
+    display_ = display;
+    window_ = window;
+    gc_ = gc;
+
+    LOG_INFO("Linux debug overlay window created");
     return true;
 }
 
 void OverlayWindow::BringToTop()
 {
+    Display* display = AsDisplay(display_);
+
+    if (!display || !window_)
+        return;
+
+    XRaiseWindow(display, static_cast<Window>(window_));
+    XFlush(display);
 }
 
 void OverlayWindow::SetRegionPreview(bool enabled, const RECT& rect)
@@ -284,20 +405,108 @@ void OverlayWindow::SetRegionPreview(bool enabled, const RECT& rect)
 void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
 {
     texts_ = std::move(texts);
+    ResizeAndMove();
+    Redraw();
 }
 
 void OverlayWindow::SetFontSize(int size)
 {
+    if (size <= 0)
+        return;
+
     fontSize_ = size;
+    ResizeAndMove();
+    Redraw();
 }
 
 void OverlayWindow::SetFontSizeForce(int size)
 {
+    if (size <= 0)
+        return;
+
     fontSize_ = size;
+    ResizeAndMove();
+    Redraw();
 }
 
 void OverlayWindow::PumpMessages()
 {
+    Display* display = AsDisplay(display_);
+
+    if (!display || !window_)
+        return;
+
+    while (XPending(display) > 0)
+    {
+        XEvent event{};
+        XNextEvent(display, &event);
+
+        if (event.type == Expose)
+            Redraw();
+    }
+}
+
+void OverlayWindow::ResizeAndMove()
+{
+    Display* display = AsDisplay(display_);
+
+    if (!display || !window_ || texts_.empty())
+        return;
+
+    int maxLen = 1;
+
+    for (const auto& text : texts_)
+        maxLen = std::max(maxLen, static_cast<int>(text.text.size()));
+
+    windowX_ = std::max(0, texts_.front().x);
+    windowY_ = std::max(0, texts_.front().y);
+    windowW_ = std::clamp(maxLen * std::max(8, fontSize_ / 2) + 28, 320, 900);
+    windowH_ = std::max(80, static_cast<int>(texts_.size()) * (fontSize_ + 8) + 20);
+
+    XMoveResizeWindow(
+        display,
+        static_cast<Window>(window_),
+        windowX_,
+        windowY_,
+        static_cast<unsigned int>(windowW_),
+        static_cast<unsigned int>(windowH_)
+    );
+}
+
+void OverlayWindow::Redraw()
+{
+    Display* display = AsDisplay(display_);
+    GC gc = AsGc(gc_);
+
+    if (!display || !window_ || !gc)
+        return;
+
+    int screen = DefaultScreen(display);
+    Window window = static_cast<Window>(window_);
+
+    XSetForeground(display, gc, BlackPixel(display, screen));
+    XFillRectangle(display, window, gc, 0, 0, static_cast<unsigned int>(windowW_), static_cast<unsigned int>(windowH_));
+
+    XFontStruct* font = XLoadQueryFont(display, "fixed");
+
+    if (font)
+        XSetFont(display, gc, font->fid);
+
+    const int lineHeight = std::max(14, fontSize_ + 8);
+    int y = 18;
+
+    for (const auto& text : texts_)
+    {
+        std::string narrow = ToNarrow(text.text);
+        XSetForeground(display, gc, XColorFromColorRef(display, text.color));
+        XDrawString(display, window, gc, 12, y, narrow.c_str(), static_cast<int>(narrow.size()));
+        y += lineHeight;
+    }
+
+    if (font)
+        XFreeFont(display, font);
+
+    XFlush(display);
 }
 
 #endif

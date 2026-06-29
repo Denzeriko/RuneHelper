@@ -163,6 +163,7 @@ void RuneHelperApp::OcrWorkerLoop()
 
             std::vector<OverlayText> newTexts;
 
+#ifdef _WIN32
             if ((loot.size() < 2) && config_->ocrAutoDetect)
             {
                 {
@@ -210,6 +211,72 @@ void RuneHelperApp::OcrWorkerLoop()
 
                 newTexts.push_back(std::move(t));
             }
+#else
+            const int baseX = localRegion.x + localRegion.width + config_->overlayOffsetX;
+            const int baseY = localRegion.y + config_->overlayOffsetY;
+            const int lineStep = config_->overlayFontSize + 8;
+
+            auto addDebugLine =
+                [&](int lineIndex, const std::string& text, COLORREF color = RGB(220, 220, 220))
+                {
+                    OverlayText t;
+                    t.color = color;
+                    t.text = ToWide(text);
+                    t.x = baseX;
+                    t.y = baseY + lineIndex * lineStep;
+                    newTexts.push_back(std::move(t));
+                };
+
+            if (loot.empty())
+            {
+                addDebugLine(0, "Raw OCR: <none>", RGB(180, 180, 180));
+                addDebugLine(1, "Parsed item: <none>", RGB(180, 180, 180));
+                addDebugLine(2, "Price/color: <none>", RGB(180, 180, 180));
+            }
+            else
+            {
+                const auto& latest = loot.front();
+                auto parsed = LootParser::ParseLootLine(latest.text);
+                std::string rawName = parsed.itemName;
+
+                auto price = priceCache_.GetPrice(rawName);
+
+                if (!price)
+                {
+                    auto guess = FindBestItemMatch(rawName, priceCache_.GetAllItemNames());
+
+                    if (guess)
+                    {
+                        rawName = *guess;
+                        price = priceCache_.GetPrice(*guess);
+                    }
+                }
+
+                addDebugLine(0, "Raw OCR: " + latest.text, RGB(255, 255, 255));
+                addDebugLine(1, "Parsed item: " + rawName, RGB(180, 220, 255));
+
+                if (price)
+                {
+                    std::optional<double> value = LootParser::ParsePriceValue(*price);
+                    double totalValue = value ? (*value * parsed.quantity) : 0.0;
+                    COLORREF color = GetPriceColor(totalValue, *config_);
+                    std::string colorName = "gray";
+
+                    if (totalValue > config_->priceColorVeryHigh)
+                        colorName = "red";
+                    else if (totalValue > config_->priceColorHigh)
+                        colorName = "yellow";
+                    else if (totalValue > config_->priceColorMedium)
+                        colorName = "green";
+
+                    addDebugLine(2, "Price/color: " + LootParser::FormatStackPrice(*price, parsed.quantity) + " / " + colorName, color);
+                }
+                else
+                {
+                    addDebugLine(2, "Price/color: unavailable", RGB(160, 160, 160));
+                }
+            }
+#endif
 
             {
                 std::lock_guard lock(overlayMutex_);
