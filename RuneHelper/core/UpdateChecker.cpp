@@ -6,6 +6,10 @@
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
 
+#include <algorithm>
+#include <sstream>
+#include <vector>
+
 using json = nlohmann::json;
 
 static std::string NormalizeVersion(std::string v)

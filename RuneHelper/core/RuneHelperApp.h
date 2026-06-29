@@ -36,6 +36,12 @@ private:
     void HandleUIActions();
     void UpdateOverlay();
     void UpdateRegionPreview();
+#ifndef _WIN32
+    void RunOcrDebugTest();
+    void ResetOcrEngine();
+#endif
+
+    bool InitOcrEngine();
 
 private:
     ConfigManager configManager_;
@@ -46,11 +52,14 @@ private:
     UpdateChecker updateChecker_;
     PriceCache priceCache_;
     OCR ocr_;
+    std::string tessdataPath_;
 
     cv::Rect region_;
 
     std::mutex overlayMutex_;
     std::vector<OverlayText> sharedTexts_;
+
+    std::mutex ocrMutex_;
 
     std::atomic<bool> running_ = true;
 

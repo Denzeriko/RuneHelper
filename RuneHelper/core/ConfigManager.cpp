@@ -1,8 +1,5 @@
 #include "ConfigManager.h"
 
-#include <windows.h>
-#include <shlobj.h>
-
 #include <filesystem>
 #include <fstream>
 
@@ -47,6 +44,7 @@ bool ConfigManager::Load()
     config_.ocrAutoDetect   = j.value("ocrAutoDetect",  config_.ocrAutoDetect);
     config_.ocrScale        = j.value("ocrScale",       config_.ocrScale);
     config_.ocrThreshold    = j.value("ocrThreshold",   config_.ocrThreshold);
+    config_.ocrPsm          = j.value("ocrPsm", config_.ocrPsm);
     config_.ocrIntervalMs   = j.value("ocrIntervalMs",  config_.ocrIntervalMs);
 
     config_.hotkeyToggleOCR         = j.value("hotkeyToggleOCR",        config_.hotkeyToggleOCR);
@@ -82,6 +80,7 @@ bool ConfigManager::Save() const
     j["ocrEnabled"]     = config_.ocrEnabled;
     j["ocrAutoDetect"]  = config_.ocrAutoDetect;
     j["ocrScale"]       = config_.ocrScale;
+    j["ocrPsm"]         = config_.ocrPsm;
     j["ocrThreshold"]   = config_.ocrThreshold;
     j["ocrIntervalMs"]  = config_.ocrIntervalMs;
 

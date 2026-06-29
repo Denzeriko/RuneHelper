@@ -2,15 +2,23 @@
 
 #include <chrono>
 
+#include <opencv2/imgcodecs.hpp>
+
 #include "core/Helpers.h"
 #include "core/Logger.h"
 
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 
+#ifdef _WIN32
 #include "platform/windows/RegionSelect.h"
 #include "platform/windows/ResourceHelper.h"
 #include "platform/windows/ScreenCapture.h"
+#else
+#include "platform/linux/RegionSelect.h"
+#include "platform/linux/ResourceHelper.h"
+#include "platform/linux/ScreenCapture.h"
+#endif
 
 int RuneHelperApp::Run()
 {
@@ -78,12 +86,12 @@ bool RuneHelperApp::Init()
 void RuneHelperApp::InitOcr()
 {
     ocrInitializing_ = true;
+    ocrReady_ = false;
+    ocrFailed_ = false;
 
     LOG_INFO("Initializing OCR");
 
-    std::string tessdata = PrepareTessdata();
-
-    if (!ocr_.Init(tessdata))
+    if (!InitOcrEngine())
     {
         LOG_ERROR("Tesseract init failed");
 
@@ -97,6 +105,16 @@ void RuneHelperApp::InitOcr()
     ocrInitializing_ = false;
 
     LOG_INFO("OCR ready");
+}
+
+bool RuneHelperApp::InitOcrEngine()
+{
+    if (tessdataPath_.empty())
+        tessdataPath_ = PrepareTessdata();
+
+    std::lock_guard lock(ocrMutex_);
+    ocr_.SetConfig(config_);
+    return ocr_.Init(tessdataPath_);
 }
 
 void RuneHelperApp::OcrWorkerLoop()
@@ -159,6 +177,14 @@ void RuneHelperApp::OcrWorkerLoop()
 
             DebugData debug;
             std::vector<OverlayText> newTexts;
+
+#ifdef _WIN32
+            std::vector<LootLine> loot;
+
+            {
+                std::lock_guard lock(ocrMutex_);
+                loot = ocr_.RecognizeLoot(img);
+            }
 
             if ((loot.size() < 2) && config_->ocrAutoDetect)
             {
@@ -233,6 +259,88 @@ void RuneHelperApp::OcrWorkerLoop()
 
                 debug.lines.push_back(std::move(debugLine));
             }
+#else
+            std::vector<OcrRowDebug> rows;
+
+            {
+                std::lock_guard lock(ocrMutex_);
+                rows = ocr_.RecognizeRows(img, {config_->ocrPsm});
+            }
+
+            const int baseX = localRegion.x + localRegion.width + config_->overlayOffsetX;
+            const int baseY = localRegion.y + config_->overlayOffsetY;
+            const int lineStep = config_->overlayFontSize + 8;
+
+            auto addDebugLine =
+                [&](int lineIndex, const std::string& text, COLORREF color = RGB(220, 220, 220))
+                {
+                    OverlayText t;
+                    t.color = color;
+                    t.text = ToWide(text);
+                    t.x = baseX;
+                    t.y = baseY + lineIndex * lineStep;
+                    newTexts.push_back(std::move(t));
+                };
+
+            if (rows.empty())
+            {
+                addDebugLine(0, "No items detected", RGB(180, 180, 180));
+            }
+            else
+            {
+                int lineIndex = 0;
+
+                for (const auto& row : rows)
+                {
+                    auto parsed = LootParser::ParseLootLine(row.text);
+                    std::string displayName = parsed.itemName;
+
+                    auto price = priceCache_.GetPrice(displayName);
+
+                    if (!price)
+                    {
+                        auto guess = FindBestItemMatch(displayName, priceCache_.GetAllItemNames());
+
+                        if (guess)
+                        {
+                            displayName = *guess;
+                            price = priceCache_.GetPrice(*guess);
+                        }
+                    }
+
+                    if (price)
+                    {
+                        std::optional<double> value = LootParser::ParsePriceValue(*price);
+                        double totalValue = value ? (*value * parsed.quantity) : 0.0;
+                        COLORREF color = GetPriceColor(totalValue, *config_);
+                        std::string colorName = "gray";
+
+                        if (totalValue > config_->priceColorVeryHigh)
+                            colorName = "red";
+                        else if (totalValue > config_->priceColorHigh)
+                            colorName = "yellow";
+                        else if (totalValue > config_->priceColorMedium)
+                            colorName = "green";
+
+                        std::string line = displayName + " - " + LootParser::FormatStackPrice(*price, parsed.quantity) + " / " + colorName;
+
+                        if (config_->debugOCR)
+                            line += " (conf " + std::to_string(static_cast<int>(row.confidence)) + ")";
+
+                        addDebugLine(lineIndex++, line, color);
+                    }
+                    else
+                    {
+                        std::string line = displayName + " - price unavailable";
+
+                        if (config_->debugOCR)
+                            line += " (conf " + std::to_string(static_cast<int>(row.confidence)) + ")";
+
+                        addDebugLine(lineIndex++, line, RGB(160, 160, 160));
+                    }
+                }
+            }
+#endif
 
             {
                 std::lock_guard lock(overlayMutex_);
@@ -295,22 +403,6 @@ void RuneHelperApp::MainLoop()
 
 void RuneHelperApp::HandleUIActions()
 {
-    if (ui_.WantsToggleOCR())
-    {
-        config_->ocrEnabled = !config_->ocrEnabled;
-        configManager_.Save();
-    }
-
-    if (ui_.WantsSingleSnapshot())
-    {
-        singleSnapshotRequested_ = true;
-    }
-
-    if (ui_.WantsRefreshPrices())
-    {
-        //priceCache_.ForceRefreshAsync();
-    }
-
     if (ui_.WantsSelectRegion())
     {
         RegionSelector selector;
@@ -329,7 +421,146 @@ void RuneHelperApp::HandleUIActions()
             configManager_.Save();
         }
     }
+
+#ifndef _WIN32
+    if (ui_.WantsResetOcr())
+        ResetOcrEngine();
+
+    if (ui_.WantsTestOcr())
+        RunOcrDebugTest();
+#endif
 }
+
+#ifndef _WIN32
+void RuneHelperApp::ResetOcrEngine()
+{
+    LOG_INFO("Manual OCR engine reset requested");
+
+    ocrInitializing_ = true;
+    ocrReady_ = false;
+    ocrFailed_ = false;
+
+    if (!InitOcrEngine())
+    {
+        LOG_ERROR("Manual OCR engine reset failed");
+        ocrFailed_ = true;
+        ocrInitializing_ = false;
+        return;
+    }
+
+    ocrReady_ = true;
+    ocrInitializing_ = false;
+    LOG_INFO("Manual OCR engine reset complete");
+}
+
+void RuneHelperApp::RunOcrDebugTest()
+{
+    if (!ocrReady_)
+    {
+        LOG_ERROR("Linux OCR debug test skipped: OCR is not ready");
+        return;
+    }
+
+    cv::Rect localRegion(
+        config_->regionX,
+        config_->regionY,
+        config_->regionW,
+        config_->regionH
+    );
+
+    if (localRegion.empty())
+    {
+        LOG_ERROR("Linux OCR debug test skipped: no selected region");
+        return;
+    }
+
+    LOG_INFO(
+        "Linux OCR debug test capture region: x=" + std::to_string(localRegion.x) +
+        " y=" + std::to_string(localRegion.y) +
+        " w=" + std::to_string(localRegion.width) +
+        " h=" + std::to_string(localRegion.height)
+    );
+
+    cv::Mat img = CaptureRegion(localRegion);
+
+    if (img.empty())
+    {
+        LOG_ERROR("Linux OCR debug test failed: captured image is empty");
+        return;
+    }
+
+    LOG_INFO(
+        "Linux OCR debug capture dimensions: " +
+        std::to_string(img.cols) + "x" + std::to_string(img.rows) +
+        " channels=" + std::to_string(img.channels())
+    );
+
+    LOG_INFO("Linux OCR debug threshold: " + std::to_string(config_->ocrThreshold));
+
+    if (cv::imwrite("debug_capture_full.png", img))
+        LOG_INFO("Linux OCR debug saved full crop: debug_capture_full.png");
+    else
+        LOG_ERROR("Linux OCR debug failed to save full crop: debug_capture_full.png");
+
+    std::vector<OcrRowDebug> rows;
+    std::vector<cv::Rect> detectedRows;
+
+    {
+        std::lock_guard lock(ocrMutex_);
+        cv::Mat prepared = ocr_.PreprocessForDebug(img);
+        detectedRows = ocr_.DetectRows(prepared);
+        cv::imwrite("debug_capture_threshold.png", prepared);
+        rows = ocr_.RecognizeRows(img, {6, 7, 11}, "debug_capture");
+    }
+
+    LOG_INFO("Linux OCR debug detected rows before OCR: " + std::to_string(detectedRows.size()));
+
+    for (size_t i = 0; i < detectedRows.size(); ++i)
+    {
+        const auto& row = detectedRows[i];
+        LOG_INFO(
+            "Linux OCR debug row " + std::to_string(i) +
+            ": x=" + std::to_string(row.x) +
+            " y=" + std::to_string(row.y) +
+            " w=" + std::to_string(row.width) +
+            " h=" + std::to_string(row.height)
+        );
+    }
+
+    if (rows.empty())
+    {
+        LOG_INFO("Linux OCR debug row OCR text: <none>");
+        LOG_INFO("Linux OCR debug parsed rows: <none>");
+        return;
+    }
+
+    for (size_t i = 0; i < rows.size(); ++i)
+    {
+        const auto& row = rows[i];
+
+        LOG_INFO(
+            "Linux OCR debug row " + std::to_string(i) +
+            " psm=" + std::to_string(row.psm) +
+            " conf=" + std::to_string(row.confidence) +
+            " raw=\"" + row.rawText + "\""
+        );
+
+        auto parsed = LootParser::ParseLootLine(row.text);
+
+        if (parsed.itemName.empty())
+        {
+            LOG_INFO("Linux OCR debug parsed row " + std::to_string(i) + ": <none>");
+            continue;
+        }
+
+        LOG_INFO(
+            "Linux OCR debug parsed row " + std::to_string(i) +
+            ": quantity=" + std::to_string(parsed.quantity) +
+            " item=\"" + parsed.itemName + "\""
+        );
+    }
+}
+#endif
 
 void RuneHelperApp::UpdateOverlay()
 {

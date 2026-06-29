@@ -1,5 +1,7 @@
 #include "UIManager.h"
 
+#ifdef _WIN32
+
 #include <iostream>
 
 #include <windowsx.h>
@@ -903,3 +905,68 @@ LRESULT CALLBACK UIManager::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 
     return DefWindowProcW(hwnd, msg, wp, lp);
 }
+#else
+
+#include "core/Logger.h"
+
+UIManager::~UIManager() = default;
+
+bool UIManager::Init(AppConfig* config, ConfigManager* configManager)
+{
+    config_ = config;
+    configManager_ = configManager;
+    running_ = false;
+
+    LOG_ERROR("Linux UI is not implemented");
+
+    return false;
+}
+
+void UIManager::Shutdown()
+{
+    running_ = false;
+}
+
+void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
+{
+    ocrInitializing_ = ocrInitializing;
+    ocrReady_ = ocrReady;
+    ocrFailed_ = ocrFailed;
+}
+
+void UIManager::Pump()
+{
+}
+
+bool UIManager::IsRunning() const
+{
+    return running_;
+}
+
+void UIManager::SetUpdateChecker(UpdateChecker* checker)
+{
+    updateChecker_ = checker;
+}
+
+bool UIManager::WantsSelectRegion()
+{
+    return false;
+}
+
+bool UIManager::WantsRefreshPrices()
+{
+    return false;
+}
+
+bool UIManager::IsRegionHovered() const
+{
+    return false;
+}
+
+void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
+{
+    priceDownloading_ = downloading;
+    priceCount_ = priceCount;
+}
+
+#endif
