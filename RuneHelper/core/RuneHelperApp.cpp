@@ -221,11 +221,13 @@ void RuneHelperApp::MainLoop()
 
         HandleUIActions();
 
+        UpdateRegionPreview();
+
         UpdateOverlay();
 
         overlay_.SetFontSize(config_->overlayFontSize);
 
-        UpdateRegionPreview();
+        
 
         static auto lastTop = std::chrono::steady_clock::now();
 
@@ -274,8 +276,12 @@ void RuneHelperApp::UpdateOverlay()
 
 void RuneHelperApp::UpdateRegionPreview()
 {
-    if (!ui_.IsRegionHovered())
+    if (!ui_.IsRegionHovered() || config_->regionW <= 0)
+    {
+        static RECT empty{};
+        overlay_.SetRegionPreview(false, empty);
         return;
+    }
 
     RECT rect{
         config_->regionX,
@@ -284,7 +290,7 @@ void RuneHelperApp::UpdateRegionPreview()
         config_->regionY + config_->regionH
     };
 
-    overlay_.SetRegionPreview(config_->regionW > 0, rect);
+    overlay_.SetRegionPreview(true, rect);
 }
 
 void RuneHelperApp::Shutdown()
