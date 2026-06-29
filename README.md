@@ -70,6 +70,8 @@ cmake --build build --config Release
 
 ### Building on Ubuntu
 
+Linux support currently targets X11 only. Run RuneHelper from an X11 session; Wayland support is not implemented yet.
+
 #### Install dependencies
 
 ```bash
@@ -81,7 +83,7 @@ sudo apt install \
     libopencv-dev \
     libtesseract-dev \
     libleptonica-dev \
-    libcpr-dev
+    libx11-dev
 ```
 
 > **Note:** `libtesseract-dev` provides the C++ API, while `libleptonica-dev` is required by Tesseract.

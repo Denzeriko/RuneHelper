@@ -26,6 +26,7 @@ if (NOT Tesseract_FOUND)
 endif ()
 find_package(CURL REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(X11 REQUIRED)
 find_package(glfw3 QUIET)
 
 if(NOT glfw3_FOUND)
@@ -101,7 +102,7 @@ if(RUNEHELPER_MISSING_PACKAGES)
     "${RUNEHELPER_MISSING_PACKAGES_TEXT}\n\n"
     "On Ubuntu, install them with:\n"
     "  sudo apt update\n"
-    "  sudo apt install build-essential cmake pkg-config libopencv-dev libtesseract-dev libleptonica-dev libcpr-dev"
+    "  sudo apt install build-essential cmake pkg-config libopencv-dev libtesseract-dev libleptonica-dev libx11-dev"
   )
 endif()
 
@@ -126,6 +127,7 @@ add_executable(runehelper
 target_include_directories(runehelper PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${OpenCV_INCLUDE_DIRS}
+  ${X11_INCLUDE_DIR}
 )
 
 target_link_libraries(runehelper PRIVATE
@@ -135,4 +137,5 @@ target_link_libraries(runehelper PRIVATE
   imgui
   glfw
   OpenGL::GL
+  ${X11_LIBRARIES}
 )

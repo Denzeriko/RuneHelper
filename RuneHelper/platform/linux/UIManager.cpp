@@ -163,7 +163,7 @@ void UIManager::Pump()
         ImGui::Text("Region");
 
         if (ImGui::Button("Select Region"))
-            LOG_ERROR("Linux select region is not implemented");
+            wantsSelectRegion_ = true;
 
         ImGui::SameLine();
 
@@ -267,12 +267,16 @@ void UIManager::SetUpdateChecker(UpdateChecker* checker)
 
 bool UIManager::WantsSelectRegion()
 {
-    return false;
+    bool value = wantsSelectRegion_;
+    wantsSelectRegion_ = false;
+    return value;
 }
 
 bool UIManager::WantsRefreshPrices()
 {
-    return false;
+    bool value = wantsRefreshPrices_;
+    wantsRefreshPrices_ = false;
+    return value;
 }
 
 bool UIManager::IsRegionHovered() const
