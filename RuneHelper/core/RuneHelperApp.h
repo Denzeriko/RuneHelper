@@ -34,6 +34,9 @@ private:
     void HandleUIActions();
     void UpdateOverlay();
     void UpdateRegionPreview();
+#ifndef _WIN32
+    void RunOcrDebugTest();
+#endif
 
 private:
     ConfigManager configManager_;
@@ -49,6 +52,8 @@ private:
 
     std::mutex overlayMutex_;
     std::vector<OverlayText> sharedTexts_;
+
+    std::mutex ocrMutex_;
 
     std::atomic<bool> running_ = true;
 

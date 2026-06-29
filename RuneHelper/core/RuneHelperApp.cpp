@@ -2,6 +2,8 @@
 
 #include <chrono>
 
+#include <opencv2/imgcodecs.hpp>
+
 #include "core/Helpers.h"
 #include "core/Logger.h"
 
@@ -152,7 +154,12 @@ void RuneHelperApp::OcrWorkerLoop()
 
         if (!img.empty())
         {
-            auto loot = ocr_.RecognizeLoot(img);
+            std::vector<LootLine> loot;
+
+            {
+                std::lock_guard lock(ocrMutex_);
+                loot = ocr_.RecognizeLoot(img);
+            }
 
             std::vector<OverlayText> newTexts;
 
@@ -249,25 +256,114 @@ void RuneHelperApp::MainLoop()
 
 void RuneHelperApp::HandleUIActions()
 {
-    if (!ui_.WantsSelectRegion())
-        return;
+    if (ui_.WantsSelectRegion())
+    {
+        RegionSelector selector;
 
-    RegionSelector selector;
+        cv::Rect newRegion = selector.Select();
 
-    cv::Rect newRegion = selector.Select();
+        if (!newRegion.empty())
+        {
+            region_ = newRegion;
 
-    if (newRegion.empty())
-        return;
+            config_->regionX = region_.x;
+            config_->regionY = region_.y;
+            config_->regionW = region_.width;
+            config_->regionH = region_.height;
 
-    region_ = newRegion;
+            configManager_.Save();
+        }
+    }
 
-    config_->regionX = region_.x;
-    config_->regionY = region_.y;
-    config_->regionW = region_.width;
-    config_->regionH = region_.height;
-
-    configManager_.Save();
+#ifndef _WIN32
+    if (ui_.WantsTestOcr())
+        RunOcrDebugTest();
+#endif
 }
+
+#ifndef _WIN32
+void RuneHelperApp::RunOcrDebugTest()
+{
+    if (!ocrReady_)
+    {
+        LOG_ERROR("Linux OCR debug test skipped: OCR is not ready");
+        return;
+    }
+
+    cv::Rect localRegion(
+        config_->regionX,
+        config_->regionY,
+        config_->regionW,
+        config_->regionH
+    );
+
+    if (localRegion.empty())
+    {
+        LOG_ERROR("Linux OCR debug test skipped: no selected region");
+        return;
+    }
+
+    LOG_INFO(
+        "Linux OCR debug test capture region: x=" + std::to_string(localRegion.x) +
+        " y=" + std::to_string(localRegion.y) +
+        " w=" + std::to_string(localRegion.width) +
+        " h=" + std::to_string(localRegion.height)
+    );
+
+    cv::Mat img = CaptureRegion(localRegion);
+
+    if (img.empty())
+    {
+        LOG_ERROR("Linux OCR debug test failed: captured image is empty");
+        return;
+    }
+
+    LOG_INFO(
+        "Linux OCR debug capture dimensions: " +
+        std::to_string(img.cols) + "x" + std::to_string(img.rows) +
+        " channels=" + std::to_string(img.channels())
+    );
+
+    LOG_INFO("Linux OCR debug threshold: " + std::to_string(config_->ocrThreshold));
+
+    if (cv::imwrite("debug_capture.png", img))
+        LOG_INFO("Linux OCR debug saved capture: debug_capture.png");
+    else
+        LOG_ERROR("Linux OCR debug failed to save capture: debug_capture.png");
+
+    std::vector<LootLine> loot;
+
+    {
+        std::lock_guard lock(ocrMutex_);
+        loot = ocr_.RecognizeLoot(img);
+    }
+
+    if (loot.empty())
+    {
+        LOG_INFO("Linux OCR debug raw OCR text: <none>");
+        LOG_INFO("Linux OCR debug parsed result: <none>");
+        return;
+    }
+
+    for (const auto& line : loot)
+    {
+        LOG_INFO("Linux OCR debug raw OCR text: " + line.text);
+
+        auto parsed = LootParser::ParseLootLine(line.text);
+
+        if (parsed.itemName.empty())
+        {
+            LOG_INFO("Linux OCR debug parsed result: <none>");
+            continue;
+        }
+
+        LOG_INFO(
+            "Linux OCR debug parsed result: quantity=" + std::to_string(parsed.quantity) +
+            " item=\"" + parsed.itemName + "\""
+        );
+    }
+}
+#endif
 
 void RuneHelperApp::UpdateOverlay()
 {
