@@ -142,6 +142,9 @@ void RuneHelperApp::OcrWorkerLoop()
             }
         }
 
+        if (ocrRebuildRequested_.exchange(false))
+            ocr_.ReinitializeWorkers();
+
         bool runSingleSnapshot = singleSnapshotRequested_.exchange(false);
 
         if (runSingleSnapshot)
@@ -339,9 +342,7 @@ void RuneHelperApp::HandleUIActions()
     }
 
     if (ui_.WantsSingleSnapshot())
-    {
         singleSnapshotRequested_ = true;
-    }
 
     if (ui_.WantsRefreshPrices())
     {
@@ -366,6 +367,9 @@ void RuneHelperApp::HandleUIActions()
             configManager_.Save();
         }
     }
+
+    if (ui_.WantsOCRRebuild())
+        ocrRebuildRequested_ = true;
 }
 
 void RuneHelperApp::UpdateOverlay()
@@ -394,6 +398,11 @@ void RuneHelperApp::UpdateRegionPreview()
     };
 
     overlay_.SetRegionPreview(true, rect);
+}
+
+void RuneHelperApp::RequestOcrRebuild()
+{
+    ocrRebuildRequested_ = true;
 }
 
 void RuneHelperApp::Shutdown()

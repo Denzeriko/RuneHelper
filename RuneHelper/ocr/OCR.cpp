@@ -7,6 +7,7 @@
 #include <cctype>
 #include <iostream>
 #include <filesystem>
+#include <future>
 
 OCR::~OCR()
 {
@@ -18,6 +19,7 @@ bool OCR::Init(const std::string& tessdataPath)
 {
     LOG_INFO("OCR::Init tessdataPath = " + tessdataPath);
 
+    tessdataPath_ = tessdataPath;
     std::filesystem::path engPath = std::filesystem::path(tessdataPath) / "eng.traineddata";
 
     if (!std::filesystem::exists(engPath))
@@ -26,22 +28,57 @@ bool OCR::Init(const std::string& tessdataPath)
         return false;
     }
 
-    LOG_INFO("eng.traineddata found: " + engPath.string());
-    LOG_INFO("eng.traineddata size: " + std::to_string(std::filesystem::file_size(engPath)));
-
-    int rc = api_.Init(tessdataPath.c_str(), "eng");
-
+    int rc = api_.Init(tessdataPath.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
     if (rc != 0)
     {
         LOG_ERROR("Tesseract api.Init failed, rc=" + std::to_string(rc));
         return false;
     }
 
+    SetupTesseractApi(api_);
+
+    int passes = config_ ? config_->ocrPasses : 1;
+    passes = std::clamp(passes, 1, 8);
+
+    workerApis_.clear();
+    workerApis_.reserve(passes);
+
+    for (int i = 0; i < passes; ++i)
+    {
+        auto api = std::make_unique<tesseract::TessBaseAPI>();
+
+        rc = api->Init(tessdataPath.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
+
+        if (rc != 0)
+        {
+            LOG_ERROR("Tesseract worker api.Init failed, rc=" + std::to_string(rc));
+            return false;
+        }
+
+        SetupTesseractApi(*api);
+
+        workerApis_.push_back(std::move(api));
+    }
+
     initialized_ = true;
     LOG_INFO("OCR initialized");
 
-    SetupTesseract();
     return true;
+}
+
+void OCR::SetupTesseractApi(tesseract::TessBaseAPI& api)
+{
+    api.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
+
+    api.SetVariable(
+        "tessedit_char_whitelist",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789"
+        " '-"
+    );
+
+    api.SetVariable("preserve_interword_spaces", "1");
 }
 
 void OCR::SetConfig(const AppConfig* config)
@@ -66,6 +103,31 @@ void OCR::SetupTesseract()
     );
 
     LOG_INFO("SetupTesseract done");
+}
+
+bool OCR::ReinitializeWorkers()
+{
+    std::lock_guard lock(workerMutex_);
+
+    workerApis_.clear();
+
+    int passes = std::clamp(config_->ocrPasses, 1, 6);
+
+    workerApis_.reserve(passes);
+
+    for (int i = 0; i < passes; ++i)
+    {
+        auto api = std::make_unique<tesseract::TessBaseAPI>();
+        int rc = api->Init(tessdataPath_.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
+        if (rc != 0)
+            return false;
+
+        SetupTesseractApi(*api);
+
+        workerApis_.push_back(std::move(api));
+    }
+
+    return true;
 }
 
 std::vector<double> OCR::BuildThresholds() const
@@ -166,22 +228,93 @@ std::vector<LootLine> OCR::RecognizeLoot2(const cv::Mat& img)
     return lastResult_;
 }
 
-std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& src)
+std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img)
 {
-    if (!initialized_ || src.empty())
+    if (!initialized_ || img.empty())
         return {};
 
-    std::vector<LootLine> allLines;
+    cv::Mat gray;
+    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
-    for (double threshold : BuildThresholds())
+    auto thresholds = BuildThresholds();
+    if (thresholds.empty())
+        return {};
+
+    const size_t passCount = (std::min)(thresholds.size(), workerApis_.size());
+
+    std::vector<std::future<std::vector<LootLine>>> futures;
+    futures.reserve(passCount);
+        
+    for (size_t i = 0; i < passCount; ++i)
     {
-        cv::Mat prepared = Preprocess(src, threshold);
-        auto lines = RecognizePrepared(prepared);
-
-        allLines.insert(allLines.end(), lines.begin(), lines.end());
+        futures.emplace_back(
+            std::async(
+                std::launch::async,
+                [this, gray, threshold = thresholds[i], i]()
+                {
+                    cv::Mat prepared;
+                    cv::threshold(gray, prepared, threshold, 255, cv::THRESH_BINARY);
+                    return RecognizePreparedWithApi(*workerApis_[i], prepared);
+                }));
     }
 
-    return allLines;
+    std::vector<LootLine> best;
+
+    for (auto& f : futures)
+    {
+        auto result = f.get();
+        if (result.size() > best.size())
+            best = std::move(result);
+    }
+
+    return best;
+}
+
+std::vector<LootLine> OCR::RecognizePreparedWithApi(tesseract::TessBaseAPI& api, const cv::Mat& img)
+{
+    api.SetImage( img.data, img.cols, img.rows, 1, static_cast<int>(img.step));
+    api.Recognize(nullptr);
+
+    std::vector<LootLine> result;
+
+    tesseract::ResultIterator* ri = api.GetIterator();
+    if (!ri)
+        return result;
+
+    do
+    {
+        char* text = ri->GetUTF8Text(tesseract::RIL_TEXTLINE);
+        if (!text)
+            continue;
+
+        std::string line(text);
+        delete[] text;
+
+        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
+        line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+
+        Trim(line);
+
+        if (line.empty())
+            continue;
+
+        float conf = ri->Confidence(tesseract::RIL_TEXTLINE);
+        if (conf < 35.0f)
+            continue;
+
+        int x1 = 0;
+        int y1 = 0;
+        int x2 = 0;
+        int y2 = 0;
+
+        if (!ri->BoundingBox(tesseract::RIL_TEXTLINE, &x1, &y1, &x2, &y2))
+            continue;
+
+        result.push_back({line, x1, y1, x2, y2,conf});
+
+    } while (ri->Next(tesseract::RIL_TEXTLINE));
+
+    return result;
 }
 
 cv::Mat OCR::Preprocess(const cv::Mat& src)
@@ -214,49 +347,10 @@ cv::Mat OCR::Preprocess(const cv::Mat& src, double thresholdValue)
 
 std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
 {
-    api_.SetImage(img.data, img.cols, img.rows, 1, static_cast<int>(img.step));
-    api_.Recognize(nullptr);
+    auto result = RecognizePreparedWithApi(api_, img);
 
     if (debug_ || (config_ && config_->debugOCR))
         DebugTesseract();
-
-    std::vector<LootLine> result;
-
-    tesseract::ResultIterator* ri = api_.GetIterator();
-    if (!ri)
-        return result;
-
-    do
-    {
-        char* text = ri->GetUTF8Text(tesseract::RIL_TEXTLINE);
-
-        if (!text)
-            continue;
-
-        std::string line(text);
-        delete[] text;
-
-        line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-        line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
-
-        Trim(line);
-
-        if (line.empty())
-            continue;
-
-        float conf = ri->Confidence(tesseract::RIL_TEXTLINE);
-
-        if (conf < 35.0f)
-            continue;
-
-        int x1, y1, x2, y2;
-
-        if (!ri->BoundingBox(tesseract::RIL_TEXTLINE, &x1, &y1, &x2, &y2))
-            continue;
-
-        result.push_back({ line, x1, y1, x2, y2, conf });
-
-    } while (ri->Next(tesseract::RIL_TEXTLINE));
 
     return result;
 }

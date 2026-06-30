@@ -191,6 +191,13 @@ bool UIManager::WantsSingleSnapshot()
     return v;
 }
 
+bool UIManager::WantsOCRRebuild()
+{
+    bool value = state_.wantsOCRRebuild;
+    state_.wantsOCRRebuild = false;
+    return value;
+}
+
 void UIManager::Pump()
 {
     if (!state_.running)
@@ -594,9 +601,14 @@ void UIManager::DrawOcrSection()
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Only shows the overlay when the Runeshape menu is detected.\nMay occasionally fail due to OCR inaccuracies.");
 
-    ImGui::SliderInt("OCR passes", &config_->ocrPasses, 1, 6);
+    if (ImGui::SliderInt("OCR Passes", &config_->ocrPasses, 1, 6))
+    {
+        state_.wantsOCRRebuild = true;
+        configManager_->Save();
+    }
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("More passes = better OCR recognize, but higher CPU usage");
+        ImGui::SetTooltip("More passes = better OCR recognize, but higher CPU usage\nChanging OCR passes requires OCR restart.");
+
     /*
     ImGui::SliderFloat("OCR Threshold", reinterpret_cast<float*>(&config_->ocrThreshold), 0.0f, 255.0f);
     if (ImGui::IsItemHovered())

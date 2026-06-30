@@ -35,6 +35,7 @@ public:
     bool WantsRefreshPrices();
     bool WantsToggleOCR();
     bool WantsSingleSnapshot();
+    bool WantsOCRRebuild();
 
     bool IsRegionHovered() const;
 
