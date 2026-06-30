@@ -54,20 +54,20 @@ bool WindowsOverlayBackend::Init(const char*, int, int)
 
     RegisterClassW(&windowClass_);
 
-    int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-    int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    state_.virtualX = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    state_.virtualY = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    state_.virtualW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    state_.virtualH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     hwnd_ = CreateWindowExW(
         WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
         windowClass_.lpszClassName,
         L"RuneHelperOverlay",
         WS_POPUP,
-        x,
-        y,
-        w,
-        h,
+        state_.virtualX,
+        state_.virtualY,
+        state_.virtualW,
+        state_.virtualH,
         nullptr,
         nullptr,
         windowClass_.hInstance,
@@ -268,7 +268,7 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
             HBRUSH oldBrush = static_cast<HBRUSH>(SelectObject(hdc, GetStockObject(HOLLOW_BRUSH)));
             RECT rect = ToRect(self->state_.previewRect);
 
-            Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+            Rectangle(hdc, rect.left - self->state_.virtualX, rect.top - self->state_.virtualY, rect.right - self->state_.virtualX, rect.bottom - self->state_.virtualY);
 
             SelectObject(hdc, oldBrush);
             SelectObject(hdc, oldPen);
@@ -283,7 +283,9 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
         for (const auto& text : self->state_.texts)
         {
             SetTextColor(hdc, ToColorRef(text.color));
-            RECT rect{text.x, text.y - 20, text.x + 300, text.y + 20};
+            int x = text.x - self->state_.virtualX;
+            int y = text.y - self->state_.virtualY;
+            RECT rect{x, y - 20, x + 300, y + 20};
             DrawTextW(hdc, text.text.c_str(), -1, &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }
 
