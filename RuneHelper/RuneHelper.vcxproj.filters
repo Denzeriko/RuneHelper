@@ -52,6 +52,9 @@
     <ClCompile Include="platform\windows\PlatformPaths.cpp">
       <Filter>platform\windows</Filter>
     </ClCompile>
+    <ClCompile Include="platform\windows\OverlayBackend.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
     <ClCompile Include="platform\windows\UIBackend.cpp">
       <Filter>platform\windows</Filter>
     </ClCompile>
@@ -90,6 +93,9 @@
     <ClInclude Include="ui\Overlay.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="ui\OverlayState.h">
+      <Filter>ui</Filter>
+    </ClInclude>
     <ClInclude Include="resources\resource.h">
       <Filter>resources</Filter>
     </ClInclude>
@@ -106,6 +112,9 @@
       <Filter>platform\windows</Filter>
     </ClInclude>
     <ClInclude Include="platform\PlatformPaths.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\OverlayBackend.h">
       <Filter>platform</Filter>
     </ClInclude>
     <ClInclude Include="platform\UIBackend.h">

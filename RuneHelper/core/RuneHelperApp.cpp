@@ -388,12 +388,12 @@ void RuneHelperApp::UpdateRegionPreview()
 {
     if (!ui_.IsRegionHovered() || config_->regionW <= 0)
     {
-        static RECT empty{};
+        static OverlayRect empty{};
         overlay_.SetRegionPreview(false, empty);
         return;
     }
 
-    RECT rect{
+    OverlayRect rect{
         config_->regionX,
         config_->regionY,
         config_->regionX + config_->regionW,

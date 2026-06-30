@@ -120,6 +120,7 @@ add_executable(runehelper
   ui/Overlay.cpp
   ui/UIManager.cpp
   ui/UIDraw.cpp
+  platform/linux/OverlayBackend.cpp
   platform/linux/PlatformPaths.cpp
   platform/linux/UIBackend.cpp
   platform/linux/ScreenCapture.cpp

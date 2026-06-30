@@ -41,18 +41,18 @@ std::wstring ToWide(const std::string& s)
 }
 
 
-COLORREF GetPriceColor(double priceEx, AppConfig& config)
+OverlayColor GetPriceColor(double priceEx, AppConfig& config)
 {
     if (priceEx > config.priceColorVeryHigh)
-        return RGB(255, 60, 60); // red
+        return OverlayRgb(255, 60, 60); // red
 
     if (priceEx > config.priceColorHigh)
-        return RGB(255, 220, 80); // yellow
+        return OverlayRgb(255, 220, 80); // yellow
 
     if (priceEx > config.priceColorMedium)
-        return RGB(80, 255, 80); // green
+        return OverlayRgb(80, 255, 80); // green
 
-    return RGB(160, 160, 160); // gray
+    return OverlayRgb(160, 160, 160); // gray
 }
 
 std::string VkToString(int vk)

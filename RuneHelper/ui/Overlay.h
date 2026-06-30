@@ -1,54 +1,32 @@
 #pragma once
-#ifdef _WIN32
-#include <windows.h>
-#else
-#include "platform/linux/PlatformTypes.h"
-#endif
-#include <string>
+
+#include <memory>
 #include <vector>
 
-struct OverlayText
-{
-    std::wstring text;
-    int x = 0;
-    int y = 0;
-    COLORREF color = RGB(255, 255, 255);
-};
+#include "ui/OverlayState.h"
+
+class OverlayBackend;
 
 class OverlayWindow
 {
 public:
+    OverlayWindow();
+    ~OverlayWindow();
+
+    OverlayWindow(const OverlayWindow&) = delete;
+    OverlayWindow& operator=(const OverlayWindow&) = delete;
+
     bool Create();
+    void Shutdown();
+
     void BringToTop();
-    void SetRegionPreview(bool enabled, const RECT& rect);
+    void SetRegionPreview(bool enabled, const OverlayRect& rect);
     void SetTexts(std::vector<OverlayText> texts);
     void SetFontSize(int size);
     void SetFontSizeForce(int size);
     void PumpMessages();
 
 private:
-#ifdef _WIN32
-    HWND hwnd_ = nullptr;
-#endif
-
-    bool previewEnabled_ = false;
-    RECT previewRect_{};
-
-#ifdef _WIN32
-    HFONT font_ = nullptr;
-#endif
-    int fontSize_ = 24;
-
-    std::vector<OverlayText> texts_;
-
-    int virtualX_ = 0;
-    int virtualY_ = 0;
-    int virtualW_ = 0;
-    int virtualH_ = 0;
-
-private:
-#ifdef _WIN32
-    void RecreateFont();
-    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
-#endif
+    OverlayState state_;
+    std::unique_ptr<OverlayBackend> backend_;
 };
