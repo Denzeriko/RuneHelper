@@ -27,6 +27,7 @@
     <ClCompile Include="ocr\LootParser.cpp" />
     <ClCompile Include="ocr\NameNormalizer.cpp" />
     <ClCompile Include="ocr\OCR.cpp" />
+    <ClCompile Include="platform\windows\PlatformPaths.cpp" />
     <ClCompile Include="platform\windows\RegionSelect.cpp" />
     <ClCompile Include="platform\windows\ResourceHelper.cpp" />
     <ClCompile Include="platform\windows\ScreenCapture.cpp" />
@@ -49,6 +50,7 @@
     <ClInclude Include="ocr\LootParser.h" />
     <ClInclude Include="ocr\NameNormalizer.h" />
     <ClInclude Include="ocr\OCR.h" />
+    <ClInclude Include="platform\PlatformPaths.h" />
     <ClInclude Include="platform\windows\RegionSelect.h" />
     <ClInclude Include="platform\windows\ResourceHelper.h" />
     <ClInclude Include="platform\windows\ScreenCapture.h" />

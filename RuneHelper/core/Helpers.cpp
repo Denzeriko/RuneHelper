@@ -1,8 +1,9 @@
 #include "Helpers.h"
+#ifdef _WIN32
 #include <windows.h>
+#endif
 #include <regex>
 #include <string>
-#include <shlobj.h>
 
 #include "Logger.h"
 #include "Config.h"
@@ -23,6 +24,7 @@ std::wstring ToWide(const std::string& s)
     if (s.empty())
         return L"";
 
+#ifdef _WIN32
     int size = MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, nullptr, 0);
 
     if (size <= 0)
@@ -33,33 +35,11 @@ std::wstring ToWide(const std::string& s)
     MultiByteToWideChar(CP_UTF8, 0, s.c_str(), -1, result.data(), size);
 
     return result;
+#else
+    return std::wstring(s.begin(), s.end());
+#endif
 }
 
-
-std::filesystem::path GetAppDataDir() 
-{
-    LOG_INFO("GetAppDataDir() -> call");
-    PWSTR path = nullptr;
-
-    if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &path)))
-    {
-        LOG_ERROR("GetAppDataDir() -> SHGetKnownFolderPath -> ERROR");
-        return ".";
-    }
-       
-
-    std::filesystem::path result(path);
-    CoTaskMemFree(path);
-
-    result /= "Denz";
-    result /= "RuneHelper";
-
-    std::filesystem::create_directories(result);
-
-    LOG_INFO("GetAppDataDir() -> return -> " + result.string());
-
-    return result;
-}
 
 COLORREF GetPriceColor(double priceEx, AppConfig& config)
 {
@@ -80,12 +60,14 @@ std::string VkToString(int vk)
     if (vk == 0)
         return "None";
 
+#ifdef _WIN32
     UINT scan = MapVirtualKey(vk, MAPVK_VK_TO_VSC);
 
     char name[128]{};
 
     if (GetKeyNameTextA(scan << 16, name,sizeof(name)))
         return name;
+#endif
 
     return std::to_string(vk);
 }

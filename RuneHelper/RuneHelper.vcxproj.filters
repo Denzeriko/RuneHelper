@@ -46,6 +46,9 @@
     <ClCompile Include="platform\windows\ScreenCapture.cpp">
       <Filter>platform\windows</Filter>
     </ClCompile>
+    <ClCompile Include="platform\windows\PlatformPaths.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
     <ClCompile Include="ocr\LootParser.cpp">
       <Filter>ocr</Filter>
     </ClCompile>
@@ -95,6 +98,9 @@
     </ClInclude>
     <ClInclude Include="platform\windows\ScreenCapture.h">
       <Filter>platform\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\PlatformPaths.h">
+      <Filter>platform</Filter>
     </ClInclude>
     <ClInclude Include="ocr\LootParser.h">
       <Filter>ocr</Filter>

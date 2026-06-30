@@ -10,8 +10,15 @@
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 
+#ifdef _WIN32
 #include "platform/windows/RegionSelect.h"
 #include "platform/windows/ResourceHelper.h"
+#include "platform/windows/ScreenCapture.h"
+#else
+#include "platform/linux/RegionSelect.h"
+#include "platform/linux/ResourceHelper.h"
+#include "platform/linux/ScreenCapture.h"
+#endif
 
 int RuneHelperApp::Run()
 {
