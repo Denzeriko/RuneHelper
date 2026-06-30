@@ -13,41 +13,39 @@ env:
   SOLUTION_FILE_PATH: RuneHelper.slnx
   BUILD_CONFIGURATION: Release
   BUILD_PLATFORM: x64
-  VCPKG_TRIPLET: x64-windows-static
+  VCPKG_DEFAULT_TRIPLET: x64-windows-static
 
 jobs:
   build:
     runs-on: windows-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Setup MSBuild
         uses: microsoft/setup-msbuild@v2
 
-      - name: Cache vcpkg
-        id: cache-vcpkg
+      - name: Setup vcpkg
+        uses: microsoft/setup-vcpkg@v1
+
+      - name: Cache vcpkg packages
         uses: actions/cache@v4
         with:
-          path: vcpkg
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_TRIPLET }}-${{ hashFiles('vcpkg.json') }}
+          path: |
+            ${{ github.workspace }}/vcpkg_installed
+            ${{ env.VCPKG_ROOT }}/installed
+            ${{ env.VCPKG_ROOT }}/packages
+            ${{ env.VCPKG_ROOT }}/downloads
+            ${{ env.VCPKG_ROOT }}/buildtrees
+          key: >
+            vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ env.VCPKG_TRIPLET }}-
-
-      - name: Clone vcpkg
-        if: steps.cache-vcpkg.outputs.cache-hit != 'true'
-        run: |
-          git clone --depth=1 https://github.com/microsoft/vcpkg.git
-          .\vcpkg\bootstrap-vcpkg.bat
-
-      - name: Integrate vcpkg
-        run: |
-          .\vcpkg\vcpkg.exe integrate install
+            vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-
 
       - name: Install dependencies
         run: |
-          .\vcpkg\vcpkg.exe install --triplet=${{ env.VCPKG_TRIPLET }}
+          vcpkg install --triplet=${{ env.VCPKG_DEFAULT_TRIPLET }}
 
       - name: Build
         run: |
@@ -55,5 +53,5 @@ jobs:
             /m `
             /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
             /p:Platform=${{ env.BUILD_PLATFORM }} `
-            /p:VcpkgTriplet=${{ env.VCPKG_TRIPLET }} `
-            /p:VcpkgRoot=${{ github.workspace }}\vcpkg
+            /p:VcpkgEnableManifest=true `
+            /p:VcpkgTriplet=${{ env.VCPKG_DEFAULT_TRIPLET }}
