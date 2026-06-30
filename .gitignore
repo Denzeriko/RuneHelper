@@ -367,3 +367,5 @@ build/
 
 # VSCode
 .vscode/
+
+vcpkg_installed

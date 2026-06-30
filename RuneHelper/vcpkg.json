@@ -1,0 +1,17 @@
+{
+  "name": "runehelper",
+  "version": "1.3.1",
+  "dependencies": [
+    "opencv4",
+    "tesseract",
+    "cpr",
+    "nlohmann-json",
+    {
+      "name": "imgui",
+      "features": [
+        "dx11-binding",
+        "win32-binding"
+      ]
+    }
+  ]
+}

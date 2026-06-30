@@ -22,9 +22,6 @@
     <Filter Include="ocr">
       <UniqueIdentifier>{4618206b-69d6-4160-a4af-0ac1aa124480}</UniqueIdentifier>
     </Filter>
-    <Filter Include="third-party">
-      <UniqueIdentifier>{b416a2b0-df01-47ed-a56f-34be77877f77}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RuneHelper.cpp" />
@@ -87,9 +84,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="nlohmann\json.hpp">
-      <Filter>third-party</Filter>
-    </ClInclude>
     <ClInclude Include="ui\Overlay.h">
       <Filter>ui</Filter>
     </ClInclude>
@@ -170,6 +164,7 @@
     <None Include="resources\eng.traineddata_fast">
       <Filter>resources</Filter>
     </None>
+    <None Include="vcpkg.json" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\runehelper.ico">
