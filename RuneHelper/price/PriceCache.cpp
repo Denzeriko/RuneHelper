@@ -4,156 +4,27 @@
 #include "core/Logger.h"
 
 #include <cpr/cpr.h>
-#include "nlohmann/json.hpp"
 
-#include <unordered_map>
-#include <string>
-#include <fstream>
 #include <chrono>
-#include <optional>
-#include <mutex>
-#include <iostream>
-#include <regex>
+#include <fstream>
+#include <iomanip>
+#include <sstream>
 
 using json = nlohmann::json;
 
-std::string JsonString(const json& j, const char* key)
+namespace
 {
-    if (!j.contains(key))
-        return "";
-
-    const auto& v = j.at(key);
-
-    if (v.is_null())
-        return "";
-
-    if (v.is_string())
-        return v.get<std::string>();
-
-    return "";
-}
-
-PriceCache::PriceCache()
-{
-    LOG_INFO("PriceCache::PriceCache() INIT");
-
-    LoadDump();
-    RefreshIfNeeded();
-}
-
-std::vector<std::string> PriceCache::GetAllItemNames() const
-{
-    std::vector<std::string> result;
-    result.reserve(prices_.size());
-
-    for (const auto& [name, info] : prices_)
-        result.push_back(name);
-
-    return result;
-}
-
-std::optional<std::string> PriceCache::GetPrice(const std::string& itemName)
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    auto it = prices_.find(itemName);
-    if (it == prices_.end())
-        return std::nullopt;
-
-    return it->second.price;
-}
-
-const std::unordered_map<std::string, PriceInfo>& PriceCache::GetPrices() const
-{
-    return prices_;
-}
-
-void PriceCache::RefreshIfNeeded()
-{
-    LOG_INFO("PriceCache::RefreshIfNeeded() -> call");
-
-    int64_t now = NowUnix();
-
+    struct RefreshGuard
     {
-        std::lock_guard<std::mutex> lock(mutex_);
+        std::atomic<bool>& flag;
 
-        if (!prices_.empty() &&
-            now - dump_updated_at_ < refresh_seconds_)
+        ~RefreshGuard()
         {
-            return;
+            flag.store(false);
         }
-    }
+    };
 
-    ForceRefreshAsync();
-}
-
-void PriceCache::ForceRefreshAsync()
-{
-    bool expected = false;
-
-    if (!refreshInProgress_.compare_exchange_strong(expected, true))
-    {
-        LOG_INFO("Price refresh already in progress");
-        return;
-    }
-
-    std::thread([this]()
-        {
-            RefreshWorker();
-        }).detach();
-}
-
-bool PriceCache::IsRefreshInProgress() const
-{
-    return refreshInProgress_.load();
-}
-
-size_t PriceCache::GetPriceCount() const
-{
-    std::lock_guard<std::mutex> lock(mutex_);
-    return prices_.size();
-}
-
-void PriceCache::RefreshWorker()
-{
-    LOG_INFO("PriceCache::RefreshWorker() -> start");
-
-    int64_t now = NowUnix();
-
-    auto fresh = DownloadFullDump();
-
-    if (fresh.empty())
-    {
-        LOG_ERROR("PriceCache refresh failed or empty");
-        refreshInProgress_ = false;
-        return;
-    }
-
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        prices_ = std::move(fresh);
-        dump_updated_at_ = now;
-    }
-
-    SaveDump();
-
-    refreshInProgress_ = false;
-
-    LOG_INFO("PriceCache::RefreshWorker() -> done");
-}
-
-int64_t PriceCache::NowUnix()
-{
-    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-}
-
-std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
-{
-    LOG_INFO("PriceCache::DownloadFullDump() -> poe.ninja");
-
-    std::unordered_map<std::string, PriceInfo> result;
-
-    const std::vector<std::string> categories =
+    const std::vector<std::string> kPoeNinjaCategories =
     {
         "Runes",
         "Currency",
@@ -169,8 +40,115 @@ std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
         "Abyss",
         "Fragments"
     };
+}
 
-    for (const auto& category : categories)
+PriceCache::PriceCache()
+{
+    LOG_INFO("PriceCache::PriceCache() -> init");
+    LoadDump();
+}
+
+std::vector<std::string> PriceCache::GetAllItemNames() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    std::vector<std::string> result;
+    result.reserve(prices_.size());
+
+    for (const auto& [name, info] : prices_)
+        result.push_back(name);
+
+    return result;
+}
+
+std::optional<std::string> PriceCache::GetPrice(const std::string& itemName)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = prices_.find(itemName);
+
+    if (it == prices_.end())
+        return std::nullopt;
+
+    return it->second.price;
+}
+
+void PriceCache::RefreshIfNeeded()
+{
+    LOG_INFO("PriceCache::RefreshIfNeeded() -> call");
+
+    int64_t now = NowUnix();
+
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (!prices_.empty() && now - dump_updated_at_ < refresh_seconds_)
+            return;
+    }
+
+    ForceRefreshAsync();
+}
+
+void PriceCache::ForceRefreshAsync()
+{
+    bool expected = false;
+
+    if (!refreshInProgress_.compare_exchange_strong(expected, true))
+    {
+        LOG_INFO("PriceCache::ForceRefreshAsync() -> already in progress");
+        return;
+    }
+
+    std::thread([this]() { RefreshWorker(); }).detach();
+}
+
+bool PriceCache::IsRefreshInProgress() const
+{
+    return refreshInProgress_.load();
+}
+
+size_t PriceCache::GetPriceCount() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return prices_.size();
+}
+
+void PriceCache::RefreshWorker()
+{
+    RefreshGuard guard{ refreshInProgress_ };
+    LOG_INFO("PriceCache::RefreshWorker() -> start");
+
+    int64_t now = NowUnix();
+    auto fresh = DownloadFullDump();
+
+    if (fresh.empty())
+    {
+        LOG_ERROR("PriceCache::RefreshWorker() -> refresh failed or empty");
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        prices_ = std::move(fresh);
+        dump_updated_at_ = now;
+    }
+
+    SaveDump();
+
+    LOG_INFO("PriceCache::RefreshWorker() -> done");
+}
+
+int64_t PriceCache::NowUnix()
+{
+    return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
+{
+    LOG_INFO("PriceCache::DownloadFullDump() -> poe.ninja");
+
+    std::unordered_map<std::string, PriceInfo> result;
+    result.reserve(512);
+
+    for (const auto& category : kPoeNinjaCategories)
     {
         auto dump = DownloadPoeNinjaDump(category);
 
@@ -185,7 +163,8 @@ std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
     return result;
 }
 
-std::unordered_map<std::string, PriceInfo> PriceCache::DownloadPoeNinjaDump(const std::string& type)
+std::unordered_map<std::string, PriceInfo>
+PriceCache::DownloadPoeNinjaDump(const std::string& type)
 {
     const std::string url = "https://poe.ninja/poe2/api/economy/exchange/current/overview?league=Runes+of+Aldur&type=" + type;
 
@@ -220,7 +199,6 @@ std::unordered_map<std::string, PriceInfo> PriceCache::DownloadPoeNinjaDump(cons
     if (j.is_discarded())
     {
         LOG_ERROR("PriceCache poe.ninja JSON parse failed");
-
         return {};
     }
 
@@ -231,7 +209,12 @@ std::unordered_map<std::string, PriceInfo> PriceCache::ParsePoeNinjaDump(const j
 {
     std::unordered_map<std::string, PriceInfo> result;
 
-    if (!j.contains("core") || !j["core"].contains("rates") || !j.contains("items") || !j["items"].is_array() || !j.contains("lines") || !j["lines"].is_array())
+    if (!j.contains("core") ||
+        !j["core"].contains("rates") ||
+        !j.contains("items") ||
+        !j["items"].is_array() ||
+        !j.contains("lines") ||
+        !j["lines"].is_array())
     {
         LOG_ERROR("PriceCache::ParsePoeNinjaDump() invalid JSON structure");
         return result;
@@ -246,6 +229,7 @@ std::unordered_map<std::string, PriceInfo> PriceCache::ParsePoeNinjaDump(const j
     }
 
     std::unordered_map<std::string, std::string> idToName;
+    idToName.reserve(j["items"].size());
 
     for (const auto& item : j["items"])
     {
@@ -253,9 +237,10 @@ std::unordered_map<std::string, PriceInfo> PriceCache::ParsePoeNinjaDump(const j
         std::string name = item.value("name", "");
 
         if (!id.empty() && !name.empty())
-            idToName[id] = name;
+            idToName.emplace(std::move(id), std::move(name));
     }
 
+    result.reserve(j["lines"].size());
     for (const auto& line : j["lines"])
     {
         std::string id = line.value("id", "");
@@ -264,17 +249,16 @@ std::unordered_map<std::string, PriceInfo> PriceCache::ParsePoeNinjaDump(const j
             continue;
 
         auto it = idToName.find(id);
+
         if (it == idToName.end())
             continue;
 
-        double primaryValue =
-            line.value("primaryValue", 0.0);
+        double primaryValue = line.value("primaryValue", 0.0);
 
         if (primaryValue <= 0.0)
             continue;
 
-        double exValue =
-            primaryValue * divineToEx;
+        double exValue = primaryValue * divineToEx;
 
         result[it->second] = PriceInfo{
             FormatExPrice(exValue)
@@ -291,17 +275,11 @@ std::string PriceCache::FormatExPrice(double value)
     std::ostringstream ss;
 
     if (value >= 100.0)
-    {
         ss << std::fixed << std::setprecision(0);
-    }
     else if (value >= 10.0)
-    {
         ss << std::fixed << std::setprecision(1);
-    }
     else
-    {
         ss << std::fixed << std::setprecision(2);
-    }
 
     ss << value << " ex";
 
@@ -313,20 +291,24 @@ void PriceCache::SaveDump()
     LOG_INFO("PriceCache::SaveDump() -> call");
 
     json j;
-
-    j["dump_updated_at"] = dump_updated_at_;
     j["items"] = json::object();
 
-    std::lock_guard<std::mutex> lock(mutex_);
-
-    for (const auto& [name, info] : prices_)
     {
-        j["items"][name] = info.price;
+        std::lock_guard<std::mutex> lock(mutex_);
+        j["dump_updated_at"] = dump_updated_at_;
+        for (const auto& [name, info] : prices_)
+            j["items"][name] = info.price;
     }
 
-    std::ofstream file((GetAppDataDir() / "prices_dump.json"));
-    if (file)
-        file << j.dump(4);
+    std::ofstream file(GetAppDataDir() / "prices_dump.json");
+
+    if (!file)
+    {
+        LOG_ERROR("PriceCache::SaveDump() -> failed to open file");
+        return;
+    }
+
+    file << j.dump(4);
 
     LOG_INFO("PriceCache::SaveDump() -> return");
 }
@@ -335,29 +317,36 @@ void PriceCache::LoadDump()
 {
     LOG_INFO("PriceCache::LoadDump() -> call");
 
-    std::ifstream file((GetAppDataDir() / "prices_dump.json"));
+    std::ifstream file(GetAppDataDir() / "prices_dump.json");
     if (!file)
         return;
 
     json j = json::parse(file, nullptr, false);
     if (j.is_discarded())
+    {
+        LOG_ERROR("PriceCache::LoadDump() -> JSON parse failed");
         return;
-
-    dump_updated_at_ = j.value("dump_updated_at", 0LL);
+    }
 
     if (!j.contains("items") || !j["items"].is_object())
         return;
 
+    std::unordered_map<std::string, PriceInfo> loaded;
     for (auto it = j["items"].begin(); it != j["items"].end(); ++it)
     {
         if (!it.value().is_string())
             continue;
 
-        prices_[it.key()] = PriceInfo{
-            it.value().get<std::string>()
-        };
+        loaded[it.key()] = PriceInfo{it.value().get<std::string>()};
     }
 
-    LOG_INFO("Loaded dump prices -> " + std::to_string(prices_.size()));
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        prices_ = std::move(loaded);
+        dump_updated_at_ = j.value("dump_updated_at", 0LL);
+    }
+
+    LOG_INFO("Loaded dump prices -> " + std::to_string(GetPriceCount()));
     LOG_INFO("PriceCache::LoadDump() -> return");
 }

@@ -1,5 +1,7 @@
 #include "Logger.h"
 
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
 #include <windows.h>
 #include <shlobj.h>
 
@@ -7,12 +9,24 @@
 #include <filesystem>
 #include <iomanip>
 #include <sstream>
-#include <iostream>
+
+namespace
+{
+    constexpr uintmax_t kMaxLogSize = 16 * 1024 * 1024; // 16 MB
+}
 
 Logger& Logger::Instance()
 {
     static Logger logger;
     return logger;
+}
+
+Logger::~Logger()
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (file_.is_open())
+        file_.close();
 }
 
 bool Logger::Init()
@@ -30,7 +44,15 @@ bool Logger::Init()
 
     std::filesystem::create_directories(dir);
 
-    auto logPath = dir / "runehelper.log";
+    const auto logPath = dir / "runehelper.log";
+    const auto oldLogPath = dir / "runehelper.old.log";
+
+    if (std::filesystem::exists(logPath) && std::filesystem::file_size(logPath) > kMaxLogSize)
+    {
+        std::error_code ec;
+        std::filesystem::remove(oldLogPath, ec);
+        std::filesystem::rename(logPath, oldLogPath, ec);
+    }
 
     file_.open(logPath, std::ios::app);
 
@@ -38,6 +60,7 @@ bool Logger::Init()
         return false;
 
     Info("Logger initialized");
+
     return true;
 }
 
@@ -51,20 +74,29 @@ void Logger::Error(const std::string& msg)
     Write("ERROR", msg);
 }
 
+void Logger::Debug(const std::string& msg)
+{
+#ifdef _DEBUG
+    Write("DEBUG", msg);
+#else
+    (void)msg;
+#endif
+}
+
 void Logger::Write(const char* level, const std::string& msg)
 {
     std::lock_guard<std::mutex> lock(mutex_);
+    std::string line = TimeNow() + " [" + level + "] " + msg + "\n";
 
-    std::cout << msg << std::endl;
+#ifdef _DEBUG
+    OutputDebugStringA(line.c_str());
+#endif
 
     if (!file_)
         return;
 
-    file_
-        << TimeNow()
-        << " [" << level << "] "
-        << msg
-        << std::endl;
+    file_ << line;
+    file_.flush(); //make sure log will be saved after crash
 }
 
 std::string Logger::TimeNow()

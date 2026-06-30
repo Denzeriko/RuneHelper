@@ -91,9 +91,9 @@ bool ConfigManager::Save() const
     j["overlayOffsetY"]     = config_.overlayOffsetY;
     j["overlayFontSize"]    = config_.overlayFontSize;
 
-    j["hotkeyToggleOCR"]    = config_.hotkeyToggleOCR;
-    j["overlayOffsetY"]     = config_.overlayOffsetY;
-    j["overlayFontSize"]    = config_.overlayFontSize;
+    j["hotkeyToggleOCR"]        = config_.hotkeyToggleOCR;
+    j["hotkeySingleSnapshot"]   = config_.hotkeySingleSnapshot;
+    j["hotkeySelectRegion"]     = config_.hotkeySelectRegion;
 
     j["priceColorMedium"]       = config_.priceColorMedium;
     j["hotkeySingleSnapshot"]   = config_.hotkeySingleSnapshot;

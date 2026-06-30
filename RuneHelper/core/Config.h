@@ -14,7 +14,7 @@ struct AppConfig
     bool ocrAutoDetect      = true;
     float ocrScale          = 1.0f;
     float ocrThreshold      = 130.0f;
-    int ocrIntervalMs       = 400;
+    int ocrIntervalMs       = 600;
     int ocrPasses           = 2;
 
     int hotkeyToggleOCR         = 0x77; //VK_F8;

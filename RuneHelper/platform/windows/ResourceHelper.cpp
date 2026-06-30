@@ -7,28 +7,44 @@
 #include <fstream>
 
 #include "core/Logger.h"
+#include "core/Helpers.h"
 #include "resources/resource.h"
 
 bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesystem::path& outPath)
 {
-    LOG_INFO("ExtractResourceToFile() -> call");
-
     HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(resId), resType);
-    if (!hRes) return false;
+    if (!hRes)
+    {
+        LOG_ERROR("FindResourceW failed");
+        return false;
+    }
 
     HGLOBAL hData = LoadResource(nullptr, hRes);
-    if (!hData) return false;
+    if (!hData)
+    {
+        LOG_ERROR("LoadResource failed");
+        return false;
+    }
 
     DWORD size = SizeofResource(nullptr, hRes);
     void* data = LockResource(hData);
-    if (!data || size == 0) return false;
+
+    if (!data || size == 0)
+    {
+        LOG_ERROR("LockResource/SizeofResource failed");
+        return false;
+    }
 
     std::filesystem::create_directories(outPath.parent_path());
 
     std::ofstream file(outPath, std::ios::binary);
-    file.write(reinterpret_cast<const char*>(data), size);
+    if (!file)
+    {
+        LOG_ERROR("Failed to create output file: " + outPath.string());
+        return false;
+    }
 
-    LOG_INFO("ExtractResourceToFile() -> return true");
+    file.write(reinterpret_cast<const char*>(data), size);
 
     return file.good();
 }
@@ -37,19 +53,25 @@ std::string PrepareTessdata()
 {
     LOG_INFO("PrepareTessdata() -> call");
 
-    auto dir = std::filesystem::temp_directory_path() / "RuneHelper" / "tessdata";
+    auto dir = GetAppDataDir() / "tessdata";
     auto eng = dir / "eng.traineddata";
 
     LOG_INFO("PrepareTessdata() -> path: " + dir.string());
-    LOG_INFO("PrepareTessdata() -> eng path: " + eng.string());
-    LOG_INFO("PrepareTessdata() -> extracting resource...");
 
     if (!std::filesystem::exists(eng))
     {
-        ExtractResourceToFile(IDR_ENG_TRAINEDDATA, RT_RCDATA, eng);
-    }
+        LOG_INFO("PrepareTessdata() -> extracting eng.traineddata");
 
-    LOG_INFO("PrepareTessdata() -> return " + dir.string());
+        if (!ExtractResourceToFile(IDR_ENG_TRAINEDDATA, RT_RCDATA, eng))
+        {
+            LOG_ERROR("PrepareTessdata() -> failed to extract eng.traineddata");
+            return {};
+        }
+    }
+    else
+    {
+        LOG_INFO("PrepareTessdata() -> eng.traineddata already exists");
+    }
 
     return dir.string();
 }

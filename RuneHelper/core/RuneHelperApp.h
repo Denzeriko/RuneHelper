@@ -20,6 +20,8 @@
 
 #include "core/DebugData.h"
 
+#include "platform/windows/ScreenCaptureDXGI.h"
+
 class RuneHelperApp
 {
 public:
@@ -49,6 +51,7 @@ private:
     OCR ocr_;
 
     cv::Rect region_;
+    ScreenCaptureWGC screenCapture_;
 
     std::mutex overlayMutex_;
     std::vector<OverlayText> sharedTexts_;

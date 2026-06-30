@@ -33,6 +33,11 @@ private:
 
     std::vector<OverlayText> texts_;
 
+    int virtualX_ = 0;
+    int virtualY_ = 0;
+    int virtualW_ = 0;
+    int virtualH_ = 0;
+
 private:
     void RecreateFont();
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);

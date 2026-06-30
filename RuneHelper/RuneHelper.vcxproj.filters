@@ -70,6 +70,9 @@
     <ClCompile Include="core\RuneHelperApp.cpp">
       <Filter>core</Filter>
     </ClCompile>
+    <ClCompile Include="platform\windows\ScreenCaptureDXGI.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="nlohmann\json.hpp">
@@ -131,6 +134,9 @@
     </ClInclude>
     <ClInclude Include="core\DebugData.h">
       <Filter>core</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\windows\ScreenCaptureDXGI.h">
+      <Filter>platform\windows</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

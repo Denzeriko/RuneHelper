@@ -64,13 +64,18 @@ bool RegionSelector::CreateOverlayWindow()
 
     RegisterClassW(&wc);
 
-    int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    virtualX_ = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    virtualY_ = GetSystemMetrics(SM_YVIRTUALSCREEN);
+
+    int x = virtualX_;
+    int y = virtualY_;
     int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
     int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     hwnd_ = CreateWindowExW(
-        WS_EX_TOPMOST | WS_EX_LAYERED,
+        WS_EX_TOPMOST |
+        WS_EX_LAYERED |
+        WS_EX_NOACTIVATE,
         wc.lpszClassName,
         L"Select region",
         WS_POPUP,
@@ -116,8 +121,8 @@ cv::Rect RegionSelector::GetSelectedRect() const
     int bottom = std::max(result_.top, result_.bottom);
 
     return cv::Rect(
-        left,
-        top,
+        left + virtualX_,
+        top + virtualY_,
         right - left,
         bottom - top
     );
@@ -132,7 +137,7 @@ void RegionSelector::OnLeftButtonDown(LPARAM lp)
     current_ = start_;
 
     SetCapture(hwnd_);
-    InvalidateRect(hwnd_, nullptr, TRUE);
+    InvalidateRect(hwnd_, nullptr, FALSE);
 }
 
 void RegionSelector::OnMouseMove(LPARAM lp)
@@ -143,7 +148,7 @@ void RegionSelector::OnMouseMove(LPARAM lp)
     current_.x = GET_X_LPARAM(lp);
     current_.y = GET_Y_LPARAM(lp);
 
-    InvalidateRect(hwnd_, nullptr, TRUE);
+    InvalidateRect(hwnd_, nullptr, FALSE);
 }
 
 void RegionSelector::OnLeftButtonUp(LPARAM lp)
@@ -250,6 +255,9 @@ LRESULT CALLBACK RegionSelector::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM 
     case WM_PAINT:
         self->OnPaint();
         return 0;
+
+    case WM_ERASEBKGND: //should fix box flickering
+        return 1;
     }
 
     return DefWindowProcW(hwnd, msg, wp, lp);

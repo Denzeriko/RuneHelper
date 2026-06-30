@@ -12,10 +12,7 @@ namespace LootParser
     };
 
     ParsedLootLineStruct ParseLootLine(const std::string& line);
-
     std::optional<double> ParsePriceValue(const std::string& price);
-
     std::string FormatPrice(double value);
-
     std::string FormatStackPrice(const std::string& singlePrice, int quantity);
 }

@@ -5,13 +5,13 @@
 
 #include "core/Helpers.h"
 #include "core/Logger.h"
+#include "core/Version.h"
 
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 
 #include "platform/windows/RegionSelect.h"
 #include "platform/windows/ResourceHelper.h"
-#include "platform/windows/ScreenCapture.h"
 
 int RuneHelperApp::Run()
 {
@@ -30,7 +30,7 @@ bool RuneHelperApp::Init()
     Logger::Instance().Init();
 
     LOG_INFO("--------------------------");
-    LOG_INFO("RuneHelper started!");
+    LOG_INFO("RuneHelper started! v" RUNEHELPER_VERSION);
 
     configManager_.Load();
 
@@ -60,6 +60,8 @@ bool RuneHelperApp::Init()
     ocr_.SetConfig(config_);
 
     ui_.RegisterHotkeys();
+
+    priceCache_.RefreshIfNeeded();
 
     initThread_ = std::jthread(
         [this]
@@ -172,7 +174,10 @@ void RuneHelperApp::OcrWorkerLoop()
             config_->regionH
         );
 
-        cv::Mat img = CaptureRegion(localRegion);
+        cv::Mat img = screenCapture_.CaptureRegion(localRegion);
+
+        //if (img.empty())
+        //    img = CaptureRegion(localRegion); //old capture
 
         if (!img.empty())
         {
@@ -259,7 +264,7 @@ void RuneHelperApp::OcrWorkerLoop()
                 t.color = GetPriceColor(totalValue, *config_);
                 t.text = ToWide(LootParser::FormatStackPrice(*price, quantity));
                 t.x = localRegion.x + localRegion.width + config_->overlayOffsetX;
-                t.y = overlayY;
+                t.y = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
 
                 newTexts.push_back(std::move(t));
 
@@ -395,5 +400,6 @@ void RuneHelperApp::Shutdown()
 {
     running_ = false;
     ui_.RegisterHotkeys();
+    screenCapture_.Shutdown();
     updateChecker_.Stop();
 }

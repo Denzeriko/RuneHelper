@@ -8,50 +8,52 @@
 
 LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& line)
 {
-    static const std::regex re(R"(^\s*(\d+)x\s+(.+?)\s*$)");
+    size_t pos = 0;
+    while (pos < line.size() && std::isspace((unsigned char)line[pos]))
+        ++pos;
 
-    std::smatch m;
+    size_t numStart = pos;
+    while (pos < line.size() && std::isdigit((unsigned char)line[pos]))
+        ++pos;
 
-    if (std::regex_match(line, m, re))
+    if (pos > numStart && pos < line.size() && line[pos] == 'x')
     {
-        ParsedLootLineStruct result;
-        result.quantity = std::stoi(m[1].str());
-        result.itemName = m[2].str();
-        return result;
+        ++pos;
+
+        while (pos < line.size() && std::isspace((unsigned char)line[pos]))
+            ++pos;
+
+        int quantity = std::stoi(line.substr(numStart, pos - numStart));
+
+        return { quantity, line.substr(pos) };
     }
 
-    return ParsedLootLineStruct{
-        1,
-        line
-    };
+    return { 1, line };
 }
 
 std::optional<double> LootParser::ParsePriceValue(const std::string& price)
 {
-    static const std::regex re(R"(([0-9]+(?:\.[0-9]+)?))");
+    const char* s = price.c_str();
+    char* end = nullptr;
+    double value = std::strtod(s, &end);
 
-    std::smatch m;
+    if (end == s)
+        return std::nullopt;
 
-    if (std::regex_search(price, m, re))
-        return std::stod(m[1].str());
-
-    return std::nullopt;
+    return value;
 }
 
 std::string LootParser::FormatPrice(double value)
 {
-    std::ostringstream ss;
+    char buf[64];
 
     if (value >= 10.0)
-        ss << std::fixed << std::setprecision(1);
+        sprintf_s(buf, "%.1f ex", value);
     else
-        ss << std::fixed << std::setprecision(2);
+        sprintf_s(buf, "%.2f ex", value);
 
-    ss << value << " ex";
+    std::string s = buf;
 
-    std::string s = ss.str();
-
-    // 1.50 -> 1.5, 1.00 -> 1
     while (s.find('.') != std::string::npos &&
         s.find(" ex") != std::string::npos &&
         s[s.find(" ex") - 1] == '0')
@@ -59,8 +61,9 @@ std::string LootParser::FormatPrice(double value)
         s.erase(s.find(" ex") - 1, 1);
     }
 
-    if (s.find(". ex") != std::string::npos)
-        s.erase(s.find(". ex"), 1);
+    size_t dotEx = s.find(". ex");
+    if (dotEx != std::string::npos)
+        s.erase(dotEx, 1);
 
     return s;
 }

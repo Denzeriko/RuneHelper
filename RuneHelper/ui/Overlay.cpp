@@ -14,10 +14,10 @@ bool OverlayWindow::Create()
 
     RegisterClassW(&wc);
 
-    int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-    int w = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    virtualX_ = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    virtualY_ = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    virtualW_ = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    virtualH_ = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     hwnd_ = CreateWindowExW(
         WS_EX_TOPMOST |
@@ -28,7 +28,10 @@ bool OverlayWindow::Create()
         wc.lpszClassName,
         L"RuneHelperOverlay",
         WS_POPUP,
-        x, y, w, h,
+        virtualX_,
+        virtualY_,
+        virtualW_,
+        virtualH_,
         nullptr,
         nullptr,
         wc.hInstance,
@@ -225,10 +228,10 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
 
             Rectangle(
                 hdc,
-                self->previewRect_.left,
-                self->previewRect_.top,
-                self->previewRect_.right,
-                self->previewRect_.bottom
+                self->previewRect_.left - self->virtualX_,
+                self->previewRect_.top - self->virtualY_,
+                self->previewRect_.right - self->virtualX_,
+                self->previewRect_.bottom - self->virtualY_
             );
 
             SelectObject(hdc, oldBrush);
@@ -245,7 +248,10 @@ LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM l
         {
             SetTextColor(hdc, t.color);
 
-            RECT r{t.x, t.y - 20, t.x + 300, t.y + 20};
+            int x = t.x - self->virtualX_;
+            int y = t.y - self->virtualY_;
+
+            RECT r{x, y - 20, x + 300, y + 20};
 
             DrawTextW(hdc, t.text.c_str(), -1, &r, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }

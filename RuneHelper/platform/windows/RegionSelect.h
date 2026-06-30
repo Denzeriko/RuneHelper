@@ -26,6 +26,9 @@ private:
 
     RECT result_{};
 
+    int virtualX_ = 0;
+    int virtualY_ = 0;
+
 private:
     bool CreateOverlayWindow();
     void DestroyOverlayWindow();

@@ -30,6 +30,7 @@
     <ClCompile Include="platform\windows\RegionSelect.cpp" />
     <ClCompile Include="platform\windows\ResourceHelper.cpp" />
     <ClCompile Include="platform\windows\ScreenCapture.cpp" />
+    <ClCompile Include="platform\windows\ScreenCaptureDXGI.cpp" />
     <ClCompile Include="price\PriceCache.cpp" />
     <ClCompile Include="RuneHelper.cpp" />
     <ClCompile Include="ui\Overlay.cpp" />
@@ -51,6 +52,7 @@
     <ClInclude Include="platform\windows\RegionSelect.h" />
     <ClInclude Include="platform\windows\ResourceHelper.h" />
     <ClInclude Include="platform\windows\ScreenCapture.h" />
+    <ClInclude Include="platform\windows\ScreenCaptureDXGI.h" />
     <ClInclude Include="price\PriceCache.h" />
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="ui\Overlay.h" />
