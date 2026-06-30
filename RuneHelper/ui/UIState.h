@@ -26,4 +26,10 @@ struct UIState
 
     bool showSaved = false;
     std::chrono::steady_clock::time_point savedAt;
+
+
+    // Reserved for future optimization.
+    // Will be incremented whenever overlay data changes and used to
+    // skip unnecessary redraws without comparing the entire state.
+    int revision = 0; 
 };

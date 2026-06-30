@@ -76,62 +76,81 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     //Status
     ImGui::SeparatorText("STATUS");
-    if (ImGui::BeginTable("status_table", 2, ImGuiTableFlags_SizingStretchProp))
+
+    if (!ImGui::BeginTable(
+        "status_table",
+        2,
+        ImGuiTableFlags_Borders |
+        ImGuiTableFlags_RowBg |
+        ImGuiTableFlags_SizingStretchProp))
     {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("OCR");
-
-        ImGui::TableSetColumnIndex(1);
-
-        if (state.ocrInitializing)
-            ImGui::TextColored(kYellow, "Initializing...");
-        else if (state.ocrFailed)
-            ImGui::TextColored(kRed, "Failed");
-        else if (state.ocrReady)
-            ImGui::TextColored(kGreen, "Ready");
-        else
-            ImGui::TextDisabled("Waiting...");
-
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Prices");
-
-        ImGui::TableSetColumnIndex(1);
-
-        if (state.priceDownloading)
-            ImGui::TextColored(kYellow, "Downloading...");
-        else
-            ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
-
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextUnformatted("Version");
-
-        ImGui::TableSetColumnIndex(1);
-
-        ImGui::Text("v%s", RUNEHELPER_VERSION);
-
-        if (manager.updateChecker_)
-        {
-            if (manager.updateChecker_->IsChecking())
-            {
-                ImGui::SameLine();
-                ImGui::TextColored(kYellow, "(checking...)");
-            }
-            else if (manager.updateChecker_->HasUpdate())
-            {
-                ImGui::SameLine();
-                ImGui::TextColored(kGreen, "(update available)");
-                ImGui::TextWrapped("%s", manager.updateChecker_->DownloadUrl().c_str());
-            }
-        }
-
-        ImGui::EndTable();
+        return;
     }
 
-    ImGui::Spacing();
+    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 95.0f);
+    ImGui::TableSetupColumn("Value");
 
+    auto row = [](const char* name)
+        {
+            ImGui::TableNextRow();
+            ImGui::TableSetColumnIndex(0);
+            ImGui::TextDisabled("%s", name);
+            ImGui::TableSetColumnIndex(1);
+        };
+
+    row("OCR");
+
+    if (state.ocrInitializing)
+        ImGui::TextColored(kYellow, "Initializing");
+    else if (state.ocrFailed)
+        ImGui::TextColored(kRed, "Failed");
+    else if (state.ocrReady)
+        ImGui::TextColored(kGreen, "Ready");
+    else
+        ImGui::TextDisabled("Waiting");
+
+    row("Prices");
+    if (state.priceDownloading)
+        ImGui::TextColored(kYellow, "Downloading");
+    else
+        ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
+
+    row("Version");
+    ImGui::Text("v%s", RUNEHELPER_VERSION);
+    if (manager.updateChecker_)
+    {
+        if (manager.updateChecker_->IsChecking())
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(kYellow, "(checking...)");
+        }
+        else if (manager.updateChecker_->HasUpdate())
+        {
+            ImGui::SameLine();
+            ImGui::TextColored(kGreen, "(update available)");
+            ImGui::TextWrapped("%s", manager.updateChecker_->DownloadUrl().c_str());
+        }
+    }
+
+
+    ImGui::EndTable();
+    ImGui::Spacing();
+    /*
+    row("CPU");
+    ImVec4 cpuColor = kGreen;
+    if (state_.cpuUsagePercent > 20.0)
+        cpuColor = kYellow;
+
+    if (state_.cpuUsagePercent > 50.0)
+        cpuColor = kRed;
+
+    ImGui::TextColored(cpuColor, "%.1f%%", state_.cpuUsagePercent);
+    row("RAM");
+    ImGui::Text("%zu MB", state.memoryUsageMb);
+
+    ImGui::EndTable();
+    ImGui::Spacing();
+    */
     //Region
     if (!manager.config_)
         ImGui::End();

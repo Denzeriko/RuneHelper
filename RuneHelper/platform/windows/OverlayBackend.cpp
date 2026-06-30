@@ -17,6 +17,39 @@ RECT ToRect(const OverlayRect& rect)
     return RECT{rect.left, rect.top, rect.right, rect.bottom};
 }
 
+bool EqualText(const OverlayText& a, const OverlayText& b)
+{
+    return a.x == b.x && a.y == b.y && a.color == b.color && a.text == b.text;
+}
+
+bool EqualState(const OverlayState& a, const OverlayState& b)
+{
+    if (a.previewEnabled != b.previewEnabled)
+        return false;
+
+    if (a.fontSize != b.fontSize)
+        return false;
+
+    if (a.previewRect.left != b.previewRect.left ||
+        a.previewRect.top != b.previewRect.top ||
+        a.previewRect.right != b.previewRect.right ||
+        a.previewRect.bottom != b.previewRect.bottom)
+    {
+        return false;
+    }
+
+    if (a.texts.size() != b.texts.size())
+        return false;
+
+    for (size_t i = 0; i < a.texts.size(); ++i)
+    {
+        if (!EqualText(a.texts[i], b.texts[i]))
+            return false;
+    }
+
+    return true;
+}
+
 class WindowsOverlayBackend final : public OverlayBackend
 {
 public:
@@ -135,12 +168,25 @@ void WindowsOverlayBackend::Render(const OverlayState& state)
     if (!hwnd_ || !running_)
         return;
 
+    if (EqualState(state_, state))
+        return;
+
     if (state_.fontSize != state.fontSize)
         RecreateFont(state.fontSize);
 
+    int virtualX = state_.virtualX;
+    int virtualY = state_.virtualY;
+    int virtualW = state_.virtualW;
+    int virtualH = state_.virtualH;
+
     state_ = state;
-    InvalidateRect(hwnd_, nullptr, TRUE);
-    UpdateWindow(hwnd_);
+
+    state_.virtualX = virtualX;
+    state_.virtualY = virtualY;
+    state_.virtualW = virtualW;
+    state_.virtualH = virtualH;
+
+    InvalidateRect(hwnd_, nullptr, FALSE);
 }
 
 void WindowsOverlayBackend::SetVisible(bool visible)
@@ -268,7 +314,12 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
             HBRUSH oldBrush = static_cast<HBRUSH>(SelectObject(hdc, GetStockObject(HOLLOW_BRUSH)));
             RECT rect = ToRect(self->state_.previewRect);
 
-            Rectangle(hdc, rect.left - self->state_.virtualX, rect.top - self->state_.virtualY, rect.right - self->state_.virtualX, rect.bottom - self->state_.virtualY);
+            Rectangle(hdc, 
+                rect.left   - self->state_.virtualX, 
+                rect.top    - self->state_.virtualY, 
+                rect.right  - self->state_.virtualX, 
+                rect.bottom - self->state_.virtualY
+            );
 
             SelectObject(hdc, oldBrush);
             SelectObject(hdc, oldPen);
@@ -276,7 +327,6 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
         }
 
         HFONT oldFont = nullptr;
-
         if (self->font_)
             oldFont = static_cast<HFONT>(SelectObject(hdc, self->font_));
 
