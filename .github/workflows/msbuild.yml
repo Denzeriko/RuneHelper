@@ -41,6 +41,10 @@ jobs:
           git clone --depth=1 https://github.com/microsoft/vcpkg.git
           .\vcpkg\bootstrap-vcpkg.bat
 
+      - name: Integrate vcpkg
+        run: |
+          .\vcpkg\vcpkg.exe integrate install
+
       - name: Install dependencies
         run: |
           .\vcpkg\vcpkg.exe install --triplet=${{ env.VCPKG_TRIPLET }}
@@ -51,6 +55,5 @@ jobs:
             /m `
             /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
             /p:Platform=${{ env.BUILD_PLATFORM }} `
-            /p:VcpkgEnableManifest=true `
             /p:VcpkgTriplet=${{ env.VCPKG_TRIPLET }} `
             /p:VcpkgRoot=${{ github.workspace }}\vcpkg
