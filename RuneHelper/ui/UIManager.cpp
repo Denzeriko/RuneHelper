@@ -129,6 +129,11 @@ void UIManager::SetDebugData(const DebugData& data)
     debugData_ = data;
 }
 
+DebugData UIManager::GetDebugData()
+{
+    return UIManager::debugData_;
+}
+
 void UIManager::RequestToggleOCR()
 {
     state_.wantsToggleOCR = true;

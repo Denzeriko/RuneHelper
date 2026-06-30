@@ -15,6 +15,9 @@ class UIManager;
 namespace UIDraw
 {
 void Draw(UIManager& manager);
+void DrawTitleBar(UIManager& manager, UIState& state);
+void DrawMainTab(UIManager& manager, UIState& state);
+void DrawDebugTab(UIManager& manager, UIState& state);
 }
 
 class UIManager
@@ -27,6 +30,7 @@ public:
     UIManager& operator=(const UIManager&) = delete;
 
     bool Init(AppConfig* config, ConfigManager* configManager);
+    void SetupStyle();
 
     void Shutdown();
     void Pump();
@@ -51,6 +55,7 @@ public:
     void UnregisterHotkeys();
 
     void SetDebugData(const DebugData& data);
+    DebugData GetDebugData();
 
     void RequestToggleOCR();
     void RequestSingleSnapshot();
@@ -59,6 +64,9 @@ public:
 private:
     friend class UIBackend;
     friend void UIDraw::Draw(UIManager& manager);
+    friend void UIDraw::DrawTitleBar(UIManager& manager, UIState& state);
+    friend void UIDraw::DrawMainTab(UIManager& manager, UIState& state);
+    friend void UIDraw::DrawDebugTab(UIManager& manager, UIState& state);
 
     void RequestExit();
     void MarkSaved();

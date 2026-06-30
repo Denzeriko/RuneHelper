@@ -14,6 +14,8 @@ public:
     bool Init(UIManager* manager);
     void Shutdown();
 
+    void SetupStyle();
+
     bool BeginFrame();
     void EndFrame();
 

@@ -43,5 +43,10 @@ struct OverlayState
     OverlayRect previewRect{};
     int fontSize = 24;
 
+    int virtualX = 0;
+    int virtualY = 0;
+    int virtualW = 0;
+    int virtualH = 0;
+
     std::vector<OverlayText> texts;
 };
