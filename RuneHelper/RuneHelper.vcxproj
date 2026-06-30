@@ -68,6 +68,7 @@
     <ClInclude Include="ui\UIState.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\.github\workflows\msbuild.yml" />
     <None Include="resources\eng.traineddata_fast" />
     <None Include="vcpkg.json" />
   </ItemGroup>

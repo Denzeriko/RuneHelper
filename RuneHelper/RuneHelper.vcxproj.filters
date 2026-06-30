@@ -22,6 +22,12 @@
     <Filter Include="ocr">
       <UniqueIdentifier>{4618206b-69d6-4160-a4af-0ac1aa124480}</UniqueIdentifier>
     </Filter>
+    <Filter Include=".github">
+      <UniqueIdentifier>{df804155-9507-441d-9ad9-a69090d640e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include=".github\workflows">
+      <UniqueIdentifier>{58515aaf-fb7b-4aa8-9f76-bc82833a61d6}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="RuneHelper.cpp" />
@@ -165,6 +171,9 @@
       <Filter>resources</Filter>
     </None>
     <None Include="vcpkg.json" />
+    <None Include="..\.github\workflows\msbuild.yml">
+      <Filter>.github\workflows</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Image Include="resources\runehelper.ico">
