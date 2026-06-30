@@ -27,6 +27,9 @@
     <ClCompile Include="ocr\LootParser.cpp" />
     <ClCompile Include="ocr\NameNormalizer.cpp" />
     <ClCompile Include="ocr\OCR.cpp" />
+    <ClCompile Include="platform\windows\OverlayBackend.cpp" />
+    <ClCompile Include="platform\windows\PlatformPaths.cpp" />
+    <ClCompile Include="platform\windows\UIBackend.cpp" />
     <ClCompile Include="platform\windows\RegionSelect.cpp" />
     <ClCompile Include="platform\windows\ResourceHelper.cpp" />
     <ClCompile Include="platform\windows\ScreenCapture.cpp" />
@@ -34,6 +37,7 @@
     <ClCompile Include="price\PriceCache.cpp" />
     <ClCompile Include="RuneHelper.cpp" />
     <ClCompile Include="ui\Overlay.cpp" />
+    <ClCompile Include="ui\UIDraw.cpp" />
     <ClCompile Include="ui\UIManager.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -49,6 +53,9 @@
     <ClInclude Include="ocr\LootParser.h" />
     <ClInclude Include="ocr\NameNormalizer.h" />
     <ClInclude Include="ocr\OCR.h" />
+    <ClInclude Include="platform\OverlayBackend.h" />
+    <ClInclude Include="platform\PlatformPaths.h" />
+    <ClInclude Include="platform\UIBackend.h" />
     <ClInclude Include="platform\windows\RegionSelect.h" />
     <ClInclude Include="platform\windows\ResourceHelper.h" />
     <ClInclude Include="platform\windows\ScreenCapture.h" />
@@ -56,6 +63,8 @@
     <ClInclude Include="price\PriceCache.h" />
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="ui\Overlay.h" />
+    <ClInclude Include="ui\OverlayState.h" />
+    <ClInclude Include="ui\UIDraw.h" />
     <ClInclude Include="ui\UIManager.h" />
     <ClInclude Include="ui\UIState.h" />
   </ItemGroup>

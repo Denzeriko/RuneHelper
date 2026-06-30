@@ -65,6 +65,36 @@ vcpkg install nlohmann-json:x64-windows
 vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
 ```
 
+## Building on Ubuntu
+
+Linux support currently targets X11 only. Run RuneHelper from an X11 session; Wayland support is not implemented yet.
+
+### Install dependencies
+
+```bash
+sudo apt update
+sudo apt install \
+    build-essential \
+    cmake \
+    pkg-config \
+    libopencv-dev \
+    libtesseract-dev \
+    libleptonica-dev \
+    libx11-dev
+```
+
+> **Note:** `libtesseract-dev` provides the C++ API, while `libleptonica-dev` is required by Tesseract.
+
+### Configure and build
+
+```bash
+mkdir -p build
+cd build
+
+cmake ..
+cmake --build . -j$(nproc)
+```
+
 ## Price API
 
 Prices are fetched from:

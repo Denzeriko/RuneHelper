@@ -10,8 +10,15 @@
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 
+#ifdef _WIN32
 #include "platform/windows/RegionSelect.h"
 #include "platform/windows/ResourceHelper.h"
+#include "platform/windows/ScreenCapture.h"
+#else
+#include "platform/linux/RegionSelect.h"
+#include "platform/linux/ResourceHelper.h"
+#include "platform/linux/ScreenCapture.h"
+#endif
 
 int RuneHelperApp::Run()
 {
@@ -177,10 +184,14 @@ void RuneHelperApp::OcrWorkerLoop()
             config_->regionH
         );
 
+#ifdef _WIN32
         cv::Mat img = screenCapture_.CaptureRegion(localRegion);
 
-        //if (img.empty())
-        //    img = CaptureRegion(localRegion); //old capture
+        if (img.empty())
+            img = CaptureRegion(localRegion);
+#else
+        cv::Mat img = CaptureRegion(localRegion);
+#endif
 
         if (!img.empty())
         {
@@ -385,12 +396,12 @@ void RuneHelperApp::UpdateRegionPreview()
 {
     if (!ui_.IsRegionHovered() || config_->regionW <= 0)
     {
-        static RECT empty{};
+        static OverlayRect empty{};
         overlay_.SetRegionPreview(false, empty);
         return;
     }
 
-    RECT rect{
+    OverlayRect rect{
         config_->regionX,
         config_->regionY,
         config_->regionX + config_->regionW,
@@ -409,6 +420,8 @@ void RuneHelperApp::Shutdown()
 {
     running_ = false;
     ui_.RegisterHotkeys();
+#ifdef _WIN32
     screenCapture_.Shutdown();
+#endif
     updateChecker_.Stop();
 }

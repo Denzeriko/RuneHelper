@@ -2,6 +2,7 @@
 
 #include "core/Logger.h"
 #include "ocr/NameNormalizer.h"
+#include "platform/PlatformPaths.h"
 
 #include <algorithm>
 #include <cctype>
@@ -94,7 +95,7 @@ void OCR::SetDebug(bool enabled)
 void OCR::SetupTesseract()
 {
     api_.SetPageSegMode(tesseract::PSM_SPARSE_TEXT);
-    api_.SetVariable("debug_file", "NUL");
+    api_.SetVariable("debug_file", NULL_DEVICE.data());
     api_.SetVariable("classify_bln_numeric_mode", "0");
     api_.SetVariable("preserve_interword_spaces", "1");
     api_.SetVariable(

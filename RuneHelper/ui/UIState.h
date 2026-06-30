@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <cstddef>
 
 struct UIState
 {
@@ -14,6 +15,8 @@ struct UIState
     bool wantsRefreshPrices = false;
     bool wantsToggleOCR = false;
     bool wantsSingleSnapshot = false;
+    bool wantsTestOcr = false;
+    bool wantsResetOcr = false;
     bool wantsOCRRebuild = false;
 
     bool regionHovered = false;

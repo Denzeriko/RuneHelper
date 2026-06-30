@@ -34,6 +34,9 @@
     <ClCompile Include="ui\UIManager.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="ui\UIDraw.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
     <ClCompile Include="price\PriceCache.cpp">
       <Filter>price</Filter>
     </ClCompile>
@@ -44,6 +47,15 @@
       <Filter>platform\windows</Filter>
     </ClCompile>
     <ClCompile Include="platform\windows\ScreenCapture.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\PlatformPaths.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\OverlayBackend.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\UIBackend.cpp">
       <Filter>platform\windows</Filter>
     </ClCompile>
     <ClCompile Include="ocr\LootParser.cpp">
@@ -81,6 +93,9 @@
     <ClInclude Include="ui\Overlay.h">
       <Filter>ui</Filter>
     </ClInclude>
+    <ClInclude Include="ui\OverlayState.h">
+      <Filter>ui</Filter>
+    </ClInclude>
     <ClInclude Include="resources\resource.h">
       <Filter>resources</Filter>
     </ClInclude>
@@ -95,6 +110,15 @@
     </ClInclude>
     <ClInclude Include="platform\windows\ScreenCapture.h">
       <Filter>platform\windows</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\PlatformPaths.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\OverlayBackend.h">
+      <Filter>platform</Filter>
+    </ClInclude>
+    <ClInclude Include="platform\UIBackend.h">
+      <Filter>platform</Filter>
     </ClInclude>
     <ClInclude Include="ocr\LootParser.h">
       <Filter>ocr</Filter>
@@ -127,6 +151,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="ui\UIManager.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\UIDraw.h">
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\UIState.h">

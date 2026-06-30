@@ -1,119 +1,78 @@
-#include "Overlay.h"
+#include "ui/Overlay.h"
 
-#include <windows.h>
-#include <vector>
+#include <utility>
 
-#include "core/Logger.h"
+#include "platform/OverlayBackend.h"
+
+OverlayWindow::OverlayWindow()
+    : backend_(CreateOverlayBackend())
+{
+}
+
+OverlayWindow::~OverlayWindow()
+{
+    Shutdown();
+}
 
 bool OverlayWindow::Create()
 {
-    WNDCLASSW wc{};
-    wc.lpfnWndProc = WndProc;
-    wc.hInstance = GetModuleHandleW(nullptr);
-    wc.lpszClassName = L"RuneHelperOverlay";
-
-    RegisterClassW(&wc);
-
-    virtualX_ = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    virtualY_ = GetSystemMetrics(SM_YVIRTUALSCREEN);
-    virtualW_ = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    virtualH_ = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-    hwnd_ = CreateWindowExW(
-        WS_EX_TOPMOST |
-        WS_EX_LAYERED |
-        WS_EX_TRANSPARENT |
-        WS_EX_TOOLWINDOW |
-        WS_EX_NOACTIVATE,
-        wc.lpszClassName,
-        L"RuneHelperOverlay",
-        WS_POPUP,
-        virtualX_,
-        virtualY_,
-        virtualW_,
-        virtualH_,
-        nullptr,
-        nullptr,
-        wc.hInstance,
-        this
-    );
-
-    if (!hwnd_) {
-        LOG_ERROR("OverlayWindow::Create() No HWND!");
+    if (!backend_)
         return false;
+
+    state_.running = backend_->Init("RuneHelperOverlay", 800, 600);
+
+    if (state_.running)
+    {
+        backend_->SetAlwaysOnTop(state_.alwaysOnTop);
+        backend_->SetClickThrough(state_.clickThrough);
+        backend_->SetVisible(state_.visible);
     }
 
-    SetLayeredWindowAttributes(hwnd_, RGB(0, 0, 0), 0, LWA_COLORKEY);
+    return state_.running;
+}
 
-    ShowWindow(hwnd_, SW_SHOW);
-    UpdateWindow(hwnd_);
+void OverlayWindow::Shutdown()
+{
+    state_.running = false;
 
-    LOG_INFO("OverlayWindow::Create() TRUE");
-
-    return true;
+    if (backend_)
+        backend_->Shutdown();
 }
 
 void OverlayWindow::BringToTop()
 {
-    if (!hwnd_)
-        return;
+    state_.alwaysOnTop = true;
 
-    SetWindowPos(
-        hwnd_,
-        HWND_TOPMOST,
-        0,
-        0,
-        0,
-        0,
-        SWP_NOMOVE |
-        SWP_NOSIZE |
-        SWP_NOACTIVATE |
-        SWP_SHOWWINDOW
-    );
+    if (backend_)
+        backend_->BringToTop();
 }
 
-void OverlayWindow::SetRegionPreview(bool enabled, const RECT& rect)
+void OverlayWindow::SetRegionPreview(bool enabled, const OverlayRect& rect)
 {
     bool sameRect =
-        previewRect_.left == rect.left &&
-        previewRect_.top == rect.top &&
-        previewRect_.right == rect.right &&
-        previewRect_.bottom == rect.bottom;
+        state_.previewRect.left == rect.left &&
+        state_.previewRect.top == rect.top &&
+        state_.previewRect.right == rect.right &&
+        state_.previewRect.bottom == rect.bottom;
 
-    if (previewEnabled_ == enabled && sameRect)
+    if (state_.previewEnabled == enabled && sameRect)
         return;
 
-    previewEnabled_ = enabled;
-    previewRect_ = rect;
-
-    InvalidateRect(hwnd_, nullptr, FALSE);
+    state_.previewEnabled = enabled;
+    state_.previewRect = rect;
 }
 
 void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
 {
-    texts_ = std::move(texts);
-    InvalidateRect(hwnd_, nullptr, TRUE);
-    UpdateWindow(hwnd_);
+    state_.texts = std::move(texts);
 }
 
 void OverlayWindow::SetFontSize(int size)
 {
-    if (size <= 0)
+    if (size <= 0 || state_.fontSize == size)
         return;
 
-    if (fontSize_ == size)
-        return;
-
-    LOG_INFO("OverlayWindow::SetFontSize -> call");
-
-    fontSize_ = size;
-
-    RecreateFont();
-
-    LOG_INFO("RecreateFont() done");
-
-    if (hwnd_)
-        InvalidateRect(hwnd_, nullptr, TRUE);
+    state_.fontSize = size;
 }
 
 void OverlayWindow::SetFontSizeForce(int size)
@@ -121,154 +80,21 @@ void OverlayWindow::SetFontSizeForce(int size)
     if (size <= 0)
         return;
 
-    LOG_INFO("OverlayWindow::SetFontSizeForce -> call");
-
-    fontSize_ = size;
-
-    RecreateFont();
-
-    LOG_INFO("RecreateFont() done");
-
-    if (hwnd_)
-        InvalidateRect(hwnd_, nullptr, TRUE);
+    state_.fontSize = size;
 }
 
 void OverlayWindow::PumpMessages()
 {
-    MSG msg;
-    while (PeekMessageW(&msg, nullptr, 0, 0, PM_REMOVE))
-    {
-        TranslateMessage(&msg);
-        DispatchMessageW(&msg);
-    }
-}
+    if (!backend_ || !state_.running)
+        return;
 
-void OverlayWindow::RecreateFont()
-{
-    if (font_)
+    backend_->PumpEvents();
+
+    if (!backend_->IsRunning())
     {
-        DeleteObject(font_);
-        font_ = nullptr;
+        state_.running = false;
+        return;
     }
 
-    HDC hdc = GetDC(nullptr);
-
-    int dpi = GetDeviceCaps(hdc, LOGPIXELSY);
-
-    ReleaseDC(nullptr, hdc);
-
-    int height = -MulDiv(fontSize_, dpi, 72);
-
-    font_ = CreateFontW(
-        height,
-        0,
-        0,
-        0,
-        FW_BOLD,
-        FALSE,
-        FALSE,
-        FALSE,
-        DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS,
-        CLIP_DEFAULT_PRECIS,
-        CLEARTYPE_QUALITY,
-        DEFAULT_PITCH | FF_DONTCARE,
-        L"Segoe UI"
-    );
-}
-
-LRESULT CALLBACK OverlayWindow::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
-{
-    OverlayWindow* self = nullptr;
-
-    if (msg == WM_NCCREATE)
-    {
-        auto cs = reinterpret_cast<CREATESTRUCTW*>(lp);
-
-        self = reinterpret_cast<OverlayWindow*>(cs->lpCreateParams);
-
-        SetWindowLongPtrW(hwnd, GWLP_USERDATA, reinterpret_cast<LONG_PTR>(self));
-
-        self->hwnd_ = hwnd;
-    }
-    else
-    {
-        self = reinterpret_cast<OverlayWindow*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-    }
-
-    if (!self)
-        return DefWindowProcW(hwnd, msg, wp, lp);
-
-    switch (msg)
-    {
-    case WM_PAINT:
-    {
-        PAINTSTRUCT ps;
-        HDC hdc = BeginPaint(hwnd, &ps);
-
-        RECT client;
-        GetClientRect(hwnd, &client);
-
-        HBRUSH bg = CreateSolidBrush(RGB(0, 0, 0));
-        FillRect(hdc, &client, bg);
-        DeleteObject(bg);
-
-        SetBkMode(hdc, TRANSPARENT);
-        SetTextColor(hdc, RGB(80, 240, 80));
-
-        if (self->previewEnabled_)
-        {
-            HPEN pen = CreatePen(PS_SOLID, 3, RGB(0, 255, 0));
-            HGDIOBJ oldPen = SelectObject(hdc, pen);
-
-            HBRUSH oldBrush = (HBRUSH)SelectObject(
-                hdc,
-                GetStockObject(HOLLOW_BRUSH)
-            );
-
-            Rectangle(
-                hdc,
-                self->previewRect_.left - self->virtualX_,
-                self->previewRect_.top - self->virtualY_,
-                self->previewRect_.right - self->virtualX_,
-                self->previewRect_.bottom - self->virtualY_
-            );
-
-            SelectObject(hdc, oldBrush);
-            SelectObject(hdc, oldPen);
-            DeleteObject(pen);
-        }
-
-        HFONT oldFont = nullptr;
-
-        if (self->font_)
-            oldFont = (HFONT)SelectObject(hdc, self->font_);
-
-        for (const auto& t : self->texts_)
-        {
-            SetTextColor(hdc, t.color);
-
-            int x = t.x - self->virtualX_;
-            int y = t.y - self->virtualY_;
-
-            RECT r{x, y - 20, x + 300, y + 20};
-
-            DrawTextW(hdc, t.text.c_str(), -1, &r, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
-        }
-
-        if (oldFont)
-            SelectObject(hdc, oldFont);
-
-        EndPaint(hwnd, &ps);
-        return 0;
-    }
-
-    case WM_ERASEBKGND:
-        return 1;
-
-    case WM_DESTROY:
-        return 0;
-    }
-
-    return DefWindowProcW(hwnd, msg, wp, lp);
+    backend_->Render(state_);
 }

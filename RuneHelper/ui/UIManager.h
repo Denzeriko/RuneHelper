@@ -1,18 +1,26 @@
 #pragma once
 
-#include <windows.h>
-#include <d3d11.h>
+#include <cstddef>
+#include <memory>
 
 #include "core/Config.h"
 #include "core/ConfigManager.h"
+#include "core/DebugData.h"
 #include "core/UpdateChecker.h"
 #include "ui/UIState.h"
-#include "core/DebugData.h"
+
+class UIBackend;
+class UIManager;
+
+namespace UIDraw
+{
+void Draw(UIManager& manager);
+}
 
 class UIManager
 {
 public:
-    UIManager() = default;
+    UIManager();
     ~UIManager();
 
     UIManager(const UIManager&) = delete;
@@ -26,15 +34,15 @@ public:
     bool IsRunning() const;
 
     void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
-
     void SetPriceStatus(bool downloading, size_t priceCount);
-
     void SetUpdateChecker(UpdateChecker* checker);
 
     bool WantsSelectRegion();
     bool WantsRefreshPrices();
     bool WantsToggleOCR();
     bool WantsSingleSnapshot();
+    bool WantsTestOcr();
+    bool WantsResetOcr();
     bool WantsOCRRebuild();
 
     bool IsRegionHovered() const;
@@ -44,51 +52,23 @@ public:
 
     void SetDebugData(const DebugData& data);
 
-private:
-    bool CreateAppWindow();
-    bool CreateDeviceD3D();
-
-    void CleanupDeviceD3D();
-    void CreateRenderTarget();
-    void CleanupRenderTarget();
-
-    void Render();
-
-    void DrawTitleBar();
-    void DrawSettings();
-    void DrawMainTab();
-    void DrawDebugTab();
-
-    void DrawStatusSection();
-    void DrawRegionSection();
-    void DrawOcrSection();
-    void DrawHotkeysSection();
-    void DrawOverlaySection();
-    void DrawPricesSection();
-    void DrawBottomSection();
-
-    void DrawHotkeyButton(const char* label, int& key);
-
-    static bool IsMouseVk(int vk);
-
-    static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
+    void RequestToggleOCR();
+    void RequestSingleSnapshot();
+    void RequestSelectRegion();
 
 private:
-    HWND hwnd_ = nullptr;
+    friend class UIBackend;
+    friend void UIDraw::Draw(UIManager& manager);
 
-    ID3D11Device* device_ = nullptr;
-    ID3D11DeviceContext* deviceContext_ = nullptr;
-    IDXGISwapChain* swapChain_ = nullptr;
-    ID3D11RenderTargetView* renderTargetView_ = nullptr;
+    void RequestExit();
+    void MarkSaved();
 
     AppConfig* config_ = nullptr;
     ConfigManager* configManager_ = nullptr;
     UpdateChecker* updateChecker_ = nullptr;
 
     UIState state_;
-
     DebugData debugData_;
 
-    int* waitingForHotkey_ = nullptr;
-    bool hotkeyCaptureSkipFrame_ = false;
+    std::unique_ptr<UIBackend> backend_;
 };
