@@ -96,7 +96,10 @@ void UIDraw::Draw(UIManager& manager)
         ImGui::SameLine();
 
         if (ImGui::Button("Reset OCR engine"))
+        {
             state.wantsResetOcr = true;
+            state.wantsOCRRebuild = true;
+        }
 
         ImGui::Separator();
         ImGui::Text("Overlay");

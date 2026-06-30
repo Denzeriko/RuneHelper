@@ -1,5 +1,6 @@
 #include "LootParser.h"
 
+#include <cstdio>
 #include <regex>
 #include <iostream>
 #include <sstream>
@@ -48,9 +49,9 @@ std::string LootParser::FormatPrice(double value)
     char buf[64];
 
     if (value >= 10.0)
-        sprintf_s(buf, "%.1f ex", value);
+        std::snprintf(buf, sizeof(buf), "%.1f ex", value);
     else
-        sprintf_s(buf, "%.2f ex", value);
+        std::snprintf(buf, sizeof(buf), "%.2f ex", value);
 
     std::string s = buf;
 

@@ -96,6 +96,11 @@ bool UIManager::WantsResetOcr()
     return std::exchange(state_.wantsResetOcr, false);
 }
 
+bool UIManager::WantsOCRRebuild()
+{
+    return std::exchange(state_.wantsOCRRebuild, false);
+}
+
 bool UIManager::IsRegionHovered() const
 {
     return state_.regionHovered;

@@ -184,10 +184,14 @@ void RuneHelperApp::OcrWorkerLoop()
             config_->regionH
         );
 
+#ifdef _WIN32
         cv::Mat img = screenCapture_.CaptureRegion(localRegion);
 
-        //if (img.empty())
-        //    img = CaptureRegion(localRegion); //old capture
+        if (img.empty())
+            img = CaptureRegion(localRegion);
+#else
+        cv::Mat img = CaptureRegion(localRegion);
+#endif
 
         if (!img.empty())
         {
@@ -416,6 +420,8 @@ void RuneHelperApp::Shutdown()
 {
     running_ = false;
     ui_.RegisterHotkeys();
+#ifdef _WIN32
     screenCapture_.Shutdown();
+#endif
     updateChecker_.Stop();
 }
