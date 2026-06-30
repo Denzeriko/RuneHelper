@@ -118,8 +118,10 @@ add_executable(runehelper
   ocr/OCR.cpp
   price/PriceCache.cpp
   ui/Overlay.cpp
+  ui/UIManager.cpp
+  ui/UIDraw.cpp
   platform/linux/PlatformPaths.cpp
-  platform/linux/UIManager.cpp
+  platform/linux/UIBackend.cpp
   platform/linux/ScreenCapture.cpp
   platform/linux/RegionSelect.cpp
   platform/linux/ResourceHelper.cpp

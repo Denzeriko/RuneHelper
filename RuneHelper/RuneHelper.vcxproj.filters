@@ -34,6 +34,9 @@
     <ClCompile Include="ui\UIManager.cpp">
       <Filter>ui</Filter>
     </ClCompile>
+    <ClCompile Include="ui\UIDraw.cpp">
+      <Filter>ui</Filter>
+    </ClCompile>
     <ClCompile Include="price\PriceCache.cpp">
       <Filter>price</Filter>
     </ClCompile>
@@ -47,6 +50,9 @@
       <Filter>platform\windows</Filter>
     </ClCompile>
     <ClCompile Include="platform\windows\PlatformPaths.cpp">
+      <Filter>platform\windows</Filter>
+    </ClCompile>
+    <ClCompile Include="platform\windows\UIBackend.cpp">
       <Filter>platform\windows</Filter>
     </ClCompile>
     <ClCompile Include="ocr\LootParser.cpp">
@@ -102,6 +108,9 @@
     <ClInclude Include="platform\PlatformPaths.h">
       <Filter>platform</Filter>
     </ClInclude>
+    <ClInclude Include="platform\UIBackend.h">
+      <Filter>platform</Filter>
+    </ClInclude>
     <ClInclude Include="ocr\LootParser.h">
       <Filter>ocr</Filter>
     </ClInclude>
@@ -133,6 +142,9 @@
       <Filter>core</Filter>
     </ClInclude>
     <ClInclude Include="ui\UIManager.h">
+      <Filter>ui</Filter>
+    </ClInclude>
+    <ClInclude Include="ui\UIDraw.h">
       <Filter>ui</Filter>
     </ClInclude>
     <ClInclude Include="ui\UIState.h">
