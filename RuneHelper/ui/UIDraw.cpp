@@ -8,6 +8,7 @@
 #include "core/Logger.h"
 #include "core/Version.h"
 #include "ui/UIManager.h"
+#include "core/Helpers.h"
 
 namespace
 {
@@ -187,9 +188,9 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     //HOTKEYS
     ImGui::SeparatorText("HOTKEYS");
-    //DrawHotkeyButton("Toggle OCR", config_->hotkeyToggleOCR);
-    //DrawHotkeyButton("Single Snapshot", config_->hotkeySingleSnapshot);
-    //DrawHotkeyButton("Select Region", config_->hotkeySelectRegion);
+    //DrawHotkeyButton("Toggle OCR", config.hotkeyToggleOCR);
+    //DrawHotkeyButton("Single Snapshot", config.hotkeySingleSnapshot);
+    //DrawHotkeyButton("Select Region", config.hotkeySelectRegion);
     ImGui::Spacing();
 
     //PRICES
@@ -344,3 +345,65 @@ void UIDraw::Draw(UIManager& manager)
 
     ImGui::End();
 }
+
+/*void UIManager::DrawHotkeyButton(const char* label, int& key)
+{
+    ImGui::TextUnformatted(label);
+    ImGui::SameLine(220);
+
+    std::string text;
+
+    if (state.waitingForHotkey_ == &key)
+        text = "Press any key...";
+    else
+        text = VkToString(key);
+
+    if (ImGui::Button(text.c_str(), ImVec2(180, 0)))
+    {
+        waitingForHotkey_ = &key;
+        hotkeyCaptureSkipFrame_ = true;
+    }
+
+    if (waitingForHotkey_ != &key)
+        return;
+
+    if (hotkeyCaptureSkipFrame_)
+    {
+        hotkeyCaptureSkipFrame_ = false;
+        return;
+    }
+
+    if (GetAsyncKeyState(VK_ESCAPE) & 1)
+    {
+        key = 0;
+
+        waitingForHotkey_ = nullptr;
+
+        if (configManager_)
+            configManager_->Save();
+
+        RegisterHotkeys();
+
+        return;
+    }
+
+    for (int vk = 1; vk < 256; ++vk)
+    {
+        if (IsMouseVk(vk))
+            continue;
+
+        if (GetAsyncKeyState(vk) & 1)
+        {
+            key = vk;
+
+            waitingForHotkey_ = nullptr;
+
+            if (configManager_)
+                configManager_->Save();
+
+            RegisterHotkeys();
+
+            break;
+        }
+    }
+}*/
