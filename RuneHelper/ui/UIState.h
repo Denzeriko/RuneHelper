@@ -17,6 +17,7 @@ struct UIState
     bool wantsSingleSnapshot = false;
     bool wantsTestOcr = false;
     bool wantsResetOcr = false;
+    bool wantsOCRRebuild = false;
 
     bool regionHovered = false;
 

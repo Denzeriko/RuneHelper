@@ -28,10 +28,13 @@ public:
     OCR& operator=(const OCR&) = delete;
 
     bool Init(const std::string& tessdataPath);
+    void SetupTesseractApi(tesseract::TessBaseAPI& api);
+    bool ReinitializeWorkers();
 
     void SetConfig(const AppConfig* config);
     void SetDebug(bool enabled);
 
+    std::vector<LootLine> RecognizePreparedWithApi(tesseract::TessBaseAPI& api, const cv::Mat& img);
     std::vector<LootLine> RecognizeLoot(const cv::Mat& src);
     std::vector<LootLine> RecognizeLoot2(const cv::Mat& src);
 
@@ -44,6 +47,10 @@ private:
     std::vector<LootLine> lastResult_;
 
     const AppConfig* config_ = nullptr;
+
+    std::mutex workerMutex_;
+    std::string tessdataPath_;
+    std::vector<std::unique_ptr<tesseract::TessBaseAPI>> workerApis_;
 
 private:
     void SetupTesseract();

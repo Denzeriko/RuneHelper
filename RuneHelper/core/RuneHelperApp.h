@@ -40,6 +40,8 @@ private:
     void UpdateOverlay();
     void UpdateRegionPreview();
 
+    void RequestOcrRebuild();
+
 private:
     ConfigManager configManager_;
     AppConfig* config_ = nullptr;
@@ -75,4 +77,6 @@ private:
 
     std::mutex cachedNamesMutex_;
     std::vector<CachedItemName> cachedItemNames_;
+
+    std::atomic<bool> ocrRebuildRequested_ = false;
 };

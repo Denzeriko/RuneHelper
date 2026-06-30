@@ -43,6 +43,7 @@ public:
     bool WantsSingleSnapshot();
     bool WantsTestOcr();
     bool WantsResetOcr();
+    bool WantsOCRRebuild();
 
     bool IsRegionHovered() const;
 
