@@ -1,6 +1,5 @@
 #pragma once
 
-#include <chrono>
 #include <cstddef>
 #include <memory>
 
@@ -71,19 +70,4 @@ private:
     DebugData debugData_;
 
     std::unique_ptr<UIBackend> backend_;
-
-    bool ocrInitializing_ = false;
-    bool ocrReady_ = false;
-    bool ocrFailed_ = false;
-    bool wantsSelectRegion_ = false;
-    bool wantsRefreshPrices_ = false;
-    bool wantsToggleOCR_ = false;
-    bool wantsSingleSnapshot_ = false;
-    bool wantsTestOcr_ = false;
-    bool wantsResetOcr_ = false;
-    bool regionHovered_ = false;
-    bool priceDownloading_ = false;
-    size_t priceCount_ = 0;
-    bool showSaved_ = false;
-    std::chrono::steady_clock::time_point savedAt_;
 };

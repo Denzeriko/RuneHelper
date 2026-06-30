@@ -1,5 +1,7 @@
 #include "ui/UIManager.h"
 
+#include <utility>
+
 #include "platform/UIBackend.h"
 #include "ui/UIDraw.h"
 
@@ -17,11 +19,14 @@ bool UIManager::Init(AppConfig* config, ConfigManager* configManager)
 {
     config_ = config;
     configManager_ = configManager;
-    return backend_ && backend_->Init(this);
+    state_.running = backend_ && backend_->Init(this);
+    return state_.running;
 }
 
 void UIManager::Shutdown()
 {
+    state_.running = false;
+
     if (backend_)
         backend_->Shutdown();
 }
@@ -29,7 +34,10 @@ void UIManager::Shutdown()
 void UIManager::Pump()
 {
     if (!backend_ || !backend_->BeginFrame())
+    {
+        state_.running = false;
         return;
+    }
 
     UIDraw::Draw(*this);
     backend_->EndFrame();
@@ -37,20 +45,20 @@ void UIManager::Pump()
 
 bool UIManager::IsRunning() const
 {
-    return backend_ && backend_->IsRunning();
+    return state_.running && backend_ && backend_->IsRunning();
 }
 
 void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
 {
-    ocrInitializing_ = ocrInitializing;
-    ocrReady_ = ocrReady;
-    ocrFailed_ = ocrFailed;
+    state_.ocrInitializing = ocrInitializing;
+    state_.ocrReady = ocrReady;
+    state_.ocrFailed = ocrFailed;
 }
 
 void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
 {
-    priceDownloading_ = downloading;
-    priceCount_ = priceCount;
+    state_.priceDownloading = downloading;
+    state_.priceCount = priceCount;
 }
 
 void UIManager::SetUpdateChecker(UpdateChecker* checker)
@@ -60,49 +68,37 @@ void UIManager::SetUpdateChecker(UpdateChecker* checker)
 
 bool UIManager::WantsSelectRegion()
 {
-    bool value = wantsSelectRegion_;
-    wantsSelectRegion_ = false;
-    return value;
+    return std::exchange(state_.wantsSelectRegion, false);
 }
 
 bool UIManager::WantsRefreshPrices()
 {
-    bool value = wantsRefreshPrices_;
-    wantsRefreshPrices_ = false;
-    return value;
+    return std::exchange(state_.wantsRefreshPrices, false);
 }
 
 bool UIManager::WantsToggleOCR()
 {
-    bool value = wantsToggleOCR_;
-    wantsToggleOCR_ = false;
-    return value;
+    return std::exchange(state_.wantsToggleOCR, false);
 }
 
 bool UIManager::WantsSingleSnapshot()
 {
-    bool value = wantsSingleSnapshot_;
-    wantsSingleSnapshot_ = false;
-    return value;
+    return std::exchange(state_.wantsSingleSnapshot, false);
 }
 
 bool UIManager::WantsTestOcr()
 {
-    bool value = wantsTestOcr_;
-    wantsTestOcr_ = false;
-    return value;
+    return std::exchange(state_.wantsTestOcr, false);
 }
 
 bool UIManager::WantsResetOcr()
 {
-    bool value = wantsResetOcr_;
-    wantsResetOcr_ = false;
-    return value;
+    return std::exchange(state_.wantsResetOcr, false);
 }
 
 bool UIManager::IsRegionHovered() const
 {
-    return regionHovered_;
+    return state_.regionHovered;
 }
 
 void UIManager::RegisterHotkeys()
@@ -130,27 +126,29 @@ void UIManager::SetDebugData(const DebugData& data)
 
 void UIManager::RequestToggleOCR()
 {
-    wantsToggleOCR_ = true;
+    state_.wantsToggleOCR = true;
 }
 
 void UIManager::RequestSingleSnapshot()
 {
-    wantsSingleSnapshot_ = true;
+    state_.wantsSingleSnapshot = true;
 }
 
 void UIManager::RequestSelectRegion()
 {
-    wantsSelectRegion_ = true;
+    state_.wantsSelectRegion = true;
 }
 
 void UIManager::RequestExit()
 {
+    state_.running = false;
+
     if (backend_)
         backend_->RequestClose();
 }
 
 void UIManager::MarkSaved()
 {
-    showSaved_ = true;
-    savedAt_ = std::chrono::steady_clock::now();
+    state_.showSaved = true;
+    state_.savedAt = std::chrono::steady_clock::now();
 }

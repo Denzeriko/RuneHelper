@@ -38,6 +38,8 @@ void ClampConfig(AppConfig& config)
 
 void UIDraw::Draw(UIManager& manager)
 {
+    UIState& state = manager.state_;
+
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
 
@@ -52,12 +54,12 @@ void UIDraw::Draw(UIManager& manager)
     ImGui::Text("RuneHelper %s", RUNEHELPER_VERSION);
     ImGui::Separator();
 
-    ImGui::Text("OCR: %s", OcrStatusText(manager.ocrInitializing_, manager.ocrReady_, manager.ocrFailed_));
+    ImGui::Text("OCR: %s", OcrStatusText(state.ocrInitializing, state.ocrReady, state.ocrFailed));
 
-    if (manager.priceDownloading_)
+    if (state.priceDownloading)
         ImGui::Text("Prices: Downloading...");
     else
-        ImGui::Text("Prices: Loaded (%zu items)", manager.priceCount_);
+        ImGui::Text("Prices: Loaded (%zu items)", state.priceCount);
 
     ImGui::Separator();
 
@@ -68,9 +70,9 @@ void UIDraw::Draw(UIManager& manager)
         ImGui::Text("Region");
 
         if (ImGui::Button("Select Region"))
-            manager.wantsSelectRegion_ = true;
+            state.wantsSelectRegion = true;
 
-        manager.regionHovered_ = ImGui::IsItemHovered();
+        state.regionHovered = ImGui::IsItemHovered();
 
         ImGui::SameLine();
 
@@ -89,12 +91,12 @@ void UIDraw::Draw(UIManager& manager)
         ImGui::SliderInt("OCR interval ms", &config.ocrIntervalMs, 100, 2000);
 
         if (ImGui::Button("Test OCR"))
-            manager.wantsTestOcr_ = true;
+            state.wantsTestOcr = true;
 
         ImGui::SameLine();
 
         if (ImGui::Button("Reset OCR engine"))
-            manager.wantsResetOcr_ = true;
+            state.wantsResetOcr = true;
 
         ImGui::Separator();
         ImGui::Text("Overlay");
@@ -114,7 +116,7 @@ void UIDraw::Draw(UIManager& manager)
         ClampConfig(config);
 
         if (ImGui::Button("Refresh Prices"))
-            manager.wantsRefreshPrices_ = true;
+            state.wantsRefreshPrices = true;
 
         ImGui::SameLine();
 
@@ -131,9 +133,9 @@ void UIDraw::Draw(UIManager& manager)
             }
         }
 
-        if (manager.showSaved_)
+        if (state.showSaved)
         {
-            auto elapsed = std::chrono::steady_clock::now() - manager.savedAt_;
+            auto elapsed = std::chrono::steady_clock::now() - state.savedAt;
 
             if (elapsed < std::chrono::seconds(1))
             {
@@ -142,7 +144,7 @@ void UIDraw::Draw(UIManager& manager)
             }
             else
             {
-                manager.showSaved_ = false;
+                state.showSaved = false;
             }
         }
     }
