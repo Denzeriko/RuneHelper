@@ -25,6 +25,7 @@ public:
     void RefreshIfNeeded();
     void ForceRefreshAsync();
     void SetRefreshMinutes(int minutes);
+    void SetLeague(std::string league);
 
     bool IsRefreshInProgress() const;
     size_t GetPriceCount() const;
@@ -34,6 +35,7 @@ public:
 
 private:
     static int64_t NowUnix();
+    static std::string EncodeUrlComponent(const std::string& text);
 
     void RefreshWorker();
 
@@ -53,6 +55,7 @@ private:
 
     int64_t dump_updated_at_ = 0;
     int64_t refresh_seconds_ = 60 * 60;
+    std::string league_ = "Runes of Aldur";
 
     std::atomic<bool> refreshInProgress_ = false;
     std::jthread refreshThread_;

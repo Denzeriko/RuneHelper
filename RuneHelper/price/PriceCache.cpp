@@ -7,6 +7,7 @@
 
 #include <chrono>
 #include <algorithm>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -41,6 +42,39 @@ namespace
         "Abyss",
         "Fragments"
     };
+
+    std::string DumpFileNameForLeague(const std::string& league)
+    {
+        std::string suffix;
+        suffix.reserve(league.size());
+
+        for (unsigned char ch : league)
+        {
+            if ((ch >= 'A' && ch <= 'Z') ||
+                (ch >= 'a' && ch <= 'z') ||
+                (ch >= '0' && ch <= '9'))
+            {
+                suffix.push_back(static_cast<char>(ch));
+            }
+            else if (suffix.empty() || suffix.back() != '_')
+            {
+                suffix.push_back('_');
+            }
+        }
+
+        while (!suffix.empty() && suffix.back() == '_')
+            suffix.pop_back();
+
+        if (suffix.empty())
+            suffix = "unknown";
+
+        return "prices_dump_" + suffix + ".json";
+    }
+
+    std::filesystem::path DumpPathForLeague(const std::string& league)
+    {
+        return GetAppDataDir() / DumpFileNameForLeague(league);
+    }
 }
 
 PriceCache::PriceCache()
@@ -114,6 +148,21 @@ void PriceCache::SetRefreshMinutes(int minutes)
     refresh_seconds_ = clampedMinutes * 60;
 }
 
+void PriceCache::SetLeague(std::string league)
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (league_ == league)
+            return;
+
+        league_ = std::move(league);
+        prices_.clear();
+        dump_updated_at_ = 0;
+    }
+
+    LoadDump();
+}
+
 bool PriceCache::IsRefreshInProgress() const
 {
     return refreshInProgress_.load();
@@ -155,6 +204,33 @@ int64_t PriceCache::NowUnix()
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
+std::string PriceCache::EncodeUrlComponent(const std::string& text)
+{
+    std::ostringstream out;
+    out << std::uppercase << std::hex;
+
+    for (unsigned char ch : text)
+    {
+        if ((ch >= 'A' && ch <= 'Z') ||
+            (ch >= 'a' && ch <= 'z') ||
+            (ch >= '0' && ch <= '9') ||
+            ch == '-' || ch == '_' || ch == '.' || ch == '~')
+        {
+            out << static_cast<char>(ch);
+        }
+        else if (ch == ' ')
+        {
+            out << '+';
+        }
+        else
+        {
+            out << '%' << std::setw(2) << std::setfill('0') << static_cast<int>(ch);
+        }
+    }
+
+    return out.str();
+}
+
 std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
 {
     LOG_INFO("PriceCache::DownloadFullDump() -> poe.ninja");
@@ -180,7 +256,14 @@ std::unordered_map<std::string, PriceInfo> PriceCache::DownloadFullDump()
 std::unordered_map<std::string, PriceInfo>
 PriceCache::DownloadPoeNinjaDump(const std::string& type)
 {
-    const std::string url = "https://poe.ninja/poe2/api/economy/exchange/current/overview?league=Runes+of+Aldur&type=" + type;
+    std::string league;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        league = league_;
+    }
+
+    const std::string encodedLeague = EncodeUrlComponent(league);
+    const std::string url = "https://poe.ninja/poe2/api/economy/exchange/current/overview?league=" + encodedLeague + "&type=" + type;
 
     LOG_INFO("PriceCache::DownloadPoeNinjaDump() -> " + url);
 
@@ -189,7 +272,7 @@ PriceCache::DownloadPoeNinjaDump(const std::string& type)
         cpr::Header{
             { "User-Agent", "RuneHelper/1.0" },
             { "Accept", "application/json" },
-            { "Referer", "https://poe.ninja/poe2/economy/runesofaldur/" }
+            { "Referer", "https://poe.ninja/poe2/economy/" }
         },
         cpr::Timeout{ 15000 }
     );
@@ -307,14 +390,17 @@ void PriceCache::SaveDump()
     json j;
     j["items"] = json::object();
 
+    std::string league;
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        league = league_;
+        j["league"] = league;
         j["dump_updated_at"] = dump_updated_at_;
         for (const auto& [name, info] : prices_)
             j["items"][name] = info.price;
     }
 
-    std::ofstream file(GetAppDataDir() / "prices_dump.json");
+    std::ofstream file(DumpPathForLeague(league));
 
     if (!file)
     {
@@ -331,7 +417,13 @@ void PriceCache::LoadDump()
 {
     LOG_INFO("PriceCache::LoadDump() -> call");
 
-    std::ifstream file(GetAppDataDir() / "prices_dump.json");
+    std::string league;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        league = league_;
+    }
+
+    std::ifstream file(DumpPathForLeague(league));
     if (!file)
         return;
 
@@ -356,6 +448,8 @@ void PriceCache::LoadDump()
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
+        if (league_ != league)
+            return;
 
         prices_ = std::move(loaded);
         dump_updated_at_ = j.value("dump_updated_at", 0LL);

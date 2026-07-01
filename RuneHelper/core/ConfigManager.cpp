@@ -11,6 +11,16 @@ using json = nlohmann::json;
 
 namespace
 {
+constexpr std::string_view kDefaultPriceLeague = "Runes of Aldur";
+
+bool IsSupportedPriceLeague(const std::string& league)
+{
+    return league == "Standard" ||
+        league == "Hardcore" ||
+        league == "Runes of Aldur" ||
+        league == "HC Runes of Aldur";
+}
+
 void ClampPriceThresholds(AppConfig& config)
 {
     config.priceColorMedium = std::max(0, config.priceColorMedium);
@@ -49,6 +59,10 @@ void ConfigManager::Normalize(AppConfig& config)
     config.ocrIntervalMs = std::clamp(config.ocrIntervalMs, 100, 2000);
     config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 1, 60);
+    if (config.priceLeague == "Hardcore Runes of Aldur")
+        config.priceLeague = "HC Runes of Aldur";
+    if (!IsSupportedPriceLeague(config.priceLeague))
+        config.priceLeague = std::string(kDefaultPriceLeague);
     ClampPriceThresholds(config);
 }
 
@@ -89,6 +103,7 @@ bool ConfigManager::Load()
     config_.priceColorVeryHigh  = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
 
     config_.priceRefreshMinutes = j.value("priceRefreshMinutes",    config_.priceRefreshMinutes);
+    config_.priceLeague         = j.value("priceLeague",            config_.priceLeague);
     config_.priceProvider       = j.value("priceProvider",          config_.priceProvider);
 
     config_.debugOCR    = j.value("debugOCR",       config_.debugOCR);
@@ -131,6 +146,7 @@ bool ConfigManager::Save() const
     j["priceColorVeryHigh"]     = config.priceColorVeryHigh;
 
     j["priceRefreshMinutes"]    = config.priceRefreshMinutes;
+    j["priceLeague"]            = config.priceLeague;
     j["priceProvider"]          = config.priceProvider;
 
     j["debugOCR"]       = config.debugOCR;

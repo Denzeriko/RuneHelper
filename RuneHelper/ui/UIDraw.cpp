@@ -190,6 +190,31 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     //PRICES
     ImGui::SeparatorText("PRICES");
+
+    constexpr const char* kPriceLeagues[] = {
+        "Runes of Aldur",
+        "HC Runes of Aldur",
+        "Standard",
+        "Hardcore"
+    };
+
+    int selectedLeague = 0;
+    for (int i = 0; i < IM_ARRAYSIZE(kPriceLeagues); ++i)
+    {
+        if (config.priceLeague == kPriceLeagues[i])
+        {
+            selectedLeague = i;
+            break;
+        }
+    }
+
+    if (ImGui::Combo("League", &selectedLeague, kPriceLeagues, IM_ARRAYSIZE(kPriceLeagues)))
+    {
+        config.priceLeague = kPriceLeagues[selectedLeague];
+        configChanged = true;
+        state.wantsRefreshPrices = true;
+    }
+
     configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
     configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
     configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);

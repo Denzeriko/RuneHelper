@@ -318,7 +318,7 @@ bool UIBackend::Impl::CreateWindowUI()
         100,
         100,
         420,
-        660,
+        680,
         nullptr,
         nullptr,
         windowClass.hInstance,

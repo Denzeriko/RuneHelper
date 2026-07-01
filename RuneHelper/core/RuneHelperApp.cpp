@@ -65,6 +65,7 @@ bool RuneHelperApp::Init()
 
     ocr_.SetConfig(config_);
     priceCache_.SetRefreshMinutes(config_->priceRefreshMinutes);
+    priceCache_.SetLeague(config_->priceLeague);
 
     ui_.RegisterHotkeys();
 
@@ -146,6 +147,7 @@ void RuneHelperApp::OcrWorkerLoop()
         }
 
         priceCache_.SetRefreshMinutes(localConfig.priceRefreshMinutes);
+        priceCache_.SetLeague(localConfig.priceLeague);
 
         if (std::chrono::steady_clock::now() - lastRefreshCheck > std::chrono::seconds(10))
         {
