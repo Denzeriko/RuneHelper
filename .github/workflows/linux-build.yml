@@ -16,24 +16,23 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1
-        with:
-          packages: |
-            build-essential
-            cmake
-            git
-            pkg-config
-            libopenblas-dev
-            liblapack-dev
-            libopencv-dev
-            libtesseract-dev
-            libleptonica-dev
-            libcurl4-openssl-dev
-            libglfw3-dev
-            libgl1-mesa-dev
-            libx11-dev
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            build-essential \
+            cmake \
+            git \
+            pkg-config \
+            libopenblas-dev \
+            liblapack-dev \
+            libopencv-dev \
+            libtesseract-dev \
+            libleptonica-dev \
+            libcurl4-openssl-dev \
+            libglfw3-dev \
+            libgl1-mesa-dev \
+            libx11-dev \
             libxext-dev
-          version: 1
 
       - name: Cache CMake dependencies
         uses: actions/cache@v4
