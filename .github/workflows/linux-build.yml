@@ -2,8 +2,9 @@ name: Linux build
 
 on:
   push:
-    branches: [ main ]
+    branches: [ master ]
   pull_request:
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -32,7 +33,7 @@ jobs:
             libxext-dev
 
       - name: Configure
-        run: cmake -S RuneHelper -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build --parallel
@@ -40,8 +41,10 @@ jobs:
       - name: Package binary
         run: |
           mkdir -p dist
-          cp build/runehelper dist/
-          tar -C dist -czf runehelper-linux-x86_64.tar.gz runehelper
+          BIN=$(find build -maxdepth 2 -type f -executable ! -name "*.so" | head -n 1)
+          echo "Found binary: $BIN"
+          cp "$BIN" dist/RuneHelper
+          tar -czf runehelper-linux-x86_64.tar.gz -C dist RuneHelper
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
