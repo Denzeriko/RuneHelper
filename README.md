@@ -80,6 +80,8 @@ sudo apt install \
     libopencv-dev \
     libtesseract-dev \
     libleptonica-dev \
+    libblas-dev \
+    liblapack-dev \
     libx11-dev
 ```
 
