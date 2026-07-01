@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <mutex>
 #include <string>
 #include <thread>
 
@@ -13,8 +14,8 @@ public:
     bool IsChecking() const;
     bool HasUpdate() const;
 
-    const std::string& LatestVersion() const;
-    const std::string& DownloadUrl() const;
+    std::string LatestVersion() const;
+    std::string DownloadUrl() const;
 
 private:
     void Check();
@@ -24,6 +25,7 @@ private:
     std::atomic<bool> checking_ = false;
     std::atomic<bool> hasUpdate_ = false;
 
+    mutable std::mutex mutex_;
     std::string latestVersion_;
     std::string downloadUrl_;
 };

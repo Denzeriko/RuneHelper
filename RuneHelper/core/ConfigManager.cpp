@@ -23,6 +23,11 @@ const AppConfig& ConfigManager::Get() const
     return config_;
 }
 
+std::mutex& ConfigManager::Mutex() const
+{
+    return mutex_;
+}
+
 bool ConfigManager::Load()
 {
     std::ifstream file(GetConfigPath());
@@ -93,8 +98,8 @@ bool ConfigManager::Save() const
     j["hotkeySelectRegion"]     = config_.hotkeySelectRegion;
 
     j["priceColorMedium"]       = config_.priceColorMedium;
-    j["hotkeySingleSnapshot"]   = config_.hotkeySingleSnapshot;
-    j["hotkeySelectRegion"]     = config_.hotkeySelectRegion;
+    j["priceColorHigh"]         = config_.priceColorHigh;
+    j["priceColorVeryHigh"]     = config_.priceColorVeryHigh;
 
     j["priceRefreshMinutes"]    = config_.priceRefreshMinutes;
     j["priceProvider"]          = config_.priceProvider;

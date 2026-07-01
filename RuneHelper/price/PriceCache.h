@@ -20,6 +20,7 @@ class PriceCache
 {
 public:
     PriceCache();
+    ~PriceCache();
 
     void RefreshIfNeeded();
     void ForceRefreshAsync();
@@ -53,4 +54,5 @@ private:
     int64_t refresh_seconds_ = 60 * 60;
 
     std::atomic<bool> refreshInProgress_ = false;
+    std::jthread refreshThread_;
 };

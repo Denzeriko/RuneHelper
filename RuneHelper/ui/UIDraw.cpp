@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <mutex>
 #include <string>
 
 #include <imgui.h>
@@ -17,7 +18,7 @@ constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
 }
 
-void UIDraw::DrawTitleBar(UIManager& manager, UIState& state)
+void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
 {
     const float titleBarHeight = 16;
 
@@ -129,8 +130,9 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     */
     //Region
     if (!manager.config_)
-        ImGui::End();
+        return;
 
+    std::lock_guard configLock(manager.configManager_->Mutex());
     AppConfig& config = *manager.config_;
 
     ImGui::SeparatorText("REGION");
@@ -244,7 +246,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     ImGui::TextDisabled("%s", DenzTag);
 }
 
-void UIDraw::DrawDebugTab(UIManager& manager, UIState& state)
+void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 {
     ImGui::SeparatorText("OCR DEBUG");
     if (manager.GetDebugData().lines.empty())

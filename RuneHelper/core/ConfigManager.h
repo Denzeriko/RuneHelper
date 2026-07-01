@@ -2,6 +2,7 @@
 
 #include "Config.h"
 #include <filesystem>
+#include <mutex>
 
 class ConfigManager
 {
@@ -11,9 +12,11 @@ public:
 
     AppConfig& Get();
     const AppConfig& Get() const;
+    std::mutex& Mutex() const;
 
 private:
     AppConfig config_;
+    mutable std::mutex mutex_;
 
 private:
     static std::filesystem::path GetConfigPath();

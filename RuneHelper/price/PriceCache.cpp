@@ -48,6 +48,12 @@ PriceCache::PriceCache()
     LoadDump();
 }
 
+PriceCache::~PriceCache()
+{
+    if (refreshThread_.joinable())
+        refreshThread_.request_stop();
+}
+
 std::vector<std::string> PriceCache::GetAllItemNames() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -97,7 +103,10 @@ void PriceCache::ForceRefreshAsync()
         return;
     }
 
-    std::thread([this]() { RefreshWorker(); }).detach();
+    if (refreshThread_.joinable())
+        refreshThread_.join();
+
+    refreshThread_ = std::jthread([this](std::stop_token) { RefreshWorker(); });
 }
 
 bool PriceCache::IsRefreshInProgress() const

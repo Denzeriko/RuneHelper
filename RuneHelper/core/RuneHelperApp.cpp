@@ -138,6 +138,14 @@ void RuneHelperApp::OcrWorkerLoop()
 
     while (running_)
     {
+        AppConfig localConfig;
+        {
+            std::lock_guard lock(configManager_.Mutex());
+            localConfig = *config_;
+        }
+
+        ocr_.SetConfig(&localConfig);
+
         if (std::chrono::steady_clock::now() - lastRefreshCheck > std::chrono::seconds(10))
         {
             lastRefreshCheck = std::chrono::steady_clock::now();
@@ -158,7 +166,7 @@ void RuneHelperApp::OcrWorkerLoop()
 
         bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
 
-        if (!config_->ocrEnabled && !runSingleSnapshot && !keepSnapshot)
+        if (!localConfig.ocrEnabled && !runSingleSnapshot && !keepSnapshot)
         {
             {
                 std::lock_guard lock(overlayMutex_);
@@ -177,10 +185,10 @@ void RuneHelperApp::OcrWorkerLoop()
         }
 
         cv::Rect localRegion(
-            config_->regionX,
-            config_->regionY,
-            config_->regionW,
-            config_->regionH
+            localConfig.regionX,
+            localConfig.regionY,
+            localConfig.regionW,
+            localConfig.regionH
         );
 
 #ifdef _WIN32
@@ -265,7 +273,7 @@ void RuneHelperApp::OcrWorkerLoop()
                 std::optional<double> value = LootParser::ParsePriceValue(*price);
                 double totalValue = value ? (*value * quantity) : 0.0;
 
-                int overlayY = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
+                int overlayY = localRegion.y + (item.y1 + item.y2) / 2 + localConfig.overlayOffsetY;
 
                 if (HasCloseOverlayText(newTexts, overlayY, 25))
                 {
@@ -274,10 +282,10 @@ void RuneHelperApp::OcrWorkerLoop()
                 }
 
                 OverlayText t;
-                t.color = GetPriceColor(totalValue, *config_);
+                t.color = GetPriceColor(totalValue, localConfig);
                 t.text = ToWide(LootParser::FormatStackPrice(*price, quantity));
-                t.x = localRegion.x + localRegion.width + config_->overlayOffsetX;
-                t.y = localRegion.y + (item.y1 + item.y2) / 2 + config_->overlayOffsetY;
+                t.x = localRegion.x + localRegion.width + localConfig.overlayOffsetX;
+                t.y = localRegion.y + (item.y1 + item.y2) / 2 + localConfig.overlayOffsetY;
 
                 newTexts.push_back(std::move(t));
 
@@ -296,7 +304,7 @@ void RuneHelperApp::OcrWorkerLoop()
             }
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
+        std::this_thread::sleep_for(std::chrono::milliseconds(localConfig.ocrIntervalMs));
     }
 }
 
@@ -321,13 +329,13 @@ void RuneHelperApp::MainLoop()
 
         UpdateOverlay();
 
-        overlay_.SetFontSize(config_->overlayFontSize);
-
-        if (ui_.WantsToggleOCR())
+        int overlayFontSize = 0;
         {
-            config_->ocrEnabled =!config_->ocrEnabled;
-            configManager_.Save();
+            std::lock_guard lock(configManager_.Mutex());
+            overlayFontSize = config_->overlayFontSize;
         }
+
+        overlay_.SetFontSize(overlayFontSize);
 
         static auto lastTop = std::chrono::steady_clock::now();
 
@@ -347,6 +355,7 @@ void RuneHelperApp::HandleUIActions()
 {
     if (ui_.WantsToggleOCR())
     {
+        std::lock_guard lock(configManager_.Mutex());
         config_->ocrEnabled = !config_->ocrEnabled;
         configManager_.Save();
     }
@@ -356,7 +365,7 @@ void RuneHelperApp::HandleUIActions()
 
     if (ui_.WantsRefreshPrices())
     {
-        //priceCache_.ForceRefreshAsync();
+        priceCache_.ForceRefreshAsync();
     }
 
     if (ui_.WantsSelectRegion())
@@ -369,6 +378,7 @@ void RuneHelperApp::HandleUIActions()
         {
             region_ = newRegion;
 
+            std::lock_guard lock(configManager_.Mutex());
             config_->regionX = region_.x;
             config_->regionY = region_.y;
             config_->regionW = region_.width;
@@ -393,7 +403,13 @@ void RuneHelperApp::UpdateOverlay()
 
 void RuneHelperApp::UpdateRegionPreview()
 {
-    if (!ui_.IsRegionHovered() || config_->regionW <= 0)
+    AppConfig localConfig;
+    {
+        std::lock_guard lock(configManager_.Mutex());
+        localConfig = *config_;
+    }
+
+    if (!ui_.IsRegionHovered() || localConfig.regionW <= 0)
     {
         static OverlayRect empty{};
         overlay_.SetRegionPreview(false, empty);
@@ -401,10 +417,10 @@ void RuneHelperApp::UpdateRegionPreview()
     }
 
     OverlayRect rect{
-        config_->regionX,
-        config_->regionY,
-        config_->regionX + config_->regionW,
-        config_->regionY + config_->regionH
+        localConfig.regionX,
+        localConfig.regionY,
+        localConfig.regionX + localConfig.regionW,
+        localConfig.regionY + localConfig.regionH
     };
 
     overlay_.SetRegionPreview(true, rect);
@@ -418,7 +434,7 @@ void RuneHelperApp::RequestOcrRebuild()
 void RuneHelperApp::Shutdown()
 {
     running_ = false;
-    ui_.RegisterHotkeys();
+    ui_.UnregisterHotkeys();
 #ifdef _WIN32
     screenCapture_.Shutdown();
 #endif

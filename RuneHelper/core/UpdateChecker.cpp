@@ -86,13 +86,15 @@ bool UpdateChecker::HasUpdate() const
     return hasUpdate_;
 }
 
-const std::string& UpdateChecker::LatestVersion() const
+std::string UpdateChecker::LatestVersion() const
 {
+    std::lock_guard lock(mutex_);
     return latestVersion_;
 }
 
-const std::string& UpdateChecker::DownloadUrl() const
+std::string UpdateChecker::DownloadUrl() const
 {
+    std::lock_guard lock(mutex_);
     return downloadUrl_;
 }
 
@@ -134,16 +136,22 @@ void UpdateChecker::Check()
         return;
     }
 
-    latestVersion_ =j.value("tag_name", "");
-
-    downloadUrl_ = j.value("html_url", "");
+    std::string latestVersion = j.value("tag_name", "");
+    std::string downloadUrl = j.value("html_url", "");
 
     LOG_INFO("Current version: " + std::string(RUNEHELPER_VERSION));
 
-    LOG_INFO("Latest version: " + latestVersion_);
+    LOG_INFO("Latest version: " + latestVersion);
 
-    if (!latestVersion_.empty())
-        hasUpdate_ = IsNewerVersion(latestVersion_, RUNEHELPER_VERSION);
+    const bool hasUpdate = !latestVersion.empty() && IsNewerVersion(latestVersion, RUNEHELPER_VERSION);
+
+    {
+        std::lock_guard lock(mutex_);
+        latestVersion_ = std::move(latestVersion);
+        downloadUrl_ = std::move(downloadUrl);
+    }
+
+    hasUpdate_ = hasUpdate;
 
     if (hasUpdate_)
         LOG_INFO("New version available: " + latestVersion_);
