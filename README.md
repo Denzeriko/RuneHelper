@@ -5,6 +5,15 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)
 ![Language](https://img.shields.io/badge/language-C%2B%2B20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
+[![Windows build](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
+[![Linux build](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml?query=branch%3Amaster)
+
+## Download
+
+[![Download Windows artifact](https://img.shields.io/badge/download-Windows%20x86__64-blue?logo=windows)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
+[![Download Linux artifact](https://img.shields.io/badge/download-Linux%20x86__64-blue?logo=linux)](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml?query=branch%3Amaster)
+
+Open the latest successful workflow run and download the artifact from the **Artifacts** section.
 
 ## Features
 
