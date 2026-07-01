@@ -3,6 +3,8 @@ set(OpenGL_GL_PREFERENCE GLVND)
 include(FetchContent)
 
 find_package(OpenCV QUIET)
+find_package(BLAS REQUIRED)
+find_package(LAPACK REQUIRED)
 find_package(Tesseract QUIET)
 
 if(NOT Tesseract_FOUND)
@@ -81,6 +83,8 @@ set(RUNEHELPER_LIBRARIES
     OpenGL::GL
     ${X11_LIBRARIES}
     nlohmann_json::nlohmann_json
+    ${LAPACK_LIBRARIES}
+    ${BLAS_LIBRARIES}
 )
 
 set(RUNEHELPER_DEFINITIONS

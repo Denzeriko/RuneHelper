@@ -23,6 +23,8 @@ jobs:
             cmake \
             git \
             pkg-config \
+            libopenblas-dev \
+            liblapack-dev \
             libopencv-dev \
             libtesseract-dev \
             libleptonica-dev \
@@ -31,6 +33,14 @@ jobs:
             libgl1-mesa-dev \
             libx11-dev \
             libxext-dev
+
+      - name: Cache CMake dependencies
+        uses: actions/cache@v4
+        with:
+          path: build/_deps
+          key: cmake-deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'cmake/DependenciesLinux.cmake') }}
+          restore-keys: |
+            cmake-deps-${{ runner.os }}-
 
       - name: Configure
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
