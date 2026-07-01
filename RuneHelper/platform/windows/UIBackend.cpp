@@ -11,10 +11,29 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
+#include "core/Helpers.h"
 #include "core/Logger.h"
 #include "ui/UIManager.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+
+namespace
+{
+bool IsMouseVk(int vk)
+{
+    switch (vk)
+    {
+    case VK_LBUTTON:
+    case VK_RBUTTON:
+    case VK_MBUTTON:
+    case VK_XBUTTON1:
+    case VK_XBUTTON2:
+        return true;
+    default:
+        return false;
+    }
+}
+}
 
 struct UIBackend::Impl
 {
@@ -216,6 +235,37 @@ void UIBackend::RequestClose()
 
     if (impl_->hwnd)
         PostMessageW(impl_->hwnd, WM_CLOSE, 0, 0);
+}
+
+std::string UIBackend::HotkeyToString(int key) const
+{
+    if (key == 0)
+        return "None";
+
+    return VkToString(key);
+}
+
+bool UIBackend::CaptureNextHotkey(int& key)
+{
+    if (GetAsyncKeyState(VK_ESCAPE) & 1)
+    {
+        key = 0;
+        return true;
+    }
+
+    for (int vk = 1; vk < 256; ++vk)
+    {
+        if (IsMouseVk(vk))
+            continue;
+
+        if (GetAsyncKeyState(vk) & 1)
+        {
+            key = vk;
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void UIBackend::RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int selectRegionKey)
