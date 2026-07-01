@@ -1,5 +1,6 @@
 #include "ConfigManager.h"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 
@@ -7,6 +8,16 @@
 #include "Helpers.h"
 
 using json = nlohmann::json;
+
+namespace
+{
+void ClampPriceThresholds(AppConfig& config)
+{
+    config.priceColorMedium = std::max(0, config.priceColorMedium);
+    config.priceColorHigh = std::max(config.priceColorMedium, config.priceColorHigh);
+    config.priceColorVeryHigh = std::max(config.priceColorHigh, config.priceColorVeryHigh);
+}
+}
 
 std::filesystem::path ConfigManager::GetConfigPath()
 {
@@ -26,6 +37,19 @@ const AppConfig& ConfigManager::Get() const
 std::mutex& ConfigManager::Mutex() const
 {
     return mutex_;
+}
+
+void ConfigManager::Normalize(AppConfig& config)
+{
+    config.regionW = std::max(0, config.regionW);
+    config.regionH = std::max(0, config.regionH);
+    config.ocrScale = std::clamp(config.ocrScale, 0.5f, 4.0f);
+    config.ocrThreshold = std::clamp(config.ocrThreshold, 0.0f, 255.0f);
+    config.ocrPasses = std::clamp(config.ocrPasses, 1, 6);
+    config.ocrIntervalMs = std::clamp(config.ocrIntervalMs, 100, 2000);
+    config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
+    config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 1, 60);
+    ClampPriceThresholds(config);
 }
 
 bool ConfigManager::Load()
@@ -70,42 +94,47 @@ bool ConfigManager::Load()
     config_.debugOCR    = j.value("debugOCR",       config_.debugOCR);
     config_.showConsole = j.value("showConsole",    config_.showConsole);
 
+    Normalize(config_);
+
     return true;
 }
 
 bool ConfigManager::Save() const
 {
+    AppConfig config = config_;
+    Normalize(config);
+
     json j;
 
-    j["regionX"] = config_.regionX;
-    j["regionY"] = config_.regionY;
-    j["regionW"] = config_.regionW;
-    j["regionH"] = config_.regionH;
+    j["regionX"] = config.regionX;
+    j["regionY"] = config.regionY;
+    j["regionW"] = config.regionW;
+    j["regionH"] = config.regionH;
 
-    j["ocrEnabled"]     = config_.ocrEnabled;
-    j["ocrAutoDetect"]  = config_.ocrAutoDetect;
-    j["ocrScale"]       = config_.ocrScale;
-    j["ocrThreshold"]   = config_.ocrThreshold;
-    j["ocrPasses"]      = config_.ocrPasses;
-    j["ocrIntervalMs"]  = config_.ocrIntervalMs;
+    j["ocrEnabled"]     = config.ocrEnabled;
+    j["ocrAutoDetect"]  = config.ocrAutoDetect;
+    j["ocrScale"]       = config.ocrScale;
+    j["ocrThreshold"]   = config.ocrThreshold;
+    j["ocrPasses"]      = config.ocrPasses;
+    j["ocrIntervalMs"]  = config.ocrIntervalMs;
 
-    j["overlayOffsetX"]     = config_.overlayOffsetX;
-    j["overlayOffsetY"]     = config_.overlayOffsetY;
-    j["overlayFontSize"]    = config_.overlayFontSize;
+    j["overlayOffsetX"]     = config.overlayOffsetX;
+    j["overlayOffsetY"]     = config.overlayOffsetY;
+    j["overlayFontSize"]    = config.overlayFontSize;
 
-    j["hotkeyToggleOCR"]        = config_.hotkeyToggleOCR;
-    j["hotkeySingleSnapshot"]   = config_.hotkeySingleSnapshot;
-    j["hotkeySelectRegion"]     = config_.hotkeySelectRegion;
+    j["hotkeyToggleOCR"]        = config.hotkeyToggleOCR;
+    j["hotkeySingleSnapshot"]   = config.hotkeySingleSnapshot;
+    j["hotkeySelectRegion"]     = config.hotkeySelectRegion;
 
-    j["priceColorMedium"]       = config_.priceColorMedium;
-    j["priceColorHigh"]         = config_.priceColorHigh;
-    j["priceColorVeryHigh"]     = config_.priceColorVeryHigh;
+    j["priceColorMedium"]       = config.priceColorMedium;
+    j["priceColorHigh"]         = config.priceColorHigh;
+    j["priceColorVeryHigh"]     = config.priceColorVeryHigh;
 
-    j["priceRefreshMinutes"]    = config_.priceRefreshMinutes;
-    j["priceProvider"]          = config_.priceProvider;
+    j["priceRefreshMinutes"]    = config.priceRefreshMinutes;
+    j["priceProvider"]          = config.priceProvider;
 
-    j["debugOCR"]       = config_.debugOCR;
-    j["showConsole"]    = config_.showConsole;
+    j["debugOCR"]       = config.debugOCR;
+    j["showConsole"]    = config.showConsole;
 
     std::ofstream file(GetConfigPath());
 

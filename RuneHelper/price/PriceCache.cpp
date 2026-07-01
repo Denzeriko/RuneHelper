@@ -6,6 +6,7 @@
 #include <cpr/cpr.h>
 
 #include <chrono>
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
@@ -103,10 +104,14 @@ void PriceCache::ForceRefreshAsync()
         return;
     }
 
-    if (refreshThread_.joinable())
-        refreshThread_.join();
-
     refreshThread_ = std::jthread([this](std::stop_token) { RefreshWorker(); });
+}
+
+void PriceCache::SetRefreshMinutes(int minutes)
+{
+    const int clampedMinutes = std::clamp(minutes, 1, 60);
+    std::lock_guard<std::mutex> lock(mutex_);
+    refresh_seconds_ = clampedMinutes * 60;
 }
 
 bool PriceCache::IsRefreshInProgress() const

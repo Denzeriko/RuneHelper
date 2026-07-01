@@ -66,6 +66,41 @@ void UIManager::SetUpdateChecker(UpdateChecker* checker)
     updateChecker_ = checker;
 }
 
+bool UIManager::IsCheckingForUpdate() const
+{
+    return updateChecker_ && updateChecker_->IsChecking();
+}
+
+bool UIManager::HasUpdate() const
+{
+    return updateChecker_ && updateChecker_->HasUpdate();
+}
+
+std::string UIManager::UpdateDownloadUrl() const
+{
+    return updateChecker_ ? updateChecker_->DownloadUrl() : "";
+}
+
+bool UIManager::HasConfig() const
+{
+    return config_ && configManager_;
+}
+
+AppConfig& UIManager::Config()
+{
+    return *config_;
+}
+
+std::mutex& UIManager::ConfigMutex() const
+{
+    return configManager_->Mutex();
+}
+
+UIState& UIManager::State()
+{
+    return state_;
+}
+
 bool UIManager::WantsSelectRegion()
 {
     return std::exchange(state_.wantsSelectRegion, false);
@@ -101,6 +136,11 @@ bool UIManager::WantsOCRRebuild()
     return std::exchange(state_.wantsOCRRebuild, false);
 }
 
+bool UIManager::WantsRegisterHotkeys()
+{
+    return std::exchange(state_.wantsRegisterHotkeys, false);
+}
+
 bool UIManager::IsRegionHovered() const
 {
     return state_.regionHovered;
@@ -131,12 +171,18 @@ bool UIManager::SaveConfig()
 
 void UIManager::RegisterHotkeys()
 {
-    if (backend_ && config_)
+    if (backend_ && config_ && configManager_)
     {
+        AppConfig config;
+        {
+            std::lock_guard lock(configManager_->Mutex());
+            config = *config_;
+        }
+
         backend_->RegisterHotkeys(
-            config_->hotkeyToggleOCR,
-            config_->hotkeySingleSnapshot,
-            config_->hotkeySelectRegion
+            config.hotkeyToggleOCR,
+            config.hotkeySingleSnapshot,
+            config.hotkeySelectRegion
         );
     }
 }
@@ -170,6 +216,11 @@ void UIManager::RequestSingleSnapshot()
 void UIManager::RequestSelectRegion()
 {
     state_.wantsSelectRegion = true;
+}
+
+void UIManager::RequestRegisterHotkeys()
+{
+    state_.wantsRegisterHotkeys = true;
 }
 
 void UIManager::RequestExit()

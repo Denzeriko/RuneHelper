@@ -13,6 +13,7 @@ public:
     AppConfig& Get();
     const AppConfig& Get() const;
     std::mutex& Mutex() const;
+    static void Normalize(AppConfig& config);
 
 private:
     AppConfig config_;

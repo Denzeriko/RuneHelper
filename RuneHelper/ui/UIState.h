@@ -18,6 +18,7 @@ struct UIState
     bool wantsTestOcr = false;
     bool wantsResetOcr = false;
     bool wantsOCRRebuild = false;
+    bool wantsRegisterHotkeys = false;
 
     bool regionHovered = false;
 

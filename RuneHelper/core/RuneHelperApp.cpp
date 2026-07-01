@@ -64,6 +64,7 @@ bool RuneHelperApp::Init()
     ui_.SetUpdateChecker(&updateChecker_);
 
     ocr_.SetConfig(config_);
+    priceCache_.SetRefreshMinutes(config_->priceRefreshMinutes);
 
     ui_.RegisterHotkeys();
 
@@ -144,7 +145,7 @@ void RuneHelperApp::OcrWorkerLoop()
             localConfig = *config_;
         }
 
-        ocr_.SetConfig(&localConfig);
+        priceCache_.SetRefreshMinutes(localConfig.priceRefreshMinutes);
 
         if (std::chrono::steady_clock::now() - lastRefreshCheck > std::chrono::seconds(10))
         {
@@ -157,7 +158,7 @@ void RuneHelperApp::OcrWorkerLoop()
         }
 
         if (ocrRebuildRequested_.exchange(false))
-            ocr_.ReinitializeWorkers();
+            ocr_.ReinitializeWorkers(localConfig);
 
         bool runSingleSnapshot = singleSnapshotRequested_.exchange(false);
 
@@ -202,7 +203,7 @@ void RuneHelperApp::OcrWorkerLoop()
 
         if (!img.empty())
         {
-            auto loot = ocr_.RecognizeLoot(img);
+            auto loot = ocr_.RecognizeLoot(img, localConfig);
 
             DebugData debug;
             std::vector<OverlayText> newTexts;
@@ -212,23 +213,6 @@ void RuneHelperApp::OcrWorkerLoop()
                 std::lock_guard lock(cachedNamesMutex_);
                 cachedNames = cachedItemNames_;
             }
-
-            /*if ((loot.size() < 2) && config_->ocrAutoDetect) //Broken! Cos OCR Passes making garbage lines and dupes
-            {
-                {
-                    std::lock_guard lock(overlayMutex_);
-                    sharedTexts_.clear();
-                    overlayDirty_ = true;
-                }
-
-                {
-                    std::lock_guard lock(debugMutex_);
-                    debugData_ = std::move(debug);
-                }
-
-                std::this_thread::sleep_for(std::chrono::milliseconds(config_->ocrIntervalMs));
-                continue;
-            }*/
 
             for (const auto& item : loot)
             {
@@ -390,6 +374,9 @@ void RuneHelperApp::HandleUIActions()
 
     if (ui_.WantsOCRRebuild())
         ocrRebuildRequested_ = true;
+
+    if (ui_.WantsRegisterHotkeys())
+        ui_.RegisterHotkeys();
 }
 
 void RuneHelperApp::UpdateOverlay()

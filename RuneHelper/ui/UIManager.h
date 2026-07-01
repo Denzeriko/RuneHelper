@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <mutex>
 #include <string>
 
 #include "core/Config.h"
@@ -41,6 +42,14 @@ public:
     void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
     void SetPriceStatus(bool downloading, size_t priceCount);
     void SetUpdateChecker(UpdateChecker* checker);
+    bool IsCheckingForUpdate() const;
+    bool HasUpdate() const;
+    std::string UpdateDownloadUrl() const;
+
+    bool HasConfig() const;
+    AppConfig& Config();
+    std::mutex& ConfigMutex() const;
+    UIState& State();
 
     bool WantsSelectRegion();
     bool WantsRefreshPrices();
@@ -49,6 +58,7 @@ public:
     bool WantsTestOcr();
     bool WantsResetOcr();
     bool WantsOCRRebuild();
+    bool WantsRegisterHotkeys();
 
     bool IsRegionHovered() const;
 
@@ -65,17 +75,11 @@ public:
     void RequestToggleOCR();
     void RequestSingleSnapshot();
     void RequestSelectRegion();
-
-private:
-    friend class UIBackend;
-    friend void UIDraw::Draw(UIManager& manager);
-    friend void UIDraw::DrawTitleBar(UIManager& manager, UIState& state);
-    friend void UIDraw::DrawMainTab(UIManager& manager, UIState& state);
-    friend void UIDraw::DrawDebugTab(UIManager& manager, UIState& state);
-
+    void RequestRegisterHotkeys();
     void RequestExit();
     void MarkSaved();
 
+private:
     AppConfig* config_ = nullptr;
     ConfigManager* configManager_ = nullptr;
     UpdateChecker* updateChecker_ = nullptr;

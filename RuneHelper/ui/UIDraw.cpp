@@ -94,19 +94,16 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     row("Version");
     ImGui::Text("v%s", RUNEHELPER_VERSION);
-    if (manager.updateChecker_)
+    if (manager.IsCheckingForUpdate())
     {
-        if (manager.updateChecker_->IsChecking())
-        {
-            ImGui::SameLine();
-            ImGui::TextColored(kYellow, "(checking...)");
-        }
-        else if (manager.updateChecker_->HasUpdate())
-        {
-            ImGui::SameLine();
-            ImGui::TextColored(kGreen, "(update available)");
-            ImGui::TextWrapped("%s", manager.updateChecker_->DownloadUrl().c_str());
-        }
+        ImGui::SameLine();
+        ImGui::TextColored(kYellow, "(checking...)");
+    }
+    else if (manager.HasUpdate())
+    {
+        ImGui::SameLine();
+        ImGui::TextColored(kGreen, "(update available)");
+        ImGui::TextWrapped("%s", manager.UpdateDownloadUrl().c_str());
     }
 
 
@@ -129,11 +126,12 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     ImGui::Spacing();
     */
     //Region
-    if (!manager.config_)
+    if (!manager.HasConfig())
         return;
 
-    std::lock_guard configLock(manager.configManager_->Mutex());
-    AppConfig& config = *manager.config_;
+    std::lock_guard configLock(manager.ConfigMutex());
+    AppConfig& config = manager.Config();
+    bool configChanged = false;
 
     ImGui::SeparatorText("REGION");
     if (ImGui::Button("Select Region"))
@@ -151,7 +149,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     
     //OCR
     ImGui::SeparatorText("OCR");
-    ImGui::Checkbox("Enable OCR", &config.ocrEnabled);
+    configChanged |= ImGui::Checkbox("Enable OCR", &config.ocrEnabled);
     ImGui::SameLine();
 
     if (config.ocrEnabled)
@@ -159,14 +157,14 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     else
         ImGui::TextColored(kRed, "Stopped");
 
-    ImGui::Checkbox("OCR AutoDetect Menu (Experimental)", &config.ocrAutoDetect);
+    configChanged |= ImGui::Checkbox("OCR AutoDetect Menu (Experimental)", &config.ocrAutoDetect);
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Only shows the overlay when the Runeshape menu is detected.\nMay occasionally fail due to OCR inaccuracies.");
 
     if (ImGui::SliderInt("OCR Passes", &config.ocrPasses, 1, 6))
     {
+        configChanged = true;
         state.wantsOCRRebuild = true;
-        manager.configManager_->Save();
     }
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("More passes = better OCR recognize, but higher CPU usage\nChanging OCR passes requires OCR restart.");
@@ -177,7 +175,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::SetTooltip("Image binarization threshold.\nLower values keep more details.\nHigher values remove noise but may lose characters.");
     */
 
-    ImGui::SliderInt("OCR interval (ms)", &config.ocrIntervalMs, 100, 2000);
+    configChanged |= ImGui::SliderInt("OCR interval (ms)", &config.ocrIntervalMs, 100, 2000);
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Lower values = faster updates but higher CPU usage.");
 
@@ -192,10 +190,10 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     //PRICES
     ImGui::SeparatorText("PRICES");
-    ImGui::InputInt("Green >= ex", &config.priceColorMedium);
-    ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
-    ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
-    ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 1, 60);
+    configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
+    configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
+    configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
+    configChanged |= ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 1, 60);
 
     if (ImGui::Button("Refresh Prices"))
         state.wantsRefreshPrices = true;
@@ -204,41 +202,37 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     //OVERLAY
     ImGui::SeparatorText("OVERLAY");
-    ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
-    ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
-    ImGui::SliderInt("Font Size", &config.overlayFontSize, 8, 48);
+    configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
+    configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
+    configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, 8, 48);
     ImGui::Spacing();
+
+    if (configChanged)
+    {
+        ConfigManager::Normalize(config);
+
+        if (!manager.SaveConfig())
+            LOG_ERROR("UI failed to autosave config");
+    }
 
     //Bottom
     ImGui::Separator();
 
-    if (ImGui::Button("Save"))
-    {
-        if (manager.configManager_ && manager.configManager_->Save())
-        {
-            manager.MarkSaved();
-            LOG_INFO("UI saved config");
-        }
-        else
-        {
-            LOG_ERROR("UI failed to save config");
-        }
-    }
-
+    /*
     if (state.showSaved)
     {
         auto elapsed = std::chrono::steady_clock::now() - state.savedAt;
 
         if (elapsed < std::chrono::seconds(1))
         {
-            ImGui::SameLine();
-            ImGui::Text("Saved");
+            ImGui::Text("Auto-saved");
         }
         else
         {
             state.showSaved = false;
         }
     }
+    */
 
     const char* DenzTag = "Denz";
     ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(DenzTag).x);
@@ -305,7 +299,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 
 void UIDraw::Draw(UIManager& manager)
 {
-    UIState& state = manager.state_;
+    UIState& state = manager.State();
 
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
@@ -379,7 +373,7 @@ void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* la
         if (!manager.SaveConfig())
             LOG_ERROR("UI failed to save hotkey config");
 
-        manager.RegisterHotkeys();
+        manager.RequestRegisterHotkeys();
     }
 
     ImGui::PopID();

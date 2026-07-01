@@ -2,11 +2,9 @@
 
 #include "core/Logger.h"
 #include "ocr/NameNormalizer.h"
-#include "platform/PlatformPaths.h"
 
 #include <algorithm>
 #include <cctype>
-#include <iostream>
 #include <filesystem>
 #include <future>
 
@@ -87,32 +85,13 @@ void OCR::SetConfig(const AppConfig* config)
     config_ = config;
 }
 
-void OCR::SetDebug(bool enabled)
-{
-    debug_ = enabled;
-}
-
-void OCR::SetupTesseract()
-{
-    api_.SetPageSegMode(tesseract::PSM_SPARSE_TEXT);
-    api_.SetVariable("debug_file", NULL_DEVICE.data());
-    api_.SetVariable("classify_bln_numeric_mode", "0");
-    api_.SetVariable("preserve_interword_spaces", "1");
-    api_.SetVariable(
-        "tessedit_char_whitelist",
-        "0123456789xABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz() -'"
-    );
-
-    LOG_INFO("SetupTesseract done");
-}
-
-bool OCR::ReinitializeWorkers()
+bool OCR::ReinitializeWorkers(const AppConfig& config)
 {
     std::lock_guard lock(workerMutex_);
 
     workerApis_.clear();
 
-    int passes = std::clamp(config_->ocrPasses, 1, 6);
+    int passes = std::clamp(config.ocrPasses, 1, 6);
 
     workerApis_.reserve(passes);
 
@@ -131,9 +110,9 @@ bool OCR::ReinitializeWorkers()
     return true;
 }
 
-std::vector<double> OCR::BuildThresholds() const
+std::vector<double> OCR::BuildThresholds(const AppConfig& config)
 {
-    int passes = config_ ? config_->ocrPasses : 1;
+    int passes = config.ocrPasses;
 
     switch (passes)
     {
@@ -160,76 +139,7 @@ std::vector<double> OCR::BuildThresholds() const
     }
 }
 
-cv::Mat OCR::PrepareImage(const cv::Mat& img)
-{
-    cv::Mat gray;
-    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-
-    cv::Mat resized;
-    cv::resize(gray, resized, {},  config_->ocrScale, config_->ocrScale, cv::INTER_LINEAR);
-
-    cv::Mat thresh;
-    cv::threshold(resized, thresh, config_->ocrThreshold, 255,  cv::THRESH_BINARY);
-
-    return thresh;
-}
-
-bool OCR::IsSamePreparedImage(const cv::Mat& img)
-{
-    if (lastPrepared_.empty())
-        return false;
-
-    if (lastPrepared_.size() != img.size())
-        return false;
-
-    cv::Mat diff;
-    cv::absdiff(img, lastPrepared_, diff);
-
-    double changed = cv::countNonZero(diff);
-
-    double ratio = changed / static_cast<double>(img.total());
-
-    return ratio < 0.01;
-}
-
-std::vector<LootLine> OCR::RecognizeLoot2(const cv::Mat& img)
-{
-    cv::Mat gray;
-    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-
-    cv::Mat diffPrepared;
-    cv::threshold(gray, diffPrepared, config_->ocrThreshold, 255, cv::THRESH_BINARY);
-
-    if (IsSamePreparedImage(diffPrepared))
-        return lastResult_;
-
-    std::vector<LootLine> best;
-    cv::Mat bestPrepared;
-
-    for (double threshold : BuildThresholds())
-    {
-        cv::Mat prepared;
-        cv::threshold(gray, prepared, threshold, 255, cv::THRESH_BINARY);
-
-        auto result = RecognizePrepared(prepared);
-
-        if (result.size() > best.size())
-        {
-            best = std::move(result);
-            bestPrepared = prepared.clone();
-        }
-
-        if (best.size() >= 3)
-            break;
-    }
-
-    lastPrepared_ = diffPrepared.clone();
-    lastResult_ = best;
-
-    return lastResult_;
-}
-
-std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img)
+std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& config)
 {
     if (!initialized_ || img.empty())
         return {};
@@ -237,7 +147,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img)
     cv::Mat gray;
     cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
-    auto thresholds = BuildThresholds();
+    auto thresholds = BuildThresholds(config);
     if (thresholds.empty())
         return {};
 
@@ -318,80 +228,6 @@ std::vector<LootLine> OCR::RecognizePreparedWithApi(tesseract::TessBaseAPI& api,
     return result;
 }
 
-cv::Mat OCR::Preprocess(const cv::Mat& src)
-{
-    const double thresholdValue = config_ ? config_->ocrThreshold : 130.0;
-    return Preprocess(src, thresholdValue);
-}
-
-cv::Mat OCR::Preprocess(const cv::Mat& src, double thresholdValue)
-{
-    const double scale = config_ ? config_->ocrScale : 1.0;
-
-    cv::Mat gray;
-    cv::cvtColor(src, gray, cv::COLOR_BGR2GRAY);
-    cv::resize(gray, gray, {}, scale, scale, cv::INTER_CUBIC);
-
-    cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2, 2));
-    cv::erode(gray, gray, kernel);
-
-    cv::threshold(gray, gray, thresholdValue, 255, cv::THRESH_BINARY);
-
-    if (debug_ || (config_ && config_->debugOCR))
-    {
-        std::string filename = "ocr_debug_" + std::to_string((int)thresholdValue) + ".png";
-        cv::imwrite(filename, gray);
-    }
-
-    return gray;
-}
-
-std::vector<LootLine> OCR::RecognizePrepared(const cv::Mat& img)
-{
-    auto result = RecognizePreparedWithApi(api_, img);
-
-    if (debug_ || (config_ && config_->debugOCR))
-        DebugTesseract();
-
-    return result;
-}
-
-void OCR::DebugTesseract()
-{
-    auto* ri = api_.GetIterator();
-
-    if (!ri)
-    {
-        std::cout << "No iterator\n";
-        return;
-    }
-
-    do
-    {
-        int x1, y1, x2, y2;
-
-        ri->BoundingBox(tesseract::RIL_WORD, &x1, &y1, &x2, &y2);
-
-        float conf = ri->Confidence(tesseract::RIL_WORD);
-
-        char* word = ri->GetUTF8Text(tesseract::RIL_WORD);
-
-        if (word)
-        {
-            std::cout
-                << "WORD: [" << word << "] "
-                << "conf=" << conf << " "
-                << "box=(" << x1 << "," << y1
-                << "," << x2 << "," << y2 << ")"
-                << std::endl;
-
-            delete[] word;
-        }
-
-    } while (ri->Next(tesseract::RIL_WORD));
-}
-
-//yuck
 void OCR::Trim(std::string& s)
 {
     s.erase(

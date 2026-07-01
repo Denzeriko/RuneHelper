@@ -24,6 +24,7 @@ public:
 
     void RefreshIfNeeded();
     void ForceRefreshAsync();
+    void SetRefreshMinutes(int minutes);
 
     bool IsRefreshInProgress() const;
     size_t GetPriceCount() const;

@@ -29,22 +29,16 @@ public:
 
     bool Init(const std::string& tessdataPath);
     void SetupTesseractApi(tesseract::TessBaseAPI& api);
-    bool ReinitializeWorkers();
+    bool ReinitializeWorkers(const AppConfig& config);
 
     void SetConfig(const AppConfig* config);
-    void SetDebug(bool enabled);
 
     std::vector<LootLine> RecognizePreparedWithApi(tesseract::TessBaseAPI& api, const cv::Mat& img);
-    std::vector<LootLine> RecognizeLoot(const cv::Mat& src);
-    std::vector<LootLine> RecognizeLoot2(const cv::Mat& src);
+    std::vector<LootLine> RecognizeLoot(const cv::Mat& src, const AppConfig& config);
 
 private:
     tesseract::TessBaseAPI api_;
     bool initialized_ = false;
-    bool debug_ = false;
-
-    cv::Mat lastPrepared_;
-    std::vector<LootLine> lastResult_;
 
     const AppConfig* config_ = nullptr;
 
@@ -53,13 +47,6 @@ private:
     std::vector<std::unique_ptr<tesseract::TessBaseAPI>> workerApis_;
 
 private:
-    void SetupTesseract();
-    std::vector<double> BuildThresholds() const;
-    cv::Mat PrepareImage(const cv::Mat& img);
-    bool IsSamePreparedImage(const cv::Mat& img);
-    cv::Mat Preprocess(const cv::Mat& src);
-    cv::Mat Preprocess(const cv::Mat& src, double thresholdValue);
-    std::vector<LootLine> RecognizePrepared(const cv::Mat& img);
-    void DebugTesseract();
+    static std::vector<double> BuildThresholds(const AppConfig& config);
     static void Trim(std::string& s);
 };
