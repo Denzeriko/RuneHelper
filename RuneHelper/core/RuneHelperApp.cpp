@@ -421,6 +421,12 @@ void RuneHelperApp::RequestOcrRebuild()
 void RuneHelperApp::Shutdown()
 {
     running_ = false;
+    if (initThread_.joinable())
+        initThread_.join();
+
+    if (ocrThread_.joinable())
+        ocrThread_.join();
+
     ui_.UnregisterHotkeys();
 #ifdef _WIN32
     screenCapture_.Shutdown();
