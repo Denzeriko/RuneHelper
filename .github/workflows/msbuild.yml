@@ -13,8 +13,7 @@ permissions:
 env:
   CMAKE_PRESET: windows-clang-release
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
-  VCPKG_ROOT: ${{ github.workspace }}\vcpkg
-  
+
 jobs:
   build:
     runs-on: windows-latest
