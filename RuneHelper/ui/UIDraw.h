@@ -9,4 +9,5 @@ void Draw(UIManager& manager);
 void DrawTitleBar(UIManager& manager, UIState& state);
 void DrawMainTab(UIManager& manager, UIState& state);
 void DrawDebugTab(UIManager& manager, UIState& state);
+void DrawHotkeyButton(UIManager& manager, UIState& state, const char* label, int& key);
 }

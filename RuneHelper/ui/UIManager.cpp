@@ -106,6 +106,29 @@ bool UIManager::IsRegionHovered() const
     return state_.regionHovered;
 }
 
+std::string UIManager::HotkeyToString(int key) const
+{
+    if (!backend_)
+        return "None";
+
+    return backend_->HotkeyToString(key);
+}
+
+bool UIManager::CaptureNextHotkey(int& key)
+{
+    return backend_ && backend_->CaptureNextHotkey(key);
+}
+
+bool UIManager::SaveConfig()
+{
+    if (!configManager_ || !configManager_->Save())
+        return false;
+
+    MarkSaved();
+    return true;
+}
+
+
 void UIManager::RegisterHotkeys()
 {
     if (backend_ && config_)

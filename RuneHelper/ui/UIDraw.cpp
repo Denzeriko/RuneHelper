@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <string>
 
 #include <imgui.h>
 
@@ -206,9 +207,9 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     //HOTKEYS
     ImGui::SeparatorText("HOTKEYS");
-    //DrawHotkeyButton("Toggle OCR", config.hotkeyToggleOCR);
-    //DrawHotkeyButton("Single Snapshot", config.hotkeySingleSnapshot);
-    //DrawHotkeyButton("Select Region", config.hotkeySelectRegion);
+    DrawHotkeyButton(manager, state, "Toggle OCR", config.hotkeyToggleOCR);
+    DrawHotkeyButton(manager, state, "Single Snapshot", config.hotkeySingleSnapshot);
+    DrawHotkeyButton(manager, state, "Select Region", config.hotkeySelectRegion);
     ImGui::Spacing();
 
     //PRICES
@@ -364,64 +365,36 @@ void UIDraw::Draw(UIManager& manager)
     ImGui::End();
 }
 
-/*void UIManager::DrawHotkeyButton(const char* label, int& key)
+void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* label, int& key)
 {
     ImGui::TextUnformatted(label);
-    ImGui::SameLine(220);
+    ImGui::SameLine(220.0f);
 
-    std::string text;
+    const bool capturing = state.waitingForHotkey == &key;
+    const std::string text = capturing ? "Press any key..." : manager.HotkeyToString(key);
 
-    if (state.waitingForHotkey_ == &key)
-        text = "Press any key...";
-    else
-        text = VkToString(key);
-
-    if (ImGui::Button(text.c_str(), ImVec2(180, 0)))
+    if (ImGui::Button(text.c_str(), ImVec2(180.0f, 0.0f)))
     {
-        waitingForHotkey_ = &key;
-        hotkeyCaptureSkipFrame_ = true;
+        state.waitingForHotkey = &key;
+        state.hotkeyCaptureSkipFrame = true;
     }
 
-    if (waitingForHotkey_ != &key)
+    if (!capturing)
         return;
 
-    if (hotkeyCaptureSkipFrame_)
+    if (state.hotkeyCaptureSkipFrame)
     {
-        hotkeyCaptureSkipFrame_ = false;
+        state.hotkeyCaptureSkipFrame = false;
         return;
     }
 
-    if (GetAsyncKeyState(VK_ESCAPE) & 1)
+    if (manager.CaptureNextHotkey(key))
     {
-        key = 0;
+        state.waitingForHotkey = nullptr;
 
-        waitingForHotkey_ = nullptr;
+        if (!manager.SaveConfig())
+            LOG_ERROR("UI failed to save hotkey config");
 
-        if (configManager_)
-            configManager_->Save();
-
-        RegisterHotkeys();
-
-        return;
+        manager.RegisterHotkeys();
     }
-
-    for (int vk = 1; vk < 256; ++vk)
-    {
-        if (IsMouseVk(vk))
-            continue;
-
-        if (GetAsyncKeyState(vk) & 1)
-        {
-            key = vk;
-
-            waitingForHotkey_ = nullptr;
-
-            if (configManager_)
-                configManager_->Save();
-
-            RegisterHotkeys();
-
-            break;
-        }
-    }
-}*/
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 class UIManager;
 
 class UIBackend
@@ -21,6 +23,9 @@ public:
 
     bool IsRunning() const;
     void RequestClose();
+
+    std::string HotkeyToString(int key) const;
+    bool CaptureNextHotkey(int& key);
 
     void RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int selectRegionKey);
     void UnregisterHotkeys();
