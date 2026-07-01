@@ -1,7 +1,5 @@
 #include "ResourceHelper.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <windows.h>
 
 #include <fstream>
@@ -10,12 +8,12 @@
 #include "core/Helpers.h"
 #include "resources/resource.h"
 
-bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesystem::path& outPath)
+bool ExtractResourceToFile(int resId, LPCWSTR resType, const std::filesystem::path& outPath)
 {
     HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(resId), resType);
     if (!hRes)
     {
-        LOG_ERROR("FindResourceW failed");
+        LOG_ERROR("FindResourceW failed: " + std::to_string(GetLastError()));
         return false;
     }
 
@@ -62,7 +60,7 @@ std::string PrepareTessdata()
     {
         LOG_INFO("PrepareTessdata() -> extracting eng.traineddata");
 
-        if (!ExtractResourceToFile(IDR_ENG_TRAINEDDATA, RT_RCDATA, eng))
+        if (!ExtractResourceToFile(IDR_ENG_TRAINEDDATA, MAKEINTRESOURCEW(10), eng))
         {
             LOG_ERROR("PrepareTessdata() -> failed to extract eng.traineddata");
             return {};

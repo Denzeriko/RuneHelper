@@ -1,0 +1,37 @@
+set(RUNEHELPER_COMMON_SOURCES
+    RuneHelper/RuneHelper.cpp
+    RuneHelper/core/RuneHelperApp.cpp
+    RuneHelper/core/ConfigManager.cpp
+    RuneHelper/core/Logger.cpp
+    RuneHelper/core/Helpers.cpp
+    RuneHelper/core/UpdateChecker.cpp
+    RuneHelper/ocr/LootParser.cpp
+    RuneHelper/ocr/NameNormalizer.cpp
+    RuneHelper/ocr/OCR.cpp
+    RuneHelper/price/PriceCache.cpp
+    RuneHelper/ui/Overlay.cpp
+    RuneHelper/ui/UIManager.cpp
+    RuneHelper/ui/UIDraw.cpp
+)
+
+if(WIN32)
+    set(RUNEHELPER_PLATFORM_SOURCES
+        RuneHelper/resources/RuneHelper.rc
+        RuneHelper/platform/windows/OverlayBackend.cpp
+        RuneHelper/platform/windows/PlatformPaths.cpp
+        RuneHelper/platform/windows/UIBackend.cpp
+        RuneHelper/platform/windows/ScreenCapture.cpp
+        RuneHelper/platform/windows/ScreenCaptureDXGI.cpp
+        RuneHelper/platform/windows/RegionSelect.cpp
+        RuneHelper/platform/windows/ResourceHelper.cpp
+    )
+elseif(UNIX AND NOT APPLE)
+    set(RUNEHELPER_PLATFORM_SOURCES
+        RuneHelper/platform/linux/OverlayBackend.cpp
+        RuneHelper/platform/linux/PlatformPaths.cpp
+        RuneHelper/platform/linux/UIBackend.cpp
+        RuneHelper/platform/linux/ScreenCapture.cpp
+        RuneHelper/platform/linux/RegionSelect.cpp
+        RuneHelper/platform/linux/ResourceHelper.cpp
+    )
+endif()

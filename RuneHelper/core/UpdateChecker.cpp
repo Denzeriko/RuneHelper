@@ -1,6 +1,5 @@
 #include "UpdateChecker.h"
 
-#include "Version.h"
 #include "Logger.h"
 
 #include <cpr/cpr.h>

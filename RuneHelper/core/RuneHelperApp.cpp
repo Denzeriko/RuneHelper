@@ -5,7 +5,6 @@
 
 #include "core/Helpers.h"
 #include "core/Logger.h"
-#include "core/Version.h"
 
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"

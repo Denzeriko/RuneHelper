@@ -1,7 +1,0 @@
-<Solution>
-  <Configurations>
-    <Platform Name="x64" />
-    <Platform Name="x86" />
-  </Configurations>
-  <Project Path="RuneHelper/RuneHelper.vcxproj" Id="7500aca0-5651-447f-bcf0-d2c23c34b832" />
-</Solution>

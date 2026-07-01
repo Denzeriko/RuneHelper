@@ -1,18 +1,17 @@
-name: Windows MSBuild
+name: Windows build
 
 on:
   push:
     branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 env:
-  SOLUTION_FILE_PATH: RuneHelper.slnx
-  BUILD_CONFIGURATION: Release
-  BUILD_PLATFORM: x64
+  CMAKE_PRESET: windows-clang-release
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
 
 jobs:
@@ -23,8 +22,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup MSBuild
-        uses: microsoft/setup-msbuild@v2
+      - name: Setup MSVC developer command prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
 
       - name: Setup vcpkg
         uses: microsoft/setup-vcpkg@v1
@@ -33,7 +34,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: |
-            ${{ github.workspace }}/vcpkg_installed
+            ${{ github.workspace }}/build/${{ env.CMAKE_PRESET }}/vcpkg_installed
             ${{ env.VCPKG_ROOT }}/installed
             ${{ env.VCPKG_ROOT }}/packages
             ${{ env.VCPKG_ROOT }}/downloads
@@ -43,15 +44,14 @@ jobs:
           restore-keys: |
             vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-
 
-      - name: Install dependencies
-        run: |
-          vcpkg install --triplet=${{ env.VCPKG_DEFAULT_TRIPLET }}
+      - name: Configure
+        run: cmake --preset ${{ env.CMAKE_PRESET }}
 
       - name: Build
-        run: |
-          msbuild "${{ env.SOLUTION_FILE_PATH }}" `
-            /m `
-            /p:Configuration=${{ env.BUILD_CONFIGURATION }} `
-            /p:Platform=${{ env.BUILD_PLATFORM }} `
-            /p:VcpkgEnableManifest=true `
-            /p:VcpkgTriplet=${{ env.VCPKG_DEFAULT_TRIPLET }}
+        run: cmake --build --preset ${{ env.CMAKE_PRESET }}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: runehelper-windows-x86_64
+          path: build/${{ env.CMAKE_PRESET }}/RuneHelper.exe

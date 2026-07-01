@@ -6,7 +6,6 @@
 #include <imgui.h>
 
 #include "core/Logger.h"
-#include "core/Version.h"
 #include "ui/UIManager.h"
 #include "core/Helpers.h"
 

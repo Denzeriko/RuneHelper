@@ -2,8 +2,6 @@
 
 #include "core/Logger.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #include <windows.h>
 #include <windowsx.h>
 
@@ -60,7 +58,7 @@ bool RegionSelector::CreateOverlayWindow()
     wc.lpfnWndProc = RegionSelector::WndProc;
     wc.hInstance = hInst;
     wc.lpszClassName = L"OCR_REGION_SELECTOR";
-    wc.hCursor = LoadCursorW(nullptr, IDC_CROSS);
+    wc.hCursor = LoadCursor(nullptr, IDC_CROSS);
 
     RegisterClassW(&wc);
 

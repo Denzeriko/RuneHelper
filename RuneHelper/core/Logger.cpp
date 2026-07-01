@@ -1,7 +1,5 @@
 #include "Logger.h"
 
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
 #ifdef _WIN32
 #include <windows.h>
 #endif
