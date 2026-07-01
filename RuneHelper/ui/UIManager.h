@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <string>
 
 #include "core/Config.h"
 #include "core/ConfigManager.h"
@@ -50,6 +51,10 @@ public:
     bool WantsOCRRebuild();
 
     bool IsRegionHovered() const;
+
+    std::string HotkeyToString(int key) const;
+    bool CaptureNextHotkey(int& key);
+    bool SaveConfig();
 
     void RegisterHotkeys();
     void UnregisterHotkeys();
