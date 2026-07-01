@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.15.0)
 if(POLICY CMP0091)
     cmake_policy(SET CMP0091 NEW)
 endif()
+cmake_policy(SET CMP0135 NEW)
 
 set(RUNEHELPER_LANGUAGES CXX)
 
