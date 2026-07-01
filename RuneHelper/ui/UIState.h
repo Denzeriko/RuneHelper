@@ -27,6 +27,8 @@ struct UIState
     bool showSaved = false;
     std::chrono::steady_clock::time_point savedAt;
 
+    int* waitingForHotkey = nullptr;
+    bool hotkeyCaptureSkipFrame = false;
 
     // Reserved for future optimization.
     // Will be incremented whenever overlay data changes and used to
