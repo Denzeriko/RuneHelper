@@ -3,8 +3,6 @@ set(OpenGL_GL_PREFERENCE GLVND)
 include(FetchContent)
 
 find_package(OpenCV QUIET)
-find_package(BLAS REQUIRED)
-find_package(LAPACK REQUIRED)
 find_package(Tesseract QUIET)
 
 if(NOT Tesseract_FOUND)

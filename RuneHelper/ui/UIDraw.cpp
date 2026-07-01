@@ -12,30 +12,6 @@
 
 namespace
 {
-const char* OcrStatusText(bool initializing, bool ready, bool failed)
-{
-    if (initializing)
-        return "Initializing";
-
-    if (failed)
-        return "Failed";
-
-    if (ready)
-        return "Ready";
-
-    return "Waiting";
-}
-
-void ClampConfig(AppConfig& config)
-{
-    config.ocrIntervalMs = std::clamp(config.ocrIntervalMs, 100, 2000);
-    config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
-    config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 1, 60);
-    config.priceColorMedium = std::max(0, config.priceColorMedium);
-    config.priceColorHigh = std::max(0, config.priceColorHigh);
-    config.priceColorVeryHigh = std::max(0, config.priceColorVeryHigh);
-}
-
 constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
@@ -367,6 +343,8 @@ void UIDraw::Draw(UIManager& manager)
 
 void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* label, int& key)
 {
+    ImGui::PushID(label);
+
     ImGui::TextUnformatted(label);
     ImGui::SameLine(220.0f);
 
@@ -380,11 +358,15 @@ void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* la
     }
 
     if (!capturing)
+    {
+        ImGui::PopID();
         return;
+    }
 
     if (state.hotkeyCaptureSkipFrame)
     {
         state.hotkeyCaptureSkipFrame = false;
+        ImGui::PopID();
         return;
     }
 
@@ -397,4 +379,6 @@ void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* la
 
         manager.RegisterHotkeys();
     }
+
+    ImGui::PopID();
 }
