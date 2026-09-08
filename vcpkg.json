@@ -2,7 +2,17 @@
   "name": "runehelper",
   "version": "1.3.1",
   "dependencies": [
-    "opencv4",
+    {
+      "name": "opencv4",
+      "default-features": false,
+      "features": [
+        "fs",
+        "intrinsics",
+        "jpeg",
+        "png",
+        "thread"
+      ]
+    },
     "tesseract",
     "cpr",
     "nlohmann-json",
