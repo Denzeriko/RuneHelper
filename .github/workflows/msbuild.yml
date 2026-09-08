@@ -13,6 +13,8 @@ permissions:
 env:
   CMAKE_PRESET: windows-clang-release
   VCPKG_DEFAULT_TRIPLET: x64-windows-static
+  VCPKG_COMMIT: ff0df973f2d8f183ee0aa076634080f4fba38538
+  VCPKG_DEFAULT_BINARY_CACHE: ${{ github.workspace }}\vcpkg-binary-cache
 
 jobs:
   build:
@@ -32,22 +34,21 @@ jobs:
         run: |
           $vcpkgRoot = "${{ github.workspace }}\vcpkg"
           git clone https://github.com/microsoft/vcpkg.git $vcpkgRoot
+          git -C $vcpkgRoot checkout $env:VCPKG_COMMIT
           & "$vcpkgRoot\bootstrap-vcpkg.bat"
+          New-Item -ItemType Directory -Force -Path $env:VCPKG_DEFAULT_BINARY_CACHE | Out-Null
           echo "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           echo "$vcpkgRoot" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
-      - name: Cache vcpkg packages
+      - name: Cache vcpkg binaries
         uses: actions/cache@v4
         with:
           path: |
-            ${{ github.workspace }}/vcpkg/installed
-            ${{ github.workspace }}/vcpkg/packages
+            ${{ github.workspace }}/vcpkg-binary-cache
             ${{ github.workspace }}/vcpkg/downloads
-            ${{ github.workspace }}/vcpkg/buildtrees
-            ${{ github.workspace }}/build/${{ env.CMAKE_PRESET }}/vcpkg_installed
-          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-${{ env.VCPKG_COMMIT }}-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-
+            vcpkg-${{ runner.os }}-${{ env.VCPKG_DEFAULT_TRIPLET }}-${{ env.VCPKG_COMMIT }}-
 
       - name: Configure
         run: cmake --preset ${{ env.CMAKE_PRESET }}
