@@ -202,6 +202,8 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     constexpr const char* kPriceLeagues[] = {
         "Forbidden Rites",
         "HC Forbidden Rites",
+        "Runes of Aldur",
+        "HC Runes of Aldur",
         "Standard",
         "Hardcore"
     };

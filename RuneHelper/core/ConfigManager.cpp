@@ -18,7 +18,9 @@ bool IsSupportedPriceLeague(const std::string& league)
     return league == "Standard" ||
         league == "Hardcore" ||
         league == "Forbidden Rites" ||
-        league == "HC Forbidden Rites";
+        league == "HC Forbidden Rites" ||
+        league == "Runes of Aldur" ||
+        league == "HC Runes of Aldur";
 }
 
 void ClampPriceThresholds(AppConfig& config)
@@ -58,6 +60,8 @@ void ConfigManager::Normalize(AppConfig& config)
         config.runeSearchScale = 0.0;
     config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 1, 60);
+    if (config.priceLeague == "Hardcore Runes of Aldur")
+        config.priceLeague = "HC Runes of Aldur";
     if (!IsSupportedPriceLeague(config.priceLeague))
         config.priceLeague = std::string(kDefaultPriceLeague);
     ClampPriceThresholds(config);
