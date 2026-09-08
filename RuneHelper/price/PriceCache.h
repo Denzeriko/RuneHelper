@@ -44,7 +44,7 @@ private:
 
     int64_t dump_updated_at_ = 0;
     int64_t refresh_seconds_ = 60 * 60;
-    std::string league_ = "Runes of Aldur";
+    std::string league_ = "Forbidden Rites";
     std::unique_ptr<PriceProvider> provider_;
 
     std::atomic<bool> refreshInProgress_ = false;

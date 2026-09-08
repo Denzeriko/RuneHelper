@@ -31,7 +31,7 @@ struct AppConfig
 
     int priceRefreshMinutes = 15;
 
-    std::string priceLeague = "Runes of Aldur";
+    std::string priceLeague = "Forbidden Rites";
 
     bool debugOCR = false;
 };

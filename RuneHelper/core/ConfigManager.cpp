@@ -11,14 +11,14 @@ using json = nlohmann::json;
 
 namespace
 {
-constexpr std::string_view kDefaultPriceLeague = "Runes of Aldur";
+constexpr std::string_view kDefaultPriceLeague = "Forbidden Rites";
 
 bool IsSupportedPriceLeague(const std::string& league)
 {
     return league == "Standard" ||
         league == "Hardcore" ||
-        league == "Runes of Aldur" ||
-        league == "HC Runes of Aldur";
+        league == "Forbidden Rites" ||
+        league == "HC Forbidden Rites";
 }
 
 void ClampPriceThresholds(AppConfig& config)
@@ -58,8 +58,6 @@ void ConfigManager::Normalize(AppConfig& config)
         config.runeSearchScale = 0.0;
     config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 1, 60);
-    if (config.priceLeague == "Hardcore Runes of Aldur")
-        config.priceLeague = "HC Runes of Aldur";
     if (!IsSupportedPriceLeague(config.priceLeague))
         config.priceLeague = std::string(kDefaultPriceLeague);
     ClampPriceThresholds(config);

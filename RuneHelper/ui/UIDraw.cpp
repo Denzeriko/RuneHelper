@@ -200,8 +200,8 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::SetTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
 
     constexpr const char* kPriceLeagues[] = {
-        "Runes of Aldur",
-        "HC Runes of Aldur",
+        "Forbidden Rites",
+        "HC Forbidden Rites",
         "Standard",
         "Hardcore"
     };
