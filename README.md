@@ -89,7 +89,7 @@ vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
 
 ## Building on Ubuntu
 
-Linux support currently targets X11 only. Run RuneHelper from an X11 session; Wayland support is not implemented yet.
+The Linux build targets X11 or Wayland, chosen at configure time with `RUNEHELPER_LINUX_BACKEND` (`x11` by default). The Wayland backend talks to `wlr-layer-shell` and `wlr-screencopy`, so it works on wlroots compositors such as Hyprland, Sway, river and labwc; GNOME and KDE do not implement `wlr-screencopy`.
 
 ### Install dependencies
 
@@ -107,16 +107,67 @@ sudo apt install \
     libx11-dev
 ```
 
+For the Wayland backend, add:
+
+```bash
+sudo apt install \
+    libwayland-dev \
+    wayland-protocols \
+    libxkbcommon-dev
+```
+
 > **Note:** `libtesseract-dev` provides the C++ API, while `libleptonica-dev` is required by Tesseract.
 
 ### Configure and build
 
 ```bash
-mkdir -p build
-cd build
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j$(nproc)
+```
 
-cmake ..
-cmake --build . -j$(nproc)
+For Wayland:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRUNEHELPER_LINUX_BACKEND=wayland
+cmake --build build -j$(nproc)
+```
+
+## Building with Docker (Arch Linux)
+
+The Dockerfile produces a self-contained binary: OpenCV, Leptonica, Tesseract, GLFW, cpr and libstdc++ are linked statically, leaving only glibc, libcurl, the display server client libraries and libGL dynamic.
+
+```bash
+docker build --network host --output out .
+```
+
+The binary lands in `out/RuneHelper`. `--network host` keeps pacman and the FetchContent clones on the host routes; without it the Arch mirrors tend to time out inside the build container. The backend defaults to Wayland and is switched with a build argument:
+
+```bash
+docker build --network host --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
+```
+
+Run the binary from the repository root so it finds `RuneHelper/resources` (tessdata and rune templates):
+
+```bash
+./out/RuneHelper
+```
+
+## Global hotkeys on Wayland
+
+Wayland lets no client grab keys globally, so the Wayland build listens on a control socket at `$XDG_RUNTIME_DIR/runehelper.sock`. Starting the binary with a command forwards it to the running instance and exits:
+
+```bash
+RuneHelper --toggle-ocr
+RuneHelper --snapshot
+RuneHelper --select-region
+```
+
+Bind them in the compositor config, for example in `hyprland.conf`:
+
+```text
+bind = , F8, exec, /path/to/RuneHelper --toggle-ocr
+bind = , F9, exec, /path/to/RuneHelper --snapshot
+bind = , F10, exec, /path/to/RuneHelper --select-region
 ```
 
 ## Price API
@@ -138,7 +189,8 @@ The dump is refreshed automatically every 15 minutes.
 
 ## Known Issues
 
-* Linux support currently targets X11 only; Wayland support is not implemented yet.
+* The Wayland backend needs `wlr-layer-shell` and `wlr-screencopy`, so GNOME and KDE Wayland sessions are not supported.
+* Wayland has no global key grabs: hotkeys go through the control socket and a compositor binding.
 
 ## Disclaimer
 

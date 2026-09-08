@@ -1,4 +1,4 @@
-#include "ScreenCapture.h"
+#include "platform/linux/ScreenCapture.h"
 
 #include <cstdlib>
 #include <string>

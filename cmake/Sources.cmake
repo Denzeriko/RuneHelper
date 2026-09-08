@@ -33,11 +33,25 @@ if(WIN32)
     )
 elseif(UNIX AND NOT APPLE)
     set(RUNEHELPER_PLATFORM_SOURCES
-        RuneHelper/platform/linux/OverlayBackend.cpp
         RuneHelper/platform/linux/PlatformPaths.cpp
         RuneHelper/platform/linux/UIBackend.cpp
-        RuneHelper/platform/linux/ScreenCapture.cpp
-        RuneHelper/platform/linux/RegionSelect.cpp
         RuneHelper/platform/linux/ResourceHelper.cpp
     )
+
+    if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
+        list(APPEND RUNEHELPER_PLATFORM_SOURCES
+            RuneHelper/platform/linux/wayland/Hotkeys.cpp
+            RuneHelper/platform/linux/wayland/OverlayBackend.cpp
+            RuneHelper/platform/linux/wayland/RegionSelect.cpp
+            RuneHelper/platform/linux/wayland/ScreenCapture.cpp
+            RuneHelper/platform/linux/wayland/WaylandSession.cpp
+        )
+    else()
+        list(APPEND RUNEHELPER_PLATFORM_SOURCES
+            RuneHelper/platform/linux/x11/Hotkeys.cpp
+            RuneHelper/platform/linux/x11/OverlayBackend.cpp
+            RuneHelper/platform/linux/x11/RegionSelect.cpp
+            RuneHelper/platform/linux/x11/ScreenCapture.cpp
+        )
+    endif()
 endif()

@@ -1,84 +1,31 @@
 #include "platform/UIBackend.h"
 
-#include <array>
 #include <cctype>
-#include <cstdlib>
 #include <string>
-#include <vector>
 
 #include <GLFW/glfw3.h>
-#include <X11/Xlib.h>
-#include <X11/keysym.h>
 #include <imgui.h>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
 #include "core/Logger.h"
+#include "platform/linux/LinuxHotkeys.h"
 #include "ui/ImGuiStyleSetup.h"
 #include "ui/UIManager.h"
 
-namespace
-{
-constexpr std::array<unsigned int, 4> kGrabModifiers = {
-    0,
-    LockMask,
-    Mod2Mask,
-    LockMask | Mod2Mask
-};
-
-enum class HotkeyAction
-{
-    ToggleOcr,
-    SingleSnapshot,
-    SelectRegion
-};
-
-struct RegisteredHotkey
-{
-    KeyCode keycode = 0;
-    HotkeyAction action = HotkeyAction::ToggleOcr;
-};
-}
 
 struct UIBackend::Impl
 {
     GLFWwindow* window = nullptr;
-    Display* hotkeyDisplay = nullptr;
-    Window rootWindow = 0;
     UIManager* manager = nullptr;
-    std::vector<RegisteredHotkey> registeredHotkeys;
+    std::unique_ptr<LinuxHotkeys> hotkeys;
     bool running = false;
-    bool hotkeysAvailable = false;
-    bool loggedHotkeysUnavailable = false;
 
-    void InitHotkeyDisplay();
-    void DispatchHotkeyEvents();
     void DispatchHotkeyAction(HotkeyAction action);
 };
 
 namespace
 {
-bool IsWaylandSession()
-{
-    const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-    if (!sessionType)
-        return false;
-
-    std::string value(sessionType);
-    for (char& ch : value)
-        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-
-    return value == "wayland";
-}
-
-bool gSawXGrabError = false;
-
-int TrapXGrabError(Display*, XErrorEvent*)
-{
-    gSawXGrabError = true;
-    return 0;
-}
-
 std::string UpperAscii(std::string text)
 {
     for (char& ch : text)
@@ -164,60 +111,6 @@ const char* SpecialKeyName(int key)
     }
 }
 
-KeySym FunctionKeySym(int key)
-{
-    if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F12)
-        return XK_F1 + (key - GLFW_KEY_F1);
-
-    // Tolerate existing configs created with Win32 VK_F1..VK_F12 defaults.
-    if (key >= 0x70 && key <= 0x7B)
-        return XK_F1 + (key - 0x70);
-
-    return NoSymbol;
-}
-
-KeySym HotkeyToKeySym(int key)
-{
-    if (key >= GLFW_KEY_A && key <= GLFW_KEY_Z)
-        return XK_A + (key - GLFW_KEY_A);
-
-    if (key >= GLFW_KEY_0 && key <= GLFW_KEY_9)
-        return XK_0 + (key - GLFW_KEY_0);
-
-    if (KeySym functionKey = FunctionKeySym(key); functionKey != NoSymbol)
-        return functionKey;
-
-    switch (key)
-    {
-    case GLFW_KEY_ESCAPE: return XK_Escape;
-    case GLFW_KEY_SPACE: return XK_space;
-    case GLFW_KEY_ENTER: return XK_Return;
-    case GLFW_KEY_TAB: return XK_Tab;
-    default: return NoSymbol;
-    }
-}
-
-}
-
-void UIBackend::Impl::InitHotkeyDisplay()
-{
-    if (IsWaylandSession())
-    {
-        LOG_INFO("Linux global hotkeys require X11; Wayland is not supported yet");
-        loggedHotkeysUnavailable = true;
-        return;
-    }
-
-    hotkeyDisplay = XOpenDisplay(nullptr);
-    if (!hotkeyDisplay)
-    {
-        LOG_INFO("Linux global hotkeys require X11; Wayland is not supported yet");
-        loggedHotkeysUnavailable = true;
-        return;
-    }
-
-    rootWindow = DefaultRootWindow(hotkeyDisplay);
-    hotkeysAvailable = true;
 }
 
 void UIBackend::Impl::DispatchHotkeyAction(HotkeyAction action)
@@ -236,31 +129,6 @@ void UIBackend::Impl::DispatchHotkeyAction(HotkeyAction action)
     case HotkeyAction::SelectRegion:
         manager->RequestSelectRegion();
         break;
-    }
-}
-
-void UIBackend::Impl::DispatchHotkeyEvents()
-{
-    if (!hotkeysAvailable || !hotkeyDisplay)
-        return;
-
-    while (XPending(hotkeyDisplay) > 0)
-    {
-        XEvent event;
-        XNextEvent(hotkeyDisplay, &event);
-
-        if (event.type != KeyPress)
-            continue;
-
-        const KeyCode keycode = static_cast<KeyCode>(event.xkey.keycode);
-        for (const RegisteredHotkey& hotkey : registeredHotkeys)
-        {
-            if (hotkey.keycode == keycode)
-            {
-                DispatchHotkeyAction(hotkey.action);
-                break;
-            }
-        }
     }
 }
 
@@ -325,7 +193,8 @@ bool UIBackend::Init(UIManager* manager)
         return false;
     }
 
-    impl_->InitHotkeyDisplay();
+    impl_->hotkeys = CreateLinuxHotkeys();
+    impl_->hotkeys->Init();
 
     impl_->running = true;
     LOG_INFO("Linux UI backend initialized");
@@ -356,12 +225,10 @@ void UIBackend::Shutdown()
 
     glfwTerminate();
 
-    if (impl_->hotkeyDisplay)
+    if (impl_->hotkeys)
     {
-        XCloseDisplay(impl_->hotkeyDisplay);
-        impl_->hotkeyDisplay = nullptr;
-        impl_->rootWindow = 0;
-        impl_->hotkeysAvailable = false;
+        impl_->hotkeys->Shutdown();
+        impl_->hotkeys.reset();
     }
 }
 
@@ -371,7 +238,9 @@ bool UIBackend::BeginFrame()
         return false;
 
     glfwPollEvents();
-    impl_->DispatchHotkeyEvents();
+
+    if (impl_->hotkeys)
+        impl_->hotkeys->Poll([this](HotkeyAction action) { impl_->DispatchHotkeyAction(action); });
 
     if (glfwWindowShouldClose(impl_->window))
     {
@@ -472,82 +341,16 @@ bool UIBackend::CaptureNextHotkey(int& key)
 
 void UIBackend::RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int selectRegionKey)
 {
-    if (!impl_)
+    if (!impl_ || !impl_->hotkeys)
         return;
 
-    UnregisterHotkeys();
-
-    if (!impl_->hotkeysAvailable || !impl_->hotkeyDisplay)
-    {
-        if (!impl_->loggedHotkeysUnavailable)
-        {
-            LOG_INFO("Linux global hotkeys require X11; Wayland is not supported yet");
-            impl_->loggedHotkeysUnavailable = true;
-        }
-        return;
-    }
-
-    gSawXGrabError = false;
-    XErrorHandler previousErrorHandler = XSetErrorHandler(TrapXGrabError);
-
-    auto grabHotkey = [this](int key, HotkeyAction action, const char* label)
-    {
-        if (key == 0)
-            return;
-
-        const KeySym keySym = HotkeyToKeySym(key);
-        if (keySym == NoSymbol)
-        {
-            LOG_ERROR(std::string("Linux UI: unsupported global hotkey for ") + label + ": " + std::to_string(key));
-            return;
-        }
-
-        const KeyCode keycode = XKeysymToKeycode(impl_->hotkeyDisplay, keySym);
-        if (keycode == 0)
-        {
-            LOG_ERROR(std::string("Linux UI: failed to convert global hotkey for ") + label);
-            return;
-        }
-
-        for (unsigned int modifier : kGrabModifiers)
-        {
-            XGrabKey(
-                impl_->hotkeyDisplay,
-                keycode,
-                modifier,
-                impl_->rootWindow,
-                False,
-                GrabModeAsync,
-                GrabModeAsync
-            );
-        }
-
-        impl_->registeredHotkeys.push_back({keycode, action});
-    };
-
-    grabHotkey(toggleOcrKey, HotkeyAction::ToggleOcr, "toggle OCR");
-    grabHotkey(singleSnapshotKey, HotkeyAction::SingleSnapshot, "single snapshot");
-    grabHotkey(selectRegionKey, HotkeyAction::SelectRegion, "select region");
-
-    XSync(impl_->hotkeyDisplay, False);
-    XSetErrorHandler(previousErrorHandler);
-
-    if (gSawXGrabError)
-        LOG_ERROR("Linux UI: one or more global hotkeys could not be registered");
+    impl_->hotkeys->Register(toggleOcrKey, singleSnapshotKey, selectRegionKey);
 }
 
 void UIBackend::UnregisterHotkeys()
 {
-    if (!impl_ || !impl_->hotkeyDisplay || impl_->registeredHotkeys.empty())
+    if (!impl_ || !impl_->hotkeys)
         return;
 
-    for (const RegisteredHotkey& hotkey : impl_->registeredHotkeys)
-    {
-        for (unsigned int modifier : kGrabModifiers)
-            XUngrabKey(impl_->hotkeyDisplay, hotkey.keycode, modifier, impl_->rootWindow);
-    }
-
-    impl_->registeredHotkeys.clear();
-    XSync(impl_->hotkeyDisplay, False);
+    impl_->hotkeys->Unregister();
 }
-

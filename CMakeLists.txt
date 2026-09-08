@@ -22,6 +22,13 @@ list(APPEND CMAKE_MODULE_PATH
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
 )
 
+set(RUNEHELPER_LINUX_BACKEND "x11" CACHE STRING "Linux display backend: x11 or wayland")
+set_property(CACHE RUNEHELPER_LINUX_BACKEND PROPERTY STRINGS x11 wayland)
+
+if(UNIX AND NOT APPLE AND NOT RUNEHELPER_LINUX_BACKEND MATCHES "^(x11|wayland)$")
+    message(FATAL_ERROR "RUNEHELPER_LINUX_BACKEND must be x11 or wayland, got '${RUNEHELPER_LINUX_BACKEND}'")
+endif()
+
 include(Sources)
 
 if(WIN32)
@@ -35,10 +42,12 @@ endif()
 add_executable(RuneHelper
     ${RUNEHELPER_COMMON_SOURCES}
     ${RUNEHELPER_PLATFORM_SOURCES}
+    ${RUNEHELPER_GENERATED_SOURCES}
 )
 
 target_include_directories(RuneHelper PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/RuneHelper"
+    ${RUNEHELPER_INCLUDE_DIRECTORIES}
 )
 
 target_compile_definitions(RuneHelper PRIVATE
