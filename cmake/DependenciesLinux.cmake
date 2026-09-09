@@ -1,6 +1,7 @@
 set(OpenGL_GL_PREFERENCE GLVND)
 
 include(FetchContent)
+include(EmbedResources)
 
 find_package(OpenCV QUIET COMPONENTS core imgproc imgcodecs)
 find_package(Tesseract QUIET)

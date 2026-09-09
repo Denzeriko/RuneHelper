@@ -1,55 +1,62 @@
 #include "ResourceHelper.h"
 
 #include <fstream>
+#include <string>
+#include <string_view>
 
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
+#include "platform/linux/EmbeddedResources.h"
 
 namespace
 {
-bool CopyFile(const std::filesystem::path& source, const std::filesystem::path& destination)
+const EmbeddedResource* FindEmbedded(std::string_view name)
+{
+    for (const EmbeddedResource& resource : GetEmbeddedResources())
+    {
+        if (resource.name == name)
+            return &resource;
+    }
+
+    return nullptr;
+}
+
+bool WriteEmbedded(const EmbeddedResource& resource, const std::filesystem::path& destination)
 {
     std::filesystem::create_directories(destination.parent_path());
-
-    std::ifstream in(source, std::ios::binary);
-
-    if (!in)
-        return false;
 
     std::ofstream out(destination, std::ios::binary);
 
     if (!out)
         return false;
 
-    out << in.rdbuf();
+    out.write(
+        reinterpret_cast<const char*>(resource.begin),
+        static_cast<std::streamsize>(resource.end - resource.begin)
+    );
+
     return out.good();
 }
 }
 
 bool ExtractResourceToFile(int, const wchar_t*, const std::filesystem::path& outPath)
 {
-    LOG_INFO("Linux resource extraction using filesystem tessdata");
+    const EmbeddedResource* resource = FindEmbedded("eng.traineddata_fast");
 
-#ifdef RUNEHELPER_SOURCE_DIR
-    const std::filesystem::path configuredSource =
-        std::filesystem::path(RUNEHELPER_SOURCE_DIR) / "resources" / "eng.traineddata_fast";
+    if (!resource)
+    {
+        LOG_ERROR("Linux resource extraction failed: eng.traineddata_fast is not embedded in the binary");
+        return false;
+    }
 
-    if (CopyFile(configuredSource, outPath))
-        return true;
-#endif
+    if (!WriteEmbedded(*resource, outPath))
+    {
+        LOG_ERROR("Linux resource extraction failed: could not write " + outPath.string());
+        return false;
+    }
 
-    const std::filesystem::path source = std::filesystem::path("RuneHelper") / "resources" / "eng.traineddata_fast";
-
-    if (CopyFile(source, outPath))
-        return true;
-
-    const std::filesystem::path fallbackSource = std::filesystem::path("resources") / "eng.traineddata_fast";
-
-    if (CopyFile(fallbackSource, outPath))
-        return true;
-
-    LOG_ERROR("Linux resource extraction failed: could not find resources/eng.traineddata_fast");
-    return false;
+    LOG_INFO("Linux tessdata written from the embedded resource: " + outPath.string());
+    return true;
 }
 
 std::string PrepareTessdata()
@@ -74,29 +81,18 @@ std::filesystem::path PrepareRuneTemplates()
     const auto dir = GetAppDataDir() / "runes";
     std::filesystem::create_directories(dir);
 
-#ifdef RUNEHELPER_SOURCE_DIR
-    const std::filesystem::path configuredSource =
-        std::filesystem::path(RUNEHELPER_SOURCE_DIR) / "RuneHelper" / "resources" / "runes";
-
-    if (std::filesystem::exists(configuredSource))
+    for (const EmbeddedResource& resource : GetEmbeddedResources())
     {
-        std::filesystem::copy(
-            configuredSource,
-            dir,
-            std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive
-        );
-        return dir;
-    }
-#endif
+        if (!resource.name.ends_with(".png"))
+            continue;
 
-    const std::filesystem::path fallbackSource = std::filesystem::path("RuneHelper") / "resources" / "runes";
-    if (std::filesystem::exists(fallbackSource))
-    {
-        std::filesystem::copy(
-            fallbackSource,
-            dir,
-            std::filesystem::copy_options::skip_existing | std::filesystem::copy_options::recursive
-        );
+        const std::filesystem::path destination = dir / std::string(resource.name);
+
+        if (std::filesystem::exists(destination))
+            continue;
+
+        if (!WriteEmbedded(resource, destination))
+            LOG_ERROR("Linux rune template extraction failed: " + destination.string());
     }
 
     return dir;

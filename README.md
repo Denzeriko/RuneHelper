@@ -146,7 +146,7 @@ The binary lands in `out/RuneHelper`. `--network host` keeps pacman and the Fetc
 docker build --network host --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
 ```
 
-Run the binary from the repository root so it finds `RuneHelper/resources` (tessdata and rune templates):
+The Linux build embeds `eng.traineddata_fast` and the rune templates into the executable the same way the Windows resource script does, so the binary runs from any working directory:
 
 ```bash
 ./out/RuneHelper
