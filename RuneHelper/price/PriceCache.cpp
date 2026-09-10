@@ -126,7 +126,7 @@ void PriceCache::ForceRefreshAsync()
 
 void PriceCache::SetRefreshMinutes(int minutes)
 {
-    const int clampedMinutes = std::clamp(minutes, 1, 60);
+    const int clampedMinutes = std::clamp(minutes, 5, 360);
     std::lock_guard<std::mutex> lock(mutex_);
     refresh_seconds_ = clampedMinutes * 60;
 }

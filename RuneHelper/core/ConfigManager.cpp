@@ -59,7 +59,7 @@ void ConfigManager::Normalize(AppConfig& config)
     if (config.runeSearchScale < 0.5 || config.runeSearchScale > 2.0)
         config.runeSearchScale = 0.0;
     config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
-    config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 1, 60);
+    config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 5, 360);
     if (config.priceLeague == "Hardcore Runes of Aldur")
         config.priceLeague = "HC Runes of Aldur";
     if (!IsSupportedPriceLeague(config.priceLeague))

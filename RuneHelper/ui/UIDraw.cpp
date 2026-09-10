@@ -229,7 +229,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
     configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
     configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
-    configChanged |= ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 1, 60);
+    configChanged |= ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 5, 360);
 
     if (!config.priceSearchEnabled)
         ImGui::BeginDisabled();

@@ -1,7 +1,10 @@
 #include "price/PoeNinjaPriceProvider.h"
 
+#include <atomic>
+#include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <string>
 #include <vector>
 
 #include <cpr/cpr.h>
@@ -12,6 +15,59 @@ using json = nlohmann::json;
 
 namespace
 {
+std::string PriceApiBase()
+{
+    if (const char* override = std::getenv("RUNEHELPER_PRICE_API"); override && *override)
+        return override;
+
+    return "https://denz.pw/poe2/economy";
+}
+
+std::string UserAgent()
+{
+    return std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
+}
+
+constexpr const char* kDirectApi = "https://poe.ninja/poe2/api/economy/exchange/current/overview";
+constexpr int kProxyFailureLimit = 3;
+
+std::atomic<int>& ProxyFailures()
+{
+    static std::atomic<int> failures{0};
+    return failures;
+}
+
+bool Fetch(const std::string& url, std::string& body)
+{
+    LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() -> " + url);
+
+    auto r = cpr::Get(
+        cpr::Url{ url },
+        cpr::Header{
+            { "User-Agent", UserAgent() },
+            { "Accept", "application/json" }
+        },
+        cpr::Timeout{ 15000 }
+    );
+
+    LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size()));
+
+    if (r.error.code != cpr::ErrorCode::OK)
+    {
+        LOG_ERROR("PoeNinjaPriceProvider CPR error: code=" + std::to_string(static_cast<int>(r.error.code)) + " message=" + r.error.message);
+        return false;
+    }
+
+    if (r.status_code != 200)
+    {
+        LOG_ERROR("PoeNinjaPriceProvider HTTP error: " + std::to_string(r.status_code));
+        return false;
+    }
+
+    body = std::move(r.text);
+    return true;
+}
+
 const std::vector<std::string> kPoeNinjaCategories =
 {
     "Runes",
@@ -32,7 +88,9 @@ const std::vector<std::string> kPoeNinjaCategories =
 
 std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::DownloadPrices(const std::string& league)
 {
-    LOG_INFO("PoeNinjaPriceProvider::DownloadPrices() -> poe.ninja");
+    LOG_INFO("PoeNinjaPriceProvider::DownloadPrices() -> " + PriceApiBase());
+
+    ProxyFailures().store(0);
 
     std::unordered_map<std::string, PriceInfo> result;
     result.reserve(512);
@@ -98,44 +156,43 @@ std::string PoeNinjaPriceProvider::FormatExPrice(double value)
 std::unordered_map<std::string, PriceInfo>
 PoeNinjaPriceProvider::DownloadCategory(const std::string& league, const std::string& type)
 {
-    const std::string encodedLeague = EncodeUrlComponent(league);
-    const std::string url = "https://poe.ninja/poe2/api/economy/exchange/current/overview?league=" + encodedLeague + "&type=" + type;
+    const std::string query = "?league=" + EncodeUrlComponent(league) + "&type=" + type;
 
-    LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() -> " + url);
-
-    auto r = cpr::Get(
-        cpr::Url{ url },
-        cpr::Header{
-            { "User-Agent", "RuneHelper/1.0" },
-            { "Accept", "application/json" },
-            { "Referer", "https://poe.ninja/poe2/economy/" }
-        },
-        cpr::Timeout{ 15000 }
-    );
-
-    LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size()));
-
-    if (r.error.code != cpr::ErrorCode::OK)
+    auto parse = [this](const std::string& text) -> std::unordered_map<std::string, PriceInfo>
     {
-        LOG_ERROR("PoeNinjaPriceProvider CPR error: code=" + std::to_string(static_cast<int>(r.error.code)) + " message=" + r.error.message);
-        return {};
+        json j = json::parse(text, nullptr, false);
+
+        if (j.is_discarded())
+        {
+            LOG_ERROR("PoeNinjaPriceProvider JSON parse failed");
+            return {};
+        }
+
+        return ParseCategoryDump(j);
+    };
+
+    std::string body;
+
+    if (ProxyFailures().load() < kProxyFailureLimit)
+    {
+        if (Fetch(PriceApiBase() + query, body))
+        {
+            ProxyFailures().store(0);
+            return parse(body);
+        }
+
+        const int failures = ProxyFailures().fetch_add(1) + 1;
+
+        LOG_ERROR(
+            "Price proxy unavailable (" + std::to_string(failures) + "/" + std::to_string(kProxyFailureLimit) +
+            "), falling back to poe.ninja directly"
+        );
     }
 
-    if (r.status_code != 200)
-    {
-        LOG_ERROR("PoeNinjaPriceProvider HTTP error: " + std::to_string(r.status_code));
+    if (!Fetch(kDirectApi + query, body))
         return {};
-    }
 
-    json j = json::parse(r.text, nullptr, false);
-
-    if (j.is_discarded())
-    {
-        LOG_ERROR("PoeNinjaPriceProvider JSON parse failed");
-        return {};
-    }
-
-    return ParseCategoryDump(j);
+    return parse(body);
 }
 
 std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::ParseCategoryDump(const json& j)

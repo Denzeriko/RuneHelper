@@ -185,11 +185,15 @@ bind = , F10, exec, /path/to/RuneHelper --select-region
 
 ## Price API
 
-Prices are fetched from:
+poe.ninja asks that desktop clients not call its API from end-user machines, so prices go through a proxy:
 
 ```text
-https://poe.ninja/poe2/api/economy/exchange/current/overview?league=LEAGUE&type=TYPE
+https://denz.pw/poe2/economy?league=LEAGUE&type=TYPE
 ```
+
+The proxy fetches `https://poe.ninja/poe2/api/economy/exchange/current/overview` upstream, identifies itself with a descriptive User-Agent, revalidates with `If-None-Match`, and caches each league/type pair for an hour, which is how often the PoE 2 economy is recomputed. Clients therefore poll the proxy, not poe.ninja, and the interval in the settings only controls how soon a client picks up an already-cached answer.
+
+If the proxy fails three times in a refresh cycle, the client falls back to calling poe.ninja directly for the rest of that cycle and probes the proxy again on the next one. `RUNEHELPER_PRICE_API` overrides the proxy base URL, which is useful when running a proxy of your own.
 
 The cache is stored in the RuneHelper app data directory as a league-specific dump:
 
@@ -198,12 +202,11 @@ Windows: %APPDATA%\Denz\RuneHelper\prices_dump_<league>.json
 Linux:   ~/.config/RuneHelper/prices_dump_<league>.json
 ```
 
-The dump is refreshed automatically every 15 minutes.
-
 ## Known Issues
 
 * The Wayland backend needs `wlr-layer-shell`, so GNOME Wayland sessions are not supported.
 * On KDE the portal asks which monitor to share; it has to be the one holding the capture region.
+* Prices come from the proxy at `denz.pw`; if it is unreachable the client falls back to poe.ninja directly.
 * Wayland has no global key grabs: hotkeys go through the control socket and a compositor binding.
 
 ## Disclaimer
