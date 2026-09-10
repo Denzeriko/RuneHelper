@@ -89,7 +89,18 @@ vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
 
 ## Building on Ubuntu
 
-The Linux build targets X11 or Wayland, chosen at configure time with `RUNEHELPER_LINUX_BACKEND` (`x11` by default). The Wayland backend talks to `wlr-layer-shell` and `wlr-screencopy`, so it works on wlroots compositors such as Hyprland, Sway, river and labwc; GNOME and KDE do not implement `wlr-screencopy`.
+The Linux build targets X11 or Wayland, chosen at configure time with `RUNEHELPER_LINUX_BACKEND` (`x11` by default).
+
+The Wayland backend draws its overlay and region selector through `wlr-layer-shell`, which both wlroots compositors and KWin implement. For screen capture it picks a path at runtime:
+
+* `wlr-screencopy` when the compositor offers it (Hyprland, Sway, river, labwc) — captures just the configured region, with no permission prompt;
+* `xdg-desktop-portal` ScreenCast over PipeWire otherwise (KDE Plasma) — the desktop asks once which monitor to share, and the answer is remembered in `~/.config/RuneHelper/screencast_token`.
+
+Share the monitor that contains the capture region: the portal gives the app a single output and the app cannot choose it for you. If the wrong monitor is shared, the log says which output arrived and which region was expected, and the saved permission is dropped so the picker opens again.
+
+Setting `RUNEHELPER_CAPTURE_PORTAL=1` forces the portal path on compositors that also support `wlr-screencopy`, which is useful for reproducing KDE behaviour.
+
+GNOME is not supported: it implements neither `wlr-layer-shell` nor `wlr-screencopy`, so the overlay has nowhere to live.
 
 ### Install dependencies
 
@@ -113,7 +124,9 @@ For the Wayland backend, add:
 sudo apt install \
     libwayland-dev \
     wayland-protocols \
-    libxkbcommon-dev
+    libxkbcommon-dev \
+    libdbus-1-dev \
+    libpipewire-0.3-dev
 ```
 
 > **Note:** `libtesseract-dev` provides the C++ API, while `libleptonica-dev` is required by Tesseract.
@@ -189,7 +202,8 @@ The dump is refreshed automatically every 15 minutes.
 
 ## Known Issues
 
-* The Wayland backend needs `wlr-layer-shell` and `wlr-screencopy`, so GNOME and KDE Wayland sessions are not supported.
+* The Wayland backend needs `wlr-layer-shell`, so GNOME Wayland sessions are not supported.
+* On KDE the portal asks which monitor to share; it has to be the one holding the capture region.
 * Wayland has no global key grabs: hotkeys go through the control socket and a compositor binding.
 
 ## Disclaimer

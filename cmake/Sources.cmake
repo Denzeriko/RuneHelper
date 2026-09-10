@@ -42,6 +42,7 @@ elseif(UNIX AND NOT APPLE)
         list(APPEND RUNEHELPER_PLATFORM_SOURCES
             RuneHelper/platform/linux/wayland/Hotkeys.cpp
             RuneHelper/platform/linux/wayland/OverlayBackend.cpp
+            RuneHelper/platform/linux/wayland/PortalScreenCast.cpp
             RuneHelper/platform/linux/wayland/RegionSelect.cpp
             RuneHelper/platform/linux/wayland/ScreenCapture.cpp
             RuneHelper/platform/linux/wayland/WaylandSession.cpp

@@ -26,7 +26,9 @@ RUN --mount=type=cache,target=/var/cache/pacman/pkg,sharing=locked \
         libxi \
         wayland \
         wayland-protocols \
-        libxkbcommon
+        libxkbcommon \
+        libpipewire \
+        dbus
 
 RUN git clone --depth 1 --branch "${OPENCV_VERSION}" https://github.com/opencv/opencv.git /tmp/opencv && \
     cmake -S /tmp/opencv -B /tmp/opencv/build -G Ninja \

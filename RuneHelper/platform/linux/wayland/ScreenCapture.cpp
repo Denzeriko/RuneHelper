@@ -1,11 +1,17 @@
 #include "platform/linux/ScreenCapture.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstdint>
+#include <cstdlib>
+#include <fstream>
 #include <string>
+#include <thread>
 
+#include "PortalScreenCast.h"
 #include "WaylandSession.h"
 #include "core/Logger.h"
+#include "platform/PlatformPaths.h"
 
 namespace
 {
@@ -184,8 +190,142 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
     return result;
 }
 
+PortalScreenCast& Portal()
+{
+    static PortalScreenCast portal;
+    return portal;
+}
+
+std::filesystem::path RestoreTokenPath()
+{
+    return GetAppDataDir() / "screencast_token";
+}
+
+std::string LoadRestoreToken()
+{
+    std::ifstream in(RestoreTokenPath());
+
+    if (!in)
+        return {};
+
+    std::string token;
+    std::getline(in, token);
+    return token;
+}
+
+void SaveRestoreToken(const std::string& token)
+{
+    if (token.empty())
+        return;
+
+    std::ofstream out(RestoreTokenPath(), std::ios::trunc);
+
+    if (out)
+        out << token;
+}
+
+bool UsePortal()
+{
+    static const bool value = []
+    {
+        const char* forced = std::getenv("RUNEHELPER_CAPTURE_PORTAL");
+
+        if (forced && forced[0] == '1')
+            return true;
+
+        WaylandSession& session = Session();
+        return !session.Connect() || session.Screencopy() == nullptr;
+    }();
+
+    return value;
+}
+
+int& PortalMismatchCount()
+{
+    static int count = 0;
+    return count;
+}
+
+cv::Mat CaptureViaPortal(const cv::Rect& region)
+{
+    PortalScreenCast& portal = Portal();
+
+    if (!portal.IsRunning())
+    {
+        std::string token = LoadRestoreToken();
+
+        if (!portal.Start(token))
+            return {};
+
+        SaveRestoreToken(token);
+    }
+
+    cv::Mat frame;
+
+    for (int attempt = 0; attempt < 100 && frame.empty(); ++attempt)
+    {
+        frame = portal.LatestFrame();
+
+        if (frame.empty())
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+    }
+
+    if (frame.empty())
+    {
+        LOG_ERROR("Portal screencast: no frame arrived from the stream");
+        return {};
+    }
+
+    cv::Point origin = portal.FramePosition();
+
+    if (!portal.HasFramePosition())
+    {
+        if (const WaylandOutput* output = Session().OutputAt(region.x, region.y))
+            origin = cv::Point(output->x, output->y);
+    }
+
+    const cv::Rect local(region.x - origin.x, region.y - origin.y, region.width, region.height);
+    const cv::Rect clipped = local & cv::Rect(0, 0, frame.cols, frame.rows);
+
+    if (clipped.empty())
+    {
+        int& mismatches = PortalMismatchCount();
+        ++mismatches;
+
+        if (mismatches == 1)
+        {
+            LOG_ERROR(
+                "Portal screencast: the shared output covers " +
+                std::to_string(origin.x) + "," + std::to_string(origin.y) + " " +
+                std::to_string(frame.cols) + "x" + std::to_string(frame.rows) +
+                " but the configured region is " +
+                std::to_string(region.x) + "," + std::to_string(region.y) + " " +
+                std::to_string(region.width) + "x" + std::to_string(region.height) +
+                "; share the monitor that contains the region"
+            );
+        }
+
+        if (mismatches >= 20)
+        {
+            LOG_ERROR("Portal screencast: dropping the saved permission so the screen picker opens again");
+            portal.Stop();
+            std::error_code ignored;
+            std::filesystem::remove(RestoreTokenPath(), ignored);
+            mismatches = 0;
+        }
+
+        return {};
+    }
+
+    PortalMismatchCount() = 0;
+    return frame(clipped).clone();
+}
+
 cv::Mat Capture(const cv::Rect& region)
 {
+    if (UsePortal())
+        return CaptureViaPortal(region);
+
     WaylandSession& session = Session();
 
     if (!session.Connect())

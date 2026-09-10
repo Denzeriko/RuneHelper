@@ -20,6 +20,8 @@ if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
 
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(WaylandClient REQUIRED IMPORTED_TARGET wayland-client)
+    pkg_check_modules(DBus REQUIRED IMPORTED_TARGET dbus-1)
+    pkg_check_modules(PipeWire REQUIRED IMPORTED_TARGET libpipewire-0.3)
     pkg_get_variable(WAYLAND_SCANNER wayland-scanner wayland_scanner)
 
     if(NOT WAYLAND_SCANNER)
@@ -69,7 +71,11 @@ if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
     endforeach()
 
     set(RUNEHELPER_INCLUDE_DIRECTORIES "${RUNEHELPER_WAYLAND_PROTOCOL_DIR}")
-    set(RUNEHELPER_PLATFORM_LIBRARIES PkgConfig::WaylandClient)
+    set(RUNEHELPER_PLATFORM_LIBRARIES
+        PkgConfig::WaylandClient
+        PkgConfig::DBus
+        PkgConfig::PipeWire
+    )
 
     set(GLFW_BUILD_WAYLAND ON CACHE BOOL "" FORCE)
     set(GLFW_BUILD_X11 OFF CACHE BOOL "" FORCE)
