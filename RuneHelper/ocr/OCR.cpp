@@ -1,5 +1,7 @@
 #include "OCR.h"
 
+#include <leptonica/allheaders.h>
+
 #include "core/Logger.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/RunePatternMatcher.h"
@@ -15,6 +17,8 @@
 bool OCR::Init(const std::string& tessdataPath)
 {
     LOG_INFO("OCR::Init tessdataPath = " + tessdataPath);
+
+    setMsgSeverity(L_SEVERITY_NONE);
 
     tessdataPath_ = tessdataPath;
     std::filesystem::path engPath = std::filesystem::path(tessdataPath) / "eng.traineddata";
@@ -320,6 +324,8 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
 }
 std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& config)
 {
+    setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
+
     std::vector<LootLine> result;
 
     if (!initialized_ || img.empty())
