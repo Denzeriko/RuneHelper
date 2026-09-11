@@ -33,9 +33,15 @@ void UIManager::Shutdown()
 
 void UIManager::Pump()
 {
-    if (!backend_ || !backend_->BeginFrame())
+    if (!backend_)
     {
         state_.running = false;
+        return;
+    }
+
+    if (!backend_->BeginFrame())
+    {
+        state_.running = backend_->IsRunning();
         return;
     }
 

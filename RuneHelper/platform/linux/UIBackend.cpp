@@ -1,6 +1,7 @@
 #include "platform/UIBackend.h"
 
 #include <cctype>
+#include <chrono>
 #include <string>
 
 #include <GLFW/glfw3.h>
@@ -20,12 +21,15 @@ struct UIBackend::Impl
     UIManager* manager = nullptr;
     std::unique_ptr<LinuxHotkeys> hotkeys;
     bool running = false;
+    std::chrono::steady_clock::time_point lastFrame{};
 
     void DispatchHotkeyAction(HotkeyAction action);
 };
 
 namespace
 {
+constexpr int kUnfocusedFrameIntervalMs = 100;
+
 std::string UpperAscii(std::string text)
 {
     for (char& ch : text)
@@ -247,6 +251,20 @@ bool UIBackend::BeginFrame()
         impl_->running = false;
         return false;
     }
+
+    if (glfwGetWindowAttrib(impl_->window, GLFW_ICONIFIED))
+        return false;
+
+    const auto now = std::chrono::steady_clock::now();
+
+    const bool interactive =
+        glfwGetWindowAttrib(impl_->window, GLFW_FOCUSED) ||
+        glfwGetWindowAttrib(impl_->window, GLFW_HOVERED);
+
+    if (!interactive && now - impl_->lastFrame < std::chrono::milliseconds(kUnfocusedFrameIntervalMs))
+        return false;
+
+    impl_->lastFrame = now;
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplGlfw_NewFrame();

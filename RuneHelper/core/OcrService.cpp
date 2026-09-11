@@ -219,6 +219,8 @@ void OcrService::WorkerLoop()
 
     auto lastRefreshCheck = std::chrono::steady_clock::now();
     std::vector<LootLine> lastLoot;
+    std::vector<RunePatternMatch> lastRunes;
+    bool lastRunesValid = false;
     bool forceOcrFrame = false;
     bool runeCalibrationWasRunning = false;
 
@@ -260,6 +262,8 @@ void OcrService::WorkerLoop()
         {
             frameDiffer_.Reset();
             lastLoot.clear();
+            lastRunes.clear();
+            lastRunesValid = false;
             ClearOverlayTexts();
             SleepOcrLoop(running_, singleSnapshotRequested_, 100);
             continue;
@@ -269,6 +273,8 @@ void OcrService::WorkerLoop()
         {
             frameDiffer_.Reset();
             lastLoot.clear();
+            lastRunes.clear();
+            lastRunesValid = false;
             SleepOcrLoop(running_, singleSnapshotRequested_, 100);
             continue;
         }
@@ -293,8 +299,9 @@ void OcrService::WorkerLoop()
 
             std::vector<LootLine> loot;
             const bool similarFrame = frameDiffer_.IsSimilarFrame(img, forceOcrFrame);
+            const bool stableFrame = similarFrame && frameDiffer_.StableFrames() >= kStableOcrFramesBeforeReuse;
 
-            if (similarFrame && frameDiffer_.StableFrames() >= kStableOcrFramesBeforeReuse && !lastLoot.empty())
+            if (stableFrame && !lastLoot.empty())
             {
                 loot = lastLoot;
             }
@@ -323,7 +330,13 @@ void OcrService::WorkerLoop()
 
             if (localConfig.runeSearchEnabled && !runeCalibrationRunning)
             {
-                for (const auto& runeMatch : FindRunePatternMatches(img))
+                if (!stableFrame || !lastRunesValid)
+                {
+                    lastRunes = FindRunePatternMatches(img);
+                    lastRunesValid = true;
+                }
+
+                for (const auto& runeMatch : lastRunes)
                 {
                     OverlayText text;
                     text.text = std::wstring(runeMatch.label.begin(), runeMatch.label.end());
@@ -332,6 +345,11 @@ void OcrService::WorkerLoop()
                     text.y = localRegion.y + runeMatch.rect.y + runeMatch.rect.height / 2;
                     buildResult.texts.push_back(std::move(text));
                 }
+            }
+            else
+            {
+                lastRunes.clear();
+                lastRunesValid = false;
             }
 
             PublishOverlayTexts(std::move(buildResult.texts));

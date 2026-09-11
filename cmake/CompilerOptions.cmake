@@ -24,3 +24,14 @@ elseif(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         -Wpedantic
     )
 endif()
+
+if(UNIX AND NOT APPLE)
+    target_compile_options(RuneHelper PRIVATE
+        -ffunction-sections
+        -fdata-sections
+    )
+
+    target_link_options(RuneHelper PRIVATE
+        -Wl,--gc-sections
+    )
+endif()
