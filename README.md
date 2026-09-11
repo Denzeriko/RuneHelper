@@ -75,6 +75,26 @@ The folder is overwritten on each OCR run and may contain:
 * nlohmann/json
 * ImGui
 
+On Linux, cpr, GLFW and Dear ImGui are vendored as git submodules under `external/`, so clone with them:
+
+```bash
+git clone --recurse-submodules https://github.com/Denzeriko/RuneHelper.git
+```
+
+An existing clone catches up with:
+
+```bash
+git submodule update --init --recursive
+```
+
+Nothing is downloaded at configure time. System copies win when they exist: `cpr`, `glfw3` and `nlohmann_json` are looked up with `find_package` and the submodule is built only as a fallback, and the Wayland backend reads the `wlr-protocols` XML tree from its pkg-config `pkgdatadir`. Packagers can override the two source paths directly:
+
+```bash
+cmake -S . -B build \
+    -DRUNEHELPER_IMGUI_DIR=/usr/src/imgui \
+    -DRUNEHELPER_WLR_PROTOCOLS_DIR=/usr/share/wlr-protocols
+```
+
 ## Building on Windows
 
 Installed via vcpkg:
@@ -153,7 +173,7 @@ The Dockerfile produces a self-contained binary: OpenCV, Leptonica, Tesseract, G
 docker build --network host --output out .
 ```
 
-The binary lands in `out/RuneHelper`. `--network host` keeps pacman and the FetchContent clones on the host routes; without it the Arch mirrors tend to time out inside the build container. The backend defaults to Wayland and is switched with a build argument:
+The binary lands in `out/RuneHelper`. `--network host` keeps pacman on the host routes; without it the Arch mirrors tend to time out inside the build container. The backend defaults to Wayland and is switched with a build argument:
 
 ```bash
 docker build --network host --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .

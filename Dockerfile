@@ -16,6 +16,7 @@ RUN --mount=type=cache,target=/var/cache/pacman/pkg,sharing=locked \
         git \
         pkgconf \
         curl \
+        nlohmann-json \
         mesa \
         libglvnd \
         libx11 \
@@ -26,6 +27,7 @@ RUN --mount=type=cache,target=/var/cache/pacman/pkg,sharing=locked \
         libxi \
         wayland \
         wayland-protocols \
+        wlr-protocols \
         libxkbcommon \
         libpipewire \
         dbus
