@@ -161,12 +161,87 @@ static void SaveRunePatternDebugText(const std::filesystem::path& dir, const std
     }
 }
 
-static int FindTextStartX(const cv::Mat& rowBgr)
+static std::vector<int> FindTextStartX(const cv::Mat& img, const std::vector<cv::Rect>& rows)
 {
-    if (rowBgr.empty())
-        return -1;
+    std::vector<int> starts(rows.size(), 0);
 
-    return static_cast<int>(rowBgr.cols * 0.52);
+    if (img.empty() || rows.empty())
+        return starts;
+
+    constexpr double kGapBias = 0.5;
+
+    std::vector<int> known;
+
+    for (size_t i = 0; i < rows.size(); ++i)
+    {
+        cv::Mat gray;
+        cv::cvtColor(img(rows[i]), gray, cv::COLOR_BGR2GRAY);
+
+        cv::Mat dark;
+        cv::threshold(gray, dark, 0, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
+
+        cv::Mat columns;
+        cv::reduce(dark, columns, 0, cv::REDUCE_MAX, CV_8U);
+
+        int lastInk = -1;
+
+        for (int x = columns.cols - 1; x >= 0; --x)
+        {
+            if (columns.at<unsigned char>(0, x) != 0)
+            {
+                lastInk = x;
+                break;
+            }
+        }
+
+        int bestStart = -1;
+        int bestWidth = 0;
+        int runStart = -1;
+
+        for (int x = 0; x <= lastInk; ++x)
+        {
+            if (columns.at<unsigned char>(0, x) == 0)
+            {
+                if (runStart < 0)
+                    runStart = x;
+
+                continue;
+            }
+
+            if (runStart >= 0 && x - runStart > bestWidth)
+            {
+                bestWidth = x - runStart;
+                bestStart = runStart;
+            }
+
+            runStart = -1;
+        }
+
+        if (bestStart < 0)
+        {
+            starts[i] = -1;
+            continue;
+        }
+
+        starts[i] = bestStart + static_cast<int>(bestWidth * kGapBias);
+        known.push_back(starts[i]);
+    }
+
+    int fallback = 0;
+
+    if (!known.empty())
+    {
+        std::sort(known.begin(), known.end());
+        fallback = known[known.size() / 2];
+    }
+
+    for (int& value : starts)
+    {
+        if (value < 0)
+            value = fallback;
+    }
+
+    return starts;
 }
 
 std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
@@ -185,15 +260,32 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
     cv::Mat dark;
     cv::threshold(rightGray, dark, 115, 255, cv::THRESH_BINARY_INV);
 
+    constexpr double kVerticalLineInkRatio = 0.95;
+
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 2));
     cv::morphologyEx(dark, dark, cv::MORPH_CLOSE, kernel);
 
+    {
+        cv::Mat columnSums;
+        cv::reduce(dark, columnSums, 0, cv::REDUCE_SUM, CV_32S);
+
+        const int limit = static_cast<int>(dark.rows * 255.0 * kVerticalLineInkRatio);
+
+        for (int x = 0; x < dark.cols; ++x)
+        {
+            if (columnSums.at<int>(0, x) >= limit)
+                dark.col(x).setTo(0);
+        }
+    }
+
     constexpr int kMinInkPerRow = 12;
     constexpr int kMaxBlankGap = 4;
-    constexpr int kMinTextBandHeight = 10;
-    constexpr int kMaxTextBandHeight = 42;
+    constexpr int kMinTextBandHeight = 6;
+    constexpr double kMaxTextBandHeightFactor = 2.0;
     constexpr int kVerticalPadding = 8;
     constexpr double kMaxTextBandInkRatio = 0.25;
+
+    std::vector<std::pair<int, int>> bands;
 
     bool inBand = false;
     int bandStart = 0;
@@ -205,18 +297,7 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
         if (!inBand)
             return;
 
-        const int h = bandEnd - bandStart + 1;
-        if (h >= kMinTextBandHeight && h <= kMaxTextBandHeight)
-        {
-            const int y = std::max(0, bandStart - kVerticalPadding);
-            const int y2 = (std::min)(img.rows, bandEnd + kVerticalPadding + 1);
-            const cv::Rect band(0, y, dark.cols, y2 - y);
-            const double inkRatio = static_cast<double>(cv::countNonZero(dark(band))) / band.area();
-
-            if (inkRatio <= kMaxTextBandInkRatio)
-                rows.push_back(cv::Rect(0, y, img.cols, y2 - y));
-        }
-
+        bands.emplace_back(bandStart, bandEnd);
         inBand = false;
         blankGap = 0;
     };
@@ -246,6 +327,38 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
     }
 
     finishBand();
+
+    std::vector<int> heights;
+    heights.reserve(bands.size());
+
+    for (const auto& band : bands)
+    {
+        const int h = band.second - band.first + 1;
+
+        if (h >= kMinTextBandHeight)
+            heights.push_back(h);
+    }
+
+    std::sort(heights.begin(), heights.end());
+
+    const int median = heights.empty() ? 0 : heights[heights.size() / 2];
+    const int maxHeight = median > 0 ? static_cast<int>(median * kMaxTextBandHeightFactor) : img.rows;
+
+    for (const auto& band : bands)
+    {
+        const int h = band.second - band.first + 1;
+
+        if (h < kMinTextBandHeight || h > maxHeight)
+            continue;
+
+        const int y = std::max(0, band.first - kVerticalPadding);
+        const int y2 = (std::min)(img.rows, band.second + kVerticalPadding + 1);
+        const cv::Rect rect(0, y, dark.cols, y2 - y);
+        const double inkRatio = static_cast<double>(cv::countNonZero(dark(rect))) / rect.area();
+
+        if (inkRatio <= kMaxTextBandInkRatio)
+            rows.push_back(cv::Rect(0, y, img.cols, y2 - y));
+    }
 
     return rows;
 }
@@ -382,6 +495,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
     }
 
     auto rows = FindLootRows(img);
+    const std::vector<int> textStarts = FindTextStartX(img, rows);
 
     for (size_t rowIndex = 0; rowIndex < rows.size(); ++rowIndex)
     {
@@ -394,13 +508,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
             cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);
         }
 
-        int textX = FindTextStartX(row);
-        if (textX < 0)
-        {
-            if (debugOCR)
-                SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "no_text_start"), row);
-            continue;
-        }
+        const int textX = textStarts[rowIndex];
 
         cv::Rect textRect(
             textX,
