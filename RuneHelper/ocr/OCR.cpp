@@ -193,6 +193,7 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
     constexpr int kMinTextBandHeight = 10;
     constexpr int kMaxTextBandHeight = 42;
     constexpr int kVerticalPadding = 8;
+    constexpr double kMaxTextBandInkRatio = 0.25;
 
     bool inBand = false;
     int bandStart = 0;
@@ -209,7 +210,11 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
         {
             const int y = std::max(0, bandStart - kVerticalPadding);
             const int y2 = (std::min)(img.rows, bandEnd + kVerticalPadding + 1);
-            rows.push_back(cv::Rect(0, y, img.cols, y2 - y));
+            const cv::Rect band(0, y, dark.cols, y2 - y);
+            const double inkRatio = static_cast<double>(cv::countNonZero(dark(band))) / band.area();
+
+            if (inkRatio <= kMaxTextBandInkRatio)
+                rows.push_back(cv::Rect(0, y, img.cols, y2 - y));
         }
 
         inBand = false;
