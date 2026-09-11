@@ -171,7 +171,7 @@ bool UIBackend::Init(UIManager* manager)
     }
 
     glfwMakeContextCurrent(impl_->window);
-    glfwSwapInterval(1);
+    glfwSwapInterval(0);
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

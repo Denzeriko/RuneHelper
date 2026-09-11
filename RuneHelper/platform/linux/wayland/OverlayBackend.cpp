@@ -81,6 +81,7 @@ private:
     void Draw();
 
     cv::Rect ComputeContentRect(double& fontScale, int& thickness) const;
+    cv::Rect PreviewRect() const;
     WaylandShmBuffer* AcquireBuffer(int width, int height);
 
     WaylandSession session_;
@@ -279,6 +280,7 @@ void WaylandOverlayBackend::Hide()
     session_.Flush();
 
     mapped_ = false;
+    configured_ = false;
     drawnRect_ = cv::Rect();
 }
 
@@ -323,43 +325,46 @@ void WaylandOverlayBackend::UpdateGeometry()
     session_.Roundtrip();
 }
 
+cv::Rect WaylandOverlayBackend::PreviewRect() const
+{
+    return cv::Rect(
+        static_cast<int>(state_.previewRect.left),
+        static_cast<int>(state_.previewRect.top),
+        static_cast<int>(state_.previewRect.right - state_.previewRect.left),
+        static_cast<int>(state_.previewRect.bottom - state_.previewRect.top)
+    );
+}
+
 cv::Rect WaylandOverlayBackend::ComputeContentRect(double& fontScale, int& thickness) const
 {
     thickness = std::max(1, state_.fontSize / 16);
     fontScale = cv::getFontScaleFromHeight(cv::FONT_HERSHEY_SIMPLEX, std::max(8, state_.fontSize), thickness);
 
-    if (!state_.texts.empty())
+    cv::Rect bounds;
+
+    for (const OverlayText& text : state_.texts)
     {
-        cv::Rect bounds;
+        int baseline = 0;
+        const cv::Size size = cv::getTextSize(ToNarrow(text.text), cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
+        const cv::Rect box(
+            text.x - kTextPadding,
+            text.y - size.height / 2 - kTextPadding,
+            size.width + 2 * kTextPadding,
+            size.height + baseline + 2 * kTextPadding
+        );
 
-        for (const OverlayText& text : state_.texts)
-        {
-            int baseline = 0;
-            const cv::Size size = cv::getTextSize(ToNarrow(text.text), cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
-            const cv::Rect box(
-                text.x - kTextPadding,
-                text.y - size.height / 2 - kTextPadding,
-                size.width + 2 * kTextPadding,
-                size.height + baseline + 2 * kTextPadding
-            );
-
-            bounds = bounds.empty() ? box : (bounds | box);
-        }
-
-        return bounds;
+        bounds = bounds.empty() ? box : (bounds | box);
     }
 
     if (state_.previewEnabled)
     {
-        return cv::Rect(
-            static_cast<int>(state_.previewRect.left),
-            static_cast<int>(state_.previewRect.top),
-            static_cast<int>(state_.previewRect.right - state_.previewRect.left),
-            static_cast<int>(state_.previewRect.bottom - state_.previewRect.top)
-        );
+        const cv::Rect preview = PreviewRect();
+
+        if (!preview.empty())
+            bounds = bounds.empty() ? preview : (bounds | preview);
     }
 
-    return {};
+    return bounds;
 }
 
 WaylandShmBuffer* WaylandOverlayBackend::AcquireBuffer(int width, int height)
@@ -426,14 +431,24 @@ void WaylandOverlayBackend::Draw()
             cv::putText(canvas, narrow, origin, cv::FONT_HERSHEY_SIMPLEX, fontScale, ToScalar(text.color, 255), thickness, cv::LINE_AA);
         }
     }
-    else if (state_.previewEnabled)
+    if (state_.previewEnabled)
     {
-        cv::rectangle(
-            canvas,
-            cv::Rect(0, 0, std::max(1, contentRect_.width - 1), std::max(1, contentRect_.height - 1)),
-            ToScalar(OverlayRgb(0, 255, 0), 255),
-            2
-        );
+        const cv::Rect preview = PreviewRect();
+
+        if (!preview.empty())
+        {
+            cv::rectangle(
+                canvas,
+                cv::Rect(
+                    preview.x - contentRect_.x,
+                    preview.y - contentRect_.y,
+                    std::max(1, preview.width - 1),
+                    std::max(1, preview.height - 1)
+                ),
+                ToScalar(OverlayRgb(0, 255, 0), 255),
+                2
+            );
+        }
     }
 
     unsigned char* destination = buffer->Data();
@@ -509,7 +524,7 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
             return;
     }
 
-    if (content != contentRect_)
+    if (content != contentRect_ || !mapped_)
     {
         contentRect_ = content;
         UpdateGeometry();
