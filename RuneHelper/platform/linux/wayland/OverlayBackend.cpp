@@ -77,7 +77,7 @@ private:
     void DestroySurface();
     void Hide();
     void ApplyInputRegion();
-    void UpdateGeometry();
+    void EnsureConfigured();
     void Draw();
 
     cv::Rect ComputeContentRect(double& fontScale, int& thickness) const;
@@ -93,8 +93,9 @@ private:
 
     OverlayState state_;
     std::vector<OverlayText> drawnTexts_;
-    cv::Rect contentRect_;
-    cv::Rect drawnRect_;
+    cv::Rect surfaceRect_;
+    cv::Rect drawnContentRect_;
+    cv::Mat canvas_;
     bool drawnPreview_ = false;
     int drawnFontSize_ = 0;
 
@@ -126,12 +127,12 @@ void WaylandOverlayBackend::HandleConfigure(void* data, zwlr_layer_surface_v1* s
 
     if (width > 0 && height > 0)
     {
-        backend->contentRect_.width = static_cast<int>(width);
-        backend->contentRect_.height = static_cast<int>(height);
+        backend->surfaceRect_.width = static_cast<int>(width);
+        backend->surfaceRect_.height = static_cast<int>(height);
     }
 
     backend->configured_ = true;
-    backend->drawnRect_ = cv::Rect();
+    backend->drawnContentRect_ = cv::Rect();
 }
 
 void WaylandOverlayBackend::HandleClosed(void* data, zwlr_layer_surface_v1*)
@@ -139,6 +140,7 @@ void WaylandOverlayBackend::HandleClosed(void* data, zwlr_layer_surface_v1*)
     auto* backend = static_cast<WaylandOverlayBackend*>(data);
     backend->configured_ = false;
     backend->mapped_ = false;
+    backend->drawnContentRect_ = cv::Rect();
 }
 
 void WaylandOverlayBackend::HandleBufferRelease(void* data, wl_buffer* buffer)
@@ -204,13 +206,17 @@ bool WaylandOverlayBackend::CreateSurface(const WaylandOutput* output)
     output_ = output;
     configured_ = false;
     mapped_ = false;
-    drawnRect_ = cv::Rect();
+    drawnContentRect_ = cv::Rect();
+    surfaceRect_ = cv::Rect(output->x, output->y, output->LogicalWidth(), output->LogicalHeight());
 
     zwlr_layer_surface_v1_add_listener(layerSurface_, &kLayerSurfaceListener, this);
     zwlr_layer_surface_v1_set_anchor(
         layerSurface_,
-        ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
     );
+    zwlr_layer_surface_v1_set_size(layerSurface_, 0, 0);
+    zwlr_layer_surface_v1_set_margin(layerSurface_, 0, 0, 0, 0);
     zwlr_layer_surface_v1_set_keyboard_interactivity(layerSurface_, 0);
     zwlr_layer_surface_v1_set_exclusive_zone(layerSurface_, -1);
 
@@ -243,8 +249,8 @@ void WaylandOverlayBackend::DestroySurface()
     configured_ = false;
     mapped_ = false;
     output_ = nullptr;
-    contentRect_ = cv::Rect();
-    drawnRect_ = cv::Rect();
+    surfaceRect_ = cv::Rect();
+    drawnContentRect_ = cv::Rect();
 }
 
 void WaylandOverlayBackend::Shutdown()
@@ -266,7 +272,7 @@ void WaylandOverlayBackend::PumpEvents()
     if (!running_)
         return;
 
-    session_.DispatchPending();
+    session_.DispatchNonBlocking();
     session_.Flush();
 }
 
@@ -281,7 +287,7 @@ void WaylandOverlayBackend::Hide()
 
     mapped_ = false;
     configured_ = false;
-    drawnRect_ = cv::Rect();
+    drawnContentRect_ = cv::Rect();
 }
 
 void WaylandOverlayBackend::ApplyInputRegion()
@@ -301,26 +307,11 @@ void WaylandOverlayBackend::ApplyInputRegion()
     }
 }
 
-void WaylandOverlayBackend::UpdateGeometry()
+void WaylandOverlayBackend::EnsureConfigured()
 {
-    if (!layerSurface_ || !output_ || contentRect_.empty())
+    if (!layerSurface_ || !surface_ || configured_)
         return;
 
-    zwlr_layer_surface_v1_set_size(
-        layerSurface_,
-        static_cast<std::uint32_t>(contentRect_.width),
-        static_cast<std::uint32_t>(contentRect_.height)
-    );
-
-    zwlr_layer_surface_v1_set_margin(
-        layerSurface_,
-        contentRect_.y - output_->y,
-        0,
-        0,
-        contentRect_.x - output_->x
-    );
-
-    configured_ = false;
     wl_surface_commit(surface_);
     session_.Roundtrip();
 }
@@ -393,19 +384,23 @@ WaylandShmBuffer* WaylandOverlayBackend::AcquireBuffer(int width, int height)
 
 void WaylandOverlayBackend::Draw()
 {
-    if (!surface_ || !configured_ || contentRect_.empty())
+    if (!surface_ || !configured_ || surfaceRect_.empty())
         return;
 
-    WaylandShmBuffer* buffer = AcquireBuffer(contentRect_.width, contentRect_.height);
+    WaylandShmBuffer* buffer = AcquireBuffer(surfaceRect_.width, surfaceRect_.height);
 
     if (!buffer)
         return;
 
-    cv::Mat canvas(contentRect_.height, contentRect_.width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    if (canvas_.rows != surfaceRect_.height || canvas_.cols != surfaceRect_.width)
+        canvas_.create(surfaceRect_.height, surfaceRect_.width, CV_8UC4);
+
+    canvas_.setTo(cv::Scalar(0, 0, 0, 0));
+    cv::Mat& canvas = canvas_;
 
     int thickness = 1;
     double fontScale = 1.0;
-    ComputeContentRect(fontScale, thickness);
+    const cv::Rect content = ComputeContentRect(fontScale, thickness);
 
     if (!state_.texts.empty())
     {
@@ -415,7 +410,7 @@ void WaylandOverlayBackend::Draw()
             int baseline = 0;
             const cv::Size size = cv::getTextSize(narrow, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
 
-            const cv::Point origin(text.x - contentRect_.x, text.y - contentRect_.y + size.height / 2);
+            const cv::Point origin(text.x - surfaceRect_.x, text.y - surfaceRect_.y + size.height / 2);
             const cv::Rect backdrop(
                 origin.x - kTextPadding,
                 origin.y - size.height - kTextPadding,
@@ -440,8 +435,8 @@ void WaylandOverlayBackend::Draw()
             cv::rectangle(
                 canvas,
                 cv::Rect(
-                    preview.x - contentRect_.x,
-                    preview.y - contentRect_.y,
+                    preview.x - surfaceRect_.x,
+                    preview.y - surfaceRect_.y,
                     std::max(1, preview.width - 1),
                     std::max(1, preview.height - 1)
                 ),
@@ -453,12 +448,12 @@ void WaylandOverlayBackend::Draw()
 
     unsigned char* destination = buffer->Data();
 
-    for (int row = 0; row < contentRect_.height; ++row)
+    for (int row = 0; row < surfaceRect_.height; ++row)
     {
         std::memcpy(
             destination + static_cast<std::size_t>(row) * buffer->Stride(),
             canvas.ptr(row),
-            static_cast<std::size_t>(contentRect_.width) * 4
+            static_cast<std::size_t>(surfaceRect_.width) * 4
         );
     }
 
@@ -468,13 +463,22 @@ void WaylandOverlayBackend::Draw()
             busy_[i] = true;
     }
 
+    cv::Rect damage = content.empty() ? drawnContentRect_
+                                      : (drawnContentRect_.empty() ? content : (content | drawnContentRect_));
+    damage &= surfaceRect_;
+
     wl_surface_attach(surface_, buffer->Buffer(), 0, 0);
-    wl_surface_damage_buffer(surface_, 0, 0, contentRect_.width, contentRect_.height);
+
+    if (damage.empty())
+        wl_surface_damage_buffer(surface_, 0, 0, surfaceRect_.width, surfaceRect_.height);
+    else
+        wl_surface_damage_buffer(surface_, damage.x - surfaceRect_.x, damage.y - surfaceRect_.y, damage.width, damage.height);
+
     wl_surface_commit(surface_);
     session_.Flush();
 
     mapped_ = true;
-    drawnRect_ = contentRect_;
+    drawnContentRect_ = content;
     drawnTexts_ = state_.texts;
     drawnPreview_ = state_.previewEnabled;
     drawnFontSize_ = state_.fontSize;
@@ -487,17 +491,26 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
 
     state_ = state;
 
-    int thickness = 1;
-    double fontScale = 1.0;
-    cv::Rect content = ComputeContentRect(fontScale, thickness);
-
-    if (content.empty() || !visible_)
+    if (!visible_)
     {
         Hide();
         return;
     }
 
-    const WaylandOutput* target = session_.OutputAt(content.x, content.y);
+    int thickness = 1;
+    double fontScale = 1.0;
+    cv::Rect content = ComputeContentRect(fontScale, thickness);
+
+    const WaylandOutput* target = nullptr;
+
+    if (output_ && (content.empty() ||
+        !(content & cv::Rect(output_->x, output_->y, output_->LogicalWidth(), output_->LogicalHeight())).empty()))
+    {
+        target = output_;
+    }
+
+    if (!target && !content.empty())
+        target = session_.OutputAt(content.x, content.y);
 
     if (!target)
         target = session_.PrimaryOutput();
@@ -508,13 +521,8 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
         return;
     }
 
-    content &= cv::Rect(target->x, target->y, target->LogicalWidth(), target->LogicalHeight());
-
-    if (content.empty())
-    {
-        Hide();
-        return;
-    }
+    if (!content.empty())
+        content &= cv::Rect(target->x, target->y, target->LogicalWidth(), target->LogicalHeight());
 
     if (!surface_ || output_ != target)
     {
@@ -524,15 +532,12 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
             return;
     }
 
-    if (content != contentRect_ || !mapped_)
-    {
-        contentRect_ = content;
-        UpdateGeometry();
-    }
+    if (!mapped_)
+        EnsureConfigured();
 
     const bool unchanged =
         mapped_ &&
-        drawnRect_ == contentRect_ &&
+        drawnContentRect_ == content &&
         drawnPreview_ == state_.previewEnabled &&
         drawnFontSize_ == state_.fontSize &&
         SameTexts(drawnTexts_, state_.texts);
@@ -553,7 +558,7 @@ void WaylandOverlayBackend::SetVisible(bool visible)
     if (!visible_)
         Hide();
     else
-        drawnRect_ = cv::Rect();
+        drawnContentRect_ = cv::Rect();
 }
 
 void WaylandOverlayBackend::SetClickThrough(bool enabled)

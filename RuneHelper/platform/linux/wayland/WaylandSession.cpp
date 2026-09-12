@@ -1,5 +1,6 @@
 #include "WaylandSession.h"
 
+#include <poll.h>
 #include <algorithm>
 #include <string>
 
@@ -257,6 +258,36 @@ bool WaylandSession::Dispatch()
 bool WaylandSession::DispatchPending()
 {
     return display_ && wl_display_dispatch_pending(display_) != -1;
+}
+
+bool WaylandSession::DispatchNonBlocking()
+{
+    if (!display_)
+        return false;
+
+    while (wl_display_prepare_read(display_) != 0)
+    {
+        if (wl_display_dispatch_pending(display_) == -1)
+            return false;
+    }
+
+    wl_display_flush(display_);
+
+    pollfd entry{};
+    entry.fd = wl_display_get_fd(display_);
+    entry.events = POLLIN;
+
+    if (poll(&entry, 1, 0) > 0 && (entry.revents & POLLIN))
+    {
+        if (wl_display_read_events(display_) == -1)
+            return false;
+    }
+    else
+    {
+        wl_display_cancel_read(display_);
+    }
+
+    return wl_display_dispatch_pending(display_) != -1;
 }
 
 void WaylandSession::Flush()

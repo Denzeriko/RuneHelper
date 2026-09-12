@@ -42,6 +42,7 @@ public:
     bool Roundtrip();
     bool Dispatch();
     bool DispatchPending();
+    bool DispatchNonBlocking();
     void Flush();
 
     wl_display* Display() const;
