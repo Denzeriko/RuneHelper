@@ -1,6 +1,7 @@
 #include "core/OcrService.h"
 
 #include <algorithm>
+#include <memory>
 #include <thread>
 #include <utility>
 
@@ -214,7 +215,8 @@ void OcrService::WorkerLoop()
 
     {
         std::lock_guard lock(cachedNamesMutex_);
-        cachedItemNames_ = BuildCachedItemNames(priceCache_.GetAllItemNames());
+        cachedItemNames_ = std::make_shared<const std::vector<CachedItemName>>(
+            BuildCachedItemNames(priceCache_.GetAllItemNames()));
     }
 
     auto lastRefreshCheck = std::chrono::steady_clock::now();
@@ -245,7 +247,8 @@ void OcrService::WorkerLoop()
             priceCache_.RefreshIfNeeded();
             {
                 std::lock_guard lock(cachedNamesMutex_);
-                cachedItemNames_ = BuildCachedItemNames(priceCache_.GetAllItemNames());
+                cachedItemNames_ = std::make_shared<const std::vector<CachedItemName>>(
+                    BuildCachedItemNames(priceCache_.GetAllItemNames()));
             }
         }
 
@@ -314,18 +317,20 @@ void OcrService::WorkerLoop()
 
             frameDiffer_.StoreFrame(img);
 
-            std::vector<CachedItemName> cachedNames;
+            std::shared_ptr<const std::vector<CachedItemName>> cachedNames;
             {
                 std::lock_guard lock(cachedNamesMutex_);
                 cachedNames = cachedItemNames_;
             }
+
+            static const std::vector<CachedItemName> kNoNames;
 
             LootOverlayBuildResult buildResult = LootOverlayBuilder::Build(
                 loot,
                 localRegion,
                 localConfig,
                 priceCache_,
-                cachedNames
+                cachedNames ? *cachedNames : kNoNames
             );
 
             if (localConfig.runeSearchEnabled && !runeCalibrationRunning)
@@ -410,7 +415,7 @@ void OcrService::ClearRuntimeBuffers()
 
     {
         std::lock_guard lock(cachedNamesMutex_);
-        cachedItemNames_.clear();
+        cachedItemNames_.reset();
     }
 }
 

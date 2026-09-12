@@ -3,6 +3,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
@@ -92,7 +93,7 @@ private:
     DebugData debugData_;
 
     std::mutex cachedNamesMutex_;
-    std::vector<CachedItemName> cachedItemNames_;
+    std::shared_ptr<const std::vector<CachedItemName>> cachedItemNames_;
 
     std::jthread initThread_;
     std::jthread workerThread_;

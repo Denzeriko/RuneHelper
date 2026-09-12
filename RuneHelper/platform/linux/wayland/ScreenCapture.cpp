@@ -122,6 +122,27 @@ WaylandSession& Session()
     return session;
 }
 
+std::string DescribeRect(const cv::Rect& rect)
+{
+    return std::to_string(rect.x) + "," + std::to_string(rect.y) + " " +
+           std::to_string(rect.width) + "x" + std::to_string(rect.height);
+}
+
+std::string DescribeOutputs(const WaylandSession& session)
+{
+    if (session.Outputs().empty())
+        return " (no outputs)";
+
+    std::string text = " (outputs:";
+
+    for (const WaylandOutput& output : session.Outputs())
+    {
+        text += " " + DescribeRect(cv::Rect(output.x, output.y, output.LogicalWidth(), output.LogicalHeight()));
+    }
+
+    return text + ")";
+}
+
 const WaylandOutput* OutputForRegion(const WaylandSession& session, const cv::Rect& region)
 {
     if (const WaylandOutput* output = session.OutputAt(region.x, region.y))
@@ -331,6 +352,15 @@ cv::Mat Capture(const cv::Rect& region)
     if (!session.Connect())
         return {};
 
+    if (!session.DispatchNonBlocking())
+    {
+        LOG_ERROR("Wayland screen capture: display error, reconnecting");
+        session.Disconnect();
+
+        if (!session.Connect())
+            return {};
+    }
+
     if (!session.Screencopy())
     {
         LOG_ERROR("Wayland screen capture requires zwlr_screencopy_manager_v1, which this compositor does not support");
@@ -341,7 +371,7 @@ cv::Mat Capture(const cv::Rect& region)
 
     if (!output)
     {
-        LOG_ERROR("Wayland screen capture failed: no output covers the requested region");
+        LOG_ERROR("Wayland screen capture failed: no outputs are known" + DescribeOutputs(session));
         return {};
     }
 
@@ -350,7 +380,10 @@ cv::Mat Capture(const cv::Rect& region)
 
     if (clipped.empty())
     {
-        LOG_ERROR("Wayland screen capture failed: requested region is outside every output");
+        LOG_ERROR(
+            "Wayland screen capture failed: region " + DescribeRect(region) +
+            " is outside every output" + DescribeOutputs(session)
+        );
         return {};
     }
 
