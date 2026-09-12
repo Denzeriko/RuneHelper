@@ -70,7 +70,7 @@ void OcrService::Start(ConfigManager& configManager)
 
     configManager_ = &configManager;
     running_ = true;
-    ResetRuntimeState();
+    ResetState(true);
 
     AppConfig config;
     {
@@ -113,7 +113,7 @@ void OcrService::Stop()
 
     screenCapture_.Shutdown();
     configManager_ = nullptr;
-    ResetStoppedState();
+    ResetState(false);
 }
 
 void OcrService::RequestSingleSnapshot()
@@ -375,24 +375,11 @@ void OcrService::WorkerLoop()
     }
 }
 
-void OcrService::ResetRuntimeState()
+void OcrService::ResetState(bool initializing)
 {
     ocrReady_ = false;
     ocrFailed_ = false;
-    ocrInitializing_ = true;
-    singleSnapshotRequested_ = false;
-    singleSnapshotUntil_ = {};
-    overlayDirty_ = false;
-    emptyOverlayFrames_ = 0;
-    frameDiffer_.Reset();
-    ClearRuntimeBuffers();
-}
-
-void OcrService::ResetStoppedState()
-{
-    ocrReady_ = false;
-    ocrFailed_ = false;
-    ocrInitializing_ = false;
+    ocrInitializing_ = initializing;
     singleSnapshotRequested_ = false;
     singleSnapshotUntil_ = {};
     overlayDirty_ = false;

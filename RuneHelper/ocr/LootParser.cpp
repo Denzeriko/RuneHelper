@@ -3,11 +3,9 @@
 #include <cctype>
 #include <charconv>
 #include <cstdio>
-#include <regex>
-#include <iostream>
-#include <sstream>
-#include <iomanip>
+#include <cstdlib>
 #include <optional>
+#include <string>
 
 LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& line)
 {

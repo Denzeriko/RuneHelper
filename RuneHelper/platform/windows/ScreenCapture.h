@@ -1,6 +1,5 @@
 #pragma once
 
-#include <opencv2/opencv.hpp>
+#include <opencv2/core.hpp>
 
-cv::Mat CaptureScreen();
 cv::Mat CaptureRegion(const cv::Rect& region);

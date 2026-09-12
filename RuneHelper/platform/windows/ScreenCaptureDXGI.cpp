@@ -4,6 +4,8 @@
 
 #include <dxgi1_2.h>
 
+#include <opencv2/imgproc.hpp>
+
 #include "core/Logger.h"
 
 #pragma comment(lib, "d3d11.lib")

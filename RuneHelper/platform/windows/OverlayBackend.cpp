@@ -79,6 +79,12 @@ private:
     WNDCLASSW windowClass_ = {};
     HFONT font_ = nullptr;
     OverlayState state_;
+
+    int virtualX_ = 0;
+    int virtualY_ = 0;
+    int virtualW_ = 0;
+    int virtualH_ = 0;
+
     bool running_ = false;
 };
 
@@ -91,20 +97,20 @@ bool WindowsOverlayBackend::Init(const char*, int, int)
 
     RegisterClassW(&windowClass_);
 
-    state_.virtualX = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    state_.virtualY = GetSystemMetrics(SM_YVIRTUALSCREEN);
-    state_.virtualW = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    state_.virtualH = GetSystemMetrics(SM_CYVIRTUALSCREEN);
+    virtualX_ = GetSystemMetrics(SM_XVIRTUALSCREEN);
+    virtualY_ = GetSystemMetrics(SM_YVIRTUALSCREEN);
+    virtualW_ = GetSystemMetrics(SM_CXVIRTUALSCREEN);
+    virtualH_ = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     hwnd_ = CreateWindowExW(
         WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_TRANSPARENT | WS_EX_TOOLWINDOW | WS_EX_NOACTIVATE,
         windowClass_.lpszClassName,
         L"RuneHelperOverlay",
         WS_POPUP,
-        state_.virtualX,
-        state_.virtualY,
-        state_.virtualW,
-        state_.virtualH,
+        virtualX_,
+        virtualY_,
+        virtualW_,
+        virtualH_,
         nullptr,
         nullptr,
         windowClass_.hInstance,
@@ -181,17 +187,7 @@ void WindowsOverlayBackend::Render(const OverlayState& state)
     if (state_.fontSize != state.fontSize)
         RecreateFont(state.fontSize);
 
-    int virtualX = state_.virtualX;
-    int virtualY = state_.virtualY;
-    int virtualW = state_.virtualW;
-    int virtualH = state_.virtualH;
-
     state_ = state;
-
-    state_.virtualX = virtualX;
-    state_.virtualY = virtualY;
-    state_.virtualW = virtualW;
-    state_.virtualH = virtualH;
 
     InvalidateRect(hwnd_, nullptr, FALSE);
 }
@@ -322,10 +318,10 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
             RECT rect = ToRect(self->state_.previewRect);
 
             Rectangle(hdc, 
-                rect.left   - self->state_.virtualX, 
-                rect.top    - self->state_.virtualY, 
-                rect.right  - self->state_.virtualX, 
-                rect.bottom - self->state_.virtualY
+                rect.left   - self->virtualX_, 
+                rect.top    - self->virtualY_, 
+                rect.right  - self->virtualX_, 
+                rect.bottom - self->virtualY_
             );
 
             SelectObject(hdc, oldBrush);
@@ -340,8 +336,8 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
         for (const auto& text : self->state_.texts)
         {
             SetTextColor(hdc, ToColorRef(text.color));
-            int x = text.x - self->state_.virtualX;
-            int y = text.y - self->state_.virtualY;
+            int x = text.x - self->virtualX_;
+            int y = text.y - self->virtualY_;
             RECT rect{x, y - 20, x + 300, y + 20};
             DrawTextW(hdc, text.text.c_str(), -1, &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }

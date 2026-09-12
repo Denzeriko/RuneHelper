@@ -66,15 +66,6 @@ void Logger::Error(const std::string& msg)
     Write("ERROR", msg);
 }
 
-void Logger::Debug(const std::string& msg)
-{
-#ifdef _DEBUG
-    Write("DEBUG", msg);
-#else
-    (void)msg;
-#endif
-}
-
 void Logger::Write(const char* level, const std::string& msg)
 {
     std::lock_guard<std::mutex> lock(mutex_);

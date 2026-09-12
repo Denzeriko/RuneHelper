@@ -58,8 +58,7 @@ private:
     void InitOcr();
     void WorkerLoop();
 
-    void ResetRuntimeState();
-    void ResetStoppedState();
+    void ResetState(bool initializing);
     void ClearRuntimeBuffers();
     void ClearOverlayTexts();
     void SaveRuneCalibrationScale(double scale);

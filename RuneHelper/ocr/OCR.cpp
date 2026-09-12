@@ -2,6 +2,9 @@
 
 #include <leptonica/allheaders.h>
 
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/imgproc.hpp>
+
 #include "core/Logger.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/RunePatternMatcher.h"

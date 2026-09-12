@@ -8,6 +8,8 @@
 #include <string>
 #include <thread>
 
+#include <opencv2/imgproc.hpp>
+
 #include "PortalScreenCast.h"
 #include "WaylandSession.h"
 #include "core/Logger.h"
@@ -395,24 +397,6 @@ cv::Mat Capture(const cv::Rect& region)
 
     return result;
 }
-}
-
-cv::Mat CaptureScreen()
-{
-    WaylandSession& session = Session();
-
-    if (!session.Connect())
-        return {};
-
-    const WaylandOutput* output = session.PrimaryOutput();
-
-    if (!output)
-    {
-        LOG_ERROR("Wayland screen capture failed: compositor advertised no outputs");
-        return {};
-    }
-
-    return Capture(cv::Rect(output->x, output->y, output->LogicalWidth(), output->LogicalHeight()));
 }
 
 cv::Mat CaptureRegion(const cv::Rect& region)

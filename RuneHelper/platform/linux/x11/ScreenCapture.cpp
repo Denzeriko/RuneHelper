@@ -119,38 +119,6 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
 }
 }
 
-cv::Mat CaptureScreen()
-{
-    if (!IsX11Session())
-    {
-        LOG_ERROR("Linux screen capture requires an X11 session; Wayland is not supported yet");
-        return {};
-    }
-
-    Display* display = XOpenDisplay(nullptr);
-
-    if (!display)
-    {
-        LOG_ERROR("Linux screen capture requires X11, but XOpenDisplay failed");
-        return {};
-    }
-
-    Window root = DefaultRootWindow(display);
-    XWindowAttributes attrs{};
-
-    if (!XGetWindowAttributes(display, root, &attrs))
-    {
-        LOG_ERROR("Linux screen capture failed: unable to read X11 root window attributes");
-        XCloseDisplay(display);
-        return {};
-    }
-
-    cv::Mat result = CaptureRootRegion(display, cv::Rect(0, 0, attrs.width, attrs.height));
-    XCloseDisplay(display);
-
-    return result;
-}
-
 cv::Mat CaptureRegion(const cv::Rect& region)
 {
     if (!IsX11Session())

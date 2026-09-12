@@ -13,7 +13,6 @@ public:
 
     void Info(const std::string& msg);
     void Error(const std::string& msg);
-    void Debug(const std::string& msg);
 
 private:
     Logger() = default;
@@ -32,9 +31,3 @@ private:
 
 #define LOG_INFO(msg)  Logger::Instance().Info(msg)
 #define LOG_ERROR(msg) Logger::Instance().Error(msg)
-
-#ifdef _DEBUG
-#define LOG_DEBUG(msg) Logger::Instance().Debug(msg)
-#else
-#define LOG_DEBUG(msg) do {} while (0)
-#endif

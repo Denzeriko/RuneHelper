@@ -6,7 +6,7 @@ include(EmbedResources)
 set(RUNEHELPER_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(RUNEHELPER_SUBMODULE_HINT "run: git submodule update --init --recursive")
 
-find_package(OpenCV QUIET COMPONENTS core imgproc imgcodecs)
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
 find_package(Tesseract QUIET)
 
 if(NOT Tesseract_FOUND)
@@ -194,10 +194,4 @@ set(RUNEHELPER_LIBRARIES
     OpenGL::GL
     ${RUNEHELPER_PLATFORM_LIBRARIES}
     nlohmann_json::nlohmann_json
-    ${LAPACK_LIBRARIES}
-    ${BLAS_LIBRARIES}
-)
-
-set(RUNEHELPER_DEFINITIONS
-    RUNEHELPER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
 )

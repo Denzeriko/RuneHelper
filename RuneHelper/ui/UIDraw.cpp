@@ -138,10 +138,6 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     else
         ImGui::TextColored(kRed, "Stopped");
 
-    configChanged |= ImGui::Checkbox("OCR AutoDetect Menu (Experimental)", &config.ocrAutoDetect);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Only shows the overlay when the Runeshape menu is detected.\nMay occasionally fail due to OCR inaccuracies.");
-
     configChanged |= ImGui::Checkbox("Debug OCR", &config.debugOCR);
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Writes OCR crops and recognition logs to AppData\\Denz\\RuneHelper\\ocr_debug\\latest.");

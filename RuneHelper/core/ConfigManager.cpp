@@ -85,7 +85,6 @@ bool ConfigManager::Load()
     config_.regionH = j.value("regionH", config_.regionH);
 
     config_.ocrEnabled      = j.value("ocrEnabled",     config_.ocrEnabled);
-    config_.ocrAutoDetect   = j.value("ocrAutoDetect",  config_.ocrAutoDetect);
     config_.runeSearchEnabled  = j.value("runeSearchEnabled",  config_.runeSearchEnabled);
     config_.priceSearchEnabled = j.value("priceSearchEnabled", config_.priceSearchEnabled);
     config_.runeSearchScale    = j.value("runeSearchScale",    config_.runeSearchScale);
@@ -126,7 +125,6 @@ bool ConfigManager::Save() const
     j["regionH"] = config.regionH;
 
     j["ocrEnabled"]     = config.ocrEnabled;
-    j["ocrAutoDetect"]  = config.ocrAutoDetect;
     j["runeSearchEnabled"]  = config.runeSearchEnabled;
     j["priceSearchEnabled"] = config.priceSearchEnabled;
     j["runeSearchScale"]    = config.runeSearchScale;

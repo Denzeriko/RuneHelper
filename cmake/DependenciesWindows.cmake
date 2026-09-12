@@ -12,8 +12,6 @@ set(RUNEHELPER_LIBRARIES
     imgui::imgui
     d3d11
     dxgi
-    dwmapi
-    psapi
 )
 
 set(RUNEHELPER_DEFINITIONS

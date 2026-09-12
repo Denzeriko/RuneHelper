@@ -11,7 +11,6 @@ struct AppConfig
 
 
     bool ocrEnabled         = true;
-    bool ocrAutoDetect      = true;
     bool runeSearchEnabled  = false;
     bool priceSearchEnabled = true;
     double runeSearchScale  = 0.0;
