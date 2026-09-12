@@ -1,5 +1,7 @@
 #include "LootParser.h"
 
+#include <cctype>
+#include <charconv>
 #include <cstdio>
 #include <regex>
 #include <iostream>
@@ -19,12 +21,19 @@ LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& li
 
     if (pos > numStart && pos < line.size() && line[pos] == 'x')
     {
+        const size_t numEnd = pos;
+
         ++pos;
 
         while (pos < line.size() && std::isspace((unsigned char)line[pos]))
             ++pos;
 
-        int quantity = std::stoi(line.substr(numStart, pos - numStart));
+        int quantity = 1;
+
+        const auto parsed = std::from_chars(line.data() + numStart, line.data() + numEnd, quantity);
+
+        if (parsed.ec != std::errc{} || quantity <= 0)
+            quantity = 1;
 
         return { quantity, line.substr(pos) };
     }

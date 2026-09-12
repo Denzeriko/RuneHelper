@@ -5,6 +5,10 @@
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
 
+#include <cstdint>
+#include <sstream>
+#include <vector>
+
 using json = nlohmann::json;
 
 static std::string NormalizeVersion(std::string v)
@@ -64,9 +68,9 @@ void UpdateChecker::Start()
 {
     checking_ = true;
 
-    thread_ = std::jthread([this]
+    thread_ = std::jthread([this](std::stop_token stop)
         {
-            Check();
+            Check(stop);
         });
 }
 
@@ -98,7 +102,7 @@ std::string UpdateChecker::DownloadUrl() const
     return downloadUrl_;
 }
 
-void UpdateChecker::Check()
+void UpdateChecker::Check(const std::stop_token& stop)
 {
     LOG_INFO("UpdateChecker::Check() -> call");
 
@@ -110,10 +114,19 @@ void UpdateChecker::Check()
             { "User-Agent", "RuneHelper/" RUNEHELPER_VERSION },
             { "Accept", "application/vnd.github+json" }
         },
-        cpr::Timeout{ 10000 }
+        cpr::Timeout{ 10000 },
+        cpr::ProgressCallback{
+            [&stop](auto, auto, auto, auto, std::intptr_t)
+            {
+                return !stop.stop_requested();
+            }
+        }
     );
 
     checking_ = false;
+
+    if (stop.stop_requested())
+        return;
 
     if (r.error.code != cpr::ErrorCode::OK)
     {

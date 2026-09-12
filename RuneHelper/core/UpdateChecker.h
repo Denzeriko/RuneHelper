@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <mutex>
+#include <stop_token>
 #include <string>
 #include <thread>
 
@@ -18,7 +19,7 @@ public:
     std::string DownloadUrl() const;
 
 private:
-    void Check();
+    void Check(const std::stop_token& stop);
 
     std::jthread thread_;
 

@@ -276,7 +276,10 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 {
     ImGui::SeparatorText("OCR DEBUG");
-    if (manager.GetDebugData().lines.empty())
+
+    const DebugData debug = manager.GetDebugData();
+
+    if (debug.lines.empty())
     {
         ImGui::TextDisabled("No OCR data yet.");
         return;
@@ -295,7 +298,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 
         ImGui::TableHeadersRow();
 
-        for (const auto& line : manager.GetDebugData().lines)
+        for (const auto& line : debug.lines)
         {
             ImGui::TableNextRow();
 

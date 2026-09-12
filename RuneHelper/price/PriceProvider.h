@@ -1,5 +1,6 @@
 #pragma once
 
+#include <stop_token>
 #include <string>
 #include <unordered_map>
 
@@ -13,5 +14,5 @@ class PriceProvider
 public:
     virtual ~PriceProvider() = default;
 
-    virtual std::unordered_map<std::string, PriceInfo> DownloadPrices(const std::string& league) = 0;
+    virtual std::unordered_map<std::string, PriceInfo> DownloadPrices(const std::string& league, const std::stop_token& stop) = 0;
 };

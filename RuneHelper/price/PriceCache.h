@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stop_token>
 #include <string>
 #include <thread>
 #include <unordered_map>
@@ -32,7 +33,7 @@ public:
 private:
     static int64_t NowUnix();
 
-    void RefreshWorker();
+    void RefreshWorker(const std::stop_token& stop);
 
     void LoadDump();
     void SaveDump();
@@ -48,5 +49,7 @@ private:
     std::unique_ptr<PriceProvider> provider_;
 
     std::atomic<bool> refreshInProgress_ = false;
+
+    std::mutex refreshThreadMutex_;
     std::jthread refreshThread_;
 };

@@ -68,6 +68,8 @@ PriceCache::PriceCache() : provider_(std::make_unique<PoeNinjaPriceProvider>())
 
 PriceCache::~PriceCache()
 {
+    std::lock_guard<std::mutex> lock(refreshThreadMutex_);
+
     if (refreshThread_.joinable())
         refreshThread_.request_stop();
 }
@@ -121,7 +123,9 @@ void PriceCache::ForceRefreshAsync()
         return;
     }
 
-    refreshThread_ = std::jthread([this](std::stop_token) { RefreshWorker(); });
+    std::lock_guard<std::mutex> lock(refreshThreadMutex_);
+
+    refreshThread_ = std::jthread([this](std::stop_token stop) { RefreshWorker(stop); });
 }
 
 void PriceCache::SetRefreshMinutes(int minutes)
@@ -157,7 +161,7 @@ size_t PriceCache::GetPriceCount() const
     return prices_.size();
 }
 
-void PriceCache::RefreshWorker()
+void PriceCache::RefreshWorker(const std::stop_token& stop)
 {
     RefreshGuard guard{ refreshInProgress_ };
     LOG_INFO("PriceCache::RefreshWorker() -> start");
@@ -169,7 +173,13 @@ void PriceCache::RefreshWorker()
         league = league_;
     }
 
-    auto fresh = provider_->DownloadPrices(league);
+    auto fresh = provider_->DownloadPrices(league, stop);
+
+    if (stop.stop_requested())
+    {
+        LOG_INFO("PriceCache::RefreshWorker() -> cancelled");
+        return;
+    }
 
     if (fresh.empty())
     {
