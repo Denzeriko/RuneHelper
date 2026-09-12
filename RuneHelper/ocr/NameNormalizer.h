@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -11,12 +14,29 @@ struct MatchResult
     int confidence = 0;
 };
 
-struct CachedItemName
+class CachedItemNames
 {
-    std::string original;
-    std::string normalized;
+public:
+    static CachedItemNames Build(const std::vector<std::string>& names);
+
+    bool Empty() const;
+    std::size_t Size() const;
+
+    std::optional<MatchResult> FindBest(std::string_view input, int minConfidence = 72) const;
+
+public:
+    static constexpr std::size_t kHistogramSize = 37;
+    using Histogram = std::array<std::uint8_t, kHistogramSize>;
+
+private:
+    struct Entry
+    {
+        std::string original;
+        std::string normalized;
+        Histogram histogram{};
+    };
+
+    std::vector<Entry> entries_;
 };
 
 std::string NormalizeName(std::string_view s);
-std::vector<CachedItemName> BuildCachedItemNames(const std::vector<std::string>& names);
-std::optional<MatchResult> FindBestItemMatch(std::string_view input, const std::vector<CachedItemName>& candidates, int minConfidence = 72);

@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "core/Config.h"
+#include "ocr/RunePatternMatcher.h"
 
 struct LootLine
 {
@@ -32,9 +33,13 @@ public:
     bool Init(const std::string& tessdataPath);
     void SetupTesseractApi(tesseract::TessBaseAPI& api);
 
-    std::vector<LootLine> RecognizeLoot(const cv::Mat& src, const AppConfig& config);
-    std::vector<cv::Rect> FindLootRows(const cv::Mat& img) const;
-    std::vector<LootLine> RecognizeTextOnly(tesseract::TessBaseAPI& api, const cv::Mat& textBgr, const std::string& debugBinPath = {});
+    std::vector<LootLine> RecognizeLoot(
+        const cv::Mat& bgr,
+        const cv::Mat& gray,
+        const AppConfig& config,
+        const std::vector<RunePatternMatch>& runeMatches = {});
+    std::vector<cv::Rect> FindLootRows(const cv::Mat& gray) const;
+    std::vector<LootLine> RecognizeTextOnly(tesseract::TessBaseAPI& api, const cv::Mat& textGray, const std::string& debugBinPath = {});
 
 private:
     bool initialized_ = false;

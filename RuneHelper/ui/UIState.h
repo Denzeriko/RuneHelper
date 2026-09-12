@@ -20,6 +20,10 @@ struct UIState
     bool wantsCalibrateRunes = false;
 
     bool regionHovered = false;
+    bool debugTabOpen = false;
+
+    bool configSavePending = false;
+    double configSaveAt = 0.0;
 
     bool priceDownloading = false;
     size_t priceCount = 0;

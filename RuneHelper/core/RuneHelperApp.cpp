@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "core/DebugData.h"
 #include "core/Logger.h"
 
 #include <opencv2/core.hpp>
@@ -67,7 +68,14 @@ void RuneHelperApp::MainLoop()
         PriceServiceStatus priceStatus = ocrService_.GetPriceStatus();
         ui_.SetPriceStatus(priceStatus.downloading, priceStatus.priceCount);
         ui_.SetRuneCalibrationStatus(ocrService_.GetRuneCalibrationStatus());
-        ui_.SetDebugData(ocrService_.GetDebugData());
+
+        if (ui_.IsDebugTabOpen())
+        {
+            DebugData debugData;
+
+            if (ocrService_.ConsumeDebugData(debugData))
+                ui_.SetDebugData(std::move(debugData));
+        }
 
         ui_.Pump();
         overlay_.PumpMessages();

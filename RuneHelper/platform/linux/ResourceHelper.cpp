@@ -78,7 +78,7 @@ std::filesystem::path PrepareRuneTemplates()
 {
     LOG_INFO("Linux PrepareRuneTemplates() -> call");
 
-    const auto dir = GetAppDataDir() / "runes";
+    const auto dir = GetUserDataDir() / "runes";
     std::filesystem::create_directories(dir);
 
     for (const EmbeddedResource& resource : GetEmbeddedResources())

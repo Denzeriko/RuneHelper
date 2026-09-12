@@ -13,6 +13,7 @@ namespace
 constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
+constexpr double kConfigSaveDelaySeconds = 0.5;
 }
 
 void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
@@ -256,8 +257,8 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     {
         ConfigManager::Normalize(config);
 
-        if (!manager.SaveConfig())
-            LOG_ERROR("UI failed to autosave config");
+        state.configSavePending = true;
+        state.configSaveAt = ImGui::GetTime() + kConfigSaveDelaySeconds;
     }
 
     //Bottom
@@ -273,7 +274,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 {
     ImGui::SeparatorText("OCR DEBUG");
 
-    const DebugData debug = manager.GetDebugData();
+    const DebugData& debug = manager.GetDebugData();
 
     if (debug.lines.empty())
     {
@@ -349,6 +350,8 @@ void UIDraw::Draw(UIManager& manager)
     
     DrawTitleBar(manager, state);
 
+    state.debugTabOpen = false;
+
     if (ImGui::BeginTabBar("MainTabs"))
     {
         if (ImGui::BeginTabItem("RuneHelper"))
@@ -359,6 +362,7 @@ void UIDraw::Draw(UIManager& manager)
 
         if (ImGui::BeginTabItem("Debug Menu"))
         {
+            state.debugTabOpen = true;
             DrawDebugTab(manager, state);
             ImGui::EndTabItem();
         }
@@ -367,6 +371,16 @@ void UIDraw::Draw(UIManager& manager)
     }
 
     ImGui::End();
+
+    if (state.configSavePending && ImGui::GetTime() >= state.configSaveAt && manager.HasConfig())
+    {
+        std::lock_guard configLock(manager.ConfigMutex());
+
+        state.configSavePending = false;
+
+        if (!manager.SaveConfig())
+            LOG_ERROR("UI failed to autosave config");
+    }
 }
 
 void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* label, int& key)

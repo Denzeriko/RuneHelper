@@ -71,7 +71,7 @@ void OCR::SetupTesseractApi(tesseract::TessBaseAPI& api)
 
 static std::filesystem::path PrepareOcrDebugDir()
 {
-    std::filesystem::path dir = GetAppDataDir() / "ocr_debug" / "latest";
+    std::filesystem::path dir = GetUserDataDir() / "ocr_debug" / "latest";
 
     std::error_code ec;
     std::filesystem::remove_all(dir, ec);
@@ -164,11 +164,11 @@ static void SaveRunePatternDebugText(const std::filesystem::path& dir, const std
     }
 }
 
-static std::vector<int> FindTextStartX(const cv::Mat& img, const std::vector<cv::Rect>& rows)
+static std::vector<int> FindTextStartX(const cv::Mat& gray, const std::vector<cv::Rect>& rows)
 {
     std::vector<int> starts(rows.size(), 0);
 
-    if (img.empty() || rows.empty())
+    if (gray.empty() || rows.empty())
         return starts;
 
     constexpr double kGapBias = 0.5;
@@ -177,11 +177,8 @@ static std::vector<int> FindTextStartX(const cv::Mat& img, const std::vector<cv:
 
     for (size_t i = 0; i < rows.size(); ++i)
     {
-        cv::Mat gray;
-        cv::cvtColor(img(rows[i]), gray, cv::COLOR_BGR2GRAY);
-
         cv::Mat dark;
-        cv::threshold(gray, dark, 0, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
+        cv::threshold(gray(rows[i]), dark, 0, 255, cv::THRESH_BINARY_INV | cv::THRESH_OTSU);
 
         cv::Mat columns;
         cv::reduce(dark, columns, 0, cv::REDUCE_MAX, CV_8U);
@@ -247,18 +244,15 @@ static std::vector<int> FindTextStartX(const cv::Mat& img, const std::vector<cv:
     return starts;
 }
 
-std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
+std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
 {
     std::vector<cv::Rect> rows;
 
-    if (img.empty())
+    if (gray.empty())
         return rows;
 
-    cv::Mat gray;
-    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-
-    const int textAreaX = static_cast<int>(img.cols * 0.50);
-    cv::Mat rightGray = gray(cv::Rect(textAreaX, 0, img.cols - textAreaX, img.rows));
+    const int textAreaX = static_cast<int>(gray.cols * 0.50);
+    cv::Mat rightGray = gray(cv::Rect(textAreaX, 0, gray.cols - textAreaX, gray.rows));
 
     cv::Mat dark;
     cv::threshold(rightGray, dark, 115, 255, cv::THRESH_BINARY_INV);
@@ -290,6 +284,9 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
 
     std::vector<std::pair<int, int>> bands;
 
+    cv::Mat rowInk;
+    cv::reduce(dark, rowInk, 1, cv::REDUCE_SUM, CV_32S);
+
     bool inBand = false;
     int bandStart = 0;
     int bandEnd = 0;
@@ -307,7 +304,7 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
 
     for (int y = 0; y < dark.rows; ++y)
     {
-        const int ink = cv::countNonZero(dark.row(y));
+        const int ink = rowInk.at<int>(y, 0) / 255;
         if (ink >= kMinInkPerRow)
         {
             if (!inBand)
@@ -345,7 +342,7 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
     std::sort(heights.begin(), heights.end());
 
     const int median = heights.empty() ? 0 : heights[heights.size() / 2];
-    const int maxHeight = median > 0 ? static_cast<int>(median * kMaxTextBandHeightFactor) : img.rows;
+    const int maxHeight = median > 0 ? static_cast<int>(median * kMaxTextBandHeightFactor) : gray.rows;
 
     for (const auto& band : bands)
     {
@@ -355,12 +352,12 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
             continue;
 
         const int y = std::max(0, band.first - kVerticalPadding);
-        const int y2 = (std::min)(img.rows, band.second + kVerticalPadding + 1);
+        const int y2 = (std::min)(gray.rows, band.second + kVerticalPadding + 1);
         const cv::Rect rect(0, y, dark.cols, y2 - y);
         const double inkRatio = static_cast<double>(cv::countNonZero(dark(rect))) / rect.area();
 
         if (inkRatio <= kMaxTextBandInkRatio)
-            rows.push_back(cv::Rect(0, y, img.cols, y2 - y));
+            rows.push_back(cv::Rect(0, y, gray.cols, y2 - y));
     }
 
     return rows;
@@ -368,19 +365,16 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& img) const
 
 std::vector<LootLine> OCR::RecognizeTextOnly(
     tesseract::TessBaseAPI& api,
-    const cv::Mat& textBgr,
+    const cv::Mat& textGray,
     const std::string& debugBinPath)
 {
     std::vector<LootLine> result;
 
-    if (textBgr.empty())
+    if (textGray.empty())
         return result;
 
-    cv::Mat gray;
-    cv::cvtColor(textBgr, gray, cv::COLOR_BGR2GRAY);
-
     cv::Mat scaled;
-    cv::resize(gray, scaled, cv::Size(), 2.0, 2.0, cv::INTER_CUBIC);
+    cv::resize(textGray, scaled, cv::Size(), 2.0, 2.0, cv::INTER_CUBIC);
 
     cv::Mat bin;
     cv::threshold(scaled, bin, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
@@ -436,20 +430,24 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
         line,
         0,
         0,
-        textBgr.cols,
-        textBgr.rows,
+        textGray.cols,
+        textGray.rows,
         static_cast<float>(conf)
     });
 
     return result;
 }
-std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& config)
+std::vector<LootLine> OCR::RecognizeLoot(
+    const cv::Mat& bgr,
+    const cv::Mat& gray,
+    const AppConfig& config,
+    const std::vector<RunePatternMatch>& runeMatches)
 {
     setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
 
     std::vector<LootLine> result;
 
-    if (!initialized_ || img.empty())
+    if (!initialized_ || gray.empty())
         return result;
 
     std::unique_lock lock(apiMutex_);
@@ -458,7 +456,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
 
     tesseract::TessBaseAPI& api = *api_;
 
-    bool debugOCR = config.debugOCR;
+    bool debugOCR = config.debugOCR && !bgr.empty();
     std::filesystem::path debugDir;
     cv::Mat debugRows;
 
@@ -471,14 +469,13 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
         }
         else
         {
-            SaveOcrDebugImage(debugDir / "source.png", img);
-            debugRows = img.clone();
+            SaveOcrDebugImage(debugDir / "source.png", bgr);
+            debugRows = bgr.clone();
         }
     }
 
     if (debugOCR)
     {
-        auto runeMatches = FindRunePatternMatches(img);
         SaveRunePatternDebugText(debugDir, runeMatches);
 
         for (const auto& match : runeMatches)
@@ -497,17 +494,17 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
         }
     }
 
-    auto rows = FindLootRows(img);
-    const std::vector<int> textStarts = FindTextStartX(img, rows);
+    auto rows = FindLootRows(gray);
+    const std::vector<int> textStarts = FindTextStartX(gray, rows);
 
     for (size_t rowIndex = 0; rowIndex < rows.size(); ++rowIndex)
     {
         const auto& rowRect = rows[rowIndex];
-        cv::Mat row = img(rowRect);
+        cv::Mat rowGray = gray(rowRect);
 
         if (debugOCR)
         {
-            SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), row);
+            SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), bgr(rowRect));
             cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);
         }
 
@@ -516,16 +513,16 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
         cv::Rect textRect(
             textX,
             0,
-            row.cols - textX,
-            row.rows
+            rowGray.cols - textX,
+            rowGray.rows
         );
 
-        cv::Mat textCrop = row(textRect);
+        cv::Mat textGray = rowGray(textRect);
 
         std::string debugBinPath;
         if (debugOCR)
         {
-            SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), textCrop);
+            SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), bgr(rowRect)(textRect));
             debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin").string();
 
             const int absoluteTextX = rowRect.x + textX;
@@ -538,7 +535,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& img, const AppConfig& co
             );
         }
 
-        auto lines = RecognizeTextOnly(api, textCrop, debugBinPath);
+        auto lines = RecognizeTextOnly(api, textGray, debugBinPath);
 
         for (auto& line : lines)
         {

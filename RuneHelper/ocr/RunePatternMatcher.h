@@ -27,5 +27,5 @@ struct RunePatternCalibrationStatus
 void BeginRunePatternScaleCalibration();
 RunePatternCalibrationStatus GetRunePatternCalibrationStatus();
 void SetRunePatternSearchScale(double scale);
-void StepRunePatternScaleCalibration(const cv::Mat& sourceBgr, double threshold = 0.70);
-std::vector<RunePatternMatch> FindRunePatternMatches(const cv::Mat& sourceBgr, double threshold = 0.70);
+void StepRunePatternScaleCalibration(const cv::Mat& sourceGray, double threshold = 0.70);
+std::vector<RunePatternMatch> FindRunePatternMatches(const cv::Mat& sourceGray, double threshold = 0.70);

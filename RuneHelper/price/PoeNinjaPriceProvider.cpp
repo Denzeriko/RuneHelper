@@ -17,17 +17,25 @@ using json = nlohmann::json;
 
 namespace
 {
-std::string PriceApiBase()
+const std::string& PriceApiBase()
 {
-    if (const char* override = std::getenv("RUNEHELPER_PRICE_API"); override && *override)
-        return override;
+    static const std::string base = []
+    {
+        if (const char* override = std::getenv("RUNEHELPER_PRICE_API"); override && *override)
+            return std::string(override);
 
-    return "https://denz.pw/poe2/economy";
+        return std::string("https://denz.pw/poe2/economy");
+    }();
+
+    return base;
 }
 
-std::string UserAgent()
+const std::string& UserAgent()
 {
-    return std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
+    static const std::string agent =
+        std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
+
+    return agent;
 }
 
 constexpr const char* kDirectApi = "https://poe.ninja/poe2/api/economy/exchange/current/overview";
@@ -106,12 +114,14 @@ std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::DownloadPrices
     std::unordered_map<std::string, PriceInfo> result;
     result.reserve(512);
 
+    const std::string encodedLeague = EncodeUrlComponent(league);
+
     for (const auto& category : kPoeNinjaCategories)
     {
         if (stop.stop_requested())
             return {};
 
-        auto dump = DownloadCategory(league, category, stop);
+        auto dump = DownloadCategory(encodedLeague, category, stop);
 
         LOG_INFO("Downloaded " + category + ": " + std::to_string(dump.size()));
 
@@ -168,9 +178,9 @@ std::string PoeNinjaPriceProvider::FormatExPrice(double value)
 }
 
 std::unordered_map<std::string, PriceInfo>
-PoeNinjaPriceProvider::DownloadCategory(const std::string& league, const std::string& type, const std::stop_token& stop)
+PoeNinjaPriceProvider::DownloadCategory(const std::string& encodedLeague, const std::string& type, const std::stop_token& stop)
 {
-    const std::string query = "?league=" + EncodeUrlComponent(league) + "&type=" + type;
+    const std::string query = "?league=" + encodedLeague + "&type=" + type;
 
     auto parse = [this](const std::string& text) -> std::unordered_map<std::string, PriceInfo>
     {

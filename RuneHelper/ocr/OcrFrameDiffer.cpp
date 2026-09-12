@@ -10,7 +10,7 @@ constexpr double kOcrPixelDiffThreshold = 8.0;
 constexpr double kOcrChangedPixelRatioThreshold = 0.002;
 }
 
-bool OcrFrameDiffer::IsSimilarFrame(const cv::Mat& img, bool forceFrame)
+bool OcrFrameDiffer::IsSimilarFrame(const cv::Mat& gray, bool forceFrame)
 {
     if (forceFrame)
     {
@@ -18,12 +18,10 @@ bool OcrFrameDiffer::IsSimilarFrame(const cv::Mat& img, bool forceFrame)
         return false;
     }
 
-    cv::Mat currentGray = ToGray(img);
-
-    if (currentGray.empty() ||
+    if (gray.empty() ||
         lastGray_.empty() ||
-        currentGray.size() != lastGray_.size() ||
-        currentGray.type() != lastGray_.type())
+        gray.size() != lastGray_.size() ||
+        gray.type() != lastGray_.type())
     {
         stableFrames_ = 0;
         return false;
@@ -31,11 +29,11 @@ bool OcrFrameDiffer::IsSimilarFrame(const cv::Mat& img, bool forceFrame)
 
     cv::Mat diff;
     cv::Mat changed;
-    cv::absdiff(currentGray, lastGray_, diff);
+    cv::absdiff(gray, lastGray_, diff);
     cv::threshold(diff, changed, kOcrPixelDiffThreshold, 255, cv::THRESH_BINARY);
 
     const double changedPixels = static_cast<double>(cv::countNonZero(changed));
-    const double totalPixels = static_cast<double>(currentGray.total());
+    const double totalPixels = static_cast<double>(gray.total());
     const bool similar = totalPixels > 0.0 && (changedPixels / totalPixels) < kOcrChangedPixelRatioThreshold;
 
     if (similar)
@@ -46,9 +44,9 @@ bool OcrFrameDiffer::IsSimilarFrame(const cv::Mat& img, bool forceFrame)
     return similar;
 }
 
-void OcrFrameDiffer::StoreFrame(cv::Mat img)
+void OcrFrameDiffer::StoreFrame(cv::Mat gray)
 {
-    lastGray_ = ToGray(img);
+    lastGray_ = std::move(gray);
 }
 
 void OcrFrameDiffer::Reset()
@@ -60,17 +58,4 @@ void OcrFrameDiffer::Reset()
 int OcrFrameDiffer::StableFrames() const
 {
     return stableFrames_;
-}
-
-cv::Mat OcrFrameDiffer::ToGray(const cv::Mat& img)
-{
-    if (img.empty())
-        return {};
-
-    if (img.channels() == 1)
-        return img.clone();
-
-    cv::Mat gray;
-    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-    return gray;
 }

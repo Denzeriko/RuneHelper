@@ -56,7 +56,7 @@ namespace
 
     std::filesystem::path DumpPathForLeague(const std::string& league)
     {
-        return GetAppDataDir() / DumpFileNameForLeague(league);
+        return GetUserDataDir() / DumpFileNameForLeague(league);
     }
 }
 
@@ -100,8 +100,6 @@ std::optional<std::string> PriceCache::GetPrice(const std::string& itemName)
 
 void PriceCache::RefreshIfNeeded()
 {
-    LOG_INFO("PriceCache::RefreshIfNeeded() -> call");
-
     int64_t now = NowUnix();
 
     {
@@ -145,6 +143,7 @@ void PriceCache::SetLeague(std::string league)
         league_ = std::move(league);
         prices_.clear();
         dump_updated_at_ = 0;
+        ++version_;
     }
 
     LoadDump();
@@ -159,6 +158,12 @@ size_t PriceCache::GetPriceCount() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
     return prices_.size();
+}
+
+std::uint64_t PriceCache::Version() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return version_;
 }
 
 void PriceCache::RefreshWorker(const std::stop_token& stop)
@@ -197,6 +202,7 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
 
         prices_ = std::move(fresh);
         dump_updated_at_ = now;
+        ++version_;
     }
 
     SaveDump();
@@ -279,6 +285,7 @@ void PriceCache::LoadDump()
 
         prices_ = std::move(loaded);
         dump_updated_at_ = j.value("dump_updated_at", 0LL);
+        ++version_;
     }
 
     LOG_INFO("Loaded dump prices -> " + std::to_string(GetPriceCount()));

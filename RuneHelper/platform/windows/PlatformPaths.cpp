@@ -7,29 +7,34 @@
 
 #include "core/Logger.h"
 
-std::filesystem::path GetAppDataDir()
+const std::filesystem::path& GetUserDataDir()
 {
-    LOG_INFO("GetAppDataDir() -> call");
-    PWSTR path = nullptr;
-
-    if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &path)))
+    static const std::filesystem::path dir = []
     {
-        LOG_ERROR("GetAppDataDir() -> SHGetKnownFolderPath -> ERROR");
-        return ".";
-    }
+        PWSTR path = nullptr;
 
-    std::filesystem::path result(path);
-    CoTaskMemFree(path);
+        if (FAILED(SHGetKnownFolderPath(FOLDERID_RoamingAppData, 0, nullptr, &path)))
+        {
+            LOG_ERROR("GetUserDataDir() -> SHGetKnownFolderPath failed");
+            return std::filesystem::path(".");
+        }
 
-    result /= "Denz";
-    result /= "RuneHelper";
+        std::filesystem::path result(path);
+        CoTaskMemFree(path);
 
-    if(!std::filesystem::exists(result))
-    {
-        std::filesystem::create_directories(result);
-    }
+        result /= "Denz";
+        result /= "RuneHelper";
 
-    LOG_INFO("GetAppDataDir() -> return -> " + result.string());
+        std::error_code ec;
+        std::filesystem::create_directories(result, ec);
 
-    return result;
+        if (ec)
+            LOG_ERROR("GetUserDataDir() -> create_directories failed: " + ec.message());
+
+        LOG_INFO("GetUserDataDir() -> " + result.string());
+
+        return result;
+    }();
+
+    return dir;
 }

@@ -51,6 +51,8 @@ struct RunePatternTemplate
 
 std::once_flag g_loadTemplatesOnce;
 std::vector<RunePatternTemplate> g_templates;
+std::vector<cv::Mat> g_scaledTemplates;
+double g_scaledTemplatesScale = -1.0;
 std::mutex g_scaleMutex;
 double g_calibratedScale = 0.0;
 
@@ -110,7 +112,7 @@ std::string RankLabelFromTemplateName(const std::string& name)
 
 void LoadTemplates()
 {
-    const std::filesystem::path dir = GetAppDataDir() / "runes";
+    const std::filesystem::path dir = GetUserDataDir() / "runes";
     LOG_INFO("Rune pattern template dir: " + dir.string());
 
     std::error_code ec;
@@ -221,6 +223,22 @@ cv::Mat ScaleTemplate(const cv::Mat& templ, double scale)
     return scaledTemplate;
 }
 
+const std::vector<cv::Mat>& ScaledTemplates(double scale)
+{
+    if (g_scaledTemplatesScale == scale && g_scaledTemplates.size() == g_templates.size())
+        return g_scaledTemplates;
+
+    g_scaledTemplates.clear();
+    g_scaledTemplates.reserve(g_templates.size());
+
+    for (const auto& templ : g_templates)
+        g_scaledTemplates.push_back(templ.gray.empty() ? cv::Mat() : ScaleTemplate(templ.gray, scale));
+
+    g_scaledTemplatesScale = scale;
+
+    return g_scaledTemplates;
+}
+
 std::vector<RunePatternMatch> FindMatchesAtScale(
     const cv::Mat& sourceGray,
     double threshold,
@@ -228,12 +246,12 @@ std::vector<RunePatternMatch> FindMatchesAtScale(
 {
     std::vector<RunePatternMatch> matches;
 
-    for (const auto& templ : g_templates)
-    {
-        if (templ.gray.empty())
-            continue;
+    const std::vector<cv::Mat>& scaledTemplates = ScaledTemplates(scale);
 
-        cv::Mat scaledTemplate = ScaleTemplate(templ.gray, scale);
+    for (std::size_t index = 0; index < g_templates.size(); ++index)
+    {
+        const RunePatternTemplate& templ = g_templates[index];
+        const cv::Mat& scaledTemplate = scaledTemplates[index];
 
         if (scaledTemplate.empty() ||
             scaledTemplate.cols < 8 ||
@@ -329,11 +347,11 @@ void SetRunePatternSearchScale(double scale)
     g_calibratedScale = scale > 0.0 ? scale : 0.0;
 }
 
-void StepRunePatternScaleCalibration(const cv::Mat& sourceBgr, double threshold)
+void StepRunePatternScaleCalibration(const cv::Mat& sourceGray, double threshold)
 {
     std::call_once(g_loadTemplatesOnce, LoadTemplates);
 
-    if (sourceBgr.empty())
+    if (sourceGray.empty())
         return;
 
     if (g_templates.empty())
@@ -359,9 +377,6 @@ void StepRunePatternScaleCalibration(const cv::Mat& sourceBgr, double threshold)
 
         g_calibrationCurrentScale = kCalibrationScales[g_calibrationIndex];
     }
-
-    cv::Mat sourceGray;
-    cv::cvtColor(sourceBgr, sourceGray, cv::COLOR_BGR2GRAY);
 
     double scale = 1.0;
     {
@@ -431,17 +446,14 @@ void StepRunePatternScaleCalibration(const cv::Mat& sourceBgr, double threshold)
     );
 }
 
-std::vector<RunePatternMatch> FindRunePatternMatches(const cv::Mat& sourceBgr, double threshold)
+std::vector<RunePatternMatch> FindRunePatternMatches(const cv::Mat& sourceGray, double threshold)
 {
     std::vector<RunePatternMatch> matches;
 
     std::call_once(g_loadTemplatesOnce, LoadTemplates);
 
-    if (sourceBgr.empty() || g_templates.empty())
+    if (sourceGray.empty() || g_templates.empty())
         return matches;
-
-    cv::Mat sourceGray;
-    cv::cvtColor(sourceBgr, sourceGray, cv::COLOR_BGR2GRAY);
 
     const double scale = CurrentSearchScale();
     matches = FindMatchesAtScale(sourceGray, threshold, scale);

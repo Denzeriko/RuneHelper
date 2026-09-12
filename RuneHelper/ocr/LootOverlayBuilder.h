@@ -25,7 +25,7 @@ public:
         const cv::Rect& region,
         const AppConfig& config,
         PriceCache& priceCache,
-        const std::vector<CachedItemName>& cachedNames);
+        const CachedItemNames& cachedNames);
 
 private:
     static bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDistance);

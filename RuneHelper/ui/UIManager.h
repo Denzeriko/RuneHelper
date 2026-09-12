@@ -68,8 +68,10 @@ public:
     void RegisterHotkeys();
     void UnregisterHotkeys();
 
-    void SetDebugData(const DebugData& data);
-    DebugData GetDebugData();
+    void SetDebugData(DebugData data);
+    const DebugData& GetDebugData() const;
+    bool IsDebugTabOpen() const;
+    void FlushPendingConfigSave();
 
     void RequestToggleOCR();
     void RequestSingleSnapshot();

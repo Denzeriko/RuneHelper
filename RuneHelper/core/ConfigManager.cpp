@@ -33,7 +33,7 @@ void ClampPriceThresholds(AppConfig& config)
 
 std::filesystem::path ConfigManager::GetConfigPath()
 {
-    return GetAppDataDir() / "config.json";
+    return GetUserDataDir() / "config.json";
 }
 
 AppConfig& ConfigManager::Get()

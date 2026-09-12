@@ -69,6 +69,45 @@ namespace
         return prev[m];
     }
 
+    CachedItemNames::Histogram MakeHistogram(std::string_view text)
+    {
+        CachedItemNames::Histogram histogram{};
+
+        for (unsigned char ch : text)
+        {
+            std::size_t bucket = CachedItemNames::kHistogramSize - 1;
+
+            if (ch >= 'a' && ch <= 'z')
+                bucket = static_cast<std::size_t>(ch - 'a');
+            else if (ch >= '0' && ch <= '9')
+                bucket = 26 + static_cast<std::size_t>(ch - '0');
+
+            if (histogram[bucket] < 255)
+                ++histogram[bucket];
+        }
+
+        return histogram;
+    }
+
+    bool HistogramAllows(
+        const CachedItemNames::Histogram& a,
+        const CachedItemNames::Histogram& b,
+        int maxDistance)
+    {
+        const int limit = 2 * maxDistance;
+        int difference = 0;
+
+        for (std::size_t i = 0; i < CachedItemNames::kHistogramSize; ++i)
+        {
+            difference += std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i]));
+
+            if (difference > limit)
+                return false;
+        }
+
+        return true;
+    }
+
     int SimilarityPercentNormalized(std::string_view a, std::string_view b, int minConfidence)
     {
         if (a.empty() || b.empty())
@@ -118,46 +157,107 @@ std::string NormalizeName(std::string_view s)
     return out;
 }
 
-std::vector<CachedItemName> BuildCachedItemNames(const std::vector<std::string>& names)
+CachedItemNames CachedItemNames::Build(const std::vector<std::string>& names)
 {
-    std::vector<CachedItemName> result;
-    result.reserve(names.size());
+    CachedItemNames cache;
+    cache.entries_.reserve(names.size());
 
     for (const auto& name : names)
-        result.push_back({ name, NormalizeName(name) });
+    {
+        std::string normalized = NormalizeName(name);
 
-    return result;
+        if (normalized.empty())
+            continue;
+
+        Histogram histogram = MakeHistogram(normalized);
+
+        cache.entries_.push_back({ name, std::move(normalized), histogram });
+    }
+
+    std::sort(
+        cache.entries_.begin(),
+        cache.entries_.end(),
+        [](const Entry& a, const Entry& b)
+        {
+            if (a.normalized.size() != b.normalized.size())
+                return a.normalized.size() < b.normalized.size();
+
+            return a.normalized < b.normalized;
+        });
+
+    return cache;
 }
 
-std::optional<MatchResult> FindBestItemMatch(std::string_view input, const std::vector<CachedItemName>& candidates, int minConfidence)
+bool CachedItemNames::Empty() const
+{
+    return entries_.empty();
+}
+
+std::size_t CachedItemNames::Size() const
+{
+    return entries_.size();
+}
+
+std::optional<MatchResult> CachedItemNames::FindBest(std::string_view input, int minConfidence) const
 {
     const std::string normalizedInput = NormalizeName(input);
 
-    if (normalizedInput.empty())
+    if (normalizedInput.empty() || entries_.empty())
         return std::nullopt;
 
+    const int inputLen = static_cast<int>(normalizedInput.size());
+    const int slack = 100 - minConfidence;
+
+    int minLen = inputLen - (inputLen * slack) / 100 - 1;
+    int maxLen = minConfidence > 0 ? (inputLen * 100) / minConfidence + 2 : inputLen * 2 + 2;
+
+    while (maxLen > inputLen && maxLen - (maxLen * slack) / 100 > inputLen)
+        --maxLen;
+
+    ++maxLen;
+    minLen = std::max(1, minLen);
+
+    const auto first = std::lower_bound(
+        entries_.begin(),
+        entries_.end(),
+        static_cast<std::size_t>(minLen),
+        [](const Entry& entry, std::size_t length)
+        {
+            return entry.normalized.size() < length;
+        });
+
+    const auto last = std::upper_bound(
+        entries_.begin(),
+        entries_.end(),
+        static_cast<std::size_t>(maxLen),
+        [](std::size_t length, const Entry& entry)
+        {
+            return length < entry.normalized.size();
+        });
+
+    const Histogram inputHistogram = MakeHistogram(normalizedInput);
+
     int bestScore = 0;
-    const CachedItemName* best = nullptr;
+    const Entry* best = nullptr;
 
-    for (const auto& item : candidates)
+    for (auto it = first; it != last; ++it)
     {
-        if (item.normalized.empty())
-            continue;
-
-        const int inputLen = static_cast<int>(normalizedInput.size());
-        const int itemLen = static_cast<int>(item.normalized.size());
-        const int maxLen = (std::max)(inputLen, itemLen);
-        const int maxAllowedDistance = (maxLen * (100 - minConfidence)) / 100;
+        const int itemLen = static_cast<int>(it->normalized.size());
+        const int maxLength = (std::max)(inputLen, itemLen);
+        const int maxAllowedDistance = (maxLength * slack) / 100;
 
         if (std::abs(inputLen - itemLen) > maxAllowedDistance)
             continue;
 
-        const int score = SimilarityPercentNormalized(normalizedInput, item.normalized, minConfidence);
+        if (!HistogramAllows(inputHistogram, it->histogram, maxAllowedDistance))
+            continue;
+
+        const int score = SimilarityPercentNormalized(normalizedInput, it->normalized, minConfidence);
 
         if (score > bestScore)
         {
             bestScore = score;
-            best = &item;
+            best = &*it;
 
             if (bestScore == 100)
                 break;

@@ -54,7 +54,7 @@ LootOverlayBuildResult LootOverlayBuilder::Build(
     const cv::Rect& region,
     const AppConfig& config,
     PriceCache& priceCache,
-    const std::vector<CachedItemName>& cachedNames)
+    const CachedItemNames& cachedNames)
 {
     LootOverlayBuildResult result;
 
@@ -86,7 +86,7 @@ LootOverlayBuildResult LootOverlayBuilder::Build(
         }
         else
         {
-            auto guess = FindBestItemMatch(rawName, cachedNames);
+            auto guess = cachedNames.FindBest(rawName);
 
             if (guess)
             {

@@ -1,6 +1,9 @@
 #include "ui/UIManager.h"
 
+#include <mutex>
 #include <utility>
+
+#include "core/Logger.h"
 
 #include "platform/UIBackend.h"
 #include "ui/UIDraw.h"
@@ -25,6 +28,8 @@ bool UIManager::Init(AppConfig* config, ConfigManager* configManager)
 
 void UIManager::Shutdown()
 {
+    FlushPendingConfigSave();
+
     state_.running = false;
 
     if (backend_)
@@ -190,14 +195,32 @@ void UIManager::UnregisterHotkeys()
         backend_->UnregisterHotkeys();
 }
 
-void UIManager::SetDebugData(const DebugData& data)
+void UIManager::SetDebugData(DebugData data)
 {
-    debugData_ = data;
+    debugData_ = std::move(data);
 }
 
-DebugData UIManager::GetDebugData()
+const DebugData& UIManager::GetDebugData() const
 {
-    return UIManager::debugData_;
+    return debugData_;
+}
+
+bool UIManager::IsDebugTabOpen() const
+{
+    return state_.debugTabOpen;
+}
+
+void UIManager::FlushPendingConfigSave()
+{
+    if (!state_.configSavePending || !configManager_)
+        return;
+
+    state_.configSavePending = false;
+
+    std::lock_guard lock(configManager_->Mutex());
+
+    if (!configManager_->Save())
+        LOG_ERROR("UI failed to save pending config");
 }
 
 void UIManager::RequestToggleOCR()

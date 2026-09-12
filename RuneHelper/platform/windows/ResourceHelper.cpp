@@ -72,7 +72,7 @@ std::string PrepareTessdata()
 {
     LOG_INFO("PrepareTessdata() -> call");
 
-    auto dir = GetAppDataDir() / "tessdata";
+    auto dir = GetUserDataDir() / "tessdata";
     auto eng = dir / "eng.traineddata";
 
     LOG_INFO("PrepareTessdata() -> path: " + dir.string());
@@ -99,7 +99,7 @@ std::filesystem::path PrepareRuneTemplates()
 {
     LOG_INFO("PrepareRuneTemplates() -> call");
 
-    const auto dir = GetAppDataDir() / "runes";
+    const auto dir = GetUserDataDir() / "runes";
     std::filesystem::create_directories(dir);
 
     for (const auto& runeTemplate : kRuneTemplates)

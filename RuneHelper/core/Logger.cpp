@@ -7,9 +7,8 @@
 #include "platform/PlatformPaths.h"
 
 #include <chrono>
+#include <ctime>
 #include <filesystem>
-#include <iomanip>
-#include <sstream>
 
 namespace
 {
@@ -32,7 +31,7 @@ Logger::~Logger()
 
 bool Logger::Init()
 {
-    std::filesystem::path dir = GetAppDataDir();
+    std::filesystem::path dir = GetUserDataDir();
 
     std::filesystem::create_directories(dir);
 
@@ -68,8 +67,9 @@ void Logger::Error(const std::string& msg)
 
 void Logger::Write(const char* level, const std::string& msg)
 {
+    const std::string line = TimeNow() + " [" + level + "] " + msg + "\n";
+
     std::lock_guard<std::mutex> lock(mutex_);
-    std::string line = TimeNow() + " [" + level + "] " + msg + "\n";
 
 #ifdef _DEBUG
     OutputDebugStringA(line.c_str());
@@ -84,8 +84,8 @@ void Logger::Write(const char* level, const std::string& msg)
 
 std::string Logger::TimeNow()
 {
-    auto now = std::chrono::system_clock::now();
-    auto t = std::chrono::system_clock::to_time_t(now);
+    const auto now = std::chrono::system_clock::now();
+    const std::time_t t = std::chrono::system_clock::to_time_t(now);
 
     std::tm tm{};
 #ifdef _WIN32
@@ -94,9 +94,8 @@ std::string Logger::TimeNow()
     localtime_r(&t, &tm);
 #endif
 
-    std::ostringstream ss;
+    char buffer[32];
+    const std::size_t length = std::strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", &tm);
 
-    ss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
-
-    return ss.str();
+    return std::string(buffer, length);
 }

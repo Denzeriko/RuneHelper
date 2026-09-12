@@ -3,6 +3,7 @@
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <thread>
@@ -50,7 +51,7 @@ public:
     OcrServiceStatus GetStatus() const;
     PriceServiceStatus GetPriceStatus() const;
     RunePatternCalibrationStatus GetRuneCalibrationStatus() const;
-    DebugData GetDebugData();
+    bool ConsumeDebugData(DebugData& data);
 
     bool ConsumeOverlayTexts(std::vector<OverlayText>& texts);
 
@@ -88,11 +89,12 @@ private:
     std::vector<OverlayText> sharedTexts_;
     int emptyOverlayFrames_ = 0;
 
+    std::atomic<bool> debugDirty_ = false;
     std::mutex debugMutex_;
     DebugData debugData_;
 
     std::mutex cachedNamesMutex_;
-    std::shared_ptr<const std::vector<CachedItemName>> cachedItemNames_;
+    std::shared_ptr<const CachedItemNames> cachedItemNames_;
 
     std::jthread initThread_;
     std::jthread workerThread_;

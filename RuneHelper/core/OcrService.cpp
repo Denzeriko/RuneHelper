@@ -1,5 +1,7 @@
 #include "core/OcrService.h"
 
+#include <opencv2/imgproc.hpp>
+
 #include <algorithm>
 #include <memory>
 #include <thread>
@@ -163,10 +165,15 @@ RunePatternCalibrationStatus OcrService::GetRuneCalibrationStatus() const
     return GetRunePatternCalibrationStatus();
 }
 
-DebugData OcrService::GetDebugData()
+bool OcrService::ConsumeDebugData(DebugData& data)
 {
+    if (!debugDirty_.exchange(false))
+        return false;
+
     std::lock_guard lock(debugMutex_);
-    return debugData_;
+    data = debugData_;
+
+    return true;
 }
 
 bool OcrService::ConsumeOverlayTexts(std::vector<OverlayText>& texts)
@@ -213,10 +220,12 @@ void OcrService::WorkerLoop()
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
+    std::uint64_t cachedNamesVersion = priceCache_.Version();
+
     {
         std::lock_guard lock(cachedNamesMutex_);
-        cachedItemNames_ = std::make_shared<const std::vector<CachedItemName>>(
-            BuildCachedItemNames(priceCache_.GetAllItemNames()));
+        cachedItemNames_ = std::make_shared<const CachedItemNames>(
+            CachedItemNames::Build(priceCache_.GetAllItemNames()));
     }
 
     auto lastRefreshCheck = std::chrono::steady_clock::now();
@@ -245,10 +254,15 @@ void OcrService::WorkerLoop()
         {
             lastRefreshCheck = std::chrono::steady_clock::now();
             priceCache_.RefreshIfNeeded();
+
+            const std::uint64_t priceVersion = priceCache_.Version();
+
+            if (priceVersion != cachedNamesVersion)
             {
                 std::lock_guard lock(cachedNamesMutex_);
-                cachedItemNames_ = std::make_shared<const std::vector<CachedItemName>>(
-                    BuildCachedItemNames(priceCache_.GetAllItemNames()));
+                cachedItemNames_ = std::make_shared<const CachedItemNames>(
+                    CachedItemNames::Build(priceCache_.GetAllItemNames()));
+                cachedNamesVersion = priceVersion;
             }
         }
 
@@ -293,16 +307,34 @@ void OcrService::WorkerLoop()
 
         if (!img.empty())
         {
-            StepRunePatternScaleCalibration(img);
+            cv::Mat gray;
+            cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
+
+            StepRunePatternScaleCalibration(gray);
             runeCalibrationStatus = GetRunePatternCalibrationStatus();
             runeCalibrationRunning = runeCalibrationStatus.running;
 
             if (runeCalibrationWasRunning && !runeCalibrationStatus.running && runeCalibrationStatus.bestScale > 0.0)
                 SaveRuneCalibrationScale(runeCalibrationStatus.bestScale);
 
-            std::vector<LootLine> loot;
-            const bool similarFrame = frameDiffer_.IsSimilarFrame(img, forceOcrFrame);
+            const bool similarFrame = frameDiffer_.IsSimilarFrame(gray, forceOcrFrame);
             const bool stableFrame = similarFrame && frameDiffer_.StableFrames() >= kStableOcrFramesBeforeReuse;
+
+            if (localConfig.runeSearchEnabled && !runeCalibrationRunning)
+            {
+                if (!stableFrame || !lastRunesValid)
+                {
+                    lastRunes = FindRunePatternMatches(gray);
+                    lastRunesValid = true;
+                }
+            }
+            else
+            {
+                lastRunes.clear();
+                lastRunesValid = false;
+            }
+
+            std::vector<LootLine> loot;
 
             if (stableFrame && !lastLoot.empty())
             {
@@ -310,20 +342,20 @@ void OcrService::WorkerLoop()
             }
             else
             {
-                loot = ocr_.RecognizeLoot(img, localConfig);
+                loot = ocr_.RecognizeLoot(img, gray, localConfig, lastRunes);
                 lastLoot = loot;
                 forceOcrFrame = false;
             }
 
-            frameDiffer_.StoreFrame(img);
+            frameDiffer_.StoreFrame(std::move(gray));
 
-            std::shared_ptr<const std::vector<CachedItemName>> cachedNames;
+            std::shared_ptr<const CachedItemNames> cachedNames;
             {
                 std::lock_guard lock(cachedNamesMutex_);
                 cachedNames = cachedItemNames_;
             }
 
-            static const std::vector<CachedItemName> kNoNames;
+            static const CachedItemNames kNoNames;
 
             LootOverlayBuildResult buildResult = LootOverlayBuilder::Build(
                 loot,
@@ -333,28 +365,14 @@ void OcrService::WorkerLoop()
                 cachedNames ? *cachedNames : kNoNames
             );
 
-            if (localConfig.runeSearchEnabled && !runeCalibrationRunning)
+            for (const auto& runeMatch : lastRunes)
             {
-                if (!stableFrame || !lastRunesValid)
-                {
-                    lastRunes = FindRunePatternMatches(img);
-                    lastRunesValid = true;
-                }
-
-                for (const auto& runeMatch : lastRunes)
-                {
-                    OverlayText text;
-                    text.text = std::wstring(runeMatch.label.begin(), runeMatch.label.end());
-                    text.color = OverlayRgb(60, 255, 60);
-                    text.x = localRegion.x + runeMatch.rect.x + runeMatch.rect.width / 2 - localConfig.overlayFontSize / 4;
-                    text.y = localRegion.y + runeMatch.rect.y + runeMatch.rect.height / 2;
-                    buildResult.texts.push_back(std::move(text));
-                }
-            }
-            else
-            {
-                lastRunes.clear();
-                lastRunesValid = false;
+                OverlayText text;
+                text.text = std::wstring(runeMatch.label.begin(), runeMatch.label.end());
+                text.color = OverlayRgb(60, 255, 60);
+                text.x = localRegion.x + runeMatch.rect.x + runeMatch.rect.width / 2 - localConfig.overlayFontSize / 4;
+                text.y = localRegion.y + runeMatch.rect.y + runeMatch.rect.height / 2;
+                buildResult.texts.push_back(std::move(text));
             }
 
             PublishOverlayTexts(std::move(buildResult.texts));
@@ -363,6 +381,8 @@ void OcrService::WorkerLoop()
                 std::lock_guard lock(debugMutex_);
                 debugData_ = std::move(buildResult.debug);
             }
+
+            debugDirty_ = true;
         }
 
         int sleepMs = localConfig.ocrIntervalMs;
@@ -383,6 +403,7 @@ void OcrService::ResetState(bool initializing)
     singleSnapshotRequested_ = false;
     singleSnapshotUntil_ = {};
     overlayDirty_ = false;
+    debugDirty_ = false;
     emptyOverlayFrames_ = 0;
     frameDiffer_.Reset();
     ClearRuntimeBuffers();

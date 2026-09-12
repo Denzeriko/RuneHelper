@@ -9,4 +9,4 @@ inline constexpr std::string_view NULL_DEVICE = "NUL";
 inline constexpr std::string_view NULL_DEVICE = "/dev/null";
 #endif
 
-std::filesystem::path GetAppDataDir();
+const std::filesystem::path& GetUserDataDir();

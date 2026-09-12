@@ -221,7 +221,7 @@ PortalScreenCast& Portal()
 
 std::filesystem::path RestoreTokenPath()
 {
-    return GetAppDataDir() / "screencast_token";
+    return GetUserDataDir() / "screencast_token";
 }
 
 std::string LoadRestoreToken()

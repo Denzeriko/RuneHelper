@@ -5,14 +5,11 @@
 class OcrFrameDiffer
 {
 public:
-    bool IsSimilarFrame(const cv::Mat& img, bool forceFrame);
+    bool IsSimilarFrame(const cv::Mat& gray, bool forceFrame);
     void StoreFrame(cv::Mat gray);
     void Reset();
 
     int StableFrames() const;
-
-private:
-    static cv::Mat ToGray(const cv::Mat& img);
 
 private:
     cv::Mat lastGray_;
