@@ -18,17 +18,27 @@ namespace
 {
 constexpr double kNmsIouThreshold = 0.35;
 constexpr double kCalibrationScales[] = {
-    0.75, //-25% from 2k full hd
+    0.60,
+    0.65,
+    0.70,
+    0.75,
     0.80,
     0.85,
     0.90,
     0.95,
-    1.00, //2k resoultion
+    1.00, //2560x1440
     1.05,
     1.10,
     1.15,
     1.20,
-    1.25 //4k 
+    1.25,
+    1.30,
+    1.35,
+    1.40,
+    1.45,
+    1.50, //3840x2160
+    1.55,
+    1.60
 };
 constexpr int kCalibrationTotal = static_cast<int>(std::size(kCalibrationScales));
 

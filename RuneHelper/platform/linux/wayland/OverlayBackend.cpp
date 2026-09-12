@@ -463,16 +463,8 @@ void WaylandOverlayBackend::Draw()
             busy_[i] = true;
     }
 
-    cv::Rect damage = content.empty() ? drawnContentRect_
-                                      : (drawnContentRect_.empty() ? content : (content | drawnContentRect_));
-    damage &= surfaceRect_;
-
     wl_surface_attach(surface_, buffer->Buffer(), 0, 0);
-
-    if (damage.empty())
-        wl_surface_damage_buffer(surface_, 0, 0, surfaceRect_.width, surfaceRect_.height);
-    else
-        wl_surface_damage_buffer(surface_, damage.x - surfaceRect_.x, damage.y - surfaceRect_.y, damage.width, damage.height);
+    wl_surface_damage_buffer(surface_, 0, 0, surfaceRect_.width, surfaceRect_.height);
 
     wl_surface_commit(surface_);
     session_.Flush();

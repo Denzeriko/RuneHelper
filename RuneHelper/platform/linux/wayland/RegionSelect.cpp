@@ -1,3 +1,4 @@
+#include <chrono>
 #include "platform/linux/RegionSelect.h"
 
 #include <algorithm>
@@ -65,6 +66,8 @@ private:
     Surface* ActiveSurface();
     void DrawSurface(Surface& target);
     void DrawAll();
+
+    std::chrono::steady_clock::time_point lastDraw_{};
 
     WaylandSession session_;
     std::vector<std::unique_ptr<Surface>> surfaces_;
@@ -232,8 +235,17 @@ void RegionSelectSession::HandlePointerMotion(void* data, wl_pointer*, std::uint
     session->pointerX_ = target->output->x + static_cast<int>(wl_fixed_to_double(x));
     session->pointerY_ = target->output->y + static_cast<int>(wl_fixed_to_double(y));
 
-    if (session->dragging_)
-        session->DrawAll();
+    if (!session->dragging_)
+        return;
+
+    constexpr auto kRedrawInterval = std::chrono::milliseconds(8);
+    const auto now = std::chrono::steady_clock::now();
+
+    if (now - session->lastDraw_ < kRedrawInterval)
+        return;
+
+    session->lastDraw_ = now;
+    session->DrawAll();
 }
 
 void RegionSelectSession::HandlePointerButton(void* data, wl_pointer*, std::uint32_t, std::uint32_t, std::uint32_t button, std::uint32_t state)

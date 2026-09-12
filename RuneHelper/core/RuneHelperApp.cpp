@@ -124,7 +124,9 @@ void RuneHelperApp::HandleUIActions()
 
         cv::Rect newRegion = selector.Select();
 
-        if (!newRegion.empty())
+        constexpr int kMinRegionSide = 16;
+
+        if (newRegion.width >= kMinRegionSide && newRegion.height >= kMinRegionSide)
         {
             std::lock_guard lock(configManager_.Mutex());
             config_->regionX = newRegion.x;
