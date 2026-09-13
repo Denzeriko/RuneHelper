@@ -24,6 +24,7 @@ struct OcrServiceStatus
     bool initializing = false;
     bool ready = false;
     bool failed = false;
+    bool captureFailing = false;
 };
 
 struct PriceServiceStatus
@@ -80,6 +81,7 @@ private:
     std::atomic<bool> ocrReady_ = false;
     std::atomic<bool> ocrFailed_ = false;
     std::atomic<bool> ocrInitializing_ = true;
+    std::atomic<bool> captureFailing_ = false;
 
     std::atomic<bool> singleSnapshotRequested_ = false;
     std::chrono::steady_clock::time_point singleSnapshotUntil_;

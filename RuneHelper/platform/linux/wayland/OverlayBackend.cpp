@@ -184,12 +184,12 @@ bool WaylandOverlayBackend::Init(const char* title, int, int)
         namespace_ = title;
 
     if (!session_.Connect())
-        return true;
+        return false;
 
     if (!session_.LayerShell())
     {
         LOG_ERROR("Wayland overlay requires zwlr_layer_shell_v1, which this compositor does not support");
-        return true;
+        return false;
     }
 
     running_ = true;

@@ -43,10 +43,14 @@ bool RuneHelperApp::Init()
     if (!ui_.Init(config_, &configManager_))
         return false;
 
-    if (!overlay_.Create())
-        return false;
+    const bool overlayAvailable = overlay_.Create();
 
-    overlay_.SetFontSizeForce(config_->overlayFontSize);
+    if (overlayAvailable)
+        overlay_.SetFontSizeForce(config_->overlayFontSize);
+    else
+        LOG_ERROR("Overlay is unavailable, RuneHelper will run without it");
+
+    ui_.SetOverlayAvailable(overlayAvailable);
 
     updateChecker_.Start();
     ui_.SetUpdateChecker(&updateChecker_);
@@ -64,6 +68,7 @@ void RuneHelperApp::MainLoop()
     {
         OcrServiceStatus ocrStatus = ocrService_.GetStatus();
         ui_.SetStatus(ocrStatus.initializing, ocrStatus.ready, ocrStatus.failed);
+        ui_.SetCaptureFailing(ocrStatus.captureFailing);
 
         PriceServiceStatus priceStatus = ocrService_.GetPriceStatus();
         ui_.SetPriceStatus(priceStatus.downloading, priceStatus.priceCount);

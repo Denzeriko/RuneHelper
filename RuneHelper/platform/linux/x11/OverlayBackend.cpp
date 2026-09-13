@@ -117,7 +117,7 @@ bool LinuxOverlayBackend::Init(const char* title, int width, int height)
     if (IsWaylandSession())
     {
         LOG_ERROR("Linux overlay requires an X11 session; Wayland is not supported yet");
-        return true;
+        return false;
     }
 
     display_ = XOpenDisplay(nullptr);
@@ -125,7 +125,7 @@ bool LinuxOverlayBackend::Init(const char* title, int width, int height)
     if (!display_)
     {
         LOG_ERROR("Linux overlay requires X11, but XOpenDisplay failed");
-        return true;
+        return false;
     }
 
     int screen = DefaultScreen(display_);
@@ -156,7 +156,7 @@ bool LinuxOverlayBackend::Init(const char* title, int width, int height)
         LOG_ERROR("Linux overlay failed to create X11 window");
         XCloseDisplay(display_);
         display_ = nullptr;
-        return true;
+        return false;
     }
 
     XStoreName(display_, window_, title ? title : "RuneHelper Overlay");

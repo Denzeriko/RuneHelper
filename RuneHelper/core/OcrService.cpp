@@ -23,6 +23,7 @@ constexpr int kStableOcrFramesBeforeReuse = 3;
 constexpr int kMaxStableOcrIntervalMs = 2000;
 constexpr int kOcrSleepChunkMs = 50;
 constexpr int kEmptyOverlayFramesBeforeClear = 3;
+constexpr int kCaptureFailuresBeforeWarning = 3;
 
 void SleepOcrLoop(std::atomic<bool>& running, const std::atomic<bool>& singleSnapshotRequested, int sleepMs)
 {
@@ -148,7 +149,8 @@ OcrServiceStatus OcrService::GetStatus() const
     return {
         ocrInitializing_.load(),
         ocrReady_.load(),
-        ocrFailed_.load()
+        ocrFailed_.load(),
+        captureFailing_.load()
     };
 }
 
@@ -234,6 +236,7 @@ void OcrService::WorkerLoop()
     bool lastRunesValid = false;
     bool forceOcrFrame = false;
     bool runeCalibrationWasRunning = false;
+    int captureFailures = 0;
 
     while (running_)
     {
@@ -281,6 +284,8 @@ void OcrService::WorkerLoop()
             lastLoot.clear();
             lastRunes.clear();
             lastRunesValid = false;
+            captureFailures = 0;
+            captureFailing_ = false;
             ClearOverlayTexts();
             SleepOcrLoop(running_, singleSnapshotRequested_, 100);
             continue;
@@ -292,6 +297,8 @@ void OcrService::WorkerLoop()
             lastLoot.clear();
             lastRunes.clear();
             lastRunesValid = false;
+            captureFailures = 0;
+            captureFailing_ = false;
             SleepOcrLoop(running_, singleSnapshotRequested_, 100);
             continue;
         }
@@ -305,8 +312,19 @@ void OcrService::WorkerLoop()
 
         cv::Mat img = screenCapture_.CaptureRegion(localRegion);
 
-        if (!img.empty())
+        if (img.empty())
         {
+            if (captureFailures < kCaptureFailuresBeforeWarning)
+                ++captureFailures;
+
+            if (captureFailures >= kCaptureFailuresBeforeWarning)
+                captureFailing_ = true;
+        }
+        else
+        {
+            captureFailures = 0;
+            captureFailing_ = false;
+
             cv::Mat gray;
             cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
@@ -404,6 +422,7 @@ void OcrService::ResetState(bool initializing)
     singleSnapshotUntil_ = {};
     overlayDirty_ = false;
     debugDirty_ = false;
+    captureFailing_ = false;
     emptyOverlayFrames_ = 0;
     frameDiffer_.Reset();
     ClearRuntimeBuffers();

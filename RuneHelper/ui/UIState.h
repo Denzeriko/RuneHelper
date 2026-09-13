@@ -12,6 +12,9 @@ struct UIState
     bool ocrReady = false;
     bool ocrFailed = false;
 
+    bool overlayAvailable = true;
+    bool captureFailing = false;
+
     bool wantsSelectRegion = false;
     bool wantsRefreshPrices = false;
     bool wantsToggleOCR = false;

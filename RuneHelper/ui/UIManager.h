@@ -40,6 +40,8 @@ public:
     bool IsRunning() const;
 
     void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
+    void SetOverlayAvailable(bool available);
+    void SetCaptureFailing(bool failing);
     void SetPriceStatus(bool downloading, size_t priceCount);
     void SetRuneCalibrationStatus(const RunePatternCalibrationStatus& status);
     void SetUpdateChecker(UpdateChecker* checker);

@@ -83,6 +83,24 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     else
         ImGui::TextDisabled("Waiting");
 
+    row("Capture");
+    if (state.captureFailing)
+        ImGui::TextColored(kRed, "Failing");
+    else
+        ImGui::TextColored(kGreen, "OK");
+
+    if (ImGui::IsItemHovered() && state.captureFailing)
+        ImGui::SetTooltip("The selected region cannot be captured. See runehelper.log for the reason.");
+
+    row("Overlay");
+    if (state.overlayAvailable)
+        ImGui::TextColored(kGreen, "Ready");
+    else
+        ImGui::TextColored(kRed, "Unavailable");
+
+    if (ImGui::IsItemHovered() && !state.overlayAvailable)
+        ImGui::SetTooltip("The overlay window could not be created, prices are shown in the Debug Menu only.");
+
     row("Prices");
     if (state.priceDownloading)
         ImGui::TextColored(kYellow, "Downloading");

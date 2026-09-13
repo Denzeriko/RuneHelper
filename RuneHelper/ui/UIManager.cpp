@@ -66,6 +66,16 @@ void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
     state_.ocrFailed = ocrFailed;
 }
 
+void UIManager::SetOverlayAvailable(bool available)
+{
+    state_.overlayAvailable = available;
+}
+
+void UIManager::SetCaptureFailing(bool failing)
+{
+    state_.captureFailing = failing;
+}
+
 void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
 {
     state_.priceDownloading = downloading;

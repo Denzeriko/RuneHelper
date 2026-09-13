@@ -63,7 +63,7 @@ std::string PrepareTessdata()
 {
     LOG_INFO("Linux PrepareTessdata() -> call");
 
-    auto dir = std::filesystem::temp_directory_path() / "RuneHelper" / "tessdata";
+    const auto dir = GetUserDataDir() / "tessdata";
     auto eng = dir / "eng.traineddata";
 
     if (!std::filesystem::exists(eng))
