@@ -394,7 +394,7 @@ cv::Mat PortalScreenCast::LatestFrame()
         return {};
 
     std::lock_guard lock(impl_->frameMutex);
-    return impl_->frame.clone();
+    return impl_->frame;
 }
 
 cv::Point PortalScreenCast::FramePosition() const
@@ -675,9 +675,9 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     spa_rectangle sizeDefault{1920, 1080};
     spa_rectangle sizeMin{1, 1};
     spa_rectangle sizeMax{8192, 8192};
-    spa_fraction rateDefault{30, 1};
+    spa_fraction rateDefault{10, 1};
     spa_fraction rateMin{0, 1};
-    spa_fraction rateMax{240, 1};
+    spa_fraction rateMax{15, 1};
 
     const spa_pod* params[1];
     params[0] = static_cast<const spa_pod*>(spa_pod_builder_add_object(

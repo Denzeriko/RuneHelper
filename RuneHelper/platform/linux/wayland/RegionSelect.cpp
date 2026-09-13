@@ -37,7 +37,10 @@ public:
 private:
     struct Surface
     {
-        const WaylandOutput* output = nullptr;
+        int outputX = 0;
+        int outputY = 0;
+        int outputWidth = 0;
+        int outputHeight = 0;
         wl_surface* surface = nullptr;
         zwlr_layer_surface_v1* layerSurface = nullptr;
         WaylandShmBuffer buffer;
@@ -186,8 +189,8 @@ void RegionSelectSession::HandleConfigure(void* data, zwlr_layer_surface_v1* lay
         if (surface->layerSurface != layerSurface)
             continue;
 
-        surface->width = width > 0 ? static_cast<int>(width) : surface->output->LogicalWidth();
-        surface->height = height > 0 ? static_cast<int>(height) : surface->output->LogicalHeight();
+        surface->width = width > 0 ? static_cast<int>(width) : surface->outputWidth;
+        surface->height = height > 0 ? static_cast<int>(height) : surface->outputHeight;
         surface->configured = true;
         session->DrawSurface(*surface);
     }
@@ -212,8 +215,8 @@ void RegionSelectSession::HandlePointerEnter(void* data, wl_pointer*, std::uint3
     }
 
     session->activeSurface_ = surface;
-    session->pointerX_ = target->output->x + static_cast<int>(wl_fixed_to_double(x));
-    session->pointerY_ = target->output->y + static_cast<int>(wl_fixed_to_double(y));
+    session->pointerX_ = target->outputX + static_cast<int>(wl_fixed_to_double(x));
+    session->pointerY_ = target->outputY + static_cast<int>(wl_fixed_to_double(y));
 }
 
 void RegionSelectSession::HandlePointerLeave(void* data, wl_pointer*, std::uint32_t, wl_surface* surface)
@@ -232,8 +235,8 @@ void RegionSelectSession::HandlePointerMotion(void* data, wl_pointer*, std::uint
     if (!target)
         return;
 
-    session->pointerX_ = target->output->x + static_cast<int>(wl_fixed_to_double(x));
-    session->pointerY_ = target->output->y + static_cast<int>(wl_fixed_to_double(y));
+    session->pointerX_ = target->outputX + static_cast<int>(wl_fixed_to_double(x));
+    session->pointerY_ = target->outputY + static_cast<int>(wl_fixed_to_double(y));
 
     if (!session->dragging_)
         return;
@@ -324,8 +327,8 @@ void RegionSelectSession::DrawSurface(Surface& target)
     {
         const cv::Rect global = RectFromPoints(startX_, startY_, pointerX_, pointerY_);
         const cv::Rect local(
-            (global.x - target.output->x) * target.scale,
-            (global.y - target.output->y) * target.scale,
+            (global.x - target.outputX) * target.scale,
+            (global.y - target.outputY) * target.scale,
             global.width * target.scale,
             global.height * target.scale
         );
@@ -382,7 +385,10 @@ bool RegionSelectSession::Start()
     for (const WaylandOutput& output : session_.Outputs())
     {
         auto surface = std::make_unique<Surface>();
-        surface->output = &output;
+        surface->outputX = output.x;
+        surface->outputY = output.y;
+        surface->outputWidth = output.LogicalWidth();
+        surface->outputHeight = output.LogicalHeight();
         surface->scale = std::max(1, output.scale);
         surface->surface = wl_compositor_create_surface(session_.Compositor());
 

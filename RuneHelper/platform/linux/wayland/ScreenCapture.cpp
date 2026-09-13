@@ -17,11 +17,17 @@
 
 namespace
 {
+WaylandShmBuffer& CaptureBuffer()
+{
+    static WaylandShmBuffer buffer;
+    return buffer;
+}
+
 struct CaptureFrame
 {
     WaylandSession* session = nullptr;
     zwlr_screencopy_frame_v1* frame = nullptr;
-    WaylandShmBuffer buffer;
+    WaylandShmBuffer* buffer = nullptr;
     bool copyRequested = false;
     bool done = false;
     bool failed = false;
@@ -30,18 +36,23 @@ struct CaptureFrame
 
 void RequestCopy(CaptureFrame* capture)
 {
-    if (capture->copyRequested || capture->failed || !capture->buffer.IsValid())
+    if (capture->copyRequested || capture->failed || !capture->buffer->IsValid())
         return;
 
     capture->copyRequested = true;
-    zwlr_screencopy_frame_v1_copy(capture->frame, capture->buffer.Buffer());
+    zwlr_screencopy_frame_v1_copy(capture->frame, capture->buffer->Buffer());
 }
 
 void HandleBuffer(void* data, zwlr_screencopy_frame_v1* frame, std::uint32_t format, std::uint32_t width, std::uint32_t height, std::uint32_t stride)
 {
     auto* capture = static_cast<CaptureFrame*>(data);
 
-    if (!capture->buffer.Create(capture->session->Shm(), static_cast<int>(width), static_cast<int>(height), static_cast<int>(stride), format))
+    const int bufferWidth = static_cast<int>(width);
+    const int bufferHeight = static_cast<int>(height);
+    const int bufferStride = static_cast<int>(stride);
+
+    if (!capture->buffer->Matches(bufferWidth, bufferHeight, bufferStride, format) &&
+        !capture->buffer->Create(capture->session->Shm(), bufferWidth, bufferHeight, bufferStride, format))
     {
         capture->failed = true;
         return;
@@ -174,6 +185,7 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
 
     CaptureFrame capture;
     capture.session = &session;
+    capture.buffer = &CaptureBuffer();
     capture.frame = zwlr_screencopy_manager_v1_capture_output_region(
         session.Screencopy(),
         0,
@@ -197,6 +209,7 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
         if (!session.Dispatch())
         {
             LOG_ERROR("Wayland screen capture failed: display dispatch error");
+            CaptureBuffer().Destroy();
             session.Disconnect();
             return {};
         }
@@ -204,8 +217,8 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
 
     cv::Mat result;
 
-    if (!capture.failed && capture.buffer.IsValid())
-        result = ToBgr(capture.buffer, capture.yInvert);
+    if (!capture.failed && capture.buffer->IsValid())
+        result = ToBgr(*capture.buffer, capture.yInvert);
     else
         LOG_ERROR("Wayland screen capture failed: compositor rejected the frame");
 
@@ -357,6 +370,7 @@ cv::Mat Capture(const cv::Rect& region)
     if (!session.DispatchNonBlocking())
     {
         LOG_ERROR("Wayland screen capture: display error, reconnecting");
+        CaptureBuffer().Destroy();
         session.Disconnect();
 
         if (!session.Connect())

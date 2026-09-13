@@ -54,6 +54,7 @@ public:
 
     const std::vector<WaylandOutput>& Outputs() const;
     const WaylandOutput* OutputAt(int px, int py) const;
+    const WaylandOutput* OutputByName(std::uint32_t globalName) const;
     const WaylandOutput* PrimaryOutput() const;
 
 private:
@@ -92,6 +93,7 @@ public:
     WaylandShmBuffer& operator=(const WaylandShmBuffer&) = delete;
 
     bool Create(wl_shm* shm, int width, int height, int stride, std::uint32_t format);
+    bool Matches(int width, int height, int stride, std::uint32_t format) const;
     void Destroy();
 
     bool IsValid() const;

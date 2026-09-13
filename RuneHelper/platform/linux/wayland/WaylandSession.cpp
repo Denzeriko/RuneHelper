@@ -342,6 +342,17 @@ const WaylandOutput* WaylandSession::OutputAt(int px, int py) const
     return nullptr;
 }
 
+const WaylandOutput* WaylandSession::OutputByName(std::uint32_t globalName) const
+{
+    for (const WaylandOutput& output : outputs_)
+    {
+        if (output.globalName == globalName)
+            return &output;
+    }
+
+    return nullptr;
+}
+
 const WaylandOutput* WaylandSession::PrimaryOutput() const
 {
     const WaylandOutput* best = nullptr;
@@ -411,6 +422,16 @@ bool WaylandShmBuffer::Create(wl_shm* shm, int width, int height, int stride, st
     stride_ = stride;
     format_ = format;
     return true;
+}
+
+bool WaylandShmBuffer::Matches(int width, int height, int stride, std::uint32_t format) const
+{
+    return buffer_ != nullptr &&
+           data_ != nullptr &&
+           width_ == width &&
+           height_ == height &&
+           stride_ == stride &&
+           format_ == format;
 }
 
 void WaylandShmBuffer::Destroy()
