@@ -1,0 +1,83 @@
+name: Release binaries
+
+on:
+  push:
+    tags: [ 'v*' ]
+  workflow_dispatch:
+
+jobs:
+  linux:
+    runs-on: ubuntu-24.04
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Warm dependency cache
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: deps
+          outputs: type=cacheonly
+          cache-from: type=gha,scope=linux-deps
+          cache-to: type=gha,mode=max,scope=linux-deps
+
+      - name: Build static binary (x11)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: RUNEHELPER_LINUX_BACKEND=x11
+          outputs: type=local,dest=out-x11
+          cache-from: type=gha,scope=linux-deps
+
+      - name: Build static binary (wayland)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          build-args: RUNEHELPER_LINUX_BACKEND=wayland
+          outputs: type=local,dest=out-wayland
+          cache-from: type=gha,scope=linux-deps
+
+      - name: Collect binaries
+        run: |
+          mkdir -p dist
+          install -m755 out-x11/RuneHelper dist/RuneHelper-linux-x86_64-x11
+          install -m755 out-wayland/RuneHelper dist/RuneHelper-linux-x86_64-wayland
+
+      - name: Check glibc floor
+        run: |
+          for binary in dist/*; do
+            required=$(objdump -T "$binary" | grep -oE 'GLIBC_[0-9]+\.[0-9]+' | sort -uV | tail -n 1)
+            echo "$binary requires $required"
+            if [ "$(printf '%s\nGLIBC_2.35\n' "$required" | sort -V | tail -n 1)" != "GLIBC_2.35" ]; then
+              echo "::error::$binary requires $required, the base image floor is GLIBC_2.35"
+              exit 1
+            fi
+          done
+
+      - name: Report runtime dependencies
+        run: ldd dist/RuneHelper-linux-x86_64-wayland || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: runehelper-linux-x86_64-static
+          path: dist/*
+
+      - name: Attach to release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
+            gh release create "$GITHUB_REF_NAME" --generate-notes
+          gh release upload "$GITHUB_REF_NAME" dist/* --clobber

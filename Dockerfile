@@ -1,36 +1,47 @@
 # syntax=docker/dockerfile:1.7
 
-FROM archlinux:base-devel AS deps
+FROM ubuntu:22.04 AS deps
 
 ARG OPENCV_VERSION=4.14.0
 ARG LEPTONICA_VERSION=1.87.0
 ARG TESSERACT_VERSION=5.5.3
 
+ENV DEBIAN_FRONTEND=noninteractive
 ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+ENV CC=gcc-12
+ENV CXX=g++-12
 
-RUN --mount=type=cache,target=/var/cache/pacman/pkg,sharing=locked \
-    pacman -Sy --noconfirm --needed archlinux-keyring && \
-    pacman -Su --noconfirm --needed \
+RUN rm -f /etc/apt/apt.conf.d/docker-clean
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential \
+        ca-certificates \
         cmake \
-        ninja \
+        g++-12 \
+        gcc-12 \
         git \
-        pkgconf \
-        curl \
-        nlohmann-json \
-        mesa \
-        libglvnd \
-        libx11 \
-        libxext \
-        libxrandr \
-        libxinerama \
-        libxcursor \
-        libxi \
-        wayland \
-        wayland-protocols \
-        wlr-protocols \
-        libxkbcommon \
-        libpipewire \
-        dbus
+        libcurl4-openssl-dev \
+        libdbus-1-dev \
+        libgl-dev \
+        libglx-dev \
+        libopengl-dev \
+        libpipewire-0.3-dev \
+        libssl-dev \
+        libwayland-bin \
+        libwayland-dev \
+        libx11-dev \
+        libxcursor-dev \
+        libxext-dev \
+        libxi-dev \
+        libxinerama-dev \
+        libxkbcommon-dev \
+        libxrandr-dev \
+        ninja-build \
+        pkg-config \
+        wayland-protocols
 
 RUN git clone --depth 1 --branch "${OPENCV_VERSION}" https://github.com/opencv/opencv.git /tmp/opencv && \
     cmake -S /tmp/opencv -B /tmp/opencv/build -G Ninja \
@@ -111,13 +122,13 @@ WORKDIR /src
 COPY . .
 
 RUN --mount=type=cache,target=/build,sharing=locked \
-    cmake -S /src -B /build -G Ninja \
+    cmake -S /src -B "/build/${RUNEHELPER_LINUX_BACKEND}" -G Ninja \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF \
         -DRUNEHELPER_LINUX_BACKEND="${RUNEHELPER_LINUX_BACKEND}" \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" && \
-    cmake --build /build --parallel && \
-    install -Dm755 -s /build/RuneHelper /out/RuneHelper
+    cmake --build "/build/${RUNEHELPER_LINUX_BACKEND}" --parallel && \
+    install -Dm755 -s "/build/${RUNEHELPER_LINUX_BACKEND}/RuneHelper" /out/RuneHelper
 
 FROM scratch AS export
 

@@ -56,10 +56,10 @@ jobs:
           BIN=$(find build -maxdepth 2 -type f -executable ! -name "*.so" | head -n 1)
           echo "Found binary: $BIN"
           cp "$BIN" dist/RuneHelper
-          tar -czf runehelper-linux-x86_64.tar.gz -C dist RuneHelper
+          tar -czf runehelper-linux-x86_64-ubuntu-dynamic.tar.gz -C dist RuneHelper
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: runehelper-linux-x86_64
-          path: runehelper-linux-x86_64.tar.gz
+          name: runehelper-linux-x86_64-ubuntu-dynamic
+          path: runehelper-linux-x86_64-ubuntu-dynamic.tar.gz

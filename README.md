@@ -10,10 +10,17 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 
 ## Download
 
+[![Download Linux](https://img.shields.io/badge/download-Linux%20x86__64-blue?logo=linux)](https://github.com/Denzeriko/RuneHelper/releases/latest)
 [![Download Windows artifact](https://img.shields.io/badge/download-Windows%20x86__64-blue?logo=windows)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
-[![Download Linux artifact](https://img.shields.io/badge/download-Linux%20x86__64-blue?logo=linux)](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml?query=branch%3Amaster)
 
-Open the latest successful workflow run and download the artifact from the **Artifacts** section.
+Linux binaries are published on the [Releases](https://github.com/Denzeriko/RuneHelper/releases/latest) page. OpenCV, Tesseract, Leptonica, GLFW and cpr are linked in, so nothing has to be installed first. Pick the build that matches the session:
+
+* `RuneHelper-linux-x86_64-wayland` - Hyprland, Sway, river, labwc, KDE Plasma on Wayland.
+* `RuneHelper-linux-x86_64-x11` - any X11 session.
+
+They are built against glibc 2.35, which covers Ubuntu 22.04 and newer, Debian 12 and newer, and current rolling distributions.
+
+The Linux job under **Actions** builds against Ubuntu's own OpenCV and links it dynamically. That artifact is a build check, not a download: it only runs on the same Ubuntu release, and it fails with an `undefined symbol` error anywhere else. Windows has no release job yet, so its artifact still comes from Actions and needs a GitHub login to download.
 
 ## Features
 
@@ -165,19 +172,23 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRUNEHELPER_LINUX_BACKEND=waylan
 cmake --build build -j$(nproc)
 ```
 
-## Building with Docker (Arch Linux)
+## Building with Docker
 
-The Dockerfile produces a self-contained binary: OpenCV, Leptonica, Tesseract, GLFW, cpr and libstdc++ are linked statically, leaving only glibc, libcurl, the display server client libraries and libGL dynamic.
+The Dockerfile produces the same self-contained binary the releases ship: OpenCV, Leptonica, Tesseract, GLFW, cpr and libstdc++ are linked statically, leaving only glibc, libcurl, the display server client libraries and libGL dynamic. It builds on Ubuntu 22.04 so the result keeps a glibc 2.35 floor and runs on newer distributions.
 
-```bash
-docker build --network host --output out .
-```
-
-The binary lands in `out/RuneHelper`. `--network host` keeps pacman on the host routes; without it the Arch mirrors tend to time out inside the build container. The backend defaults to Wayland and is switched with a build argument:
+The last stage is an export stage, not a runnable image. `--output` writes the binary onto the host and there is nothing to `docker run`:
 
 ```bash
-docker build --network host --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
+docker build --output out .
 ```
+
+The binary lands in `out/RuneHelper`. The backend defaults to Wayland and is switched with a build argument:
+
+```bash
+docker build --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
+```
+
+Add `--network host` if the container cannot reach the package mirrors on your setup.
 
 The Linux build embeds `eng.traineddata_fast` and the rune templates into the executable the same way the Windows resource script does, so the binary runs from any working directory:
 
