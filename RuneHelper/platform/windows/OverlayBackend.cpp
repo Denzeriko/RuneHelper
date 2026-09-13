@@ -2,6 +2,8 @@
 
 #include <windows.h>
 
+#include <algorithm>
+
 #include "core/Logger.h"
 #include "ui/OverlayState.h"
 
@@ -72,6 +74,7 @@ public:
 private:
     void RecreateFont(int size);
     void ApplyClickThrough(bool enabled);
+    RECT ContentBounds(const OverlayState& state) const;
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 
@@ -84,6 +87,8 @@ private:
     int virtualY_ = 0;
     int virtualW_ = 0;
     int virtualH_ = 0;
+
+    RECT paintedBounds_{};
 
     bool running_ = false;
 };
@@ -176,6 +181,42 @@ void WindowsOverlayBackend::PumpEvents()
     }
 }
 
+RECT WindowsOverlayBackend::ContentBounds(const OverlayState& state) const
+{
+    RECT bounds{};
+
+    const int lineHeight = std::max(16, state.fontSize + 8);
+
+    for (const auto& text : state.texts)
+    {
+        const int x = text.x - virtualX_;
+        const int y = text.y - virtualY_;
+        const int width = static_cast<int>(text.text.size()) * std::max(8, state.fontSize) + 32;
+
+        const RECT box{ x - 8, y - lineHeight, x + width, y + lineHeight };
+
+        RECT merged{};
+        UnionRect(&merged, &bounds, &box);
+        bounds = merged;
+    }
+
+    if (state.previewEnabled)
+    {
+        const RECT preview{
+            state.previewRect.left - virtualX_ - 4,
+            state.previewRect.top - virtualY_ - 4,
+            state.previewRect.right - virtualX_ + 4,
+            state.previewRect.bottom - virtualY_ + 4
+        };
+
+        RECT merged{};
+        UnionRect(&merged, &bounds, &preview);
+        bounds = merged;
+    }
+
+    return bounds;
+}
+
 void WindowsOverlayBackend::Render(const OverlayState& state)
 {
     if (!hwnd_ || !running_)
@@ -184,12 +225,23 @@ void WindowsOverlayBackend::Render(const OverlayState& state)
     if (EqualState(state_, state))
         return;
 
-    if (state_.fontSize != state.fontSize)
+    const bool fontChanged = state_.fontSize != state.fontSize;
+
+    if (fontChanged)
         RecreateFont(state.fontSize);
 
-    state_ = state;
+    const RECT newBounds = ContentBounds(state);
 
-    InvalidateRect(hwnd_, nullptr, FALSE);
+    RECT dirty{};
+    UnionRect(&dirty, &paintedBounds_, &newBounds);
+
+    state_ = state;
+    paintedBounds_ = newBounds;
+
+    if (fontChanged || IsRectEmpty(&dirty))
+        InvalidateRect(hwnd_, nullptr, FALSE);
+    else
+        InvalidateRect(hwnd_, &dirty, FALSE);
 }
 
 void WindowsOverlayBackend::SetVisible(bool visible)

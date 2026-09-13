@@ -362,10 +362,8 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     cv::Mat bgra(region.height, region.width, CV_8UC4, mapped.pData, mapped.RowPitch);
 
-    cv::Mat bgr;
-    cv::cvtColor(bgra, bgr, cv::COLOR_BGRA2BGR);
-
-    cv::Mat result = bgr.clone();
+    cv::Mat result;
+    cv::cvtColor(bgra, result, cv::COLOR_BGRA2BGR);
 
     g_context->Unmap(stagingTexture_.Get(), 0);
     g_duplication->ReleaseFrame();

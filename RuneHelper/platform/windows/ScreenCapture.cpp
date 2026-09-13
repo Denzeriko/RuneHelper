@@ -2,52 +2,93 @@
 
 #include <windows.h>
 
-namespace
-{
-cv::Mat CaptureScreen()
-{
-    int x = GetSystemMetrics(SM_XVIRTUALSCREEN);
-    int y = GetSystemMetrics(SM_YVIRTUALSCREEN);
-    int width = GetSystemMetrics(SM_CXVIRTUALSCREEN);
-    int height = GetSystemMetrics(SM_CYVIRTUALSCREEN);
-
-    HDC hScreen = GetDC(nullptr);
-    HDC hDC = CreateCompatibleDC(hScreen);
-
-    HBITMAP hBitmap = CreateCompatibleBitmap(hScreen, width, height);
-    HGDIOBJ oldObj = SelectObject(hDC, hBitmap);
-
-    BitBlt(hDC, 0, 0, width, height, hScreen, x, y, SRCCOPY);
-
-    BITMAPINFOHEADER bi{};
-    bi.biSize = sizeof(BITMAPINFOHEADER);
-    bi.biWidth = width;
-    bi.biHeight = -height;
-    bi.biPlanes = 1;
-    bi.biBitCount = 24;
-    bi.biCompression = BI_RGB;
-
-    cv::Mat mat(height, width, CV_8UC3);
-    GetDIBits(hDC, hBitmap, 0, height, mat.data, reinterpret_cast<BITMAPINFO*>(&bi), DIB_RGB_COLORS);
-
-    SelectObject(hDC, oldObj);
-    DeleteObject(hBitmap);
-    DeleteDC(hDC);
-    ReleaseDC(nullptr, hScreen);
-
-    return mat;
-}
-}
+#include <opencv2/imgproc.hpp>
 
 cv::Mat CaptureRegion(const cv::Rect& region)
 {
-    cv::Mat screen = CaptureScreen();
+    if (region.width <= 0 || region.height <= 0)
+        return {};
 
-    cv::Rect screenRect(0, 0, screen.cols, screen.rows);
-    cv::Rect safeRegion = region & screenRect;
+    const cv::Rect virtualScreen(
+        GetSystemMetrics(SM_XVIRTUALSCREEN),
+        GetSystemMetrics(SM_YVIRTUALSCREEN),
+        GetSystemMetrics(SM_CXVIRTUALSCREEN),
+        GetSystemMetrics(SM_CYVIRTUALSCREEN)
+    );
+
+    const cv::Rect safeRegion = region & virtualScreen;
 
     if (safeRegion.empty())
         return {};
 
-    return screen(safeRegion).clone();
+    HDC screenDC = GetDC(nullptr);
+
+    if (!screenDC)
+        return {};
+
+    HDC memoryDC = CreateCompatibleDC(screenDC);
+
+    if (!memoryDC)
+    {
+        ReleaseDC(nullptr, screenDC);
+        return {};
+    }
+
+    HBITMAP bitmap = CreateCompatibleBitmap(screenDC, safeRegion.width, safeRegion.height);
+
+    if (!bitmap)
+    {
+        DeleteDC(memoryDC);
+        ReleaseDC(nullptr, screenDC);
+        return {};
+    }
+
+    HGDIOBJ oldBitmap = SelectObject(memoryDC, bitmap);
+
+    const BOOL blitted = BitBlt(
+        memoryDC,
+        0,
+        0,
+        safeRegion.width,
+        safeRegion.height,
+        screenDC,
+        safeRegion.x,
+        safeRegion.y,
+        SRCCOPY
+    );
+
+    SelectObject(memoryDC, oldBitmap);
+
+    cv::Mat result;
+
+    if (blitted)
+    {
+        BITMAPINFOHEADER header{};
+        header.biSize = sizeof(BITMAPINFOHEADER);
+        header.biWidth = safeRegion.width;
+        header.biHeight = -safeRegion.height;
+        header.biPlanes = 1;
+        header.biBitCount = 32;
+        header.biCompression = BI_RGB;
+
+        cv::Mat bgra(safeRegion.height, safeRegion.width, CV_8UC4);
+
+        if (GetDIBits(
+                memoryDC,
+                bitmap,
+                0,
+                static_cast<UINT>(safeRegion.height),
+                bgra.data,
+                reinterpret_cast<BITMAPINFO*>(&header),
+                DIB_RGB_COLORS))
+        {
+            cv::cvtColor(bgra, result, cv::COLOR_BGRA2BGR);
+        }
+    }
+
+    DeleteObject(bitmap);
+    DeleteDC(memoryDC);
+    ReleaseDC(nullptr, screenDC);
+
+    return result;
 }
