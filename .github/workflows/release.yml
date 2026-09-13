@@ -2,7 +2,7 @@ name: Release binaries
 
 on:
   push:
-    tags: [ 'v*' ]
+    tags: [ '[0-9]*' ]
   workflow_dispatch:
 
 jobs:
