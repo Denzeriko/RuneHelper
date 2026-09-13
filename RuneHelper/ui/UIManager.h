@@ -32,7 +32,7 @@ public:
     UIManager(const UIManager&) = delete;
     UIManager& operator=(const UIManager&) = delete;
 
-    bool Init(AppConfig* config, ConfigManager* configManager);
+    bool Init(ConfigManager* configManager);
 
     void Shutdown();
     void Pump();
@@ -50,8 +50,8 @@ public:
     std::string UpdateDownloadUrl() const;
 
     bool HasConfig() const;
-    AppConfig& Config();
-    std::mutex& ConfigMutex() const;
+    AppConfig& ConfigDraft();
+    void ApplyConfigDraft();
     UIState& State();
 
     bool WantsSelectRegion();
@@ -83,8 +83,8 @@ public:
     void RequestExit();
 
 private:
-    AppConfig* config_ = nullptr;
     ConfigManager* configManager_ = nullptr;
+    AppConfig configDraft_;
     UpdateChecker* updateChecker_ = nullptr;
 
     UIState state_;

@@ -75,11 +75,7 @@ void OcrService::Start(ConfigManager& configManager)
     running_ = true;
     ResetState(true);
 
-    AppConfig config;
-    {
-        std::lock_guard lock(configManager.Mutex());
-        config = configManager.Get();
-    }
+    const AppConfig config = configManager.Snapshot();
 
     priceCache_.SetRefreshMinutes(config.priceRefreshMinutes);
     priceCache_.SetLeague(config.priceLeague);
@@ -243,11 +239,7 @@ void OcrService::WorkerLoop()
         if (!configManager_)
             return;
 
-        AppConfig localConfig;
-        {
-            std::lock_guard lock(configManager_->Mutex());
-            localConfig = configManager_->Get();
-        }
+        const AppConfig localConfig = configManager_->Snapshot();
 
         priceCache_.SetRefreshMinutes(localConfig.priceRefreshMinutes);
         priceCache_.SetLeague(localConfig.priceLeague);
@@ -457,14 +449,14 @@ void OcrService::SaveRuneCalibrationScale(double scale)
     if (!configManager_)
         return;
 
-    std::lock_guard lock(configManager_->Mutex());
-    AppConfig& config = configManager_->Get();
-
-    if (config.runeSearchScale == scale)
+    if (configManager_->Snapshot().runeSearchScale == scale)
         return;
 
-    config.runeSearchScale = scale;
-    ConfigManager::Normalize(config);
+    configManager_->Update(
+        [scale](AppConfig& config)
+        {
+            config.runeSearchScale = scale;
+        });
 
     if (!configManager_->Save())
         LOG_ERROR("OcrService failed to save rune calibration scale");

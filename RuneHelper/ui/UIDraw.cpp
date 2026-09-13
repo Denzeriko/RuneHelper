@@ -1,6 +1,5 @@
 #include "ui/UIDraw.h"
 
-#include <mutex>
 #include <string>
 
 #include <imgui.h>
@@ -129,8 +128,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     if (!manager.HasConfig())
         return;
 
-    std::lock_guard configLock(manager.ConfigMutex());
-    AppConfig& config = manager.Config();
+    AppConfig& config = manager.ConfigDraft();
     bool configChanged = false;
 
     ImGui::SeparatorText("REGION");
@@ -273,7 +271,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     if (configChanged)
     {
-        ConfigManager::Normalize(config);
+        manager.ApplyConfigDraft();
 
         state.configSavePending = true;
         state.configSaveAt = ImGui::GetTime() + kConfigSaveDelaySeconds;
@@ -392,8 +390,6 @@ void UIDraw::Draw(UIManager& manager)
 
     if (state.configSavePending && ImGui::GetTime() >= state.configSaveAt && manager.HasConfig())
     {
-        std::lock_guard configLock(manager.ConfigMutex());
-
         state.configSavePending = false;
 
         if (!manager.SaveConfig())
@@ -433,6 +429,8 @@ void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* la
     if (manager.CaptureNextHotkey(key))
     {
         state.waitingForHotkey = nullptr;
+
+        manager.ApplyConfigDraft();
 
         if (!manager.SaveConfig())
             LOG_ERROR("UI failed to save hotkey config");

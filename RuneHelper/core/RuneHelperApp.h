@@ -20,11 +20,10 @@ private:
 
     void HandleUIActions();
     void UpdateOverlay();
-    void UpdateRegionPreview();
+    void UpdateRegionPreview(const AppConfig& config);
 
 private:
     ConfigManager configManager_;
-    AppConfig* config_ = nullptr;
 
     UIManager ui_;
     OverlayWindow overlay_;

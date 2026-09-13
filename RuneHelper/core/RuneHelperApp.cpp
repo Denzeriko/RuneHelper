@@ -38,15 +38,13 @@ bool RuneHelperApp::Init()
 
     configManager_.Load();
 
-    config_ = &configManager_.Get();
-
-    if (!ui_.Init(config_, &configManager_))
+    if (!ui_.Init(&configManager_))
         return false;
 
     const bool overlayAvailable = overlay_.Create();
 
     if (overlayAvailable)
-        overlay_.SetFontSizeForce(config_->overlayFontSize);
+        overlay_.SetFontSizeForce(configManager_.Snapshot().overlayFontSize);
     else
         LOG_ERROR("Overlay is unavailable, RuneHelper will run without it");
 
@@ -87,17 +85,13 @@ void RuneHelperApp::MainLoop()
 
         HandleUIActions();
 
-        UpdateRegionPreview();
+        const AppConfig config = configManager_.Snapshot();
+
+        UpdateRegionPreview(config);
 
         UpdateOverlay();
 
-        int overlayFontSize = 0;
-        {
-            std::lock_guard lock(configManager_.Mutex());
-            overlayFontSize = config_->overlayFontSize;
-        }
-
-        overlay_.SetFontSize(overlayFontSize);
+        overlay_.SetFontSize(config.overlayFontSize);
 
         static auto lastTop = std::chrono::steady_clock::now();
 
@@ -117,8 +111,12 @@ void RuneHelperApp::HandleUIActions()
 {
     if (ui_.WantsToggleOCR())
     {
-        std::lock_guard lock(configManager_.Mutex());
-        config_->ocrEnabled = !config_->ocrEnabled;
+        configManager_.Update(
+            [](AppConfig& config)
+            {
+                config.ocrEnabled = !config.ocrEnabled;
+            });
+
         configManager_.Save();
     }
 
@@ -141,11 +139,14 @@ void RuneHelperApp::HandleUIActions()
 
         if (newRegion.width >= kMinRegionSide && newRegion.height >= kMinRegionSide)
         {
-            std::lock_guard lock(configManager_.Mutex());
-            config_->regionX = newRegion.x;
-            config_->regionY = newRegion.y;
-            config_->regionW = newRegion.width;
-            config_->regionH = newRegion.height;
+            configManager_.Update(
+                [&newRegion](AppConfig& config)
+                {
+                    config.regionX = newRegion.x;
+                    config.regionY = newRegion.y;
+                    config.regionW = newRegion.width;
+                    config.regionH = newRegion.height;
+                });
 
             configManager_.Save();
         }
@@ -164,14 +165,8 @@ void RuneHelperApp::UpdateOverlay()
     overlay_.SetTexts(std::move(texts));
 }
 
-void RuneHelperApp::UpdateRegionPreview()
+void RuneHelperApp::UpdateRegionPreview(const AppConfig& localConfig)
 {
-    AppConfig localConfig;
-    {
-        std::lock_guard lock(configManager_.Mutex());
-        localConfig = *config_;
-    }
-
     if (!ui_.IsRegionHovered() || localConfig.regionW <= 0)
     {
         static OverlayRect empty{};

@@ -18,10 +18,13 @@ UIManager::~UIManager()
     Shutdown();
 }
 
-bool UIManager::Init(AppConfig* config, ConfigManager* configManager)
+bool UIManager::Init(ConfigManager* configManager)
 {
-    config_ = config;
     configManager_ = configManager;
+
+    if (configManager_)
+        configDraft_ = configManager_->Snapshot();
+
     state_.running = backend_ && backend_->Init(this);
     return state_.running;
 }
@@ -49,6 +52,9 @@ void UIManager::Pump()
         state_.running = backend_->IsRunning();
         return;
     }
+
+    if (configManager_)
+        configDraft_ = configManager_->Snapshot();
 
     UIDraw::Draw(*this);
     backend_->EndFrame();
@@ -109,17 +115,26 @@ std::string UIManager::UpdateDownloadUrl() const
 
 bool UIManager::HasConfig() const
 {
-    return config_ && configManager_;
+    return configManager_ != nullptr;
 }
 
-AppConfig& UIManager::Config()
+AppConfig& UIManager::ConfigDraft()
 {
-    return *config_;
+    return configDraft_;
 }
 
-std::mutex& UIManager::ConfigMutex() const
+void UIManager::ApplyConfigDraft()
 {
-    return configManager_->Mutex();
+    if (!configManager_)
+        return;
+
+    configManager_->Update(
+        [this](AppConfig& config)
+        {
+            config = configDraft_;
+        });
+
+    configDraft_ = configManager_->Snapshot();
 }
 
 UIState& UIManager::State()
@@ -183,13 +198,9 @@ bool UIManager::SaveConfig()
 
 void UIManager::RegisterHotkeys()
 {
-    if (backend_ && config_ && configManager_)
+    if (backend_ && configManager_)
     {
-        AppConfig config;
-        {
-            std::lock_guard lock(configManager_->Mutex());
-            config = *config_;
-        }
+        const AppConfig config = configManager_->Snapshot();
 
         backend_->RegisterHotkeys(
             config.hotkeyToggleOCR,
@@ -226,8 +237,6 @@ void UIManager::FlushPendingConfigSave()
         return;
 
     state_.configSavePending = false;
-
-    std::lock_guard lock(configManager_->Mutex());
 
     if (!configManager_->Save())
         LOG_ERROR("UI failed to save pending config");

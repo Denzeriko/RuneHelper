@@ -36,19 +36,21 @@ std::filesystem::path ConfigManager::GetConfigPath()
     return GetUserDataDir() / "config.json";
 }
 
-AppConfig& ConfigManager::Get()
+AppConfig ConfigManager::Snapshot() const
 {
+    std::lock_guard<std::mutex> lock(mutex_);
     return config_;
 }
 
-const AppConfig& ConfigManager::Get() const
+void ConfigManager::Update(const std::function<void(AppConfig&)>& change)
 {
-    return config_;
-}
+    if (!change)
+        return;
 
-std::mutex& ConfigManager::Mutex() const
-{
-    return mutex_;
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    change(config_);
+    Normalize(config_);
 }
 
 void ConfigManager::Normalize(AppConfig& config)
@@ -69,6 +71,8 @@ void ConfigManager::Normalize(AppConfig& config)
 
 bool ConfigManager::Load()
 {
+    std::lock_guard<std::mutex> lock(mutex_);
+
     std::ifstream file(GetConfigPath());
 
     if (!file)
@@ -114,7 +118,13 @@ bool ConfigManager::Load()
 
 bool ConfigManager::Save() const
 {
-    AppConfig config = config_;
+    AppConfig config;
+
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        config = config_;
+    }
+
     Normalize(config);
 
     json j;
