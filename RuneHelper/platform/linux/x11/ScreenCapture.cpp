@@ -6,60 +6,178 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
+#include <opencv2/imgproc.hpp>
+
 #include "core/Logger.h"
 
 namespace
 {
 bool IsX11Session()
 {
-    const char* sessionType = std::getenv("XDG_SESSION_TYPE");
+    static const bool value = []
+    {
+        const char* sessionType = std::getenv("XDG_SESSION_TYPE");
+        return !(sessionType && std::string(sessionType) == "wayland");
+    }();
 
-    if (sessionType && std::string(sessionType) == "wayland")
-        return false;
-
-    return true;
+    return value;
 }
 
-int MaskShift(unsigned long mask)
+class DisplayConnection
+{
+public:
+    ~DisplayConnection()
+    {
+        if (display_)
+            XCloseDisplay(display_);
+    }
+
+    Display* Get()
+    {
+        if (!display_)
+            display_ = XOpenDisplay(nullptr);
+
+        return display_;
+    }
+
+    void Drop()
+    {
+        if (display_)
+        {
+            XCloseDisplay(display_);
+            display_ = nullptr;
+        }
+    }
+
+private:
+    Display* display_ = nullptr;
+};
+
+DisplayConnection& Connection()
+{
+    static DisplayConnection connection;
+    return connection;
+}
+
+bool gSawXCaptureError = false;
+
+int TrapXCaptureError(Display*, XErrorEvent* error)
+{
+    gSawXCaptureError = true;
+
+    LOG_ERROR(
+        "Linux screen capture: X error, code " + std::to_string(static_cast<int>(error->error_code)) +
+        ", request " + std::to_string(static_cast<int>(error->request_code))
+    );
+
+    return 0;
+}
+
+struct ChannelLayout
 {
     int shift = 0;
+    unsigned long maxValue = 0;
+};
 
-    while (mask && ((mask & 1UL) == 0))
-    {
-        mask >>= 1;
-        ++shift;
-    }
-
-    return shift;
-}
-
-int MaskBits(unsigned long mask)
+ChannelLayout MakeChannelLayout(unsigned long mask)
 {
-    int bits = 0;
+    ChannelLayout layout;
 
-    while (mask)
-    {
-        bits += static_cast<int>(mask & 1UL);
-        mask >>= 1;
-    }
-
-    return bits;
-}
-
-unsigned char ScaleChannel(unsigned long pixel, unsigned long mask)
-{
     if (!mask)
+        return layout;
+
+    unsigned long bits = mask;
+
+    while ((bits & 1UL) == 0)
+    {
+        bits >>= 1;
+        ++layout.shift;
+    }
+
+    int width = 0;
+
+    while (bits)
+    {
+        width += static_cast<int>(bits & 1UL);
+        bits >>= 1;
+    }
+
+    layout.maxValue = (1UL << width) - 1UL;
+
+    return layout;
+}
+
+unsigned char ScaleChannel(unsigned long pixel, unsigned long mask, const ChannelLayout& layout)
+{
+    if (!layout.maxValue)
         return 0;
 
-    const int shift = MaskShift(mask);
-    const int bits = MaskBits(mask);
-    const unsigned long value = (pixel & mask) >> shift;
-    const unsigned long maxValue = (1UL << bits) - 1UL;
+    return static_cast<unsigned char>((((pixel & mask) >> layout.shift) * 255UL) / layout.maxValue);
+}
 
-    if (!maxValue)
-        return 0;
+bool IsPackedBgr(const XImage& image)
+{
+    return image.byte_order == LSBFirst &&
+           image.red_mask == 0x00ff0000UL &&
+           image.green_mask == 0x0000ff00UL &&
+           image.blue_mask == 0x000000ffUL;
+}
 
-    return static_cast<unsigned char>((value * 255UL) / maxValue);
+cv::Mat ToBgr(const XImage& image, const cv::Size& size)
+{
+    if (IsPackedBgr(image))
+    {
+        if (image.bits_per_pixel == 32)
+        {
+            const cv::Mat wrapped(
+                size.height,
+                size.width,
+                CV_8UC4,
+                image.data,
+                static_cast<std::size_t>(image.bytes_per_line)
+            );
+
+            cv::Mat result;
+            cv::cvtColor(wrapped, result, cv::COLOR_BGRA2BGR);
+
+            return result;
+        }
+
+        if (image.bits_per_pixel == 24)
+        {
+            const cv::Mat wrapped(
+                size.height,
+                size.width,
+                CV_8UC3,
+                image.data,
+                static_cast<std::size_t>(image.bytes_per_line)
+            );
+
+            return wrapped.clone();
+        }
+    }
+
+    const ChannelLayout blue = MakeChannelLayout(image.blue_mask);
+    const ChannelLayout green = MakeChannelLayout(image.green_mask);
+    const ChannelLayout red = MakeChannelLayout(image.red_mask);
+
+    cv::Mat result(size.height, size.width, CV_8UC3);
+
+    for (int y = 0; y < size.height; ++y)
+    {
+        cv::Vec3b* row = result.ptr<cv::Vec3b>(y);
+
+        for (int x = 0; x < size.width; ++x)
+        {
+            const unsigned long pixel = XGetPixel(const_cast<XImage*>(&image), x, y);
+
+            row[x][0] = ScaleChannel(pixel, image.blue_mask, blue);
+            row[x][1] = ScaleChannel(pixel, image.green_mask, green);
+            row[x][2] = ScaleChannel(pixel, image.red_mask, red);
+        }
+    }
+
+    return result;
 }
 
 cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
@@ -82,6 +200,9 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
         return {};
     }
 
+    gSawXCaptureError = false;
+    XErrorHandler previousErrorHandler = XSetErrorHandler(TrapXCaptureError);
+
     XImage* image = XGetImage(
         display,
         root,
@@ -93,28 +214,22 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
         ZPixmap
     );
 
-    if (!image)
+    XSync(display, False);
+    XSetErrorHandler(previousErrorHandler);
+
+    if (gSawXCaptureError || !image)
     {
-        LOG_ERROR("Linux screen capture failed: XGetImage returned null");
+        if (image)
+            XDestroyImage(image);
+
+        LOG_ERROR("Linux screen capture failed: XGetImage did not return an image");
         return {};
     }
 
-    cv::Mat result(clipped.height, clipped.width, CV_8UC3);
-
-    for (int y = 0; y < clipped.height; ++y)
-    {
-        for (int x = 0; x < clipped.width; ++x)
-        {
-            unsigned long pixel = XGetPixel(image, x, y);
-            cv::Vec3b& bgr = result.at<cv::Vec3b>(y, x);
-
-            bgr[0] = ScaleChannel(pixel, image->blue_mask);
-            bgr[1] = ScaleChannel(pixel, image->green_mask);
-            bgr[2] = ScaleChannel(pixel, image->red_mask);
-        }
-    }
+    cv::Mat result = ToBgr(*image, cv::Size(clipped.width, clipped.height));
 
     XDestroyImage(image);
+
     return result;
 }
 }
@@ -127,7 +242,7 @@ cv::Mat CaptureRegion(const cv::Rect& region)
         return {};
     }
 
-    Display* display = XOpenDisplay(nullptr);
+    Display* display = Connection().Get();
 
     if (!display)
     {
@@ -136,7 +251,9 @@ cv::Mat CaptureRegion(const cv::Rect& region)
     }
 
     cv::Mat result = CaptureRootRegion(display, region);
-    XCloseDisplay(display);
+
+    if (result.empty() && XConnectionNumber(display) < 0)
+        Connection().Drop();
 
     return result;
 }
