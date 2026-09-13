@@ -13,6 +13,7 @@ public:
     virtual void Shutdown() = 0;
 
     virtual bool IsRunning() const = 0;
+    virtual bool NeedsRedraw() const { return false; }
     virtual void PumpEvents() = 0;
     virtual void Render(const OverlayState& state) = 0;
 

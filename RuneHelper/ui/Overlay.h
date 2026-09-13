@@ -28,5 +28,6 @@ public:
 
 private:
     OverlayState state_;
+    bool dirty_ = true;
     std::unique_ptr<OverlayBackend> backend_;
 };

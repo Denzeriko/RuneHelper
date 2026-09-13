@@ -23,39 +23,6 @@ RECT ToRect(const OverlayRect& rect)
     return RECT{rect.left, rect.top, rect.right, rect.bottom};
 }
 
-bool EqualText(const OverlayText& a, const OverlayText& b)
-{
-    return a.x == b.x && a.y == b.y && a.color == b.color && a.text == b.text;
-}
-
-bool EqualState(const OverlayState& a, const OverlayState& b)
-{
-    if (a.previewEnabled != b.previewEnabled)
-        return false;
-
-    if (a.fontSize != b.fontSize)
-        return false;
-
-    if (a.previewRect.left != b.previewRect.left ||
-        a.previewRect.top != b.previewRect.top ||
-        a.previewRect.right != b.previewRect.right ||
-        a.previewRect.bottom != b.previewRect.bottom)
-    {
-        return false;
-    }
-
-    if (a.texts.size() != b.texts.size())
-        return false;
-
-    for (size_t i = 0; i < a.texts.size(); ++i)
-    {
-        if (!EqualText(a.texts[i], b.texts[i]))
-            return false;
-    }
-
-    return true;
-}
-
 class WindowsOverlayBackend final : public OverlayBackend
 {
 public:
@@ -220,9 +187,6 @@ RECT WindowsOverlayBackend::ContentBounds(const OverlayState& state) const
 void WindowsOverlayBackend::Render(const OverlayState& state)
 {
     if (!hwnd_ || !running_)
-        return;
-
-    if (EqualState(state_, state))
         return;
 
     const bool fontChanged = state_.fontSize != state.fontSize;

@@ -49,28 +49,6 @@ cv::Rect UnionRect(const cv::Rect& a, const cv::Rect& b)
     return a | b;
 }
 
-bool SameRect(const OverlayRect& a, const OverlayRect& b)
-{
-    return a.left == b.left && a.top == b.top && a.right == b.right && a.bottom == b.bottom;
-}
-
-bool SameTexts(const std::vector<OverlayText>& left, const std::vector<OverlayText>& right)
-{
-    if (left.size() != right.size())
-        return false;
-
-    for (std::size_t i = 0; i < left.size(); ++i)
-    {
-        if (left[i].x != right[i].x || left[i].y != right[i].y ||
-            left[i].color != right[i].color || left[i].text != right[i].text)
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
 class WaylandOverlayBackend final : public OverlayBackend
 {
 public:
@@ -78,6 +56,7 @@ public:
     void Shutdown() override;
 
     bool IsRunning() const override;
+    bool NeedsRedraw() const override;
     void PumpEvents() override;
     void Render(const OverlayState& state) override;
 
@@ -112,16 +91,12 @@ private:
     bool busy_[kBufferSlots] = {false, false};
 
     OverlayState state_;
-    std::vector<OverlayText> drawnTexts_;
     cv::Rect surfaceRect_;
     cv::Mat canvas_;
     cv::Rect canvasRect_;
     cv::Rect presentedRect_;
     bool needsRedraw_ = true;
     cv::Rect slotRect_[kBufferSlots];
-    OverlayRect drawnPreviewRect_{};
-    bool drawnPreview_ = false;
-    int drawnFontSize_ = 0;
 
     bool running_ = false;
     bool visible_ = false;
@@ -295,6 +270,11 @@ void WaylandOverlayBackend::Shutdown()
 bool WaylandOverlayBackend::IsRunning() const
 {
     return running_;
+}
+
+bool WaylandOverlayBackend::NeedsRedraw() const
+{
+    return needsRedraw_;
 }
 
 void WaylandOverlayBackend::PumpEvents()
@@ -548,10 +528,6 @@ void WaylandOverlayBackend::Draw()
     mapped_ = true;
     presentedRect_ = localContent;
     needsRedraw_ = false;
-    drawnTexts_ = state_.texts;
-    drawnPreview_ = state_.previewEnabled;
-    drawnPreviewRect_ = state_.previewRect;
-    drawnFontSize_ = state_.fontSize;
 }
 
 void WaylandOverlayBackend::Render(const OverlayState& state)
@@ -563,16 +539,6 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
     {
         state_ = state;
         Hide();
-        return;
-    }
-
-    if (!needsRedraw_ &&
-        mapped_ &&
-        drawnPreview_ == state.previewEnabled &&
-        drawnFontSize_ == state.fontSize &&
-        SameRect(drawnPreviewRect_, state.previewRect) &&
-        SameTexts(drawnTexts_, state.texts))
-    {
         return;
     }
 

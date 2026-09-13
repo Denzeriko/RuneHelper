@@ -32,34 +32,6 @@ std::string ToNarrow(const std::wstring& text)
     return result;
 }
 
-bool SameOverlayState(const OverlayState& a, const OverlayState& b)
-{
-    if (a.previewEnabled != b.previewEnabled || a.fontSize != b.fontSize)
-        return false;
-
-    if (a.previewRect.left != b.previewRect.left ||
-        a.previewRect.top != b.previewRect.top ||
-        a.previewRect.right != b.previewRect.right ||
-        a.previewRect.bottom != b.previewRect.bottom)
-    {
-        return false;
-    }
-
-    if (a.texts.size() != b.texts.size())
-        return false;
-
-    for (std::size_t i = 0; i < a.texts.size(); ++i)
-    {
-        const OverlayText& left = a.texts[i];
-        const OverlayText& right = b.texts[i];
-
-        if (left.x != right.x || left.y != right.y || left.color != right.color || left.text != right.text)
-            return false;
-    }
-
-    return true;
-}
-
 unsigned long XColorFromOverlayColor(Display* display, OverlayColor color)
 {
     int screen = DefaultScreen(display);
@@ -99,7 +71,6 @@ private:
     XFontStruct* font_ = nullptr;
     OverlayState state_;
 
-    bool everDrawn_ = false;
     bool running_ = false;
     bool visible_ = false;
     bool clickThroughLogged_ = false;
@@ -188,7 +159,6 @@ void LinuxOverlayBackend::Shutdown()
 {
     running_ = false;
     visible_ = false;
-    everDrawn_ = false;
 
     if (display_ && font_)
     {
@@ -240,11 +210,7 @@ void LinuxOverlayBackend::Render(const OverlayState& state)
     if (!display_ || !window_ || !running_)
         return;
 
-    if (everDrawn_ && SameOverlayState(state_, state))
-        return;
-
     state_ = state;
-    everDrawn_ = true;
 
     ResizeAndMove();
     Redraw();

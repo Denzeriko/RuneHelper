@@ -20,6 +20,7 @@ bool OverlayWindow::Create()
         return false;
 
     state_.running = backend_->Init("RuneHelperOverlay", 800, 600);
+    dirty_ = true;
 
     if (state_.running)
     {
@@ -60,11 +61,13 @@ void OverlayWindow::SetRegionPreview(bool enabled, const OverlayRect& rect)
 
     state_.previewEnabled = enabled;
     state_.previewRect = rect;
+    dirty_ = true;
 }
 
 void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
 {
     state_.texts = std::move(texts);
+    dirty_ = true;
 }
 
 void OverlayWindow::SetFontSize(int size)
@@ -73,6 +76,7 @@ void OverlayWindow::SetFontSize(int size)
         return;
 
     state_.fontSize = size;
+    dirty_ = true;
 }
 
 void OverlayWindow::SetFontSizeForce(int size)
@@ -81,6 +85,7 @@ void OverlayWindow::SetFontSizeForce(int size)
         return;
 
     state_.fontSize = size;
+    dirty_ = true;
 }
 
 void OverlayWindow::PumpMessages()
@@ -96,5 +101,9 @@ void OverlayWindow::PumpMessages()
         return;
     }
 
+    if (!dirty_ && !backend_->NeedsRedraw())
+        return;
+
+    dirty_ = false;
     backend_->Render(state_);
 }
