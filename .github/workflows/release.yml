@@ -11,15 +11,15 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           submodules: recursive
 
       - name: Set up Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Warm dependency cache
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           target: deps
@@ -28,7 +28,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=linux-deps
 
       - name: Build static binary (x11)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           build-args: RUNEHELPER_LINUX_BACKEND=x11
@@ -36,7 +36,7 @@ jobs:
           cache-from: type=gha,scope=linux-deps
 
       - name: Build static binary (wayland)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           build-args: RUNEHELPER_LINUX_BACKEND=wayland
@@ -64,7 +64,7 @@ jobs:
         run: ldd dist/RuneHelper-linux-x86_64-wayland || true
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: runehelper-linux-x86_64-static
           path: dist/*
@@ -80,7 +80,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup MSVC developer command prompt
         uses: ilammy/msvc-dev-cmd@v1
@@ -98,7 +98,7 @@ jobs:
           echo "VCPKG_ROOT=$vcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Cache vcpkg binaries
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: |
             ${{ github.workspace }}/vcpkg-binary-cache
@@ -120,7 +120,7 @@ jobs:
           Copy-Item "build\${{ env.CMAKE_PRESET }}\RuneHelper.exe" dist\RuneHelper-windows-x86_64.exe
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: runehelper-windows-x86_64
           path: dist/*
@@ -135,7 +135,7 @@ jobs:
 
     steps:
       - name: Download binaries
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           path: dist
           pattern: runehelper-*

@@ -136,12 +136,13 @@ sudo apt update
 sudo apt install \
     build-essential \
     cmake \
+    git \
     pkg-config \
     libopencv-dev \
     libtesseract-dev \
     libleptonica-dev \
-    libblas-dev \
-    liblapack-dev \
+    libcurl4-openssl-dev \
+    libgl1-mesa-dev \
     libx11-dev
 ```
 
