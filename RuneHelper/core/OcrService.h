@@ -73,6 +73,7 @@ private:
 
     PriceCache priceCache_;
     OCR ocr_;
+    RunePatternMatcher runeMatcher_;
     ScreenCaptureService screenCapture_;
     OcrFrameDiffer frameDiffer_;
 

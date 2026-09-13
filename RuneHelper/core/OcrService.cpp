@@ -80,7 +80,7 @@ void OcrService::Start(ConfigManager& configManager)
     priceCache_.SetRefreshMinutes(config.priceRefreshMinutes);
     priceCache_.SetLeague(config.priceLeague);
     PrepareRuneTemplates();
-    SetRunePatternSearchScale(config.runeSearchScale);
+    runeMatcher_.SetSearchScale(config.runeSearchScale);
     if (config.priceSearchEnabled)
         priceCache_.RefreshIfNeeded();
 
@@ -128,7 +128,7 @@ void OcrService::RequestRuneCalibration()
     if (!running_.load())
         return;
 
-    BeginRunePatternScaleCalibration();
+    runeMatcher_.BeginScaleCalibration();
     singleSnapshotRequested_ = true;
 }
 
@@ -160,7 +160,7 @@ PriceServiceStatus OcrService::GetPriceStatus() const
 
 RunePatternCalibrationStatus OcrService::GetRuneCalibrationStatus() const
 {
-    return GetRunePatternCalibrationStatus();
+    return runeMatcher_.CalibrationStatus();
 }
 
 bool OcrService::ConsumeDebugData(DebugData& data)
@@ -267,7 +267,7 @@ void OcrService::WorkerLoop()
             singleSnapshotUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(2);
 
         bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
-        RunePatternCalibrationStatus runeCalibrationStatus = GetRunePatternCalibrationStatus();
+        RunePatternCalibrationStatus runeCalibrationStatus = runeMatcher_.CalibrationStatus();
         bool runeCalibrationRunning = runeCalibrationStatus.running;
 
         if (!localConfig.ocrEnabled && !runSingleSnapshot && !keepSnapshot && !runeCalibrationRunning)
@@ -320,8 +320,8 @@ void OcrService::WorkerLoop()
             cv::Mat gray;
             cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
-            StepRunePatternScaleCalibration(gray);
-            runeCalibrationStatus = GetRunePatternCalibrationStatus();
+            runeMatcher_.StepScaleCalibration(gray);
+            runeCalibrationStatus = runeMatcher_.CalibrationStatus();
             runeCalibrationRunning = runeCalibrationStatus.running;
 
             if (runeCalibrationWasRunning && !runeCalibrationStatus.running && runeCalibrationStatus.bestScale > 0.0)
@@ -334,7 +334,7 @@ void OcrService::WorkerLoop()
             {
                 if (!stableFrame || !lastRunesValid)
                 {
-                    lastRunes = FindRunePatternMatches(gray);
+                    lastRunes = runeMatcher_.Find(gray);
                     lastRunesValid = true;
                 }
             }

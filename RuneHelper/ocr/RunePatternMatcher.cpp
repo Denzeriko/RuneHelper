@@ -2,9 +2,9 @@
 
 #include <algorithm>
 #include <cctype>
+#include <mutex>
 #include <cstddef>
 #include <filesystem>
-#include <mutex>
 #include <string>
 #include <vector>
 
@@ -17,64 +17,22 @@
 namespace
 {
 constexpr double kNmsIouThreshold = 0.35;
-constexpr double kCalibrationScales[] = {
-    0.60,
-    0.65,
-    0.70,
-    0.75,
-    0.80,
-    0.85,
-    0.90,
-    0.95,
-    1.00, //2560x1440
-    1.05,
-    1.10,
-    1.15,
-    1.20,
-    1.25,
-    1.30,
-    1.35,
-    1.40,
-    1.45,
-    1.50, //3840x2160
-    1.55,
-    1.60
-};
-constexpr int kCalibrationTotal = static_cast<int>(std::size(kCalibrationScales));
+constexpr int kCalibrationTotal = 21;
+constexpr int kCalibrationMaxAttempts = 2;
+constexpr double kCalibrationScaleMin = 0.60;
+constexpr double kCalibrationScaleStep = 0.05;
 
-struct RunePatternTemplate
+double CalibrationScale(int index)
 {
-    std::string name;
-    std::string label;
-    cv::Mat gray;
-};
-
-std::once_flag g_loadTemplatesOnce;
-std::vector<RunePatternTemplate> g_templates;
-std::vector<cv::Mat> g_scaledTemplates;
-double g_scaledTemplatesScale = -1.0;
-std::mutex g_scaleMutex;
-double g_calibratedScale = 0.0;
-
-std::mutex g_calibrationMutex;
-bool g_calibrationRunning = false;
-int g_calibrationIndex = 0;
-double g_calibrationCurrentScale = kCalibrationScales[0];
-double g_calibrationBestScale = 0.0;
-size_t g_calibrationBestMatches = 0;
-double g_calibrationBestScoreSum = -1.0;
+    return kCalibrationScaleMin + index * kCalibrationScaleStep;
+}
 
 bool IsImageFile(const std::filesystem::path& path)
 {
     std::string ext = path.extension().string();
-    std::transform(
-        ext.begin(),
-        ext.end(),
-        ext.begin(),
-        [](unsigned char ch)
-        {
-            return static_cast<char>(std::tolower(ch));
-        });
+
+    for (char& ch : ext)
+        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
 
     return ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp";
 }
@@ -108,43 +66,6 @@ std::string RankLabelFromTemplateName(const std::string& name)
         return std::string(1, rank);
 
     return "A";
-}
-
-void LoadTemplates()
-{
-    const std::filesystem::path dir = GetUserDataDir() / "runes";
-    LOG_INFO("Rune pattern template dir: " + dir.string());
-
-    std::error_code ec;
-    if (!std::filesystem::exists(dir, ec) || !std::filesystem::is_directory(dir, ec))
-    {
-        LOG_INFO("Rune pattern templates loaded: 0");
-        return;
-    }
-
-    for (const auto& entry : std::filesystem::directory_iterator(dir, ec))
-    {
-        if (ec || !entry.is_regular_file() || !IsImageFile(entry.path()))
-            continue;
-
-        cv::Mat image = cv::imread(entry.path().string(), cv::IMREAD_COLOR);
-        if (image.empty())
-            continue;
-
-        cv::Mat gray;
-        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
-
-        std::string name = NormalizeTemplateName(entry.path());
-        if (name.empty())
-            continue;
-
-        std::string label = RankLabelFromTemplateName(name);
-
-        LOG_INFO("Rune pattern template loaded: " + name + " rank=" + label + " from " + entry.path().string());
-        g_templates.push_back({ std::move(name), std::move(label), std::move(gray) });
-    }
-
-    LOG_INFO("Rune pattern templates loaded: " + std::to_string(g_templates.size()));
 }
 
 void SuppressAround(cv::Mat& result, cv::Point loc, cv::Size templateSize)
@@ -223,23 +144,68 @@ cv::Mat ScaleTemplate(const cv::Mat& templ, double scale)
     return scaledTemplate;
 }
 
-const std::vector<cv::Mat>& ScaledTemplates(double scale)
-{
-    if (g_scaledTemplatesScale == scale && g_scaledTemplates.size() == g_templates.size())
-        return g_scaledTemplates;
-
-    g_scaledTemplates.clear();
-    g_scaledTemplates.reserve(g_templates.size());
-
-    for (const auto& templ : g_templates)
-        g_scaledTemplates.push_back(templ.gray.empty() ? cv::Mat() : ScaleTemplate(templ.gray, scale));
-
-    g_scaledTemplatesScale = scale;
-
-    return g_scaledTemplates;
 }
 
-std::vector<RunePatternMatch> FindMatchesAtScale(
+
+void RunePatternMatcher::EnsureTemplates()
+{
+    if (templatesLoaded_)
+        return;
+
+    templatesLoaded_ = true;
+
+    const std::filesystem::path dir = GetUserDataDir() / "runes";
+    LOG_INFO("Rune pattern template dir: " + dir.string());
+
+    std::error_code ec;
+    if (!std::filesystem::exists(dir, ec) || !std::filesystem::is_directory(dir, ec))
+    {
+        LOG_INFO("Rune pattern templates loaded: 0");
+        return;
+    }
+
+    for (const auto& entry : std::filesystem::directory_iterator(dir, ec))
+    {
+        if (ec || !entry.is_regular_file() || !IsImageFile(entry.path()))
+            continue;
+
+        cv::Mat image = cv::imread(entry.path().string(), cv::IMREAD_COLOR);
+        if (image.empty())
+            continue;
+
+        cv::Mat gray;
+        cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
+
+        std::string name = NormalizeTemplateName(entry.path());
+        if (name.empty())
+            continue;
+
+        std::string label = RankLabelFromTemplateName(name);
+
+        LOG_INFO("Rune pattern template loaded: " + name + " rank=" + label + " from " + entry.path().string());
+        templates_.push_back({ std::move(name), std::move(label), std::move(gray) });
+    }
+
+    LOG_INFO("Rune pattern templates loaded: " + std::to_string(templates_.size()));
+}
+
+const std::vector<cv::Mat>& RunePatternMatcher::ScaledTemplates(double scale)
+{
+    if (scaledTemplatesScale_ == scale && scaledTemplates_.size() == templates_.size())
+        return scaledTemplates_;
+
+    scaledTemplates_.clear();
+    scaledTemplates_.reserve(templates_.size());
+
+    for (const auto& templ : templates_)
+        scaledTemplates_.push_back(templ.gray.empty() ? cv::Mat() : ScaleTemplate(templ.gray, scale));
+
+    scaledTemplatesScale_ = scale;
+
+    return scaledTemplates_;
+}
+
+std::vector<RunePatternMatch> RunePatternMatcher::FindAtScale(
     const cv::Mat& sourceGray,
     double threshold,
     double scale)
@@ -248,9 +214,9 @@ std::vector<RunePatternMatch> FindMatchesAtScale(
 
     const std::vector<cv::Mat>& scaledTemplates = ScaledTemplates(scale);
 
-    for (std::size_t index = 0; index < g_templates.size(); ++index)
+    for (std::size_t index = 0; index < templates_.size(); ++index)
     {
-        const RunePatternTemplate& templ = g_templates[index];
+        const Template& templ = templates_[index];
         const cv::Mat& scaledTemplate = scaledTemplates[index];
 
         if (scaledTemplate.empty() ||
@@ -292,171 +258,189 @@ std::vector<RunePatternMatch> FindMatchesAtScale(
     return NonMaxSuppress(std::move(matches));
 }
 
-double CurrentSearchScale()
+double RunePatternMatcher::CurrentSearchScale() const
 {
-    std::lock_guard lock(g_scaleMutex);
+    std::lock_guard<std::mutex> lock(mutex_);
 
-    if (g_calibratedScale > 0.0)
-        return g_calibratedScale;
+    if (calibratedScale_ > 0.0)
+        return calibratedScale_;
 
     return 1.0;
 }
+
+void RunePatternMatcher::Calibration::Restart()
+{
+    running = true;
+    index = 0;
+    currentScale = CalibrationScale(0);
+    bestScale = 0.0;
+    bestMatches = 0;
+    bestScoreSum = -1.0;
 }
 
-void BeginRunePatternScaleCalibration()
+void RunePatternMatcher::BeginScaleCalibration()
 {
-    std::call_once(g_loadTemplatesOnce, LoadTemplates);
+    std::lock_guard<std::mutex> lock(mutex_);
 
-    std::lock_guard lock(g_calibrationMutex);
-    g_calibrationRunning = true;
-    g_calibrationIndex = 0;
-    g_calibrationCurrentScale = kCalibrationScales[0];
-    g_calibrationBestScale = 0.0;
-    g_calibrationBestMatches = 0;
-    g_calibrationBestScoreSum = -1.0;
+    calibration_ = Calibration();
+    calibration_.Restart();
 
     LOG_INFO("Rune pattern scale calibration requested");
 }
 
-RunePatternCalibrationStatus GetRunePatternCalibrationStatus()
+RunePatternCalibrationStatus RunePatternMatcher::CalibrationStatus() const
 {
-    RunePatternCalibrationStatus status;
+    std::lock_guard<std::mutex> lock(mutex_);
 
-    {
-        std::lock_guard lock(g_calibrationMutex);
-        status.running = g_calibrationRunning;
-        status.step = g_calibrationIndex;
-        status.total = kCalibrationTotal;
-        status.currentScale = g_calibrationCurrentScale;
-        status.bestScale = g_calibrationBestScale;
-        status.bestMatches = g_calibrationBestMatches;
-    }
+    RunePatternCalibrationStatus status;
+    status.running = calibration_.running;
+    status.step = calibration_.index;
+    status.total = kCalibrationTotal;
+    status.currentScale = calibration_.currentScale;
+    status.bestScale = calibration_.bestScale;
+    status.bestMatches = calibration_.bestMatches;
 
     if (!status.running && status.bestScale <= 0.0)
-    {
-        std::lock_guard lock(g_scaleMutex);
-        status.bestScale = g_calibratedScale;
-    }
+        status.bestScale = calibratedScale_;
 
     return status;
 }
 
-void SetRunePatternSearchScale(double scale)
+void RunePatternMatcher::SetSearchScale(double scale)
 {
-    std::lock_guard lock(g_scaleMutex);
-    g_calibratedScale = scale > 0.0 ? scale : 0.0;
+    std::lock_guard<std::mutex> lock(mutex_);
+    calibratedScale_ = scale > 0.0 ? scale : 0.0;
 }
 
-void StepRunePatternScaleCalibration(const cv::Mat& sourceGray, double threshold)
+void RunePatternMatcher::StopCalibration(const char* reason)
 {
-    std::call_once(g_loadTemplatesOnce, LoadTemplates);
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (!calibration_.running)
+        return;
+
+    calibration_ = Calibration();
+
+    LOG_ERROR(reason);
+}
+
+bool RunePatternMatcher::TakeNextCalibrationScale(double& scale)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (!calibration_.running)
+        return false;
+
+    if (calibration_.index < 0 || calibration_.index >= kCalibrationTotal)
+        calibration_.index = 0;
+
+    calibration_.currentScale = CalibrationScale(calibration_.index);
+    scale = calibration_.currentScale;
+
+    return true;
+}
+
+void RunePatternMatcher::AdvanceCalibration(double scale, std::size_t matches, double scoreSum)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    if (!calibration_.running)
+        return;
+
+    if (matches > calibration_.bestMatches ||
+        (matches == calibration_.bestMatches && scoreSum > calibration_.bestScoreSum))
+    {
+        calibration_.bestScale = scale;
+        calibration_.bestMatches = matches;
+        calibration_.bestScoreSum = scoreSum;
+    }
+
+    ++calibration_.index;
+
+    if (calibration_.index < kCalibrationTotal)
+    {
+        calibration_.currentScale = CalibrationScale(calibration_.index);
+        return;
+    }
+
+    if (calibration_.bestMatches == 0)
+    {
+        ++calibration_.attempts;
+
+        if (calibration_.attempts >= kCalibrationMaxAttempts)
+        {
+            calibration_ = Calibration();
+
+            LOG_ERROR(
+                "Rune pattern scale calibration gave up after " +
+                std::to_string(kCalibrationMaxAttempts) +
+                " sweeps without a single match"
+            );
+
+            return;
+        }
+
+        LOG_INFO("Rune pattern scale calibration found no matches; restarting scale matching");
+        calibration_.Restart();
+
+        return;
+    }
+
+    calibratedScale_ = calibration_.bestScale;
+    calibration_.running = false;
+    calibration_.currentScale = calibration_.bestScale;
+
+    LOG_INFO(
+        "Rune pattern scale calibrated: scale=" + std::to_string(calibration_.bestScale) +
+        " matches=" + std::to_string(calibration_.bestMatches)
+    );
+}
+
+void RunePatternMatcher::StepScaleCalibration(const cv::Mat& sourceGray, double threshold)
+{
+    EnsureTemplates();
 
     if (sourceGray.empty())
         return;
 
-    if (g_templates.empty())
+    if (templates_.empty())
     {
-        std::lock_guard lock(g_calibrationMutex);
-        if (g_calibrationRunning)
-        {
-            g_calibrationRunning = false;
-            g_calibrationBestScale = 0.0;
-            g_calibrationBestMatches = 0;
-            LOG_ERROR("Rune pattern scale calibration stopped: no rune templates loaded");
-        }
+        StopCalibration("Rune pattern scale calibration stopped: no rune templates loaded");
         return;
     }
 
-    {
-        std::lock_guard lock(g_calibrationMutex);
-        if (!g_calibrationRunning)
-            return;
+    double scale = 0.0;
 
-        if (g_calibrationIndex < 0 || g_calibrationIndex >= kCalibrationTotal)
-            g_calibrationIndex = 0;
+    if (!TakeNextCalibrationScale(scale))
+        return;
 
-        g_calibrationCurrentScale = kCalibrationScales[g_calibrationIndex];
-    }
-
-    double scale = 1.0;
-    {
-        std::lock_guard lock(g_calibrationMutex);
-        scale = g_calibrationCurrentScale;
-    }
-
-    auto matches = FindMatchesAtScale(sourceGray, threshold, scale);
+    const std::vector<RunePatternMatch> matches = FindAtScale(sourceGray, threshold, scale);
 
     double scoreSum = 0.0;
+
     for (const auto& match : matches)
         scoreSum += match.score;
 
     LOG_INFO(
-        "Rune pattern scale calibration: scale=" +
-        std::to_string(scale) +
-        " matches=" +
-        std::to_string(matches.size()) +
-        " scoreSum=" +
-        std::to_string(scoreSum)
+        "Rune pattern scale calibration: scale=" + std::to_string(scale) +
+        " matches=" + std::to_string(matches.size()) +
+        " scoreSum=" + std::to_string(scoreSum)
     );
 
-    std::lock_guard lock(g_calibrationMutex);
-    if (!g_calibrationRunning)
-        return;
-
-    if (matches.size() > g_calibrationBestMatches ||
-        (matches.size() == g_calibrationBestMatches && scoreSum > g_calibrationBestScoreSum))
-    {
-        g_calibrationBestScale = scale;
-        g_calibrationBestMatches = matches.size();
-        g_calibrationBestScoreSum = scoreSum;
-    }
-
-    ++g_calibrationIndex;
-
-    if (g_calibrationIndex < kCalibrationTotal)
-    {
-        g_calibrationCurrentScale = kCalibrationScales[g_calibrationIndex];
-        return;
-    }
-
-    if (g_calibrationBestMatches == 0)
-    {
-        LOG_INFO("Rune pattern scale calibration found no matches; restarting scale matching");
-        g_calibrationIndex = 0;
-        g_calibrationCurrentScale = kCalibrationScales[0];
-        g_calibrationBestScale = 0.0;
-        g_calibrationBestMatches = 0;
-        g_calibrationBestScoreSum = -1.0;
-        return;
-    }
-
-    {
-        std::lock_guard scaleLock(g_scaleMutex);
-        g_calibratedScale = g_calibrationBestScale;
-    }
-
-    g_calibrationRunning = false;
-    g_calibrationCurrentScale = g_calibrationBestScale;
-
-    LOG_INFO(
-        "Rune pattern scale calibrated: scale=" +
-        std::to_string(g_calibrationBestScale) +
-        " matches=" +
-        std::to_string(g_calibrationBestMatches)
-    );
+    AdvanceCalibration(scale, matches.size(), scoreSum);
 }
 
-std::vector<RunePatternMatch> FindRunePatternMatches(const cv::Mat& sourceGray, double threshold)
+std::vector<RunePatternMatch> RunePatternMatcher::Find(const cv::Mat& sourceGray, double threshold)
 {
     std::vector<RunePatternMatch> matches;
 
-    std::call_once(g_loadTemplatesOnce, LoadTemplates);
+    EnsureTemplates();
 
-    if (sourceGray.empty() || g_templates.empty())
+    if (sourceGray.empty() || templates_.empty())
         return matches;
 
     const double scale = CurrentSearchScale();
-    matches = FindMatchesAtScale(sourceGray, threshold, scale);
+    matches = FindAtScale(sourceGray, threshold, scale);
 
     std::sort(
         matches.begin(),
