@@ -138,6 +138,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: dist
+          pattern: runehelper-*
           merge-multiple: true
 
       - name: Create draft release
