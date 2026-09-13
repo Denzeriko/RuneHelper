@@ -10,17 +10,21 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 
 ## Download
 
-[![Download Linux](https://img.shields.io/badge/download-Linux%20x86__64-blue?logo=linux)](https://github.com/Denzeriko/RuneHelper/releases/latest)
-[![Download Windows artifact](https://img.shields.io/badge/download-Windows%20x86__64-blue?logo=windows)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
+[![Download](https://img.shields.io/badge/download-latest%20release-blue?logo=github)](https://github.com/Denzeriko/RuneHelper/releases/latest)
 
-Linux binaries are published on the [Releases](https://github.com/Denzeriko/RuneHelper/releases/latest) page. OpenCV, Tesseract, Leptonica, GLFW and cpr are linked in, so nothing has to be installed first. Pick the build that matches the session:
+Every build is published on the [Releases](https://github.com/Denzeriko/RuneHelper/releases/latest) page. OpenCV, Tesseract, Leptonica, GLFW and cpr are linked in, so nothing has to be installed first. Pick the file that matches the system:
 
+* `RuneHelper-windows-x86_64.exe` - Windows 10 and newer.
 * `RuneHelper-linux-x86_64-wayland` - Hyprland, Sway, river, labwc, KDE Plasma on Wayland.
 * `RuneHelper-linux-x86_64-x11` - any X11 session.
 
-They are built against glibc 2.35, which covers Ubuntu 22.04 and newer, Debian 12 and newer, and current rolling distributions.
+The Linux builds target glibc 2.35, which covers Ubuntu 22.04 and newer, Debian 12 and newer, and current rolling distributions. They also need the executable bit after downloading:
 
-The Linux job under **Actions** builds against Ubuntu's own OpenCV and links it dynamically. That artifact is a build check, not a download: it only runs on the same Ubuntu release, and it fails with an `undefined symbol` error anywhere else. Windows has no release job yet, so its artifact still comes from Actions and needs a GitHub login to download.
+```bash
+chmod +x RuneHelper-linux-x86_64-wayland
+```
+
+The jobs under **Actions** are build checks, not downloads. Their artifacts need a GitHub login, and the Linux one links Ubuntu's own OpenCV dynamically, so it fails with an `undefined symbol` error anywhere else.
 
 ## Features
 

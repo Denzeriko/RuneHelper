@@ -60,6 +60,13 @@ private:
     void InitOcr();
     void WorkerLoop();
 
+    void RebuildCachedNames();
+    void ResetFrameState();
+    bool ProcessFrame(const cv::Rect& region, const AppConfig& config, bool calibrationRunning);
+    void UpdateRuneMatches(const cv::Mat& gray, const AppConfig& config, bool stableFrame, bool calibrationRunning);
+    void PublishFrameResult(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config);
+    int NextSleepMs(const AppConfig& config) const;
+
     void ResetState(bool initializing);
     void ClearRuntimeBuffers();
     void ClearOverlayTexts();
@@ -98,6 +105,14 @@ private:
 
     std::mutex cachedNamesMutex_;
     std::shared_ptr<const CachedItemNames> cachedItemNames_;
+    std::uint64_t cachedNamesVersion_ = 0;
+
+    std::vector<LootLine> lastLoot_;
+    std::vector<RunePatternMatch> lastRunes_;
+    bool lastRunesValid_ = false;
+    bool forceOcrFrame_ = false;
+    bool runeCalibrationWasRunning_ = false;
+    int captureFailures_ = 0;
 
     std::jthread initThread_;
     std::jthread workerThread_;
