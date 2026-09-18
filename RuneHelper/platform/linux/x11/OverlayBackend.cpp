@@ -2,13 +2,16 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdio>
 #include <cstdlib>
+#include <map>
 #include <string>
 #include <utility>
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/shape.h>
 
 #include "core/Logger.h"
 #include "ui/OverlayState.h"
@@ -63,6 +66,9 @@ public:
 private:
     void ResizeAndMove();
     void Redraw();
+    XFontStruct* FontForSize(int size);
+    void ReleaseFonts();
+    int TextWidth(int size, const std::string& text) const;
     void SetOpacity(unsigned long opacity);
 
     Display* display_ = nullptr;
@@ -77,6 +83,7 @@ private:
     int windowX_ = 20;
     int windowY_ = 20;
     int windowW_ = 360;
+    std::map<int, XFontStruct*> fonts_;
     int windowH_ = 120;
 };
 
@@ -171,6 +178,9 @@ void LinuxOverlayBackend::Shutdown()
         XFreeGC(display_, gc_);
         gc_ = nullptr;
     }
+
+    if (display_)
+        ReleaseFonts();
 
     if (display_ && window_)
     {
@@ -278,37 +288,102 @@ void LinuxOverlayBackend::BringToTop()
     XFlush(display_);
 }
 
+int LinuxOverlayBackend::TextWidth(int size, const std::string& text) const
+{
+    return static_cast<int>(text.size()) * std::max(6, size / 2 + 2);
+}
+
+XFontStruct* LinuxOverlayBackend::FontForSize(int size)
+{
+    const int clamped = std::clamp(size, 8, 48);
+
+    const auto it = fonts_.find(clamped);
+
+    if (it != fonts_.end())
+        return it->second;
+
+    char pattern[128];
+    std::snprintf(pattern, sizeof(pattern), "-*-*-medium-r-normal--%d-*-*-*-*-*-iso8859-1", clamped);
+
+    XFontStruct* font = XLoadQueryFont(display_, pattern);
+
+    if (!font)
+        font = XLoadQueryFont(display_, "fixed");
+
+    fonts_[clamped] = font;
+
+    return font;
+}
+
+void LinuxOverlayBackend::ReleaseFonts()
+{
+    for (auto& [size, font] : fonts_)
+    {
+        if (font)
+            XFreeFont(display_, font);
+    }
+
+    fonts_.clear();
+}
+
 void LinuxOverlayBackend::ResizeAndMove()
 {
     if (!display_ || !window_)
         return;
 
-    if (state_.texts.empty())
+    bool any = false;
+    int left = 0;
+    int top = 0;
+    int right = 0;
+    int bottom = 0;
+
+    auto merge = [&](int x, int y, int w, int h)
+        {
+            if (!any)
+            {
+                left = x;
+                top = y;
+                right = x + w;
+                bottom = y + h;
+                any = true;
+                return;
+            }
+
+            left = std::min(left, x);
+            top = std::min(top, y);
+            right = std::max(right, x + w);
+            bottom = std::max(bottom, y + h);
+        };
+
+    for (const auto& text : state_.texts)
     {
-        if (state_.previewEnabled)
-        {
-            windowX_ = std::max(0L, state_.previewRect.left);
-            windowY_ = std::max(0L, state_.previewRect.top);
-            windowW_ = std::max(1L, state_.previewRect.right - state_.previewRect.left);
-            windowH_ = std::max(1L, state_.previewRect.bottom - state_.previewRect.top);
-        }
-        else
-        {
-            windowW_ = 1;
-            windowH_ = 1;
-        }
+        const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+        merge(text.x - 6, text.y - size, TextWidth(size, ToNarrow(text.text)) + 12, size * 2);
+    }
+
+    for (const OverlayMark& mark : state_.marks)
+        merge(mark.x, mark.y, mark.width, mark.height);
+
+    if (state_.previewEnabled)
+    {
+        merge(
+            static_cast<int>(state_.previewRect.left),
+            static_cast<int>(state_.previewRect.top),
+            static_cast<int>(state_.previewRect.right - state_.previewRect.left),
+            static_cast<int>(state_.previewRect.bottom - state_.previewRect.top));
+    }
+
+    if (!any)
+    {
+        windowW_ = 1;
+        windowH_ = 1;
     }
     else
     {
-        int maxLen = 1;
-
-        for (const auto& text : state_.texts)
-            maxLen = std::max(maxLen, static_cast<int>(text.text.size()));
-
-        windowX_ = std::max(0, state_.texts.front().x);
-        windowY_ = std::max(0, state_.texts.front().y);
-        windowW_ = std::clamp(maxLen * std::max(8, state_.fontSize / 2) + 28, 320, 900);
-        windowH_ = std::max(80, static_cast<int>(state_.texts.size()) * (state_.fontSize + 8) + 20);
+        windowX_ = std::max(0, left);
+        windowY_ = std::max(0, top);
+        windowW_ = std::max(1, right - windowX_);
+        windowH_ = std::max(1, bottom - windowY_);
     }
 
     XMoveResizeWindow(
@@ -326,7 +401,45 @@ void LinuxOverlayBackend::Redraw()
     if (!display_ || !window_ || !gc_)
         return;
 
-    int screen = DefaultScreen(display_);
+    const int screen = DefaultScreen(display_);
+
+    Region shape = XCreateRegion();
+
+    auto addShape = [&](int x, int y, int w, int h)
+        {
+            XRectangle rect{
+                static_cast<short>(x),
+                static_cast<short>(y),
+                static_cast<unsigned short>(std::max(1, w)),
+                static_cast<unsigned short>(std::max(1, h))
+            };
+
+            XUnionRectWithRegion(&rect, shape, shape);
+        };
+
+    for (const auto& text : state_.texts)
+    {
+        const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+        addShape(
+            text.x - windowX_ - 6,
+            text.y - windowY_ - size,
+            TextWidth(size, ToNarrow(text.text)) + 12,
+            size * 2);
+    }
+
+    for (const OverlayMark& mark : state_.marks)
+    {
+        addShape(mark.x - windowX_, mark.y - windowY_, mark.width, 2);
+        addShape(mark.x - windowX_, mark.y - windowY_ + mark.height - 2, mark.width, 2);
+        addShape(mark.x - windowX_, mark.y - windowY_, 2, mark.height);
+        addShape(mark.x - windowX_ + mark.width - 2, mark.y - windowY_, 2, mark.height);
+    }
+
+    if (state_.previewEnabled)
+        addShape(0, 0, windowW_, windowH_);
+
+    XShapeCombineRegion(display_, window_, ShapeBounding, 0, 0, shape, ShapeSet);
+    XDestroyRegion(shape);
 
     XSetForeground(display_, gc_, BlackPixel(display_, screen));
     XFillRectangle(
@@ -353,15 +466,41 @@ void LinuxOverlayBackend::Redraw()
         );
     }
 
-    const int lineHeight = std::max(14, state_.fontSize + 8);
-    int y = 18;
+    for (const OverlayMark& mark : state_.marks)
+    {
+        XSetForeground(display_, gc_, XColorFromOverlayColor(display_, mark.color));
+        XSetLineAttributes(display_, gc_, 2, LineSolid, CapButt, JoinMiter);
+        XDrawRectangle(
+            display_,
+            window_,
+            gc_,
+            mark.x - windowX_,
+            mark.y - windowY_,
+            static_cast<unsigned int>(std::max(1, mark.width - 1)),
+            static_cast<unsigned int>(std::max(1, mark.height - 1))
+        );
+    }
+
+    XSetLineAttributes(display_, gc_, 1, LineSolid, CapButt, JoinMiter);
 
     for (const auto& text : state_.texts)
     {
-        std::string narrow = ToNarrow(text.text);
+        const std::string narrow = ToNarrow(text.text);
+        const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+
+        if (XFontStruct* font = FontForSize(size))
+            XSetFont(display_, gc_, font->fid);
+
         XSetForeground(display_, gc_, XColorFromOverlayColor(display_, text.color));
-        XDrawString(display_, window_, gc_, 12, y, narrow.c_str(), static_cast<int>(narrow.size()));
-        y += lineHeight;
+        XDrawString(
+            display_,
+            window_,
+            gc_,
+            text.x - windowX_,
+            text.y - windowY_ + size / 3,
+            narrow.c_str(),
+            static_cast<int>(narrow.size())
+        );
     }
 
     XFlush(display_);

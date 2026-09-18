@@ -1,23 +1,30 @@
 set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/RuneHelper.cpp
-    RuneHelper/core/RuneHelperApp.cpp
     RuneHelper/core/ConfigManager.cpp
+    RuneHelper/core/Feature.cpp
     RuneHelper/core/Logger.cpp
     RuneHelper/core/OcrService.cpp
+    RuneHelper/core/RuneHelperApp.cpp
     RuneHelper/core/ScreenCaptureService.cpp
     RuneHelper/core/UpdateChecker.cpp
+    RuneHelper/features/ExpeditionFeature.cpp
+    RuneHelper/features/PriceOverlayFeature.cpp
     RuneHelper/ocr/LootParser.cpp
-    RuneHelper/ocr/LootOverlayBuilder.cpp
+    RuneHelper/ocr/LootRows.cpp
     RuneHelper/ocr/NameNormalizer.cpp
-    RuneHelper/ocr/OcrFrameDiffer.cpp
     RuneHelper/ocr/OCR.cpp
-    RuneHelper/ocr/RunePatternMatcher.cpp
+    RuneHelper/ocr/OcrFrameDiffer.cpp
+    RuneHelper/ocr/RuneTileLocator.cpp
     RuneHelper/price/PoeNinjaPriceProvider.cpp
     RuneHelper/price/PriceCache.cpp
+    RuneHelper/price/PriceService.cpp
+    RuneHelper/recipes/RecipeDatabase.cpp
+    RuneHelper/recipes/RecipeUpdater.cpp
     RuneHelper/ui/ImGuiStyleSetup.cpp
     RuneHelper/ui/Overlay.cpp
-    RuneHelper/ui/UIManager.cpp
+    RuneHelper/ui/OverlayText.cpp
     RuneHelper/ui/UIDraw.cpp
+    RuneHelper/ui/UIManager.cpp
 )
 
 if(WIN32)
@@ -25,6 +32,7 @@ if(WIN32)
         RuneHelper/resources/RuneHelper.rc
         RuneHelper/platform/windows/OverlayBackend.cpp
         RuneHelper/platform/windows/PlatformPaths.cpp
+        RuneHelper/platform/windows/PlatformShell.cpp
         RuneHelper/platform/windows/UIBackend.cpp
         RuneHelper/platform/windows/ScreenCapture.cpp
         RuneHelper/platform/windows/ScreenCaptureDXGI.cpp
@@ -34,6 +42,7 @@ if(WIN32)
 elseif(UNIX AND NOT APPLE)
     set(RUNEHELPER_PLATFORM_SOURCES
         RuneHelper/platform/linux/PlatformPaths.cpp
+        RuneHelper/platform/linux/PlatformShell.cpp
         RuneHelper/platform/linux/UIBackend.cpp
         RuneHelper/platform/linux/ResourceHelper.cpp
     )

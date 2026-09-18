@@ -2,7 +2,6 @@
 
 #include <cstddef>
 
-#include "ocr/RunePatternMatcher.h"
 
 struct UIState
 {
@@ -20,10 +19,10 @@ struct UIState
     bool wantsToggleOCR = false;
     bool wantsSingleSnapshot = false;
     bool wantsRegisterHotkeys = false;
-    bool wantsCalibrateRunes = false;
 
     bool regionHovered = false;
     bool debugTabOpen = false;
+    bool featureTabOpen = false;
 
     bool configSavePending = false;
     double configSaveAt = 0.0;
@@ -31,7 +30,6 @@ struct UIState
     bool priceDownloading = false;
     size_t priceCount = 0;
 
-    RunePatternCalibrationStatus runeCalibrationStatus{};
 
     int* waitingForHotkey = nullptr;
     bool hotkeyCaptureSkipFrame = false;

@@ -60,14 +60,36 @@ DisplayConnection& Connection()
 }
 
 bool gSawXCaptureError = false;
+bool gReportedXCaptureError = false;
+
+void LogXwaylandHint()
+{
+    const char* wayland = std::getenv("WAYLAND_DISPLAY");
+
+    if (!wayland || !*wayland)
+        return;
+
+    LOG_ERROR(
+        "This looks like Xwayland: the X11 build cannot capture the screen on a Wayland compositor. "
+        "Use the Wayland build of RuneHelper instead."
+    );
+}
 
 int TrapXCaptureError(Display*, XErrorEvent* error)
 {
     gSawXCaptureError = true;
 
+    if (gReportedXCaptureError)
+        return 0;
+
+    gReportedXCaptureError = true;
+
+    LogXwaylandHint();
+
     LOG_ERROR(
         "Linux screen capture: X error, code " + std::to_string(static_cast<int>(error->error_code)) +
-        ", request " + std::to_string(static_cast<int>(error->request_code))
+        ", request " + std::to_string(static_cast<int>(error->request_code)) +
+        " (further capture errors are not repeated until a capture succeeds)"
     );
 
     return 0;
@@ -222,9 +244,17 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
         if (image)
             XDestroyImage(image);
 
-        LOG_ERROR("Linux screen capture failed: XGetImage did not return an image");
+        if (!gReportedXCaptureError)
+        {
+            gReportedXCaptureError = true;
+            LOG_ERROR("Linux screen capture failed: XGetImage did not return an image");
+            LogXwaylandHint();
+        }
+
         return {};
     }
+
+    gReportedXCaptureError = false;
 
     cv::Mat result = ToBgr(*image, cv::Size(clipped.width, clipped.height));
 

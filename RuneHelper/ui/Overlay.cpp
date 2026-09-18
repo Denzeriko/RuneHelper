@@ -65,22 +65,43 @@ void OverlayWindow::SetRegionPreview(bool enabled, const OverlayRect& rect)
     dirty_ = true;
 }
 
-void OverlayWindow::SetTexts(std::vector<OverlayText> texts)
+void OverlayWindow::SetFrame(OverlayFrame frame)
 {
-    if (state_.texts.size() == texts.size() &&
+    const bool sameTexts =
+        state_.texts.size() == frame.texts.size() &&
         std::equal(
             state_.texts.begin(),
             state_.texts.end(),
-            texts.begin(),
+            frame.texts.begin(),
             [](const OverlayText& a, const OverlayText& b)
             {
-                return a.x == b.x && a.y == b.y && a.color == b.color && a.text == b.text;
-            }))
-    {
-        return;
-    }
+                return a.x == b.x
+                    && a.y == b.y
+                    && a.fontSize == b.fontSize
+                    && a.color == b.color
+                    && a.text == b.text;
+            });
 
-    state_.texts = std::move(texts);
+    const bool sameMarks =
+        state_.marks.size() == frame.marks.size() &&
+        std::equal(
+            state_.marks.begin(),
+            state_.marks.end(),
+            frame.marks.begin(),
+            [](const OverlayMark& a, const OverlayMark& b)
+            {
+                return a.x == b.x
+                    && a.y == b.y
+                    && a.width == b.width
+                    && a.height == b.height
+                    && a.color == b.color;
+            });
+
+    if (sameTexts && sameMarks)
+        return;
+
+    state_.texts = std::move(frame.texts);
+    state_.marks = std::move(frame.marks);
     dirty_ = true;
 }
 

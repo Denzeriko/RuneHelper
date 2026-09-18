@@ -1,10 +1,14 @@
 #include "ui/UIDraw.h"
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include <imgui.h>
 
 #include "core/Logger.h"
+#include "platform/PlatformShell.h"
+#include "core/Feature.h"
 #include "ui/UIManager.h"
 
 namespace
@@ -108,6 +112,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     row("Version");
     ImGui::Text("v%s", RUNEHELPER_VERSION);
+
     if (manager.IsCheckingForUpdate())
     {
         ImGui::SameLine();
@@ -115,9 +120,18 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     }
     else if (manager.HasUpdate())
     {
+        const std::string& url = manager.UpdateDownloadUrl();
+
         ImGui::SameLine();
-        ImGui::TextColored(kGreen, "(update available)");
-        ImGui::TextWrapped("%s", manager.UpdateDownloadUrl().c_str());
+
+        if (ImGui::SmallButton("Update"))
+        {
+            if (!OpenExternalUrl(url))
+                LOG_ERROR("Could not open the update page in a browser");
+        }
+
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("%s", url.empty() ? "No download link was reported" : url.c_str());
     }
 
 
@@ -154,49 +168,6 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kGreen, "Running");
     else
         ImGui::TextColored(kRed, "Stopped");
-
-    configChanged |= ImGui::Checkbox("Debug OCR", &config.debugOCR);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Writes OCR crops and recognition logs to AppData\\Denz\\RuneHelper\\ocr_debug\\latest.");
-
-    configChanged |= ImGui::SliderInt("OCR interval (ms)", &config.ocrIntervalMs, 100, 2000);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Lower values = faster updates but higher CPU usage.");
-
-    ImGui::Spacing();
-
-    //RUNES
-    ImGui::SeparatorText("RUNES");
-    configChanged |= ImGui::Checkbox("Enable Rune Search", &config.runeSearchEnabled);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Finds rune icons in the selected region and marks them on the overlay.");
-
-    if (ImGui::Button("Calibrate Runes"))
-        state.wantsCalibrateRunes = true;
-
-    ImGui::SameLine();
-    const RunePatternCalibrationStatus& runeCalibration = state.runeCalibrationStatus;
-    if (runeCalibration.running)
-    {
-        ImGui::TextDisabled(
-            "%d/%d (scale %.2f)",
-            runeCalibration.step,
-            runeCalibration.total,
-            runeCalibration.currentScale
-        );
-    }
-    else if (runeCalibration.bestScale > 0.0)
-    {
-        ImGui::TextDisabled(
-            "scale %.2f (%zu)",
-            runeCalibration.bestScale,
-            runeCalibration.bestMatches
-        );
-    }
-    else
-    {
-        ImGui::TextDisabled("not calibrated");
-    }
 
     ImGui::Spacing();
 
@@ -239,11 +210,6 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
             state.wantsRefreshPrices = true;
     }
 
-    configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
-    configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
-    configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
-    configChanged |= ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 5, 360);
-
     if (!config.priceSearchEnabled)
         ImGui::BeginDisabled();
 
@@ -255,19 +221,15 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     ImGui::Spacing();
 
-    //HOTKEYS
-    ImGui::SeparatorText("HOTKEYS");
-    DrawHotkeyButton(manager, state, "Toggle OCR", config.hotkeyToggleOCR);
-    DrawHotkeyButton(manager, state, "Single Snapshot", config.hotkeySingleSnapshot);
-    DrawHotkeyButton(manager, state, "Select Region", config.hotkeySelectRegion);
-    ImGui::Spacing();
+    if (FeatureRegistry* features = manager.Features())
+    {
+        ImGui::SeparatorText("FEATURES");
 
-    //OVERLAY
-    ImGui::SeparatorText("OVERLAY");
-    configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
-    configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
-    configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, 8, 48);
-    ImGui::Spacing();
+        for (const auto& feature : features->All())
+            feature->DrawMainControls(manager);
+
+        ImGui::Spacing();
+    }
 
     if (configChanged)
     {
@@ -286,8 +248,74 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     ImGui::TextDisabled("%s", DenzTag);
 }
 
+void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
+{
+    if (!manager.HasConfig())
+        return;
+
+    AppConfig& config = manager.ConfigDraft();
+    bool configChanged = false;
+
+    ImGui::SeparatorText("OCR");
+
+    configChanged |= ImGui::SliderInt("OCR interval (ms)", &config.ocrIntervalMs, 100, 2000);
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Lower values = faster updates but higher CPU usage.");
+
+    ImGui::Spacing();
+
+    ImGui::SeparatorText("PRICES");
+
+    configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
+    configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
+    configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
+    configChanged |= ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 5, 360);
+
+    ImGui::Spacing();
+
+    ImGui::SeparatorText("OVERLAY");
+
+    configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
+    configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
+    configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, 8, 48);
+
+    ImGui::Spacing();
+
+    ImGui::SeparatorText("HOTKEYS");
+
+    DrawHotkeyButton(manager, state, "Toggle OCR", config.hotkeyToggleOCR);
+    DrawHotkeyButton(manager, state, "Single Snapshot", config.hotkeySingleSnapshot);
+    DrawHotkeyButton(manager, state, "Select Region", config.hotkeySelectRegion);
+
+    if (configChanged)
+    {
+        manager.ApplyConfigDraft();
+
+        state.configSavePending = true;
+        state.configSaveAt = ImGui::GetTime() + kConfigSaveDelaySeconds;
+    }
+}
+
 void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 {
+    if (manager.HasConfig())
+    {
+        AppConfig& config = manager.ConfigDraft();
+
+        if (ImGui::Checkbox("Debug OCR", &config.debugOCR))
+        {
+            manager.ApplyConfigDraft();
+
+            if (!manager.SaveConfig())
+                LOG_ERROR("UI failed to autosave config");
+        }
+
+        if (ImGui::IsItemHovered())
+            ImGui::SetTooltip("Writes OCR crops and recognition logs into the ocr_debug/latest folder.");
+
+        ImGui::Spacing();
+    }
+
     ImGui::SeparatorText("OCR DEBUG");
 
     const DebugData& debug = manager.GetDebugData();
@@ -367,12 +395,37 @@ void UIDraw::Draw(UIManager& manager)
     DrawTitleBar(manager, state);
 
     state.debugTabOpen = false;
+    state.featureTabOpen = false;
 
     if (ImGui::BeginTabBar("MainTabs"))
     {
         if (ImGui::BeginTabItem("RuneHelper"))
         {
             DrawMainTab(manager, state);
+            ImGui::EndTabItem();
+        }
+
+        if (FeatureRegistry* features = manager.Features())
+        {
+            for (const auto& feature : features->All())
+            {
+                const char* title = feature->TabTitle();
+
+                if (!title)
+                    continue;
+
+                if (ImGui::BeginTabItem(title))
+                {
+                    state.featureTabOpen = true;
+                    feature->DrawTab(manager);
+                    ImGui::EndTabItem();
+                }
+            }
+        }
+
+        if (ImGui::BeginTabItem("Settings"))
+        {
+            DrawSettingsTab(manager, state);
             ImGui::EndTabItem();
         }
 

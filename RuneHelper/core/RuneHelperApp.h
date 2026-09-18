@@ -3,6 +3,8 @@
 #include "core/ConfigManager.h"
 #include "core/OcrService.h"
 #include "core/UpdateChecker.h"
+#include "core/Feature.h"
+#include "price/PriceService.h"
 
 #include "ui/Overlay.h"
 #include "ui/UIManager.h"
@@ -28,5 +30,7 @@ private:
     UIManager ui_;
     OverlayWindow overlay_;
     UpdateChecker updateChecker_;
+    PriceService prices_;
+    FeatureRegistry features_;
     OcrService ocrService_;
 };

@@ -7,7 +7,6 @@
 
 #include "core/Logger.h"
 #include "ocr/NameNormalizer.h"
-#include "ocr/RunePatternMatcher.h"
 #include "platform/PlatformPaths.h"
 
 #include <algorithm>
@@ -137,31 +136,6 @@ static std::filesystem::path OcrDebugRowPath(
     std::ostringstream name;
     name << "row_" << std::setw(2) << std::setfill('0') << index << "_" << suffix << ".png";
     return dir / name.str();
-}
-
-static void SaveRunePatternDebugText(const std::filesystem::path& dir, const std::vector<RunePatternMatch>& matches)
-{
-    if (dir.empty())
-        return;
-
-    std::ofstream file(dir / "rune_matches.txt");
-    if (!file)
-        return;
-
-    file << "count: " << matches.size() << '\n';
-
-    for (const auto& match : matches)
-    {
-        file << match.name
-             << " label=" << match.label
-             << " x=" << match.rect.x
-             << " y=" << match.rect.y
-             << " w=" << match.rect.width
-             << " h=" << match.rect.height
-             << " score=" << match.score
-             << " scale=" << match.scale
-             << '\n';
-    }
 }
 
 static std::vector<int> FindTextStartX(const cv::Mat& gray, const std::vector<cv::Rect>& rows)
@@ -440,8 +414,7 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
 std::vector<LootLine> OCR::RecognizeLoot(
     const cv::Mat& bgr,
     const cv::Mat& gray,
-    const AppConfig& config,
-    const std::vector<RunePatternMatch>& runeMatches)
+    const AppConfig& config)
 {
     setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
 
@@ -471,26 +444,6 @@ std::vector<LootLine> OCR::RecognizeLoot(
         {
             SaveOcrDebugImage(debugDir / "source.png", bgr);
             debugRows = bgr.clone();
-        }
-    }
-
-    if (debugOCR)
-    {
-        SaveRunePatternDebugText(debugDir, runeMatches);
-
-        for (const auto& match : runeMatches)
-        {
-            cv::rectangle(debugRows, match.rect, cv::Scalar(0, 165, 255), 2);
-            cv::putText(
-                debugRows,
-                match.name,
-                cv::Point(match.rect.x, std::max(0, match.rect.y - 4)),
-                cv::FONT_HERSHEY_SIMPLEX,
-                0.45,
-                cv::Scalar(0, 165, 255),
-                1,
-                cv::LINE_AA
-            );
         }
     }
 

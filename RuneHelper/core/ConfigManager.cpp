@@ -58,8 +58,6 @@ void ConfigManager::Normalize(AppConfig& config)
     config.regionW = std::max(0, config.regionW);
     config.regionH = std::max(0, config.regionH);
     config.ocrIntervalMs = std::clamp(config.ocrIntervalMs, 100, 2000);
-    if (config.runeSearchScale < 0.5 || config.runeSearchScale > 2.0)
-        config.runeSearchScale = 0.0;
     config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 5, 360);
     if (config.priceLeague == "Hardcore Runes of Aldur")
@@ -67,6 +65,24 @@ void ConfigManager::Normalize(AppConfig& config)
     if (!IsSupportedPriceLeague(config.priceLeague))
         config.priceLeague = std::string(kDefaultPriceLeague);
     ClampPriceThresholds(config);
+}
+
+nlohmann::json ConfigManager::FeatureSettings(const std::string& feature) const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+
+    const auto it = features_.find(feature);
+
+    if (it == features_.end() || !it->is_object())
+        return nlohmann::json::object();
+
+    return *it;
+}
+
+void ConfigManager::SetFeatureSettings(const std::string& feature, nlohmann::json settings)
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    features_[feature] = std::move(settings);
 }
 
 bool ConfigManager::Load()
@@ -83,15 +99,16 @@ bool ConfigManager::Load()
     if (j.is_discarded())
         return false;
 
+    if (j.contains("features") && j["features"].is_object())
+        features_ = j["features"];
+
     config_.regionX = j.value("regionX", config_.regionX);
     config_.regionY = j.value("regionY", config_.regionY);
     config_.regionW = j.value("regionW", config_.regionW);
     config_.regionH = j.value("regionH", config_.regionH);
 
     config_.ocrEnabled      = j.value("ocrEnabled",     config_.ocrEnabled);
-    config_.runeSearchEnabled  = j.value("runeSearchEnabled",  config_.runeSearchEnabled);
     config_.priceSearchEnabled = j.value("priceSearchEnabled", config_.priceSearchEnabled);
-    config_.runeSearchScale    = j.value("runeSearchScale",    config_.runeSearchScale);
     config_.ocrIntervalMs   = j.value("ocrIntervalMs",  config_.ocrIntervalMs);
 
     config_.hotkeyToggleOCR         = j.value("hotkeyToggleOCR",        config_.hotkeyToggleOCR);
@@ -129,15 +146,20 @@ bool ConfigManager::Save() const
 
     json j;
 
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        if (!features_.empty())
+            j["features"] = features_;
+    }
+
     j["regionX"] = config.regionX;
     j["regionY"] = config.regionY;
     j["regionW"] = config.regionW;
     j["regionH"] = config.regionH;
 
     j["ocrEnabled"]     = config.ocrEnabled;
-    j["runeSearchEnabled"]  = config.runeSearchEnabled;
     j["priceSearchEnabled"] = config.priceSearchEnabled;
-    j["runeSearchScale"]    = config.runeSearchScale;
     j["ocrIntervalMs"]  = config.ocrIntervalMs;
 
     j["overlayOffsetX"]     = config.overlayOffsetX;

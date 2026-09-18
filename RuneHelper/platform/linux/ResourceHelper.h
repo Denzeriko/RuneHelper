@@ -5,4 +5,4 @@
 
 bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesystem::path& outPath);
 std::string PrepareTessdata();
-std::filesystem::path PrepareRuneTemplates();
+std::filesystem::path PrepareRecipeDatabase();

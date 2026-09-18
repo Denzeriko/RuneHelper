@@ -3,13 +3,15 @@
 #include <opencv2/imgproc.hpp>
 
 #include <algorithm>
+#include <cstdlib>
 #include <memory>
 #include <thread>
 #include <utility>
 
 #include "core/Logger.h"
-#include "ocr/LootOverlayBuilder.h"
-#include "ocr/RunePatternMatcher.h"
+#include "ocr/LootRows.h"
+#include "price/PriceService.h"
+#include "ui/OverlayText.h"
 
 #ifdef _WIN32
 #include "platform/windows/ResourceHelper.h"
@@ -36,9 +38,35 @@ void SleepOcrLoop(std::atomic<bool>& running, const std::atomic<bool>& singleSna
     }
 }
 
+constexpr int kOverlayYJitter = 3;
+
 bool EqualOverlayText(const OverlayText& a, const OverlayText& b)
 {
-    return a.x == b.x && a.y == b.y && a.color == b.color && a.text == b.text;
+    return a.x == b.x
+        && std::abs(a.y - b.y) <= kOverlayYJitter
+        && a.fontSize == b.fontSize
+        && a.color == b.color
+        && a.text == b.text;
+}
+
+bool EqualOverlayMarks(const std::vector<OverlayMark>& a, const std::vector<OverlayMark>& b)
+{
+    if (a.size() != b.size())
+        return false;
+
+    for (size_t i = 0; i < a.size(); ++i)
+    {
+        if (a[i].x != b[i].x
+            || std::abs(a[i].y - b[i].y) > kOverlayYJitter
+            || a[i].width != b[i].width
+            || a[i].height != b[i].height
+            || !(a[i].color == b[i].color))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 bool EqualOverlayTexts(const std::vector<OverlayText>& a, const std::vector<OverlayText>& b)
@@ -61,7 +89,7 @@ OcrService::~OcrService()
     Stop();
 }
 
-void OcrService::Start(ConfigManager& configManager)
+void OcrService::Start(ConfigManager& configManager, FeatureRegistry& features, PriceService& prices)
 {
     std::lock_guard lifecycleLock(lifecycleMutex_);
 
@@ -72,17 +100,12 @@ void OcrService::Start(ConfigManager& configManager)
     }
 
     configManager_ = &configManager;
+    features_ = &features;
+    prices_ = &prices;
     running_ = true;
     ResetState(true);
 
     const AppConfig config = configManager.Snapshot();
-
-    priceCache_.SetRefreshMinutes(config.priceRefreshMinutes);
-    priceCache_.SetLeague(config.priceLeague);
-    PrepareRuneTemplates();
-    runeMatcher_.SetSearchScale(config.runeSearchScale);
-    if (config.priceSearchEnabled)
-        priceCache_.RefreshIfNeeded();
 
     initThread_ = std::jthread(
         [this]
@@ -112,6 +135,8 @@ void OcrService::Stop()
 
     screenCapture_.Shutdown();
     configManager_ = nullptr;
+    features_ = nullptr;
+    prices_ = nullptr;
     ResetState(false);
 }
 
@@ -123,23 +148,6 @@ void OcrService::RequestSingleSnapshot()
     singleSnapshotRequested_ = true;
 }
 
-void OcrService::RequestRuneCalibration()
-{
-    if (!running_.load())
-        return;
-
-    runeMatcher_.BeginScaleCalibration();
-    singleSnapshotRequested_ = true;
-}
-
-void OcrService::ForceRefreshPrices()
-{
-    if (!running_.load())
-        return;
-
-    priceCache_.ForceRefreshAsync();
-}
-
 OcrServiceStatus OcrService::GetStatus() const
 {
     return {
@@ -148,19 +156,6 @@ OcrServiceStatus OcrService::GetStatus() const
         ocrFailed_.load(),
         captureFailing_.load()
     };
-}
-
-PriceServiceStatus OcrService::GetPriceStatus() const
-{
-    return {
-        priceCache_.IsRefreshInProgress(),
-        priceCache_.GetPriceCount()
-    };
-}
-
-RunePatternCalibrationStatus OcrService::GetRuneCalibrationStatus() const
-{
-    return runeMatcher_.CalibrationStatus();
 }
 
 bool OcrService::ConsumeDebugData(DebugData& data)
@@ -174,13 +169,13 @@ bool OcrService::ConsumeDebugData(DebugData& data)
     return true;
 }
 
-bool OcrService::ConsumeOverlayTexts(std::vector<OverlayText>& texts)
+bool OcrService::ConsumeOverlayFrame(OverlayFrame& frame)
 {
     if (!overlayDirty_.exchange(false))
         return false;
 
     std::lock_guard lock(overlayMutex_);
-    texts = sharedTexts_;
+    frame = sharedFrame_;
     return true;
 }
 
@@ -208,24 +203,10 @@ void OcrService::InitOcr()
     LOG_INFO("OCR ready");
 }
 
-void OcrService::RebuildCachedNames()
-{
-    const std::uint64_t version = priceCache_.Version();
-
-    std::lock_guard lock(cachedNamesMutex_);
-
-    cachedItemNames_ = std::make_shared<const CachedItemNames>(
-        CachedItemNames::Build(priceCache_.GetAllItemNames()));
-
-    cachedNamesVersion_ = version;
-}
-
 void OcrService::ResetFrameState()
 {
     frameDiffer_.Reset();
     lastLoot_.clear();
-    lastRunes_.clear();
-    lastRunesValid_ = false;
     captureFailures_ = 0;
     captureFailing_ = false;
 }
@@ -238,62 +219,89 @@ int OcrService::NextSleepMs(const AppConfig& config) const
     return config.ocrIntervalMs;
 }
 
-void OcrService::UpdateRuneMatches(const cv::Mat& gray, const AppConfig& config, bool stableFrame, bool calibrationRunning)
+namespace
 {
-    if (!config.runeSearchEnabled || calibrationRunning)
-    {
-        lastRunes_.clear();
-        lastRunesValid_ = false;
+constexpr int kOverlayRowSpacing = 25;
 
-        return;
+bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDistance)
+{
+    for (const auto& text : texts)
+    {
+        if (std::abs(text.y - y) < minDistance)
+            return true;
     }
 
-    if (stableFrame && lastRunesValid_)
-        return;
-
-    lastRunes_ = runeMatcher_.Find(gray);
-    lastRunesValid_ = true;
+    return false;
+}
 }
 
-void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config)
+void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv::Mat& gray, const cv::Rect& region, const AppConfig& config)
 {
-    std::shared_ptr<const CachedItemNames> cachedNames;
+    std::vector<FrameRow> rows = ParseLootRows(loot, region, config);
+
+    DebugData debug;
+    debug.lines.reserve(rows.size());
+
+    for (const auto& item : loot)
     {
-        std::lock_guard lock(cachedNamesMutex_);
-        cachedNames = cachedItemNames_;
+        DebugLine line;
+        line.ocrText = item.text;
+        line.matchedText = "-";
+        line.price = "-";
+        line.confidence = 0;
+
+        debug.lines.push_back(std::move(line));
     }
 
-    static const CachedItemNames kNoNames;
+    std::vector<RowOverlay> rowOverlays(rows.size());
+    OverlayFrame overlay;
 
-    LootOverlayBuildResult buildResult = LootOverlayBuilder::Build(
-        loot,
-        region,
-        config,
-        priceCache_,
-        cachedNames ? *cachedNames : kNoNames
-    );
-
-    for (const auto& runeMatch : lastRunes_)
+    if (features_)
     {
+        FrameContext frame{
+            gray,
+            region,
+            rows,
+            config,
+            prices_,
+            rowOverlays,
+            overlay,
+            debug
+        };
+
+        features_->RunFrame(frame);
+    }
+
+    for (size_t i = 0; i < rows.size(); ++i)
+    {
+        if (rowOverlays[i].note.empty())
+            continue;
+
+        const int y = rows[i].overlayY;
+
+        if (HasCloseOverlayText(overlay.texts, y, kOverlayRowSpacing))
+            continue;
+
         OverlayText text;
-        text.text = std::wstring(runeMatch.label.begin(), runeMatch.label.end());
-        text.color = OverlayRgb(60, 255, 60);
-        text.x = region.x + runeMatch.rect.x + runeMatch.rect.width / 2 - config.overlayFontSize / 4;
-        text.y = region.y + runeMatch.rect.y + runeMatch.rect.height / 2;
-        buildResult.texts.push_back(std::move(text));
+        text.text = OverlayWide(rowOverlays[i].note);
+        text.color = rowOverlays[i].color;
+        text.x = region.x + region.width + config.overlayOffsetX;
+        text.y = y;
+
+        overlay.texts.push_back(std::move(text));
     }
 
-    PublishOverlayTexts(std::move(buildResult.texts));
+    PublishOverlayFrame(std::move(overlay));
 
     {
         std::lock_guard lock(debugMutex_);
-        debugData_ = std::move(buildResult.debug);
+        debugData_ = std::move(debug);
     }
 
     debugDirty_ = true;
 }
 
-bool OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, bool calibrationRunning)
+void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 {
     const cv::Mat img = screenCapture_.CaptureRegion(region);
 
@@ -305,7 +313,7 @@ bool OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, b
         if (captureFailures_ >= kCaptureFailuresBeforeWarning)
             captureFailing_ = true;
 
-        return calibrationRunning;
+        return;
     }
 
     captureFailures_ = 0;
@@ -314,17 +322,8 @@ bool OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, b
     cv::Mat gray;
     cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
-    runeMatcher_.StepScaleCalibration(gray);
-
-    const RunePatternCalibrationStatus status = runeMatcher_.CalibrationStatus();
-
-    if (runeCalibrationWasRunning_ && !status.running && status.bestScale > 0.0)
-        SaveRuneCalibrationScale(status.bestScale);
-
     const bool similarFrame = frameDiffer_.IsSimilarFrame(gray, forceOcrFrame_);
     const bool stableFrame = similarFrame && frameDiffer_.StableFrames() >= kStableOcrFramesBeforeReuse;
-
-    UpdateRuneMatches(gray, config, stableFrame, status.running);
 
     std::vector<LootLine> loot;
 
@@ -334,16 +333,14 @@ bool OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, b
     }
     else
     {
-        loot = ocr_.RecognizeLoot(img, gray, config, lastRunes_);
+        loot = ocr_.RecognizeLoot(img, gray, config);
         lastLoot_ = loot;
         forceOcrFrame_ = false;
     }
 
+    PublishFrameResult(loot, gray, region, config);
+
     frameDiffer_.StoreFrame(std::move(gray));
-
-    PublishFrameResult(loot, region, config);
-
-    return status.running;
 }
 
 void OcrService::WorkerLoop()
@@ -356,9 +353,6 @@ void OcrService::WorkerLoop()
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
 
-    RebuildCachedNames();
-
-    auto lastRefreshCheck = std::chrono::steady_clock::now();
 
     while (running_)
     {
@@ -367,28 +361,13 @@ void OcrService::WorkerLoop()
 
         const AppConfig config = configManager_->Snapshot();
 
-        priceCache_.SetRefreshMinutes(config.priceRefreshMinutes);
-        priceCache_.SetLeague(config.priceLeague);
-
-        if (config.priceSearchEnabled &&
-            std::chrono::steady_clock::now() - lastRefreshCheck > std::chrono::seconds(10))
-        {
-            lastRefreshCheck = std::chrono::steady_clock::now();
-            priceCache_.RefreshIfNeeded();
-
-            if (priceCache_.Version() != cachedNamesVersion_)
-                RebuildCachedNames();
-        }
-
         const bool snapshotRequested = singleSnapshotRequested_.exchange(false);
 
         if (snapshotRequested)
             singleSnapshotUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(2);
 
         const bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
-        bool calibrationRunning = runeMatcher_.CalibrationStatus().running;
-
-        if (!config.ocrEnabled && !snapshotRequested && !keepSnapshot && !calibrationRunning)
+        if (!config.ocrEnabled && !snapshotRequested && !keepSnapshot)
         {
             ResetFrameState();
             ClearOverlayTexts();
@@ -407,9 +386,7 @@ void OcrService::WorkerLoop()
 
         const cv::Rect region(config.regionX, config.regionY, config.regionW, config.regionH);
 
-        calibrationRunning = ProcessFrame(region, config, calibrationRunning);
-
-        runeCalibrationWasRunning_ = calibrationRunning;
+        ProcessFrame(region, config);
 
         SleepOcrLoop(running_, singleSnapshotRequested_, NextSleepMs(config));
     }
@@ -425,9 +402,7 @@ void OcrService::ResetState(bool initializing)
     overlayDirty_ = false;
     debugDirty_ = false;
     emptyOverlayFrames_ = 0;
-    cachedNamesVersion_ = 0;
     forceOcrFrame_ = false;
-    runeCalibrationWasRunning_ = false;
     ResetFrameState();
     ClearRuntimeBuffers();
 }
@@ -436,66 +411,43 @@ void OcrService::ClearRuntimeBuffers()
 {
     {
         std::lock_guard lock(overlayMutex_);
-        sharedTexts_.clear();
+        sharedFrame_ = {};
     }
 
     {
         std::lock_guard lock(debugMutex_);
         debugData_ = {};
     }
-
-    {
-        std::lock_guard lock(cachedNamesMutex_);
-        cachedItemNames_.reset();
-    }
 }
 
 void OcrService::ClearOverlayTexts()
 {
     emptyOverlayFrames_ = 0;
-    SetOverlayTexts({});
+    SetOverlayFrame({});
 }
 
-void OcrService::SaveRuneCalibrationScale(double scale)
-{
-    if (!configManager_)
-        return;
-
-    if (configManager_->Snapshot().runeSearchScale == scale)
-        return;
-
-    configManager_->Update(
-        [scale](AppConfig& config)
-        {
-            config.runeSearchScale = scale;
-        });
-
-    if (!configManager_->Save())
-        LOG_ERROR("OcrService failed to save rune calibration scale");
-}
-
-void OcrService::SetOverlayTexts(std::vector<OverlayText> texts)
+void OcrService::SetOverlayFrame(OverlayFrame frame)
 {
     std::lock_guard lock(overlayMutex_);
 
-    if (EqualOverlayTexts(sharedTexts_, texts))
+    if (EqualOverlayTexts(sharedFrame_.texts, frame.texts) && EqualOverlayMarks(sharedFrame_.marks, frame.marks))
         return;
 
-    sharedTexts_ = std::move(texts);
+    sharedFrame_ = std::move(frame);
     overlayDirty_ = true;
 }
 
-void OcrService::PublishOverlayTexts(std::vector<OverlayText> texts)
+void OcrService::PublishOverlayFrame(OverlayFrame frame)
 {
-    if (!texts.empty())
+    if (!frame.Empty())
     {
         emptyOverlayFrames_ = 0;
-        SetOverlayTexts(std::move(texts));
+        SetOverlayFrame(std::move(frame));
         return;
     }
 
     ++emptyOverlayFrames_;
 
     if (emptyOverlayFrames_ >= kEmptyOverlayFramesBeforeClear)
-        SetOverlayTexts({});
+        SetOverlayFrame({});
 }

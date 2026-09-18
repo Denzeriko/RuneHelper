@@ -15,6 +15,7 @@
 namespace
 {
 constexpr int kBufferSlots = 2;
+constexpr int kMarkThickness = 2;
 constexpr int kTextPadding = 6;
 constexpr int kDirtyMargin = 2;
 
@@ -78,7 +79,8 @@ private:
     void Draw();
 
     const WaylandOutput* CurrentOutput() const;
-    cv::Rect ComputeContentRect(double& fontScale, int& thickness) const;
+    void TextMetrics(const OverlayText& text, double& fontScale, int& thickness) const;
+    cv::Rect ComputeContentRect() const;
     cv::Rect PreviewRect() const;
     int AcquireBuffer(int width, int height);
 
@@ -344,15 +346,24 @@ cv::Rect WaylandOverlayBackend::PreviewRect() const
     );
 }
 
-cv::Rect WaylandOverlayBackend::ComputeContentRect(double& fontScale, int& thickness) const
+void WaylandOverlayBackend::TextMetrics(const OverlayText& text, double& fontScale, int& thickness) const
 {
-    thickness = std::max(1, state_.fontSize / 16);
-    fontScale = cv::getFontScaleFromHeight(cv::FONT_HERSHEY_SIMPLEX, std::max(8, state_.fontSize), thickness);
+    const int size = std::max(8, text.fontSize > 0 ? text.fontSize : state_.fontSize);
 
+    thickness = std::max(1, size / 16);
+    fontScale = cv::getFontScaleFromHeight(cv::FONT_HERSHEY_SIMPLEX, size, thickness);
+}
+
+cv::Rect WaylandOverlayBackend::ComputeContentRect() const
+{
     cv::Rect bounds;
 
     for (const OverlayText& text : state_.texts)
     {
+        double fontScale = 1.0;
+        int thickness = 1;
+        TextMetrics(text, fontScale, thickness);
+
         int baseline = 0;
         const cv::Size size = cv::getTextSize(ToNarrow(text.text), cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
         const cv::Rect box(
@@ -361,6 +372,16 @@ cv::Rect WaylandOverlayBackend::ComputeContentRect(double& fontScale, int& thick
             size.width + 2 * kTextPadding,
             size.height + baseline + 2 * kTextPadding
         );
+
+        bounds = bounds.empty() ? box : (bounds | box);
+    }
+
+    for (const OverlayMark& mark : state_.marks)
+    {
+        const cv::Rect box(mark.x, mark.y, mark.width, mark.height);
+
+        if (box.empty())
+            continue;
 
         bounds = bounds.empty() ? box : (bounds | box);
     }
@@ -425,9 +446,7 @@ void WaylandOverlayBackend::Draw()
     cv::Mat& canvas = canvas_;
     const cv::Rect surfaceBounds(0, 0, surfaceRect_.width, surfaceRect_.height);
 
-    int thickness = 1;
-    double fontScale = 1.0;
-    const cv::Rect content = ComputeContentRect(fontScale, thickness);
+    const cv::Rect content = ComputeContentRect();
 
     cv::Rect localContent;
 
@@ -450,6 +469,10 @@ void WaylandOverlayBackend::Draw()
     {
         for (const OverlayText& text : state_.texts)
         {
+            double fontScale = 1.0;
+            int thickness = 1;
+            TextMetrics(text, fontScale, thickness);
+
             const std::string narrow = ToNarrow(text.text);
             int baseline = 0;
             const cv::Size size = cv::getTextSize(narrow, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
@@ -470,6 +493,20 @@ void WaylandOverlayBackend::Draw()
             cv::putText(canvas, narrow, origin, cv::FONT_HERSHEY_SIMPLEX, fontScale, ToScalar(text.color, 255), thickness, cv::LINE_AA);
         }
     }
+    for (const OverlayMark& mark : state_.marks)
+    {
+        const cv::Rect box(
+            mark.x - surfaceRect_.x,
+            mark.y - surfaceRect_.y,
+            std::max(1, mark.width - 1),
+            std::max(1, mark.height - 1));
+
+        if ((box & cv::Rect(0, 0, canvas.cols, canvas.rows)).empty())
+            continue;
+
+        cv::rectangle(canvas, box, ToScalar(mark.color, 255), kMarkThickness, cv::LINE_AA);
+    }
+
     if (state_.previewEnabled)
     {
         const cv::Rect preview = PreviewRect();
@@ -544,9 +581,7 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
 
     state_ = state;
 
-    int thickness = 1;
-    double fontScale = 1.0;
-    cv::Rect content = ComputeContentRect(fontScale, thickness);
+    cv::Rect content = ComputeContentRect();
 
     const WaylandOutput* current = CurrentOutput();
     const WaylandOutput* target = nullptr;

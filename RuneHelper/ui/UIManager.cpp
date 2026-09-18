@@ -72,6 +72,16 @@ void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
     state_.ocrFailed = ocrFailed;
 }
 
+void UIManager::SetFeatures(FeatureRegistry* features)
+{
+    features_ = features;
+}
+
+FeatureRegistry* UIManager::Features() const
+{
+    return features_;
+}
+
 void UIManager::SetOverlayAvailable(bool available)
 {
     state_.overlayAvailable = available;
@@ -88,10 +98,6 @@ void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
     state_.priceCount = priceCount;
 }
 
-void UIManager::SetRuneCalibrationStatus(const RunePatternCalibrationStatus& status)
-{
-    state_.runeCalibrationStatus = status;
-}
 
 void UIManager::SetUpdateChecker(UpdateChecker* checker)
 {
@@ -167,11 +173,6 @@ bool UIManager::WantsRegisterHotkeys()
     return std::exchange(state_.wantsRegisterHotkeys, false);
 }
 
-bool UIManager::WantsCalibrateRunes()
-{
-    return std::exchange(state_.wantsCalibrateRunes, false);
-}
-
 bool UIManager::IsRegionHovered() const
 {
     return state_.regionHovered;
@@ -226,9 +227,9 @@ const DebugData& UIManager::GetDebugData() const
     return debugData_;
 }
 
-bool UIManager::IsDebugTabOpen() const
+bool UIManager::NeedsDebugData() const
 {
-    return state_.debugTabOpen;
+    return state_.debugTabOpen || state_.featureTabOpen;
 }
 
 void UIManager::FlushPendingConfigSave()

@@ -74,26 +74,23 @@ std::string PrepareTessdata()
     return dir.string();
 }
 
-std::filesystem::path PrepareRuneTemplates()
+std::filesystem::path PrepareRecipeDatabase()
 {
-    LOG_INFO("Linux PrepareRuneTemplates() -> call");
+    const EmbeddedResource* resource = FindEmbedded("combinations.json");
 
-    const auto dir = GetUserDataDir() / "runes";
-    std::filesystem::create_directories(dir);
-
-    for (const EmbeddedResource& resource : GetEmbeddedResources())
+    if (!resource)
     {
-        if (!resource.name.ends_with(".png"))
-            continue;
-
-        const std::filesystem::path destination = dir / std::string(resource.name);
-
-        if (std::filesystem::exists(destination))
-            continue;
-
-        if (!WriteEmbedded(resource, destination))
-            LOG_ERROR("Linux rune template extraction failed: " + destination.string());
+        LOG_ERROR("Linux recipe database is not embedded in the binary");
+        return {};
     }
 
-    return dir;
+    const std::filesystem::path destination = GetUserDataDir() / "combinations.json";
+
+    if (!WriteEmbedded(*resource, destination))
+    {
+        LOG_ERROR("Linux recipe database extraction failed: " + destination.string());
+        return {};
+    }
+
+    return destination;
 }

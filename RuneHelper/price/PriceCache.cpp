@@ -62,8 +62,6 @@ namespace
 
 PriceCache::PriceCache() : provider_(std::make_unique<PoeNinjaPriceProvider>())
 {
-    LOG_INFO("PriceCache::PriceCache() -> init");
-    LoadDump();
 }
 
 PriceCache::~PriceCache()

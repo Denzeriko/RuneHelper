@@ -5,6 +5,9 @@
 #include <filesystem>
 #include <functional>
 #include <mutex>
+#include <string>
+
+#include <nlohmann/json.hpp>
 
 class ConfigManager
 {
@@ -17,8 +20,12 @@ public:
 
     static void Normalize(AppConfig& config);
 
+    nlohmann::json FeatureSettings(const std::string& feature) const;
+    void SetFeatureSettings(const std::string& feature, nlohmann::json settings);
+
 private:
     AppConfig config_;
+    nlohmann::json features_ = nlohmann::json::object();
     mutable std::mutex mutex_;
 
 private:

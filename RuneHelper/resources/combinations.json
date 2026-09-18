@@ -1,0 +1,3984 @@
+{
+  "source": "https://poe2db.tw/Runeshape_Combinations",
+  "generated": "2026-09-14",
+  "complete": true,
+  "rareRunes": [
+    "Bait",
+    "Bond",
+    "Death",
+    "Earth",
+    "Life",
+    "Oath",
+    "Power",
+    "Sky",
+    "Soul",
+    "Time",
+    "Ward"
+  ],
+  "combinations": [
+    {
+      "output": "Adaptive Alloy",
+      "count": 1,
+      "level": 30,
+      "category": "alloy",
+      "runes": [
+        "Earth",
+        "Rebirth",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Celestial Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Earth",
+        "Rebirth",
+        "Celestial",
+        "Adaptive",
+        "Power",
+        "Soul",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Cyclonic Alloy",
+      "count": 1,
+      "level": 65,
+      "category": "alloy",
+      "runes": [
+        "Rage",
+        "Rebirth",
+        "Tidal",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Expansive Alloy",
+      "count": 1,
+      "level": 30,
+      "category": "alloy",
+      "runes": [
+        "Volcanic",
+        "Rebirth",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Mystic Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Adaptive",
+        "Rebirth",
+        "Time",
+        "Arcane",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Prismatic Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Prismatic",
+        "Rebirth",
+        "Adaptive",
+        "Opulent",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Protective Alloy",
+      "count": 1,
+      "level": 30,
+      "category": "alloy",
+      "runes": [
+        "Sky",
+        "Rebirth",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Runic Alloy",
+      "count": 2,
+      "level": 30,
+      "category": "alloy",
+      "runes": [
+        "Vision",
+        "Rebirth",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Runic Alloy",
+      "count": 1,
+      "level": 15,
+      "category": "alloy",
+      "runes": [
+        "Adaptive",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Sovereign Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Adaptive",
+        "Rebirth",
+        "Moon",
+        "Toxic",
+        "Power",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Swift Alloy",
+      "count": 1,
+      "level": 65,
+      "category": "alloy",
+      "runes": [
+        "Adaptive",
+        "Rebirth",
+        "Soul",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "The Runebinder's Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Ward",
+        "Rebirth",
+        "Soul",
+        "Cyclonic",
+        "Power",
+        "Lightning",
+        "Bloodletting",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "The Runefather's Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Ward",
+        "Rebirth",
+        "Time",
+        "Cold",
+        "Power",
+        "Prismatic",
+        "Moon",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Transcendent Alloy",
+      "count": 1,
+      "level": 70,
+      "category": "alloy",
+      "runes": [
+        "Sky",
+        "Rebirth",
+        "Momentum",
+        "Rage",
+        "Power",
+        "Electrocuting",
+        "Death"
+      ]
+    },
+    {
+      "output": "5x Random Currency",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Opulent",
+        "Death",
+        "Tempest",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Aldur's Saga",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Wisdom",
+        "Vision",
+        "Life",
+        "Ward",
+        "Power",
+        "Arcane",
+        "Time"
+      ]
+    },
+    {
+      "output": "Arcanist's Etcher",
+      "count": 6,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Tidal",
+        "Adaptive",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Arcanist's Etcher",
+      "count": 4,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Tidal",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Arcanist's Etcher",
+      "count": 2,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Lightning",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Armourer's Scrap",
+      "count": 6,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Moon",
+        "Adaptive",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Armourer's Scrap",
+      "count": 4,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Moon",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Armourer's Scrap",
+      "count": 2,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Cold",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Artificer's Orb",
+      "count": 3,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Stone",
+        "Vision",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Artificer's Orb",
+      "count": 2,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Volcanic",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Artificer's Orb",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Arcane",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Blacksmith's Whetstone",
+      "count": 6,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Rage",
+        "Adaptive",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Blacksmith's Whetstone",
+      "count": 4,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Rage",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Blazing Flux",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Fire",
+        "Earth",
+        "Prismatic",
+        "Soul",
+        "Rage",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Chaos Orb",
+      "count": 10,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Wisdom",
+        "Vision",
+        "Rebirth",
+        "Rage",
+        "Power",
+        "Arcane",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Chaos Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Oath",
+        "Death",
+        "Rebirth",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Chaos Orb",
+      "count": 2,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Oath",
+        "Fire",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Chaos Orb",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Tidal",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Chilling Flux",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Cold",
+        "Cyclonic",
+        "Prismatic",
+        "Death",
+        "Tidal",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Crackling Flux",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Lightning",
+        "Celestial",
+        "Prismatic",
+        "Electrocuting",
+        "Oath",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Divine Orb",
+      "count": 10,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Death",
+        "Soul",
+        "Power",
+        "Life",
+        "Vision",
+        "Celestial",
+        "Toxic",
+        "Prismatic",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Divine Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Death",
+        "Soul",
+        "Power",
+        "Life",
+        "Vision",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Divine Orb",
+      "count": 2,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Death",
+        "Soul",
+        "Power",
+        "Life",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Divine Orb",
+      "count": 1,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Death",
+        "Soul",
+        "Power",
+        "Life"
+      ]
+    },
+    {
+      "output": "Exalted Orb",
+      "count": 3,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Moon",
+        "Soul",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Exalted Orb",
+      "count": 2,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Arcane",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Exalted Orb",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Gemcutter's Prism",
+      "count": 3,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Soul",
+        "Vision",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Gemcutter's Prism",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Sky",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Glassblower's Bauble",
+      "count": 3,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Toxic",
+        "Tidal",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Glassblower's Bauble",
+      "count": 2,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Toxic",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Glassblower's Bauble",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Greater Chaos Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Oath",
+        "Ward",
+        "Rage",
+        "Volcanic",
+        "Opulent",
+        "Time"
+      ]
+    },
+    {
+      "output": "Greater Chaos Orb",
+      "count": 1,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Oath",
+        "Electrocuting",
+        "Rage",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Greater Exalted Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Oath",
+        "Arcane",
+        "Bond",
+        "Electrocuting",
+        "Opulent",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Greater Exalted Orb",
+      "count": 1,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Oath",
+        "Arcane",
+        "Bond",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Greater Jeweller's Orb",
+      "count": 1,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Oath",
+        "Adaptive",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Greater Orb of Augmentation",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Rebirth",
+        "Arcane",
+        "Electrocuting",
+        "Adaptive",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Greater Orb of Augmentation",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Momentum",
+        "Life",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Greater Orb of Transmutation",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Volcanic",
+        "Fire",
+        "Cold",
+        "Adaptive",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Greater Orb of Transmutation",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Momentum",
+        "Life",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Greater Regal Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Oath",
+        "Cyclonic",
+        "Momentum",
+        "Moon",
+        "Opulent",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Greater Regal Orb",
+      "count": 1,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Oath",
+        "Cyclonic",
+        "Life",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Hinekora's Lock",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Opulent",
+        "Power",
+        "Ward",
+        "Rebirth",
+        "Bond",
+        "Life",
+        "Time",
+        "Death",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Krillson's Bay Key",
+      "count": 1,
+      "level": 78,
+      "category": "currency",
+      "runes": [
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait",
+        "Bait"
+      ]
+    },
+    {
+      "output": "Lesser Jeweller's Orb",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Arcane",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Medved's Saga",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Rage",
+        "Vision",
+        "Bloodletting",
+        "Moon",
+        "Time",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Mirror of Kalandra",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Power",
+        "Opulent",
+        "Time",
+        "Oath",
+        "Death",
+        "Soul",
+        "Bond",
+        "Earth",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Olroth's Saga",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Tempest",
+        "Vision",
+        "Time",
+        "Celestial",
+        "Wisdom",
+        "Power"
+      ]
+    },
+    {
+      "output": "Orb of Alchemy",
+      "count": 3,
+      "level": 65,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Moon",
+        "Tidal",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Orb of Alchemy",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Rebirth",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Orb of Annulment",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Cyclonic",
+        "Arcane",
+        "Vision",
+        "Rebirth",
+        "Cyclonic",
+        "Lightning",
+        "Prismatic",
+        "Electrocuting",
+        "Power"
+      ]
+    },
+    {
+      "output": "Orb of Annulment",
+      "count": 2,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Cyclonic",
+        "Arcane",
+        "Vision",
+        "Rebirth",
+        "Cyclonic",
+        "Lightning",
+        "Power"
+      ]
+    },
+    {
+      "output": "Orb of Annulment",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Cyclonic",
+        "Momentum",
+        "Rebirth",
+        "Time",
+        "Moon",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Orb of Augmentation",
+      "count": 2,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Orb of Augmentation",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Tempest",
+        "Lightning"
+      ]
+    },
+    {
+      "output": "Orb of Chance",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Celestial",
+        "Opulent",
+        "Moon",
+        "Ward",
+        "Earth",
+        "Protective",
+        "Prismatic",
+        "Rebirth",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Orb of Chance",
+      "count": 2,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Celestial",
+        "Soul",
+        "Bloodletting",
+        "Rage",
+        "Sky",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Orb of Chance",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Celestial",
+        "Time",
+        "Rage",
+        "Bloodletting",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Orb of Transmutation",
+      "count": 2,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Orb of Transmutation",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Tempest",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Perfect Chaos Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Sky",
+        "Oath",
+        "Rage",
+        "Earth",
+        "Power",
+        "Tempest",
+        "Life",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Perfect Chaos Orb",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Celestial",
+        "Oath",
+        "Power",
+        "Opulent",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Perfect Exalted Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Life",
+        "Soul",
+        "Stone",
+        "Bond",
+        "Oath",
+        "Power",
+        "Death",
+        "Toxic"
+      ]
+    },
+    {
+      "output": "Perfect Exalted Orb",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Life",
+        "Earth",
+        "Power",
+        "Opulent",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Perfect Flux",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Wisdom",
+        "Opulent",
+        "Oath",
+        "Life",
+        "Power",
+        "Time",
+        "Celestial",
+        "Lightning"
+      ]
+    },
+    {
+      "output": "Perfect Jeweller's Orb",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Prismatic",
+        "Adaptive",
+        "Death",
+        "Life",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Perfect Orb of Augmentation",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Time",
+        "Opulent",
+        "Fire",
+        "Time",
+        "Vision",
+        "Bloodletting",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Perfect Orb of Transmutation",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Death",
+        "Opulent",
+        "Tempest",
+        "Time",
+        "Life",
+        "Moon",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Perfect Regal Orb",
+      "count": 3,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Tempest",
+        "Toxic",
+        "Soul",
+        "Moon",
+        "Adaptive",
+        "Rebirth",
+        "Opulent",
+        "Power"
+      ]
+    },
+    {
+      "output": "Regal Orb",
+      "count": 3,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Arcane",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Regal Orb",
+      "count": 2,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Cyclonic",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Regal Orb",
+      "count": 1,
+      "level": 15,
+      "category": "currency",
+      "runes": [
+        "Adaptive",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 10)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 11)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 12)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 13)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 14)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 15)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 16)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 17)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 18)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 19)",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Momentum",
+        "Earth",
+        "Ward",
+        "Bloodletting",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 20)",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Momentum",
+        "Earth",
+        "Ward",
+        "Stone",
+        "Arcane",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 5)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 6)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 7)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 8)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Thaumaturgic Flux (Level 9)",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Earth",
+        "Ward",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Uhtred's Saga",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Ward",
+        "Vision",
+        "Stone",
+        "Arcane",
+        "Wisdom",
+        "Time"
+      ]
+    },
+    {
+      "output": "Verisium Pile",
+      "count": 1,
+      "level": 30,
+      "category": "currency",
+      "runes": [
+        "Cyclonic",
+        "Sky",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Void Flux",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Toxic",
+        "Time",
+        "Adaptive",
+        "Soul",
+        "Power",
+        "Death"
+      ]
+    },
+    {
+      "output": "Vorana's Saga",
+      "count": 1,
+      "level": 70,
+      "category": "currency",
+      "runes": [
+        "Moon",
+        "Vision",
+        "Bond",
+        "Time",
+        "Wisdom",
+        "Toxic"
+      ]
+    },
+    {
+      "output": "Animus Exchange",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Prismatic",
+        "Electrocuting",
+        "Ward",
+        "Wisdom",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Animus Exchange",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Prismatic",
+        "Electrocuting",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Animus Splinters",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Bloodletting",
+        "Sky",
+        "Adaptive",
+        "Rage",
+        "Soul",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Animus Splinters",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cold",
+        "Sky",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Bitter Dead",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Rebirth",
+        "Prismatic",
+        "Ward",
+        "Toxic",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Bitter Dead",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Rebirth",
+        "Cold",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Concussive Runes",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Prismatic",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Conductive Runes",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Lightning",
+        "Vision",
+        "Vision",
+        "Life"
+      ]
+    },
+    {
+      "output": "Conductive Runes",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Lightning",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Detonate Living",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Volcanic",
+        "Celestial",
+        "Fire",
+        "Life"
+      ]
+    },
+    {
+      "output": "Detonate Living",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Cold",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Eternal March",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Prismatic",
+        "Protective",
+        "Rebirth",
+        "Life"
+      ]
+    },
+    {
+      "output": "Eternal March",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Cold",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Explosive Transmutation",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Volcanic",
+        "Sky",
+        "Fire",
+        "Volcanic",
+        "Bond",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Explosive Transmutation",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cold",
+        "Sky",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Fist Of Kalguur",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Bloodletting",
+        "Sky",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Fragments Of The Past",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Tempest",
+        "Lightning",
+        "Toxic",
+        "Life"
+      ]
+    },
+    {
+      "output": "Fragments Of The Past",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Tidal",
+        "Lightning"
+      ]
+    },
+    {
+      "output": "Frostflame Nova",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Lightning",
+        "Fire",
+        "Momentum",
+        "Life"
+      ]
+    },
+    {
+      "output": "Frostflame Nova",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Cold",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Gemcutter's Prism",
+      "count": 2,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Prismatic",
+        "Celestial",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Grim Pillars",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Volcanic",
+        "Earth",
+        "Ward",
+        "Momentum",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Grim Pillars",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Volcanic",
+        "Cold",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Healing Runes",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Electrocuting",
+        "Prismatic",
+        "Protective",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Hollow Shell",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Sky",
+        "Bloodletting",
+        "Prismatic",
+        "Life",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Hollow Shell",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Sky",
+        "Earth"
+      ]
+    },
+    {
+      "output": "Leylines",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Celestial",
+        "Rebirth",
+        "Ward",
+        "Wisdom",
+        "Life"
+      ]
+    },
+    {
+      "output": "Leylines",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Lightning",
+        "Celestial",
+        "Rebirth",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Powered by Verisium",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Earth",
+        "Ward",
+        "Vision",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Powered by Verisium",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Earth",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Rain of Blades",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Tempest",
+        "Sky",
+        "Ward",
+        "Arcane",
+        "Stone",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Rain of Blades",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Sky",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Refutation",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Rage",
+        "Prismatic",
+        "Stone",
+        "Ward",
+        "Wisdom",
+        "Death"
+      ]
+    },
+    {
+      "output": "Refutation",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Rage",
+        "Prismatic",
+        "Stone",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Remnants of Kalguur",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Sky",
+        "Tempest",
+        "Ward",
+        "Lightning",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Remnants of Kalguur",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Sky",
+        "Tidal",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Repulsion",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Earth",
+        "Protective",
+        "Lightning",
+        "Life"
+      ]
+    },
+    {
+      "output": "Repulsion",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Cyclonic",
+        "Earth",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Runeforged Blades",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Volcanic",
+        "Electrocuting",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Runic Extraction",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Rebirth",
+        "Sky",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Runic Infusion",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Electrocuting",
+        "Sky",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Runic Reprieve",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Bloodletting",
+        "Prismatic",
+        "Rebirth",
+        "Ward",
+        "Wisdom",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Runic Reprieve",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Bloodletting",
+        "Prismatic",
+        "Rebirth",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Scouring Flame",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Volcanic",
+        "Fire",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Skyfall",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Tempest",
+        "Celestial",
+        "Protective",
+        "Ward",
+        "Wisdom",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Skyfall",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Tempest",
+        "Celestial",
+        "Protective",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Triskelion Cascade",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Arcane",
+        "Celestial",
+        "Stone",
+        "Ward",
+        "Wisdom",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Triskelion Cascade",
+      "count": 1,
+      "level": 65,
+      "category": "gem",
+      "runes": [
+        "Cold",
+        "Celestial",
+        "Stone",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Uncut Skill Gem",
+      "count": 1,
+      "level": 15,
+      "category": "gem",
+      "runes": [
+        "Momentum",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Uncut Skill Gem (Level 19)",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Momentum",
+        "Fire",
+        "Electrocuting",
+        "Cold",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Uncut Skill Gem (Level 20)",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Momentum",
+        "Fire",
+        "Death",
+        "Wisdom",
+        "Protective",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Uncut Spirit Gem",
+      "count": 1,
+      "level": 15,
+      "category": "gem",
+      "runes": [
+        "Prismatic",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Uncut Spirit Gem (Level 19)",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Momentum",
+        "Arcane",
+        "Prismatic",
+        "Life",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Uncut Spirit Gem (Level 20)",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Momentum",
+        "Arcane",
+        "Soul",
+        "Wisdom",
+        "Prismatic",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Uncut Support Gem",
+      "count": 1,
+      "level": 15,
+      "category": "gem",
+      "runes": [
+        "Momentum",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Verisium Manifestations",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Rebirth",
+        "Lightning",
+        "Ward",
+        "Cold",
+        "Soul"
+      ]
+    },
+    {
+      "output": "Verisium Manifestations",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Rebirth",
+        "Rage",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Voltaic Barrier",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Protective",
+        "Sky",
+        "Earth",
+        "Stone",
+        "Death",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Voltaic Barrier",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Ward",
+        "Sky",
+        "Lightning"
+      ]
+    },
+    {
+      "output": "Wardbound Minions",
+      "count": 1,
+      "level": 70,
+      "category": "gem",
+      "runes": [
+        "Rebirth",
+        "Sky",
+        "Toxic",
+        "Protective",
+        "Oath",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Wardbound Minions",
+      "count": 1,
+      "level": 30,
+      "category": "gem",
+      "runes": [
+        "Tempest",
+        "Sky",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Adept Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Aldur's Legacy",
+      "count": 1,
+      "level": 78,
+      "category": "rune",
+      "runes": [
+        "Celestial",
+        "Wisdom",
+        "Power",
+        "Prismatic",
+        "Fire",
+        "Death",
+        "Earth",
+        "Protective",
+        "Time",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Animosity",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Momentum",
+        "Rage",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Control",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Earth",
+        "Adaptive",
+        "Moon",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Decay",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Toxic",
+        "Adaptive",
+        "Arcane",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Detonation",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Toxic",
+        "Adaptive",
+        "Tempest",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Discovery",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Toxic",
+        "Celestial",
+        "Sky",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Dueling",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Earth",
+        "Stone",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Prowess",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Sky",
+        "Momentum",
+        "Arcane",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Retaliation",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Sky",
+        "Momentum",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Shattering",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Toxic",
+        "Tidal",
+        "Lightning",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Splinters",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Tempest",
+        "Lightning",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of Witchcraft",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Bloodletting",
+        "Celestial",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of the Horde",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Bloodletting",
+        "Momentum",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Ancient Rune of the Titan",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Toxic",
+        "Bloodletting",
+        "Rage",
+        "Opulent"
+      ]
+    },
+    {
+      "output": "Astrid's Creativity",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Wisdom",
+        "Arcane",
+        "Time",
+        "Adaptive",
+        "Power",
+        "Volcanic",
+        "Death"
+      ]
+    },
+    {
+      "output": "Betrayal of Aldur",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Soul",
+        "Toxic",
+        "Bond",
+        "Death",
+        "Power",
+        "Wisdom",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Blacksmith's Whetstone",
+      "count": 2,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Fire",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Body Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Breath of Aldur",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Soul",
+        "Cold",
+        "Cyclonic",
+        "Tidal",
+        "Power",
+        "Wisdom",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Cadigan's Epiphany",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Wisdom",
+        "Sky",
+        "Oath",
+        "Protective",
+        "Power",
+        "Soul",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Charging Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Sky",
+        "Tidal",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Countess Seske's Rune of Archery",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Time",
+        "Tempest",
+        "Sky",
+        "Wisdom",
+        "Ward",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Courtesan Mannan's Rune of Cruelty",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Bloodletting",
+        "Cold",
+        "Toxic",
+        "Time",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Craiceann's Rune of Recovery",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Death",
+        "Tidal",
+        "Soul",
+        "Time",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Craiceann's Rune of Warding",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Life",
+        "Tidal",
+        "Cold",
+        "Time",
+        "Ward"
+      ]
+    },
+    {
+      "output": "Desert Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Farrul's Rune of Grace",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Momentum",
+        "Bloodletting",
+        "Adaptive",
+        "Time",
+        "Life"
+      ]
+    },
+    {
+      "output": "Farrul's Rune of the Chase",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Time",
+        "Bloodletting",
+        "Cyclonic",
+        "Wisdom",
+        "Death",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Farrul's Rune of the Hunt",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Bloodletting",
+        "Bond",
+        "Time",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Fenumus' Rune of Agony",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Toxic",
+        "Adaptive",
+        "Time",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Fenumus' Rune of Draining",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Death",
+        "Toxic",
+        "Cold",
+        "Time",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Fenumus' Rune of Spinning",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Momentum",
+        "Toxic",
+        "Tempest",
+        "Time",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Glacial Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Greater Adept Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Vision",
+        "Lightning"
+      ]
+    },
+    {
+      "output": "Greater Body Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Volcanic",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Greater Charging Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Ward",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Greater Desert Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Cyclonic",
+        "Earth"
+      ]
+    },
+    {
+      "output": "Greater Glacial Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Cyclonic",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Greater Inspiration Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Electrocuting",
+        "Protective",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Greater Iron Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Cyclonic",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Greater Mind Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Fire",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Greater Rebirth Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Protective",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Greater Resolve Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Vision",
+        "Earth"
+      ]
+    },
+    {
+      "output": "Greater Robust Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Vision",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Greater Stone Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Tidal",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Greater Storm Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Cyclonic",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Greater Vision Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Protective",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Greater Ward Rune",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Ward",
+        "Lightning"
+      ]
+    },
+    {
+      "output": "Hedgewitch Assandra's Rune of Wisdom",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Time",
+        "Ward",
+        "Arcane",
+        "Wisdom",
+        "Sky",
+        "Oath"
+      ]
+    },
+    {
+      "output": "Inspiration Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Electrocuting",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Ire of Aldur",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Soul",
+        "Lightning",
+        "Electrocuting",
+        "Sky",
+        "Power",
+        "Wisdom",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Iron Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Katla's Gloom",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Toxic",
+        "Bond",
+        "Death",
+        "Rebirth",
+        "Power",
+        "Vision",
+        "Opulent",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Kolr's Hunt",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Momentum",
+        "Bond",
+        "Sky",
+        "Tempest",
+        "Power",
+        "Rage",
+        "Opulent",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Lady Hestra's Rune of Winter",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Cold",
+        "Cyclonic",
+        "Time",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Lesser Adept Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Cold",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Lesser Body Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Stone",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Lesser Charging Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Cyclonic",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Lesser Desert Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Fire",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Lesser Glacial Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Cold",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Lesser Inspiration Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Rebirth",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Lesser Iron Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Stone",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Lesser Mind Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Lesser Rebirth Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Rebirth",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Lesser Resolve Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Lightning",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Lesser Robust Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Fire",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Lesser Stone Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Stone",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Lesser Storm Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Lightning",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Lesser Vision Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Rebirth",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Lesser Ward Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Masterwork Rune",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Prismatic",
+        "Wisdom",
+        "Sky",
+        "Arcane",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Medved's Boon",
+      "count": 1,
+      "level": 78,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Wisdom",
+        "Power",
+        "Prismatic",
+        "Rage",
+        "Volcanic",
+        "Life",
+        "Protective",
+        "Time",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Medved's Tending",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Earth",
+        "Bond",
+        "Protective",
+        "Prismatic",
+        "Power",
+        "Life",
+        "Opulent",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Mind Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Olroth's Boon",
+      "count": 1,
+      "level": 78,
+      "category": "rune",
+      "runes": [
+        "Oath",
+        "Wisdom",
+        "Power",
+        "Prismatic",
+        "Cold",
+        "Rebirth",
+        "Adaptive",
+        "Protective",
+        "Time",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Passion of Aldur",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Soul",
+        "Fire",
+        "Rage",
+        "Life",
+        "Power",
+        "Wisdom",
+        "Earth"
+      ]
+    },
+    {
+      "output": "Perfect Orb of Augmentation",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Adaptive",
+        "Time",
+        "Sky",
+        "Tidal",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Perfect Orb of Transmutation",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Adaptive",
+        "Death",
+        "Sky",
+        "Oath",
+        "Celestial"
+      ]
+    },
+    {
+      "output": "Rebirth Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Resolve Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Robust Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Rune of Accumulation",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Earth",
+        "Cyclonic",
+        "Fire",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Rune of Acrobatics",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Earth",
+        "Cyclonic",
+        "Cold",
+        "Life"
+      ]
+    },
+    {
+      "output": "Rune of Confrontation",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Sky",
+        "Tidal",
+        "Electrocuting",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Rune of Consistency",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Sky",
+        "Cyclonic",
+        "Momentum",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Rune of Culmination",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Prismatic",
+        "Cold",
+        "Life"
+      ]
+    },
+    {
+      "output": "Rune of Foundations",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Cyclonic",
+        "Fire",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Rune of Reach",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Momentum",
+        "Lightning",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Rune of Renown",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Electrocuting",
+        "Fire",
+        "Life"
+      ]
+    },
+    {
+      "output": "Rune of Vital Flame",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Lightning",
+        "Earth",
+        "Tempest"
+      ]
+    },
+    {
+      "output": "Rune of Vitality",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Electrocuting",
+        "Cold",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Rune of the Blossom",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Moon",
+        "Cyclonic",
+        "Lightning",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Rune of the Hunt",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Earth",
+        "Electrocuting",
+        "Cold",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Rune of the Prism",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Sky",
+        "Electrocuting",
+        "Fire",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Saqawal's Rune of Erosion",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Rebirth",
+        "Sky",
+        "Vision",
+        "Time",
+        "Toxic"
+      ]
+    },
+    {
+      "output": "Saqawal's Rune of Memory",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Arcane",
+        "Sky",
+        "Soul",
+        "Time",
+        "Moon"
+      ]
+    },
+    {
+      "output": "Saqawal's Rune of the Sky",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Rebirth",
+        "Sky",
+        "Bloodletting",
+        "Time",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Serle's Triumph",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Wisdom",
+        "Momentum",
+        "Protective",
+        "Moon",
+        "Power",
+        "Oath",
+        "Sky",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Stone Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Protective",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Storm Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Thane Girt's Rune of Wildness",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Bond",
+        "Rage",
+        "Time",
+        "Volcanic"
+      ]
+    },
+    {
+      "output": "Thane Grannell's Rune of Mastery",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Electrocuting",
+        "Bond",
+        "Tidal",
+        "Time",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Thane Leld's Rune of Spring",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Lightning",
+        "Bond",
+        "Volcanic",
+        "Time",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Thane Myrk's Rune of Summer",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Fire",
+        "Bond",
+        "Rage",
+        "Time",
+        "Death"
+      ]
+    },
+    {
+      "output": "The Greatwolf's Rune of Claws",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Bloodletting",
+        "Rage",
+        "Momentum",
+        "Time",
+        "Toxic"
+      ]
+    },
+    {
+      "output": "The Greatwolf's Rune of Willpower",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Rage",
+        "Toxic",
+        "Time",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Thrud's Might",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Tempest",
+        "Bond",
+        "Earth",
+        "Death",
+        "Power",
+        "Ward",
+        "Opulent",
+        "Rebirth"
+      ]
+    },
+    {
+      "output": "Uhtred's Boon",
+      "count": 1,
+      "level": 78,
+      "category": "rune",
+      "runes": [
+        "Ward",
+        "Wisdom",
+        "Power",
+        "Prismatic",
+        "Lightning",
+        "Soul",
+        "Arcane",
+        "Protective",
+        "Time",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Uhtred's Sidereus",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Time",
+        "Bond",
+        "Moon",
+        "Cyclonic",
+        "Power",
+        "Volcanic",
+        "Opulent",
+        "Cold"
+      ]
+    },
+    {
+      "output": "Vision Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Protective"
+      ]
+    },
+    {
+      "output": "Vorana's Boon",
+      "count": 1,
+      "level": 78,
+      "category": "rune",
+      "runes": [
+        "Death",
+        "Wisdom",
+        "Power",
+        "Prismatic",
+        "Toxic",
+        "Moon",
+        "Tidal",
+        "Protective",
+        "Time",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Vorana's Carnage",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Rage",
+        "Bond",
+        "Cold",
+        "Fire",
+        "Power",
+        "Bloodletting",
+        "Opulent",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Ward Rune",
+      "count": 1,
+      "level": 15,
+      "category": "rune",
+      "runes": [
+        "Volcanic",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Warding Rune of Annihilation",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Ward",
+        "Electrocuting",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Warding Rune of Armature",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Ward",
+        "Volcanic",
+        "Bond",
+        "Stone",
+        "Vision"
+      ]
+    },
+    {
+      "output": "Warding Rune of Bodyguards",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Ward",
+        "Protective",
+        "Oath",
+        "Stone",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Warding Rune of Courage",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Cold",
+        "Ward",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Desperation",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Bloodletting",
+        "Stone",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Disintegration",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Cold",
+        "Stone",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Equinox",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Ward",
+        "Tempest",
+        "Protective",
+        "Stone",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Glancing",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Tidal",
+        "Ward",
+        "Protective",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Warding Rune of Heart",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Electrocuting",
+        "Ward",
+        "Vision",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Warding Rune of Hollowing",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Ward",
+        "Lightning",
+        "Soul",
+        "Stone",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Warding Rune of Nourishment",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Rebirth",
+        "Stone",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Obsession",
+      "count": 1,
+      "level": 70,
+      "category": "rune",
+      "runes": [
+        "Ward",
+        "Life",
+        "Rage",
+        "Stone",
+        "Fire"
+      ]
+    },
+    {
+      "output": "Warding Rune of Protection",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Vision",
+        "Protective",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Reinforcement",
+      "count": 1,
+      "level": 30,
+      "category": "rune",
+      "runes": [
+        "Lightning",
+        "Ward",
+        "Electrocuting"
+      ]
+    },
+    {
+      "output": "Warding Rune of Salvaging",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Cyclonic",
+        "Ward",
+        "Moon",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Warding Rune of Stability",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Cold",
+        "Ward",
+        "Arcane",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Warding Rune of Symbiosis",
+      "count": 1,
+      "level": 65,
+      "category": "rune",
+      "runes": [
+        "Tempest",
+        "Ward",
+        "Life",
+        "Stone"
+      ]
+    },
+    {
+      "output": "Rare Unique Item",
+      "count": 1,
+      "level": 70,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Wisdom",
+        "Protective",
+        "Rage",
+        "Bond"
+      ]
+    },
+    {
+      "output": "Unique Amulet",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Cold",
+        "Fire",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Belt",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Bond",
+        "Ward",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Body Armour",
+      "count": 1,
+      "level": 30,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Prismatic",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Boots",
+      "count": 1,
+      "level": 30,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Lightning",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Bow",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Vision",
+        "Wisdom",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Unique Crossbow",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Electrocuting",
+        "Wisdom",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Unique Focus",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Protective",
+        "Wisdom",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Unique Gloves",
+      "count": 1,
+      "level": 30,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Lightning",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Helmet",
+      "count": 1,
+      "level": 30,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Tempest",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Jewellery",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Toxic",
+        "Moon",
+        "Wisdom",
+        "Cyclonic"
+      ]
+    },
+    {
+      "output": "Unique One Hand Mace",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Rage",
+        "Wisdom",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Unique Quarterstaff",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Rage",
+        "Wisdom",
+        "Adaptive"
+      ]
+    },
+    {
+      "output": "Unique Quiver",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Protective",
+        "Wisdom",
+        "Rage"
+      ]
+    },
+    {
+      "output": "Unique Ring",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Sky",
+        "Cold",
+        "Wisdom"
+      ]
+    },
+    {
+      "output": "Unique Sceptre",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Protective",
+        "Wisdom",
+        "Arcane"
+      ]
+    },
+    {
+      "output": "Unique Shield",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Protective",
+        "Wisdom",
+        "Prismatic"
+      ]
+    },
+    {
+      "output": "Unique Spear",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Rage",
+        "Wisdom",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Unique Staff",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Arcane",
+        "Wisdom",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Unique Talisman",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Rage",
+        "Wisdom",
+        "Bloodletting"
+      ]
+    },
+    {
+      "output": "Unique Two Hand Mace",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Rage",
+        "Wisdom",
+        "Tidal"
+      ]
+    },
+    {
+      "output": "Unique Wand",
+      "count": 1,
+      "level": 65,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Arcane",
+        "Wisdom",
+        "Momentum"
+      ]
+    },
+    {
+      "output": "Very Rare Unique item",
+      "count": 1,
+      "level": 70,
+      "category": "unique",
+      "runes": [
+        "Celestial",
+        "Wisdom",
+        "Moon",
+        "Power",
+        "Earth",
+        "Protective",
+        "Prismatic",
+        "Rebirth",
+        "Fire"
+      ]
+    }
+  ]
+}

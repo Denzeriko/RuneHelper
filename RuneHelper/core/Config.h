@@ -11,9 +11,7 @@ struct AppConfig
 
 
     bool ocrEnabled         = true;
-    bool runeSearchEnabled  = false;
     bool priceSearchEnabled = true;
-    double runeSearchScale  = 0.0;
     int ocrIntervalMs       = 600;
 
     int hotkeyToggleOCR         = 0x77; //VK_F8;

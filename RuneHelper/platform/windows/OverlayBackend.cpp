@@ -3,6 +3,7 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <map>
 
 #include "core/Logger.h"
 #include "ui/OverlayState.h"
@@ -39,7 +40,8 @@ public:
     void BringToTop() override;
 
 private:
-    void RecreateFont(int size);
+    HFONT FontForSize(int size);
+    void ReleaseFonts();
     void ApplyClickThrough(bool enabled);
     RECT ContentBounds(const OverlayState& state) const;
 
@@ -47,7 +49,7 @@ private:
 
     HWND hwnd_ = nullptr;
     WNDCLASSW windowClass_ = {};
-    HFONT font_ = nullptr;
+    std::map<int, HFONT> fonts_;
     OverlayState state_;
 
     int virtualX_ = 0;
@@ -99,7 +101,6 @@ bool WindowsOverlayBackend::Init(const char*, int, int)
     if (!SetWindowDisplayAffinity(hwnd_, WDA_EXCLUDEFROMCAPTURE))
         LOG_ERROR("Windows overlay: SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE) failed");
 
-    RecreateFont(state_.fontSize);
 
     ShowWindow(hwnd_, SW_SHOW);
     UpdateWindow(hwnd_);
@@ -113,11 +114,7 @@ void WindowsOverlayBackend::Shutdown()
 {
     running_ = false;
 
-    if (font_)
-    {
-        DeleteObject(font_);
-        font_ = nullptr;
-    }
+    ReleaseFonts();
 
     if (hwnd_)
     {
@@ -158,9 +155,25 @@ RECT WindowsOverlayBackend::ContentBounds(const OverlayState& state) const
     {
         const int x = text.x - virtualX_;
         const int y = text.y - virtualY_;
-        const int width = static_cast<int>(text.text.size()) * std::max(8, state.fontSize) + 32;
+        const int size = text.fontSize > 0 ? text.fontSize : state.fontSize;
+        const int width = static_cast<int>(text.text.size()) * std::max(8, size) + 32;
+        const int half = std::max(lineHeight, size + 8);
 
-        const RECT box{ x - 8, y - lineHeight, x + width, y + lineHeight };
+        const RECT box{ x - 8, y - half, x + width, y + half };
+
+        RECT merged{};
+        UnionRect(&merged, &bounds, &box);
+        bounds = merged;
+    }
+
+    for (const OverlayMark& mark : state.marks)
+    {
+        const RECT box{
+            mark.x - virtualX_ - 4,
+            mark.y - virtualY_ - 4,
+            mark.x - virtualX_ + mark.width + 4,
+            mark.y - virtualY_ + mark.height + 4
+        };
 
         RECT merged{};
         UnionRect(&merged, &bounds, &box);
@@ -192,7 +205,7 @@ void WindowsOverlayBackend::Render(const OverlayState& state)
     const bool fontChanged = state_.fontSize != state.fontSize;
 
     if (fontChanged)
-        RecreateFont(state.fontSize);
+        ReleaseFonts();
 
     const RECT newBounds = ContentBounds(state);
 
@@ -240,24 +253,21 @@ void WindowsOverlayBackend::BringToTop()
     SetAlwaysOnTop(true);
 }
 
-void WindowsOverlayBackend::RecreateFont(int size)
+HFONT WindowsOverlayBackend::FontForSize(int size)
 {
-    if (size <= 0)
-        return;
+    const int clamped = std::clamp(size, 6, 96);
 
-    if (font_)
-    {
-        DeleteObject(font_);
-        font_ = nullptr;
-    }
+    const auto it = fonts_.find(clamped);
+
+    if (it != fonts_.end())
+        return it->second;
 
     HDC hdc = GetDC(nullptr);
-    int dpi = GetDeviceCaps(hdc, LOGPIXELSY);
+    const int dpi = GetDeviceCaps(hdc, LOGPIXELSY);
     ReleaseDC(nullptr, hdc);
 
-    int height = -MulDiv(size, dpi, 72);
-
-    font_ = CreateFontW(
+    const int height = -MulDiv(clamped, dpi, 72);
+    HFONT font = CreateFontW(
         height,
         0,
         0,
@@ -273,6 +283,21 @@ void WindowsOverlayBackend::RecreateFont(int size)
         DEFAULT_PITCH | FF_DONTCARE,
         L"Segoe UI"
     );
+
+    fonts_[clamped] = font;
+
+    return font;
+}
+
+void WindowsOverlayBackend::ReleaseFonts()
+{
+    for (auto& [size, font] : fonts_)
+    {
+        if (font)
+            DeleteObject(font);
+    }
+
+    fonts_.clear();
 }
 
 void WindowsOverlayBackend::ApplyClickThrough(bool enabled)
@@ -345,16 +370,40 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
             DeleteObject(pen);
         }
 
-        HFONT oldFont = nullptr;
-        if (self->font_)
-            oldFont = static_cast<HFONT>(SelectObject(hdc, self->font_));
+        for (const OverlayMark& mark : self->state_.marks)
+        {
+            HPEN pen = CreatePen(PS_SOLID, 2, ToColorRef(mark.color));
+            HGDIOBJ oldPen = SelectObject(hdc, pen);
+            HGDIOBJ oldBrush = SelectObject(hdc, GetStockObject(HOLLOW_BRUSH));
+
+            const int left = mark.x - self->virtualX_;
+            const int top = mark.y - self->virtualY_;
+
+            Rectangle(hdc, left, top, left + mark.width, top + mark.height);
+
+            SelectObject(hdc, oldBrush);
+            SelectObject(hdc, oldPen);
+            DeleteObject(pen);
+        }
+
+        HGDIOBJ oldFont = nullptr;
 
         for (const auto& text : self->state_.texts)
         {
+            const int size = text.fontSize > 0 ? text.fontSize : self->state_.fontSize;
+
+            if (HFONT font = self->FontForSize(size))
+            {
+                HGDIOBJ previous = SelectObject(hdc, font);
+
+                if (!oldFont)
+                    oldFont = previous;
+            }
+
             SetTextColor(hdc, ToColorRef(text.color));
-            int x = text.x - self->virtualX_;
-            int y = text.y - self->virtualY_;
-            RECT rect{x, y - 20, x + 300, y + 20};
+            const int x = text.x - self->virtualX_;
+            const int y = text.y - self->virtualY_;
+            RECT rect{ x, y - size, x + 600, y + size };
             DrawTextW(hdc, text.text.c_str(), -1, &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }
 

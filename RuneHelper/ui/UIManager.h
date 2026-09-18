@@ -9,9 +9,9 @@
 #include "core/ConfigManager.h"
 #include "core/DebugData.h"
 #include "core/UpdateChecker.h"
-#include "ocr/RunePatternMatcher.h"
 #include "ui/UIState.h"
 
+class FeatureRegistry;
 class UIBackend;
 class UIManager;
 
@@ -21,6 +21,7 @@ void Draw(UIManager& manager);
 void DrawTitleBar(UIManager& manager, UIState& state);
 void DrawMainTab(UIManager& manager, UIState& state);
 void DrawDebugTab(UIManager& manager, UIState& state);
+void DrawExpeditionTab(UIManager& manager, UIState& state);
 }
 
 class UIManager
@@ -43,8 +44,9 @@ public:
     void SetOverlayAvailable(bool available);
     void SetCaptureFailing(bool failing);
     void SetPriceStatus(bool downloading, size_t priceCount);
-    void SetRuneCalibrationStatus(const RunePatternCalibrationStatus& status);
     void SetUpdateChecker(UpdateChecker* checker);
+    void SetFeatures(FeatureRegistry* features);
+    FeatureRegistry* Features() const;
     bool IsCheckingForUpdate() const;
     bool HasUpdate() const;
     std::string UpdateDownloadUrl() const;
@@ -59,7 +61,6 @@ public:
     bool WantsToggleOCR();
     bool WantsSingleSnapshot();
     bool WantsRegisterHotkeys();
-    bool WantsCalibrateRunes();
 
     bool IsRegionHovered() const;
 
@@ -72,7 +73,7 @@ public:
 
     void SetDebugData(DebugData data);
     const DebugData& GetDebugData() const;
-    bool IsDebugTabOpen() const;
+    bool NeedsDebugData() const;
     void FlushPendingConfigSave();
 
     void RequestToggleOCR();
@@ -86,6 +87,7 @@ private:
     ConfigManager* configManager_ = nullptr;
     AppConfig configDraft_;
     UpdateChecker* updateChecker_ = nullptr;
+    FeatureRegistry* features_ = nullptr;
 
     UIState state_;
     DebugData debugData_;

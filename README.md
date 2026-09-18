@@ -33,6 +33,9 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 * Single-pass OCR tuned for the Runeshape loot menu.
 * Fuzzy matching for OCR mistakes.
 * Overlay displaying item prices next to detected items.
+* Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
+* Highlights rare runeshape tiles directly in the remnant panel.
+* Offline database of every runeshape combination, refreshed from a proxy at startup.
 * Automatic price cache updates.
 * League-specific offline price cache to reduce API requests.
 * Debug window showing OCR and matching results.
@@ -195,7 +198,7 @@ docker build --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
 
 Add `--network host` if the container cannot reach the package mirrors on your setup.
 
-The Linux build embeds `eng.traineddata_fast` and the rune templates into the executable the same way the Windows resource script does, so the binary runs from any working directory:
+The Linux build embeds `eng.traineddata_fast` and `combinations.json` into the executable the same way the Windows resource script does, so the binary runs from any working directory:
 
 ```bash
 ./out/RuneHelper
@@ -252,6 +255,10 @@ This project:
 * does **not** inject into the game;
 * does **not** read game memory;
 * only captures a user-selected screen region and performs OCR on the image.
+
+## Credits
+
+The runeshape combination database and the poe2db scraper behind it come from [imbermuda/expeditionWiz](https://github.com/imbermuda/expeditionWiz) by [imbermuda](https://github.com/imbermuda), used with the author's permission.
 
 ## License
 

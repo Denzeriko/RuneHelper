@@ -1,12 +1,5 @@
 #include "resource.h"
 
 IDR_ENG_TRAINEDDATA RCDATA "eng.traineddata_fast"
-IDR_RUNE_TEMPLATE_1 RCDATA "runes/A1.png"
-IDR_RUNE_TEMPLATE_2 RCDATA "runes/A2.png"
-IDR_RUNE_TEMPLATE_3 RCDATA "runes/B1.png"
-IDR_RUNE_TEMPLATE_4 RCDATA "runes/C1.png"
-IDR_RUNE_TEMPLATE_5 RCDATA "runes/C2.png"
-IDR_RUNE_TEMPLATE_6 RCDATA "runes/C3.png"
-IDR_RUNE_TEMPLATE_7 RCDATA "runes/S1.png"
-IDR_RUNE_TEMPLATE_8 RCDATA "runes/S2.png"
+IDR_COMBINATIONS RCDATA "combinations.json"
 IDI_APP_ICON ICON "runehelper.ico"

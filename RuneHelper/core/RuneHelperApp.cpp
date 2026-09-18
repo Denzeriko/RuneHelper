@@ -7,6 +7,8 @@
 #include <vector>
 
 #include "core/DebugData.h"
+#include "features/ExpeditionFeature.h"
+#include "features/PriceOverlayFeature.h"
 #include "core/Logger.h"
 
 #include <opencv2/core.hpp>
@@ -53,9 +55,17 @@ bool RuneHelperApp::Init()
     updateChecker_.Start();
     ui_.SetUpdateChecker(&updateChecker_);
 
+    features_.Add(std::make_unique<PriceOverlayFeature>());
+    features_.Add(std::make_unique<ExpeditionFeature>());
+    features_.InitAll(configManager_);
+
+    ui_.SetFeatures(&features_);
+
     ui_.RegisterHotkeys();
 
-    ocrService_.Start(configManager_);
+    prices_.Apply(configManager_.Snapshot());
+
+    ocrService_.Start(configManager_, features_, prices_);
 
     return true;
 }
@@ -68,11 +78,10 @@ void RuneHelperApp::MainLoop()
         ui_.SetStatus(ocrStatus.initializing, ocrStatus.ready, ocrStatus.failed);
         ui_.SetCaptureFailing(ocrStatus.captureFailing);
 
-        PriceServiceStatus priceStatus = ocrService_.GetPriceStatus();
+        const PriceStatus priceStatus = prices_.Status();
         ui_.SetPriceStatus(priceStatus.downloading, priceStatus.priceCount);
-        ui_.SetRuneCalibrationStatus(ocrService_.GetRuneCalibrationStatus());
 
-        if (ui_.IsDebugTabOpen())
+        if (ui_.NeedsDebugData())
         {
             DebugData debugData;
 
@@ -86,6 +95,8 @@ void RuneHelperApp::MainLoop()
         HandleUIActions();
 
         const AppConfig config = configManager_.Snapshot();
+
+        prices_.Tick(config);
 
         UpdateRegionPreview(config);
 
@@ -124,10 +135,7 @@ void RuneHelperApp::HandleUIActions()
         ocrService_.RequestSingleSnapshot();
 
     if (ui_.WantsRefreshPrices())
-        ocrService_.ForceRefreshPrices();
-
-    if (ui_.WantsCalibrateRunes())
-        ocrService_.RequestRuneCalibration();
+        prices_.ForceRefresh();
 
     if (ui_.WantsSelectRegion())
     {
@@ -149,6 +157,7 @@ void RuneHelperApp::HandleUIActions()
                 });
 
             configManager_.Save();
+            features_.NotifyRegionChanged();
         }
     }
 
@@ -158,11 +167,12 @@ void RuneHelperApp::HandleUIActions()
 
 void RuneHelperApp::UpdateOverlay()
 {
-    std::vector<OverlayText> texts;
-    if (!ocrService_.ConsumeOverlayTexts(texts))
+    OverlayFrame frame;
+
+    if (!ocrService_.ConsumeOverlayFrame(frame))
         return;
 
-    overlay_.SetTexts(std::move(texts));
+    overlay_.SetFrame(std::move(frame));
 }
 
 void RuneHelperApp::UpdateRegionPreview(const AppConfig& localConfig)
@@ -189,4 +199,5 @@ void RuneHelperApp::Shutdown()
     ocrService_.Stop();
     ui_.UnregisterHotkeys();
     updateChecker_.Stop();
+    features_.ShutdownAll();
 }

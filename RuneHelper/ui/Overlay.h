@@ -21,7 +21,7 @@ public:
 
     void BringToTop();
     void SetRegionPreview(bool enabled, const OverlayRect& rect);
-    void SetTexts(std::vector<OverlayText> texts);
+    void SetFrame(OverlayFrame frame);
     void SetFontSize(int size);
     void SetFontSizeForce(int size);
     void PumpMessages();

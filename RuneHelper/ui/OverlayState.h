@@ -28,7 +28,25 @@ struct OverlayText
     std::wstring text;
     int x = 0;
     int y = 0;
+    int fontSize = 0;
     OverlayColor color = OverlayRgb(255, 255, 255);
+};
+
+struct OverlayMark
+{
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    OverlayColor color = OverlayRgb(255, 220, 80);
+};
+
+struct OverlayFrame
+{
+    std::vector<OverlayText> texts;
+    std::vector<OverlayMark> marks;
+
+    bool Empty() const { return texts.empty() && marks.empty(); }
 };
 
 struct OverlayState
@@ -40,6 +58,7 @@ struct OverlayState
     bool alwaysOnTop = true;
 
     OverlayRect previewRect{};
+    std::vector<OverlayMark> marks;
     int fontSize = 24;
 
     std::vector<OverlayText> texts;

@@ -12,12 +12,12 @@
 #include "core/ConfigManager.h"
 #include "core/DebugData.h"
 #include "core/ScreenCaptureService.h"
-#include "ocr/NameNormalizer.h"
 #include "ocr/OcrFrameDiffer.h"
 #include "ocr/OCR.h"
-#include "ocr/RunePatternMatcher.h"
-#include "price/PriceCache.h"
+#include "core/Feature.h"
 #include "ui/OverlayState.h"
+
+class PriceService;
 
 struct OcrServiceStatus
 {
@@ -27,11 +27,6 @@ struct OcrServiceStatus
     bool captureFailing = false;
 };
 
-struct PriceServiceStatus
-{
-    bool downloading = false;
-    size_t priceCount = 0;
-};
 
 class OcrService
 {
@@ -42,45 +37,38 @@ public:
     OcrService(const OcrService&) = delete;
     OcrService& operator=(const OcrService&) = delete;
 
-    void Start(ConfigManager& configManager);
+    void Start(ConfigManager& configManager, FeatureRegistry& features, PriceService& prices);
     void Stop();
 
     void RequestSingleSnapshot();
-    void RequestRuneCalibration();
-    void ForceRefreshPrices();
 
     OcrServiceStatus GetStatus() const;
-    PriceServiceStatus GetPriceStatus() const;
-    RunePatternCalibrationStatus GetRuneCalibrationStatus() const;
     bool ConsumeDebugData(DebugData& data);
 
-    bool ConsumeOverlayTexts(std::vector<OverlayText>& texts);
+    bool ConsumeOverlayFrame(OverlayFrame& frame);
 
 private:
     void InitOcr();
     void WorkerLoop();
 
-    void RebuildCachedNames();
     void ResetFrameState();
-    bool ProcessFrame(const cv::Rect& region, const AppConfig& config, bool calibrationRunning);
-    void UpdateRuneMatches(const cv::Mat& gray, const AppConfig& config, bool stableFrame, bool calibrationRunning);
-    void PublishFrameResult(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config);
+    void ProcessFrame(const cv::Rect& region, const AppConfig& config);
+    void PublishFrameResult(const std::vector<LootLine>& loot, const cv::Mat& gray, const cv::Rect& region, const AppConfig& config);
     int NextSleepMs(const AppConfig& config) const;
 
     void ResetState(bool initializing);
     void ClearRuntimeBuffers();
     void ClearOverlayTexts();
-    void SaveRuneCalibrationScale(double scale);
-    void SetOverlayTexts(std::vector<OverlayText> texts);
-    void PublishOverlayTexts(std::vector<OverlayText> texts);
+    void SetOverlayFrame(OverlayFrame frame);
+    void PublishOverlayFrame(OverlayFrame frame);
 
 private:
     mutable std::mutex lifecycleMutex_;
     ConfigManager* configManager_ = nullptr;
+    FeatureRegistry* features_ = nullptr;
 
-    PriceCache priceCache_;
+    PriceService* prices_ = nullptr;
     OCR ocr_;
-    RunePatternMatcher runeMatcher_;
     ScreenCaptureService screenCapture_;
     OcrFrameDiffer frameDiffer_;
 
@@ -96,22 +84,16 @@ private:
 
     std::atomic<bool> overlayDirty_ = false;
     std::mutex overlayMutex_;
-    std::vector<OverlayText> sharedTexts_;
+    OverlayFrame sharedFrame_;
     int emptyOverlayFrames_ = 0;
 
     std::atomic<bool> debugDirty_ = false;
     std::mutex debugMutex_;
     DebugData debugData_;
 
-    std::mutex cachedNamesMutex_;
-    std::shared_ptr<const CachedItemNames> cachedItemNames_;
-    std::uint64_t cachedNamesVersion_ = 0;
 
     std::vector<LootLine> lastLoot_;
-    std::vector<RunePatternMatch> lastRunes_;
-    bool lastRunesValid_ = false;
     bool forceOcrFrame_ = false;
-    bool runeCalibrationWasRunning_ = false;
     int captureFailures_ = 0;
 
     std::jthread initThread_;
