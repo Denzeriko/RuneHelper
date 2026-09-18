@@ -17,7 +17,7 @@ public:
 
     bool Valid() const { return valid_; }
 
-    const RuneTileBand* BandAbove(int y) const;
+    const RuneTileBand* BandFor(int y) const;
     cv::Rect TileRect(const RuneTileBand& band, int index) const;
 
 private:

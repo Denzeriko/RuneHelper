@@ -186,8 +186,14 @@ bool RuneTileLocator::Analyze(const cv::Mat& gray)
     return valid_;
 }
 
-const RuneTileBand* RuneTileLocator::BandAbove(int y) const
+const RuneTileBand* RuneTileLocator::BandFor(int y) const
 {
+    for (const RuneTileBand& band : bands_)
+    {
+        if (y >= band.top && y <= band.bottom)
+            return &band;
+    }
+
     const RuneTileBand* best = nullptr;
 
     for (const RuneTileBand& band : bands_)

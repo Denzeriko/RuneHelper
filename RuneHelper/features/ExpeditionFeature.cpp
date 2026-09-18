@@ -210,7 +210,7 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
 
     for (const ScreenRecipe& entry : found)
     {
-        const RuneTileBand* band = tiles_.BandAbove(frame.rows[entry.rowIndex].textTop);
+        const RuneTileBand* band = tiles_.BandFor(frame.rows[entry.rowIndex].textTop);
 
         if (!band)
             continue;
