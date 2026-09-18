@@ -161,7 +161,15 @@ bool UIBackend::Init(UIManager* manager)
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 0);
 
-    impl_->window = glfwCreateWindow(420, 680, "RuneHelper", nullptr, nullptr);
+#ifdef GLFW_WAYLAND_APP_ID
+    glfwWindowHintString(GLFW_WAYLAND_APP_ID, "runehelper");
+#endif
+#ifdef GLFW_X11_CLASS_NAME
+    glfwWindowHintString(GLFW_X11_CLASS_NAME, "runehelper");
+    glfwWindowHintString(GLFW_X11_INSTANCE_NAME, "runehelper");
+#endif
+
+    impl_->window = glfwCreateWindow(420, 476, "RuneHelper", nullptr, nullptr);
 
     if (!impl_->window)
     {
