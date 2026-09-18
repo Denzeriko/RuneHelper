@@ -8,6 +8,8 @@ struct RuneTileBand
 {
     int top = 0;
     int bottom = 0;
+
+    int Height() const { return bottom - top + 1; }
 };
 
 class RuneTileLocator
@@ -17,13 +19,13 @@ public:
 
     bool Valid() const { return valid_; }
 
-    const RuneTileBand* BandFor(int y) const;
-    cv::Rect TileRect(const RuneTileBand& band, int index) const;
+    std::vector<cv::Rect> TilesForRow(const cv::Mat& gray, int textTop, int count) const;
 
 private:
+    const RuneTileBand* BandContaining(int y) const;
+    const RuneTileBand* BandAbove(int y) const;
+    std::vector<cv::Rect> TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const;
+
     bool valid_ = false;
-    double x0_ = 0.0;
-    double pitch_ = 0.0;
-    int tileWidth_ = 0;
     std::vector<RuneTileBand> bands_;
 };

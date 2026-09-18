@@ -27,6 +27,7 @@ public:
 
 private:
     static std::string NormalizeRune(std::string_view name);
+    static std::string StripOcrNoise(std::string_view name);
 
     bool loaded_ = false;
     bool complete_ = false;

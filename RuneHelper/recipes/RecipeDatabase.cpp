@@ -59,9 +59,51 @@ bool RecipeDatabase::IsRareRune(const std::string& rune) const
     return rareRunes_.count(rune) > 0;
 }
 
+std::string RecipeDatabase::StripOcrNoise(std::string_view name)
+{
+    std::string text = Trim(name);
+
+    while (!text.empty())
+    {
+        const unsigned char last = static_cast<unsigned char>(text.back());
+
+        if (std::isalnum(last) || last == ')')
+            break;
+
+        text.pop_back();
+        text = Trim(text);
+    }
+
+    const std::size_t space = text.find_last_of(' ');
+
+    if (space != std::string::npos)
+    {
+        const std::string tail = text.substr(space + 1);
+
+        const bool shortWord = tail.size() <= 2 && !tail.empty() &&
+            std::all_of(tail.begin(), tail.end(),
+                [](unsigned char c) { return std::isalpha(c) != 0; });
+
+        if (shortWord)
+            text = Trim(text.substr(0, space));
+    }
+
+    return text;
+}
+
 const Recipe* RecipeDatabase::FindRecipe(std::string_view output, int count) const
 {
-    const auto it = byOutput_.find(std::pair{ ToLower(Trim(output)), count });
+    auto it = byOutput_.find(std::pair{ ToLower(Trim(output)), count });
+
+    if (it == byOutput_.end())
+    {
+        const std::string cleaned = StripOcrNoise(output);
+
+        if (cleaned.empty())
+            return nullptr;
+
+        it = byOutput_.find(std::pair{ ToLower(cleaned), count });
+    }
 
     if (it == byOutput_.end())
         return nullptr;

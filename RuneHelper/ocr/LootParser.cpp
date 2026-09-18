@@ -17,7 +17,7 @@ LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& li
     while (pos < line.size() && std::isdigit((unsigned char)line[pos]))
         ++pos;
 
-    if (pos > numStart && pos < line.size() && line[pos] == 'x')
+    if (pos > numStart && pos < line.size() && (line[pos] == 'x' || line[pos] == 'X'))
     {
         const size_t numEnd = pos;
 

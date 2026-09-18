@@ -7,36 +7,48 @@ namespace
 {
 constexpr int kBrightLevel = 180;
 constexpr double kBandRowCoverage = 0.10;
-constexpr double kTileColumnCoverage = 0.03;
 constexpr int kMinBandHeight = 20;
-constexpr int kMinRunWidth = 8;
-constexpr double kSquareLow = 0.7;
-constexpr double kSquareHigh = 1.3;
-constexpr double kAdjacentPitchFloor = 0.85;
-constexpr int kMinTilesPerBand = 2;
 
-struct Run
+constexpr double kStripThresholdShare = 0.25;
+constexpr int kStripFlatRunToStop = 25;
+
+constexpr double kSquareLow = 0.6;
+constexpr double kSquareHigh = 1.5;
+
+constexpr double kMaxSeamToCentreSpread = 0.5;
+constexpr int kSeamHalfWidth = 1;
+constexpr int kCentreHalfWidth = 2;
+
+constexpr int kMaxTilesPerRow = 12;
+
+double ColumnSpread(const cv::Mat& gray, int x, const RuneTileBand& band)
 {
-    int left = 0;
-    int right = 0;
+    double sum = 0.0;
+    double sumSquares = 0.0;
 
-    int Width() const { return right - left + 1; }
-};
+    const int height = band.Height();
 
-double Median(std::vector<double> values)
-{
-    if (values.empty())
-        return 0.0;
+    for (int y = band.top; y <= band.bottom; ++y)
+    {
+        const double value = gray.at<unsigned char>(y, x);
+        sum += value;
+        sumSquares += value * value;
+    }
 
-    const size_t middle = values.size() / 2;
-    std::nth_element(values.begin(), values.begin() + middle, values.end());
+    const double mean = sum / height;
+    const double variance = sumSquares / height - mean * mean;
 
-    return values[middle];
+    return variance > 0.0 ? std::sqrt(variance) : 0.0;
+}
 }
 
-std::vector<RuneTileBand> FindBands(const cv::Mat& gray)
+bool RuneTileLocator::Analyze(const cv::Mat& gray)
 {
-    std::vector<RuneTileBand> bands;
+    valid_ = false;
+    bands_.clear();
+
+    if (gray.empty() || gray.type() != CV_8UC1)
+        return false;
 
     int start = -1;
 
@@ -61,132 +73,21 @@ std::vector<RuneTileBand> FindBands(const cv::Mat& gray)
         else if (!covered && start >= 0)
         {
             if (y - start >= kMinBandHeight)
-                bands.push_back({ start, y - 1 });
+                bands_.push_back({ start, y - 1 });
 
             start = -1;
         }
     }
 
     if (start >= 0 && gray.rows - start >= kMinBandHeight)
-        bands.push_back({ start, gray.rows - 1 });
+        bands_.push_back({ start, gray.rows - 1 });
 
-    return bands;
-}
-
-std::vector<Run> FindRuns(const cv::Mat& gray, const RuneTileBand& band)
-{
-    const int height = band.bottom - band.top + 1;
-
-    std::vector<Run> runs;
-    int start = -1;
-
-    for (int x = 0; x < gray.cols; ++x)
-    {
-        int bright = 0;
-
-        for (int y = band.top; y <= band.bottom; ++y)
-        {
-            if (gray.at<unsigned char>(y, x) > kBrightLevel)
-                ++bright;
-        }
-
-        const bool covered = static_cast<double>(bright) / height > kTileColumnCoverage;
-
-        if (covered && start < 0)
-        {
-            start = x;
-        }
-        else if (!covered && start >= 0)
-        {
-            if (x - start >= kMinRunWidth)
-                runs.push_back({ start, x - 1 });
-
-            start = -1;
-        }
-    }
-
-    if (start >= 0 && gray.cols - start >= kMinRunWidth)
-        runs.push_back({ start, gray.cols - 1 });
-
-    return runs;
-}
-}
-
-bool RuneTileLocator::Analyze(const cv::Mat& gray)
-{
-    valid_ = false;
-    bands_.clear();
-    x0_ = 0.0;
-    pitch_ = 0.0;
-    tileWidth_ = 0;
-
-    if (gray.empty() || gray.type() != CV_8UC1)
-        return false;
-
-    std::vector<double> widths;
-    std::vector<double> pitches;
-    std::vector<int> lefts;
-
-    for (const RuneTileBand& band : FindBands(gray))
-    {
-        const int height = band.bottom - band.top + 1;
-        const std::vector<Run> runs = FindRuns(gray, band);
-
-        std::vector<Run> square;
-
-        for (const Run& run : runs)
-        {
-            if (run.Width() >= kSquareLow * height && run.Width() <= kSquareHigh * height)
-                square.push_back(run);
-        }
-
-        if (static_cast<int>(square.size()) < kMinTilesPerBand)
-            continue;
-
-        bands_.push_back(band);
-
-        double smallest = 0.0;
-
-        for (size_t i = 0; i + 1 < square.size(); ++i)
-        {
-            const double gap = square[i + 1].left - square[i].left;
-
-            if (gap < kAdjacentPitchFloor * square[i].Width())
-                continue;
-
-            if (smallest <= 0.0 || gap < smallest)
-                smallest = gap;
-        }
-
-        if (smallest > 0.0)
-            pitches.push_back(smallest);
-
-        for (const Run& run : square)
-        {
-            widths.push_back(run.Width());
-            lefts.push_back(run.left);
-        }
-    }
-
-    if (bands_.empty() || pitches.empty() || lefts.empty())
-    {
-        bands_.clear();
-        return false;
-    }
-
-    tileWidth_ = static_cast<int>(std::lround(Median(widths)));
-    pitch_ = Median(pitches);
-    x0_ = *std::min_element(lefts.begin(), lefts.end());
-
-    valid_ = tileWidth_ > 0 && pitch_ >= tileWidth_;
-
-    if (!valid_)
-        bands_.clear();
+    valid_ = !bands_.empty();
 
     return valid_;
 }
 
-const RuneTileBand* RuneTileLocator::BandFor(int y) const
+const RuneTileBand* RuneTileLocator::BandContaining(int y) const
 {
     for (const RuneTileBand& band : bands_)
     {
@@ -194,6 +95,11 @@ const RuneTileBand* RuneTileLocator::BandFor(int y) const
             return &band;
     }
 
+    return nullptr;
+}
+
+const RuneTileBand* RuneTileLocator::BandAbove(int y) const
+{
     const RuneTileBand* best = nullptr;
 
     for (const RuneTileBand& band : bands_)
@@ -208,9 +114,141 @@ const RuneTileBand* RuneTileLocator::BandFor(int y) const
     return best;
 }
 
-cv::Rect RuneTileLocator::TileRect(const RuneTileBand& band, int index) const
+std::vector<cv::Rect> RuneTileLocator::TilesForRow(const cv::Mat& gray, int textTop, int count) const
 {
-    const int left = static_cast<int>(std::lround(x0_ + pitch_ * index));
+    if (const RuneTileBand* band = BandContaining(textTop))
+    {
+        std::vector<cv::Rect> tiles = TilesIn(gray, *band, count);
 
-    return cv::Rect(left, band.top, tileWidth_, band.bottom - band.top + 1);
+        if (!tiles.empty())
+            return tiles;
+    }
+
+    if (const RuneTileBand* band = BandAbove(textTop))
+        return TilesIn(gray, *band, count);
+
+    return {};
+}
+
+std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const
+{
+    if (count <= 0 || count > kMaxTilesPerRow || gray.empty() || gray.type() != CV_8UC1)
+        return {};
+
+    if (band.top < 0 || band.bottom >= gray.rows || band.Height() < kMinBandHeight)
+        return {};
+
+    std::vector<double> spread(gray.cols);
+    double peak = 0.0;
+
+    for (int x = 0; x < gray.cols; ++x)
+    {
+        spread[x] = ColumnSpread(gray, x, band);
+        peak = std::max(peak, spread[x]);
+    }
+
+    if (peak <= 0.0)
+        return {};
+
+    const double threshold = peak * kStripThresholdShare;
+
+    int left = -1;
+
+    for (int x = 0; x < gray.cols; ++x)
+    {
+        if (spread[x] > threshold)
+        {
+            left = x;
+            break;
+        }
+    }
+
+    if (left < 0)
+        return {};
+
+    int right = left;
+    int flat = 0;
+
+    for (int x = left; x < gray.cols; ++x)
+    {
+        if (spread[x] > threshold)
+        {
+            right = x;
+            flat = 0;
+            continue;
+        }
+
+        if (++flat > kStripFlatRunToStop)
+            break;
+    }
+
+    const double pitch = static_cast<double>(right - left + 1) / count;
+    const double height = band.Height();
+
+    if (pitch < kSquareLow * height || pitch > kSquareHigh * height)
+        return {};
+
+    if (count > 1)
+    {
+        double seam = 0.0;
+        double centre = 0.0;
+        int seamCount = 0;
+        int centreCount = 0;
+
+        for (int i = 1; i < count; ++i)
+        {
+            const int boundary = left + static_cast<int>(std::lround(pitch * i));
+
+            for (int d = -kSeamHalfWidth; d <= kSeamHalfWidth; ++d)
+            {
+                const int x = boundary + d;
+
+                if (x >= 0 && x < gray.cols)
+                {
+                    seam += spread[x];
+                    ++seamCount;
+                }
+            }
+
+            const int middle = left + static_cast<int>(std::lround(pitch * (i - 0.5)));
+
+            for (int d = -kCentreHalfWidth; d <= kCentreHalfWidth; ++d)
+            {
+                const int x = middle + d;
+
+                if (x >= 0 && x < gray.cols)
+                {
+                    centre += spread[x];
+                    ++centreCount;
+                }
+            }
+        }
+
+        if (seamCount == 0 || centreCount == 0)
+            return {};
+
+        const double centreMean = centre / centreCount;
+
+        if (centreMean <= 0.0)
+            return {};
+
+        if ((seam / seamCount) / centreMean > kMaxSeamToCentreSpread)
+            return {};
+    }
+
+    std::vector<cv::Rect> tiles;
+    tiles.reserve(count);
+
+    for (int i = 0; i < count; ++i)
+    {
+        const int x = left + static_cast<int>(std::lround(pitch * i));
+        const int w = static_cast<int>(std::lround(pitch));
+
+        if (x + w > gray.cols)
+            break;
+
+        tiles.push_back(cv::Rect(x, band.top, w, band.Height()));
+    }
+
+    return tiles;
 }

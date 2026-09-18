@@ -337,6 +337,75 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
     return rows;
 }
 
+static cv::Mat TrimTrailingBlock(const cv::Mat& bin)
+{
+    constexpr double kBlockInkShare = 0.45;
+    constexpr int kMinGapDivisor = 8;
+    constexpr int kMinGapColumns = 6;
+
+    if (bin.empty() || bin.cols < 16)
+        return bin;
+
+    std::vector<int> ink(bin.cols, 0);
+
+    for (int y = 0; y < bin.rows; ++y)
+    {
+        const unsigned char* row = bin.ptr<unsigned char>(y);
+
+        for (int x = 0; x < bin.cols; ++x)
+        {
+            if (row[x] < 128)
+                ++ink[x];
+        }
+    }
+
+    int end = bin.cols - 1;
+
+    while (end >= 0 && ink[end] == 0)
+        --end;
+
+    if (end < 0)
+        return bin;
+
+    const int gap = std::max(kMinGapColumns, bin.rows / kMinGapDivisor);
+
+    int x = end;
+    int blank = 0;
+
+    while (x >= 0)
+    {
+        if (ink[x] == 0)
+        {
+            if (++blank >= gap)
+                break;
+        }
+        else
+        {
+            blank = 0;
+        }
+
+        --x;
+    }
+
+    if (x < 0)
+        return bin;
+
+    const int start = x + blank + 1;
+
+    if (start > end)
+        return bin;
+
+    double total = 0.0;
+
+    for (int i = start; i <= end; ++i)
+        total += static_cast<double>(ink[i]) / bin.rows;
+
+    if (total / (end - start + 1) <= kBlockInkShare)
+        return bin;
+
+    return bin(cv::Rect(0, 0, start, bin.rows));
+}
+
 std::vector<LootLine> OCR::RecognizeTextOnly(
     tesseract::TessBaseAPI& api,
     const cv::Mat& textGray,
@@ -352,6 +421,8 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
 
     cv::Mat bin;
     cv::threshold(scaled, bin, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
+
+    bin = TrimTrailingBlock(bin);
 
     if (!debugBinPath.empty())
         SaveOcrDebugImage(debugBinPath, bin);

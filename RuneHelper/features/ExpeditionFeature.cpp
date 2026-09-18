@@ -202,6 +202,28 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
     if (!settings_.highlightRare)
         return;
 
+    if (tiles_.Valid())
+    {
+        bool everyRowHasBand = true;
+
+        for (const ScreenRecipe& entry : found)
+        {
+            const std::vector<cv::Rect> probe = tiles_.TilesForRow(
+                frame.gray,
+                frame.rows[entry.rowIndex].textTop,
+                static_cast<int>(entry.recipe->runes.size()));
+
+            if (probe.empty())
+            {
+                everyRowHasBand = false;
+                break;
+            }
+        }
+
+        if (!everyRowHasBand)
+            tiles_ = RuneTileLocator{};
+    }
+
     if (!tiles_.Valid())
         tiles_.Analyze(frame.gray);
 
@@ -210,26 +232,21 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
 
     for (const ScreenRecipe& entry : found)
     {
-        const RuneTileBand* band = tiles_.BandFor(frame.rows[entry.rowIndex].textTop);
+        const std::vector<cv::Rect> tiles = tiles_.TilesForRow(
+            frame.gray,
+            frame.rows[entry.rowIndex].textTop,
+            static_cast<int>(entry.recipe->runes.size()));
 
-        if (!band)
-            continue;
-
-        for (size_t i = 0; i < entry.recipe->runes.size(); ++i)
+        for (size_t i = 0; i < tiles.size(); ++i)
         {
             if (!database_.IsRareRune(entry.recipe->runes[i]))
                 continue;
 
-            const cv::Rect tile = tiles_.TileRect(*band, static_cast<int>(i));
-
-            if (tile.x + tile.width > frame.gray.cols)
-                break;
-
             OverlayMark mark;
-            mark.x = frame.region.x + tile.x;
-            mark.y = frame.region.y + tile.y;
-            mark.width = tile.width;
-            mark.height = tile.height;
+            mark.x = frame.region.x + tiles[i].x;
+            mark.y = frame.region.y + tiles[i].y;
+            mark.width = tiles[i].width;
+            mark.height = tiles[i].height;
             mark.color = OverlayRgb(255, 220, 80);
 
             frame.overlay.marks.push_back(mark);
