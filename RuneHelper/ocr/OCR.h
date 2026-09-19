@@ -43,7 +43,7 @@ private:
     bool initialized_ = false;
 
     std::string tessdataPath_;
-    std::unique_ptr<tesseract::TessBaseAPI> api_;
+    std::vector<std::unique_ptr<tesseract::TessBaseAPI>> apis_;
     std::mutex apiMutex_;
 
     static void Trim(std::string& s);

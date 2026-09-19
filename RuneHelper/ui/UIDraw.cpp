@@ -18,6 +18,7 @@ constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
 constexpr double kConfigSaveDelaySeconds = 0.5;
 constexpr int kTrustedMatchConfidence = 85;
+constexpr float kMinDebugTableHeight = 120.0f;
 }
 
 void UIDraw::CellText(const char* text)
@@ -336,12 +337,19 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
         return;
     }
 
+    const float available = ImGui::GetContentRegionAvail().y;
+    const ImVec2 tableSize(0.0f, available > kMinDebugTableHeight ? available : kMinDebugTableHeight);
+
     if (ImGui::BeginTable("ocr_debug_table", 4,
         ImGuiTableFlags_Borders |
         ImGuiTableFlags_RowBg |
         ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_SizingStretchProp))
+        ImGuiTableFlags_ScrollY |
+        ImGuiTableFlags_SizingStretchProp,
+        tableSize))
     {
+        ImGui::TableSetupScrollFreeze(0, 1);
+
         ImGui::TableSetupColumn("OCR Text");
         ImGui::TableSetupColumn("Matched");
         ImGui::TableSetupColumn("Confidence");

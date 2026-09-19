@@ -10,11 +10,28 @@
 #include "platform/PlatformPaths.h"
 
 #include <algorithm>
+#include <atomic>
 #include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <sstream>
+#include <thread>
+
+namespace
+{
+constexpr std::size_t kMaxOcrWorkers = 4;
+
+std::size_t OcrWorkerCount()
+{
+    const unsigned hardware = std::thread::hardware_concurrency();
+
+    if (hardware <= 1)
+        return 1;
+
+    return (std::min)(kMaxOcrWorkers, static_cast<std::size_t>(hardware / 2));
+}
+}
 
 bool OCR::Init(const std::string& tessdataPath)
 {
@@ -31,23 +48,36 @@ bool OCR::Init(const std::string& tessdataPath)
         return false;
     }
 
-    auto api = std::make_unique<tesseract::TessBaseAPI>();
-    int rc = api->Init(tessdataPath_.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
-    if (rc != 0)
-    {
-        LOG_ERROR("Tesseract api.Init failed, rc=" + std::to_string(rc));
-        return false;
-    }
+    std::vector<std::unique_ptr<tesseract::TessBaseAPI>> apis;
 
-    SetupTesseractApi(*api);
+    for (std::size_t i = 0; i < OcrWorkerCount(); ++i)
+    {
+        auto api = std::make_unique<tesseract::TessBaseAPI>();
+        const int rc = api->Init(tessdataPath_.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
+
+        if (rc != 0)
+        {
+            if (apis.empty())
+            {
+                LOG_ERROR("Tesseract api.Init failed, rc=" + std::to_string(rc));
+                return false;
+            }
+
+            LOG_ERROR("Tesseract worker api.Init failed, rc=" + std::to_string(rc));
+            break;
+        }
+
+        SetupTesseractApi(*api);
+        apis.push_back(std::move(api));
+    }
 
     {
         std::lock_guard lock(apiMutex_);
-        api_ = std::move(api);
+        apis_ = std::move(apis);
     }
 
     initialized_ = true;
-    LOG_INFO("OCR initialized");
+    LOG_INFO("OCR initialized, workers: " + std::to_string(apis_.size()));
 
     return true;
 }
@@ -495,10 +525,8 @@ std::vector<LootLine> OCR::RecognizeLoot(
         return result;
 
     std::unique_lock lock(apiMutex_);
-    if (!api_)
+    if (apis_.empty())
         return result;
-
-    tesseract::TessBaseAPI& api = *api_;
 
     bool debugOCR = config.debugOCR && !bgr.empty();
     std::filesystem::path debugDir;
@@ -521,52 +549,79 @@ std::vector<LootLine> OCR::RecognizeLoot(
     auto rows = FindLootRows(gray);
     const std::vector<int> textStarts = FindTextStartX(gray, rows);
 
+    struct RowJob
+    {
+        cv::Mat textGray;
+        std::string debugBinPath;
+        int offsetX = 0;
+        int offsetY = 0;
+        std::vector<LootLine> lines;
+    };
+
+    std::vector<RowJob> jobs(rows.size());
+
     for (size_t rowIndex = 0; rowIndex < rows.size(); ++rowIndex)
     {
-        const auto& rowRect = rows[rowIndex];
+        const cv::Rect& rowRect = rows[rowIndex];
         cv::Mat rowGray = gray(rowRect);
 
-        if (debugOCR)
-        {
-            SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), bgr(rowRect));
-            cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);
-        }
-
         const int textX = textStarts[rowIndex];
+        const cv::Rect textRect(textX, 0, rowGray.cols - textX, rowGray.rows);
 
-        cv::Rect textRect(
-            textX,
-            0,
-            rowGray.cols - textX,
-            rowGray.rows
+        RowJob& job = jobs[rowIndex];
+        job.textGray = rowGray(textRect);
+        job.offsetX = rowRect.x + textX;
+        job.offsetY = rowRect.y;
+
+        if (!debugOCR)
+            continue;
+
+        SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), bgr(rowRect));
+        SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), bgr(rowRect)(textRect));
+        job.debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin").string();
+
+        cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);
+        cv::line(
+            debugRows,
+            cv::Point(job.offsetX, rowRect.y),
+            cv::Point(job.offsetX, rowRect.y + rowRect.height),
+            cv::Scalar(255, 0, 0),
+            2
         );
+    }
 
-        cv::Mat textGray = rowGray(textRect);
+    const size_t workers = (std::min)(apis_.size(), jobs.size());
 
-        std::string debugBinPath;
-        if (debugOCR)
+    if (workers <= 1)
+    {
+        for (RowJob& job : jobs)
+            job.lines = RecognizeTextOnly(*apis_[0], job.textGray, job.debugBinPath);
+    }
+    else
+    {
+        std::atomic<size_t> next{ 0 };
+        std::vector<std::jthread> pool;
+        pool.reserve(workers);
+
+        for (size_t worker = 0; worker < workers; ++worker)
         {
-            SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), bgr(rowRect)(textRect));
-            debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin").string();
-
-            const int absoluteTextX = rowRect.x + textX;
-            cv::line(
-                debugRows,
-                cv::Point(absoluteTextX, rowRect.y),
-                cv::Point(absoluteTextX, rowRect.y + rowRect.height),
-                cv::Scalar(255, 0, 0),
-                2
-            );
+            pool.emplace_back(
+                [this, worker, &next, &jobs]
+                {
+                    for (size_t i = next++; i < jobs.size(); i = next++)
+                        jobs[i].lines = RecognizeTextOnly(*apis_[worker], jobs[i].textGray, jobs[i].debugBinPath);
+                });
         }
+    }
 
-        auto lines = RecognizeTextOnly(api, textGray, debugBinPath);
-
-        for (auto& line : lines)
+    for (RowJob& job : jobs)
+    {
+        for (LootLine& line : job.lines)
         {
-            line.x1 += rowRect.x + textX;
-            line.x2 += rowRect.x + textX;
-            line.y1 += rowRect.y;
-            line.y2 += rowRect.y;
+            line.x1 += job.offsetX;
+            line.x2 += job.offsetX;
+            line.y1 += job.offsetY;
+            line.y2 += job.offsetY;
 
             result.push_back(std::move(line));
         }
