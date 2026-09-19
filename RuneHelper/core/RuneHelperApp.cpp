@@ -6,6 +6,8 @@
 #include <utility>
 #include <vector>
 
+#include <opencv2/core/utility.hpp>
+
 #include "core/DebugData.h"
 #include "features/ExpeditionFeature.h"
 #include "features/PriceOverlayFeature.h"
@@ -37,6 +39,8 @@ bool RuneHelperApp::Init()
 
     LOG_INFO("--------------------------");
     LOG_INFO("RuneHelper started! v" RUNEHELPER_VERSION);
+
+    cv::setNumThreads(1);
 
     configManager_.Load();
 
