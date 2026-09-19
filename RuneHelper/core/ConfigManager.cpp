@@ -57,7 +57,6 @@ void ConfigManager::Normalize(AppConfig& config)
 {
     config.regionW = std::max(0, config.regionW);
     config.regionH = std::max(0, config.regionH);
-    config.ocrIntervalMs = std::clamp(config.ocrIntervalMs, 100, 2000);
     config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 5, 360);
     if (config.priceLeague == "Hardcore Runes of Aldur")
@@ -111,7 +110,6 @@ bool ConfigManager::Load()
     config_.overlayBackground = j.value("overlayBackground", config_.overlayBackground);
     config_.overlayOutline    = j.value("overlayOutline",    config_.overlayOutline);
     config_.priceSearchEnabled = j.value("priceSearchEnabled", config_.priceSearchEnabled);
-    config_.ocrIntervalMs   = j.value("ocrIntervalMs",  config_.ocrIntervalMs);
 
     config_.hotkeyToggleOCR         = j.value("hotkeyToggleOCR",        config_.hotkeyToggleOCR);
     config_.hotkeySingleSnapshot    = j.value("hotkeySingleSnapshot",   config_.hotkeySingleSnapshot);
@@ -164,7 +162,6 @@ bool ConfigManager::Save() const
     j["overlayBackground"] = config.overlayBackground;
     j["overlayOutline"]    = config.overlayOutline;
     j["priceSearchEnabled"] = config.priceSearchEnabled;
-    j["ocrIntervalMs"]  = config.ocrIntervalMs;
 
     j["overlayOffsetX"]     = config.overlayOffsetX;
     j["overlayOffsetY"]     = config.overlayOffsetY;

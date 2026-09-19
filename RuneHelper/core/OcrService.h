@@ -53,8 +53,8 @@ private:
 
     void ResetFrameState();
     void ProcessFrame(const cv::Rect& region, const AppConfig& config);
+    bool NeedsOcr(const cv::Mat& gray);
     void PublishFrameResult(const std::vector<LootLine>& loot, const cv::Mat& gray, const cv::Rect& region, const AppConfig& config);
-    int NextSleepMs(const AppConfig& config) const;
 
     void ResetState(bool initializing);
     void ClearRuntimeBuffers();
@@ -93,7 +93,8 @@ private:
 
 
     std::vector<LootLine> lastLoot_;
-    bool forceOcrFrame_ = false;
+    std::atomic<bool> forceOcr_ = false;
+    std::chrono::steady_clock::time_point lastOcrAt_{};
     int captureFailures_ = 0;
 
     std::jthread initThread_;

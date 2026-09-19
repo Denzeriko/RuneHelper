@@ -8,40 +8,32 @@ namespace
 {
 constexpr double kOcrPixelDiffThreshold = 8.0;
 constexpr double kOcrChangedPixelRatioThreshold = 0.002;
-}
 
-bool OcrFrameDiffer::IsSimilarFrame(const cv::Mat& gray, bool forceFrame)
+bool SimilarFrames(const cv::Mat& a, const cv::Mat& b)
 {
-    if (forceFrame)
-    {
-        stableFrames_ = 0;
+    if (a.empty() || b.empty() || a.size() != b.size() || a.type() != b.type())
         return false;
-    }
-
-    if (gray.empty() ||
-        lastGray_.empty() ||
-        gray.size() != lastGray_.size() ||
-        gray.type() != lastGray_.type())
-    {
-        stableFrames_ = 0;
-        return false;
-    }
 
     cv::Mat diff;
     cv::Mat changed;
-    cv::absdiff(gray, lastGray_, diff);
+    cv::absdiff(a, b, diff);
     cv::threshold(diff, changed, kOcrPixelDiffThreshold, 255, cv::THRESH_BINARY);
 
     const double changedPixels = static_cast<double>(cv::countNonZero(changed));
-    const double totalPixels = static_cast<double>(gray.total());
-    const bool similar = totalPixels > 0.0 && (changedPixels / totalPixels) < kOcrChangedPixelRatioThreshold;
+    const double totalPixels = static_cast<double>(a.total());
 
-    if (similar)
-        ++stableFrames_;
-    else
-        stableFrames_ = 0;
+    return totalPixels > 0.0 && (changedPixels / totalPixels) < kOcrChangedPixelRatioThreshold;
+}
+}
 
-    return similar;
+bool OcrFrameDiffer::IsSettled(const cv::Mat& gray) const
+{
+    return SimilarFrames(gray, lastGray_);
+}
+
+bool OcrFrameDiffer::ChangedSinceOcr(const cv::Mat& gray) const
+{
+    return !SimilarFrames(gray, lastOcrGray_);
 }
 
 void OcrFrameDiffer::StoreFrame(cv::Mat gray)
@@ -49,13 +41,13 @@ void OcrFrameDiffer::StoreFrame(cv::Mat gray)
     lastGray_ = std::move(gray);
 }
 
+void OcrFrameDiffer::StoreOcrFrame(const cv::Mat& gray)
+{
+    lastOcrGray_ = gray.clone();
+}
+
 void OcrFrameDiffer::Reset()
 {
     lastGray_.release();
-    stableFrames_ = 0;
-}
-
-int OcrFrameDiffer::StableFrames() const
-{
-    return stableFrames_;
+    lastOcrGray_.release();
 }

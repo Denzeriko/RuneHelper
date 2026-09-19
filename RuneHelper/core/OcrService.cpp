@@ -21,8 +21,9 @@
 
 namespace
 {
-constexpr int kStableOcrFramesBeforeReuse = 3;
-constexpr int kMaxStableOcrIntervalMs = 2000;
+constexpr int kPollIntervalMs = 100;
+constexpr int kMinOcrGapMs = 600;
+constexpr int kMaxOcrDelayMs = 1500;
 constexpr int kOcrSleepChunkMs = 50;
 constexpr int kEmptyOverlayFramesBeforeClear = 3;
 constexpr int kCaptureFailuresBeforeWarning = 3;
@@ -145,6 +146,7 @@ void OcrService::RequestSingleSnapshot()
     if (!running_.load())
         return;
 
+    forceOcr_ = true;
     singleSnapshotRequested_ = true;
 }
 
@@ -207,16 +209,9 @@ void OcrService::ResetFrameState()
 {
     frameDiffer_.Reset();
     lastLoot_.clear();
+    lastOcrAt_ = {};
     captureFailures_ = 0;
     captureFailing_ = false;
-}
-
-int OcrService::NextSleepMs(const AppConfig& config) const
-{
-    if (frameDiffer_.StableFrames() >= kStableOcrFramesBeforeReuse)
-        return std::min(config.ocrIntervalMs * 2, kMaxStableOcrIntervalMs);
-
-    return config.ocrIntervalMs;
 }
 
 namespace
@@ -322,25 +317,32 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
     cv::Mat gray;
     cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
 
-    const bool similarFrame = frameDiffer_.IsSimilarFrame(gray, forceOcrFrame_);
-    const bool stableFrame = similarFrame && frameDiffer_.StableFrames() >= kStableOcrFramesBeforeReuse;
-
-    std::vector<LootLine> loot;
-
-    if (stableFrame && !lastLoot_.empty())
+    if (NeedsOcr(gray))
     {
-        loot = lastLoot_;
-    }
-    else
-    {
-        loot = ocr_.RecognizeLoot(img, gray, config);
-        lastLoot_ = loot;
-        forceOcrFrame_ = false;
+        lastLoot_ = ocr_.RecognizeLoot(img, gray, config);
+        frameDiffer_.StoreOcrFrame(gray);
+        lastOcrAt_ = std::chrono::steady_clock::now();
     }
 
-    PublishFrameResult(loot, gray, region, config);
+    PublishFrameResult(lastLoot_, gray, region, config);
 
     frameDiffer_.StoreFrame(std::move(gray));
+}
+
+bool OcrService::NeedsOcr(const cv::Mat& gray)
+{
+    if (forceOcr_.exchange(false))
+        return true;
+
+    if (!frameDiffer_.ChangedSinceOcr(gray))
+        return false;
+
+    const auto sinceOcr = std::chrono::steady_clock::now() - lastOcrAt_;
+
+    if (sinceOcr < std::chrono::milliseconds(kMinOcrGapMs))
+        return false;
+
+    return frameDiffer_.IsSettled(gray) || sinceOcr >= std::chrono::milliseconds(kMaxOcrDelayMs);
 }
 
 void OcrService::WorkerLoop()
@@ -388,7 +390,7 @@ void OcrService::WorkerLoop()
 
         ProcessFrame(region, config);
 
-        SleepOcrLoop(running_, singleSnapshotRequested_, NextSleepMs(config));
+        SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
     }
 }
 
@@ -402,7 +404,7 @@ void OcrService::ResetState(bool initializing)
     overlayDirty_ = false;
     debugDirty_ = false;
     emptyOverlayFrames_ = 0;
-    forceOcrFrame_ = false;
+    forceOcr_ = false;
     ResetFrameState();
     ClearRuntimeBuffers();
 }

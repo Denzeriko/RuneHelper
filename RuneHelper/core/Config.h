@@ -12,7 +12,6 @@ struct AppConfig
 
     bool ocrEnabled         = true;
     bool priceSearchEnabled = true;
-    int ocrIntervalMs       = 600;
 
     int hotkeyToggleOCR         = 0x77; //VK_F8;
     int hotkeySingleSnapshot    = 0x78; //VK_F9;

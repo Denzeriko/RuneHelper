@@ -264,14 +264,6 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     AppConfig& config = manager.ConfigDraft();
     bool configChanged = false;
 
-    ImGui::SeparatorText("OCR");
-
-    configChanged |= ImGui::SliderInt("OCR interval (ms)", &config.ocrIntervalMs, 100, 2000);
-    if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Lower values = faster updates but higher CPU usage.");
-
-    ImGui::Spacing();
-
     ImGui::SeparatorText("PRICES");
 
     configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
