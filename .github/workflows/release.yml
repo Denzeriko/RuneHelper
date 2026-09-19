@@ -133,7 +133,15 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      VT_API_KEY: ${{ secrets.VIRUSTOTAL_API_KEY }}
+
     steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+
       - name: Download binaries
         uses: actions/download-artifact@v8
         with:
@@ -149,3 +157,118 @@ jobs:
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || \
             gh release create "$GITHUB_REF_NAME" --generate-notes --draft
           gh release upload "$GITHUB_REF_NAME" dist/* --clobber
+
+      - name: Scan on VirusTotal
+        if: ${{ env.VT_API_KEY != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -uo pipefail
+
+          vt() { curl -sS -H "x-apikey: $VT_API_KEY" "$@"; }
+
+          notes=""
+          worst=0
+          worst_total=0
+
+          for file in dist/RuneHelper-windows-x86_64.exe dist/RuneHelper-linux-x86_64-x11 dist/RuneHelper-linux-x86_64-wayland; do
+            [ -f "$file" ] || continue
+
+            name=$(basename "$file")
+            sha=$(sha256sum "$file" | cut -d" " -f1)
+            report=$(vt "https://www.virustotal.com/api/v3/files/$sha" || true)
+            stats=$(printf "%s" "$report" | jq -c ".data.attributes.last_analysis_stats // empty" 2>/dev/null || true)
+
+            if [ -z "$stats" ]; then
+              echo "$name is unknown to VirusTotal, uploading"
+              id=$(vt -X POST --form "file=@$file" https://www.virustotal.com/api/v3/files | jq -r ".data.id // empty" 2>/dev/null || true)
+
+              if [ -n "$id" ]; then
+                for _ in $(seq 40); do
+                  sleep 15
+                  status=$(vt "https://www.virustotal.com/api/v3/analyses/$id" | jq -r ".data.attributes.status // empty" 2>/dev/null || true)
+                  [ "$status" = "completed" ] && break
+                done
+              fi
+
+              report=$(vt "https://www.virustotal.com/api/v3/files/$sha" || true)
+              stats=$(printf "%s" "$report" | jq -c ".data.attributes.last_analysis_stats // empty" 2>/dev/null || true)
+            fi
+
+            link="https://www.virustotal.com/gui/file/$sha"
+
+            if [ -z "$stats" ]; then
+              echo "::warning title=VirusTotal::no report for $name"
+              notes="$notes- $name — no report yet, $link"$'\n'
+              continue
+            fi
+
+            bad=$(printf "%s" "$stats" | jq -r "(.malicious // 0) + (.suspicious // 0)")
+            total=$(printf "%s" "$stats" | jq -r "[(.malicious // 0), (.suspicious // 0), (.undetected // 0), (.harmless // 0)] | add")
+
+            echo "$name: $bad/$total  $link"
+
+            if [ "$bad" -ge "$worst" ]; then
+              worst=$bad
+              worst_total=$total
+            fi
+            notes="$notes- $name — $bad/$total detections, $link"$'\n'
+
+            if [ "$bad" -gt 0 ]; then
+              flagged=$(printf "%s" "$report" | jq -r "
+                .data.attributes.last_analysis_results
+                | to_entries
+                | map(select(.value.category == \"malicious\" or .value.category == \"suspicious\"))
+                | map(.key + \": \" + (.value.result // \"?\"))
+                | join(\", \")" 2>/dev/null || true)
+
+              echo "::warning title=VirusTotal::$name flagged by $flagged"
+              notes="$notes  flagged by $flagged"$'\n'
+            fi
+          done
+
+          {
+            echo "## VirusTotal"
+            echo
+            printf "%s" "$notes"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          gh release view "$GITHUB_REF_NAME" --json body -q .body > notes.md
+          {
+            echo
+            echo "### VirusTotal"
+            echo
+            printf "%s" "$notes"
+          } >> notes.md
+
+          gh release edit "$GITHUB_REF_NAME" --notes-file notes.md
+
+          if [ "$worst_total" -eq 0 ]; then
+            exit 0
+          fi
+
+          if [ "$worst" -eq 0 ]; then
+            color=brightgreen
+          elif [ "$worst" -le 2 ]; then
+            color=yellow
+          else
+            color=red
+          fi
+
+          badge=.github/badges/virustotal.json
+          mkdir -p "$(dirname "$badge")"
+          jq -n --arg m "$worst/$worst_total" --arg c "$color" \
+            '{schemaVersion: 1, label: "virustotal", message: $m, color: $c}' > "$badge"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$badge"
+
+          if git diff --cached --quiet; then
+            echo "badge unchanged"
+            exit 0
+          fi
+
+          git commit -m "virustotal badge: $worst/$worst_total [skip ci]"
+          git push origin HEAD:"${{ github.event.repository.default_branch }}"
