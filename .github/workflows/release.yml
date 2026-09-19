@@ -171,6 +171,7 @@ jobs:
           notes=""
           worst=0
           worst_total=0
+          win_sha=""
 
           for file in dist/RuneHelper-windows-x86_64.exe dist/RuneHelper-linux-x86_64-x11 dist/RuneHelper-linux-x86_64-wayland; do
             [ -f "$file" ] || continue
@@ -209,10 +210,9 @@ jobs:
 
             echo "$name: $bad/$total  $link"
 
-            if [ "$bad" -ge "$worst" ]; then
-              worst=$bad
-              worst_total=$total
-            fi
+            [ "$bad" -gt "$worst" ] && worst=$bad
+            [ "$total" -gt "$worst_total" ] && worst_total=$total
+            [ "$name" = "RuneHelper-windows-x86_64.exe" ] && win_sha=$sha
             notes="$notes- $name — $bad/$total detections, $link"$'\n'
 
             if [ "$bad" -gt 0 ]; then
@@ -261,9 +261,16 @@ jobs:
           jq -n --arg m "$worst/$worst_total" --arg c "$color" \
             '{schemaVersion: 1, label: "virustotal", message: $m, color: $c}' > "$badge"
 
+          if [ -n "$win_sha" ]; then
+            shield=https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FDenzeriko%2FRuneHelper%2Fmaster%2F.github%2Fbadges%2Fvirustotal.json
+            line="[![VirusTotal]($shield)](https://www.virustotal.com/gui/file/$win_sha)<!-- vt-badge -->"
+            awk -v line="$line" '/<!-- vt-badge -->/ { print line; next } { print }' README.md > README.new
+            mv README.new README.md
+          fi
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add "$badge"
+          git add "$badge" README.md
 
           if git diff --cached --quiet; then
             echo "badge unchanged"
