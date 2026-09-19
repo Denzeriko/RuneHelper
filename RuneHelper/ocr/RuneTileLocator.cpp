@@ -130,13 +130,15 @@ std::vector<cv::Rect> RuneTileLocator::TilesForRow(const cv::Mat& gray, int text
     return {};
 }
 
-std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const
+bool RuneTileLocator::StripBounds(const cv::Mat& gray, int top, int bottom, int& left, int& right)
 {
-    if (count <= 0 || count > kMaxTilesPerRow || gray.empty() || gray.type() != CV_8UC1)
-        return {};
+    if (gray.empty() || gray.type() != CV_8UC1)
+        return false;
 
-    if (band.top < 0 || band.bottom >= gray.rows || band.Height() < kMinBandHeight)
-        return {};
+    if (top < 0 || bottom >= gray.rows || bottom - top + 1 < kMinBandHeight)
+        return false;
+
+    const RuneTileBand band{ top, bottom };
 
     std::vector<double> spread(gray.cols);
     double peak = 0.0;
@@ -148,11 +150,11 @@ std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTi
     }
 
     if (peak <= 0.0)
-        return {};
+        return false;
 
     const double threshold = peak * kStripThresholdShare;
 
-    int left = -1;
+    left = -1;
 
     for (int x = 0; x < gray.cols; ++x)
     {
@@ -164,9 +166,9 @@ std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTi
     }
 
     if (left < 0)
-        return {};
+        return false;
 
-    int right = left;
+    right = left;
     int flat = 0;
 
     for (int x = left; x < gray.cols; ++x)
@@ -181,6 +183,28 @@ std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTi
         if (++flat > kStripFlatRunToStop)
             break;
     }
+
+    return right > left;
+}
+
+std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const
+{
+    if (count <= 0 || count > kMaxTilesPerRow || gray.empty() || gray.type() != CV_8UC1)
+        return {};
+
+    if (band.top < 0 || band.bottom >= gray.rows || band.Height() < kMinBandHeight)
+        return {};
+
+    int left = 0;
+    int right = 0;
+
+    if (!StripBounds(gray, band.top, band.bottom, left, right))
+        return {};
+
+    std::vector<double> spread(gray.cols);
+
+    for (int x = 0; x < gray.cols; ++x)
+        spread[x] = ColumnSpread(gray, x, band);
 
     const double pitch = static_cast<double>(right - left + 1) / count;
     const double height = band.Height();

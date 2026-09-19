@@ -108,6 +108,8 @@ bool ConfigManager::Load()
     config_.regionH = j.value("regionH", config_.regionH);
 
     config_.ocrEnabled      = j.value("ocrEnabled",     config_.ocrEnabled);
+    config_.overlayBackground = j.value("overlayBackground", config_.overlayBackground);
+    config_.overlayOutline    = j.value("overlayOutline",    config_.overlayOutline);
     config_.priceSearchEnabled = j.value("priceSearchEnabled", config_.priceSearchEnabled);
     config_.ocrIntervalMs   = j.value("ocrIntervalMs",  config_.ocrIntervalMs);
 
@@ -159,6 +161,8 @@ bool ConfigManager::Save() const
     j["regionH"] = config.regionH;
 
     j["ocrEnabled"]     = config.ocrEnabled;
+    j["overlayBackground"] = config.overlayBackground;
+    j["overlayOutline"]    = config.overlayOutline;
     j["priceSearchEnabled"] = config.priceSearchEnabled;
     j["ocrIntervalMs"]  = config.ocrIntervalMs;
 

@@ -1,10 +1,14 @@
 #include "features/PriceOverlayFeature.h"
 
+#include <string>
+
 #include "ocr/LootParser.h"
 #include "price/PriceService.h"
 
 namespace
 {
+constexpr int kTrustedMatchConfidence = 85;
+
 OverlayColor ColorForPrice(double priceEx, const AppConfig& config)
 {
     if (priceEx > config.priceColorVeryHigh)
@@ -40,7 +44,12 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
         if (!resolved.price)
             continue;
 
-        frame.rowOverlays[i].Append(LootParser::FormatStackPrice(*resolved.price, row.quantity));
+        std::string note = LootParser::FormatStackPrice(*resolved.price, row.quantity);
+
+        if (resolved.confidence < kTrustedMatchConfidence)
+            note += " ?";
+
+        frame.rowOverlays[i].Append(note);
         frame.rowOverlays[i].SetColor(ColorForPrice(resolved.value, frame.config));
     }
 }

@@ -99,10 +99,14 @@ const Recipe* RecipeDatabase::FindRecipe(std::string_view output, int count) con
     {
         const std::string cleaned = StripOcrNoise(output);
 
-        if (cleaned.empty())
-            return nullptr;
+        if (!cleaned.empty())
+            it = byOutput_.find(std::pair{ ToLower(cleaned), count });
+    }
 
-        it = byOutput_.find(std::pair{ ToLower(cleaned), count });
+    if (it == byOutput_.end() && !outputNames_.Empty())
+    {
+        if (const auto guess = outputNames_.FindBest(output))
+            it = byOutput_.find(std::pair{ ToLower(guess->name), count });
     }
 
     if (it == byOutput_.end())
@@ -220,8 +224,15 @@ bool RecipeDatabase::LoadFromFile(const std::filesystem::path& path)
 
     byOutput_.clear();
 
+    std::set<std::string> outputs;
+
     for (size_t i = 0; i < recipes_.size(); ++i)
+    {
         byOutput_.emplace(std::pair{ ToLower(recipes_[i].output), recipes_[i].count }, i);
+        outputs.insert(recipes_[i].output);
+    }
+
+    outputNames_ = CachedItemNames::Build(std::vector<std::string>(outputs.begin(), outputs.end()));
 
     runeNames_ = std::move(runeNames);
 

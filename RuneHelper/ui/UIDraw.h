@@ -11,4 +11,5 @@ void DrawMainTab(UIManager& manager, UIState& state);
 void DrawSettingsTab(UIManager& manager, UIState& state);
 void DrawDebugTab(UIManager& manager, UIState& state);
 void DrawHotkeyButton(UIManager& manager, UIState& state, const char* label, int& key);
+void CellText(const char* text);
 }

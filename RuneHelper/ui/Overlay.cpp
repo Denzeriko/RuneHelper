@@ -114,6 +114,24 @@ void OverlayWindow::SetFontSize(int size)
     dirty_ = true;
 }
 
+void OverlayWindow::SetBackground(bool enabled)
+{
+    if (state_.background == enabled)
+        return;
+
+    state_.background = enabled;
+    dirty_ = true;
+}
+
+void OverlayWindow::SetOutline(bool enabled)
+{
+    if (state_.outline == enabled)
+        return;
+
+    state_.outline = enabled;
+    dirty_ = true;
+}
+
 void OverlayWindow::SetFontSizeForce(int size)
 {
     if (size <= 0)

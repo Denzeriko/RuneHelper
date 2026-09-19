@@ -21,6 +21,8 @@ struct AppConfig
     int overlayOffsetX  = 20;
     int overlayOffsetY  = 0;
     int overlayFontSize = 24;
+    bool overlayBackground = true;
+    bool overlayOutline    = false;
 
     int priceColorMedium    = 5;
     int priceColorHigh      = 20;

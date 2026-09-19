@@ -1,6 +1,7 @@
 #include "platform/OverlayBackend.h"
 
 #include <algorithm>
+#include <array>
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -18,6 +19,14 @@
 
 namespace
 {
+constexpr int kMarkThickness = 2;
+
+constexpr std::array<std::pair<int, int>, 8> kOutlineOffsets{{
+    { -1, -1 }, { 0, -1 }, { 1, -1 },
+    { -1,  0 },            { 1,  0 },
+    { -1,  1 }, { 0,  1 }, { 1,  1 }
+}};
+
 bool IsWaylandSession()
 {
     const char* sessionType = std::getenv("XDG_SESSION_TYPE");
@@ -438,7 +447,84 @@ void LinuxOverlayBackend::Redraw()
     if (state_.previewEnabled)
         addShape(0, 0, windowW_, windowH_);
 
-    XShapeCombineRegion(display_, window_, ShapeBounding, 0, 0, shape, ShapeSet);
+    if (state_.background)
+    {
+        XShapeCombineRegion(display_, window_, ShapeBounding, 0, 0, shape, ShapeSet);
+    }
+    else
+    {
+        Pixmap mask = XCreatePixmap(
+            display_,
+            window_,
+            static_cast<unsigned int>(std::max(1, windowW_)),
+            static_cast<unsigned int>(std::max(1, windowH_)),
+            1);
+
+        GC maskGc = XCreateGC(display_, mask, 0, nullptr);
+
+        XSetForeground(display_, maskGc, 0);
+        XFillRectangle(display_, mask, maskGc, 0, 0,
+            static_cast<unsigned int>(std::max(1, windowW_)),
+            static_cast<unsigned int>(std::max(1, windowH_)));
+
+        XSetForeground(display_, maskGc, 1);
+
+        for (const auto& text : state_.texts)
+        {
+            const std::string narrow = ToNarrow(text.text);
+            const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+
+            if (XFontStruct* font = FontForSize(size))
+                XSetFont(display_, maskGc, font->fid);
+
+            const int maskX = text.x - windowX_;
+            const int maskY = text.y - windowY_ + size / 3;
+
+            XDrawString(display_, mask, maskGc, maskX, maskY, narrow.c_str(), static_cast<int>(narrow.size()));
+
+            if (state_.outline)
+            {
+                for (const auto& [dx, dy] : kOutlineOffsets)
+                {
+                    XDrawString(
+                        display_,
+                        mask,
+                        maskGc,
+                        maskX + dx,
+                        maskY + dy,
+                        narrow.c_str(),
+                        static_cast<int>(narrow.size()));
+                }
+            }
+        }
+
+        XSetLineAttributes(display_, maskGc, kMarkThickness, LineSolid, CapButt, JoinMiter);
+
+        for (const OverlayMark& mark : state_.marks)
+        {
+            XDrawRectangle(
+                display_,
+                mask,
+                maskGc,
+                mark.x - windowX_,
+                mark.y - windowY_,
+                static_cast<unsigned int>(std::max(1, mark.width - 1)),
+                static_cast<unsigned int>(std::max(1, mark.height - 1)));
+        }
+
+        if (state_.previewEnabled)
+        {
+            XDrawRectangle(display_, mask, maskGc, 0, 0,
+                static_cast<unsigned int>(std::max(1, windowW_ - 1)),
+                static_cast<unsigned int>(std::max(1, windowH_ - 1)));
+        }
+
+        XShapeCombineMask(display_, window_, ShapeBounding, 0, 0, mask, ShapeSet);
+
+        XFreeGC(display_, maskGc);
+        XFreePixmap(display_, mask);
+    }
+
     XDestroyRegion(shape);
 
     XSetForeground(display_, gc_, BlackPixel(display_, screen));
@@ -491,13 +577,34 @@ void LinuxOverlayBackend::Redraw()
         if (XFontStruct* font = FontForSize(size))
             XSetFont(display_, gc_, font->fid);
 
+        const int baseX = text.x - windowX_;
+        const int baseY = text.y - windowY_ + size / 3;
+
+        if (state_.outline)
+        {
+            XSetForeground(display_, gc_, BlackPixel(display_, screen));
+
+            for (const auto& [dx, dy] : kOutlineOffsets)
+            {
+                XDrawString(
+                    display_,
+                    window_,
+                    gc_,
+                    baseX + dx,
+                    baseY + dy,
+                    narrow.c_str(),
+                    static_cast<int>(narrow.size())
+                );
+            }
+        }
+
         XSetForeground(display_, gc_, XColorFromOverlayColor(display_, text.color));
         XDrawString(
             display_,
             window_,
             gc_,
-            text.x - windowX_,
-            text.y - windowY_ + size / 3,
+            baseX,
+            baseY,
             narrow.c_str(),
             static_cast<int>(narrow.size())
         );

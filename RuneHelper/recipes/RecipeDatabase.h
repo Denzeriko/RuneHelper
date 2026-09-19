@@ -7,6 +7,7 @@
 #include <string_view>
 #include <vector>
 
+#include "ocr/NameNormalizer.h"
 #include "recipes/RecipeTypes.h"
 
 std::filesystem::path DownloadedRecipeDatabasePath();
@@ -36,4 +37,5 @@ private:
     std::map<std::pair<std::string, int>, size_t> byOutput_;
     std::set<std::string> runeNames_;
     std::set<std::string> rareRunes_;
+    CachedItemNames outputNames_;
 };

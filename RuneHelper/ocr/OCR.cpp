@@ -62,7 +62,7 @@ void OCR::SetupTesseractApi(tesseract::TessBaseAPI& api)
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
         "0123456789"
-        " '-"
+        " '-()"
     );
 
     api.SetVariable("preserve_interword_spaces", "1");

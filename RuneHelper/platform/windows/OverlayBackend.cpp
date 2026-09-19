@@ -3,7 +3,9 @@
 #include <windows.h>
 
 #include <algorithm>
+#include <array>
 #include <map>
+#include <utility>
 
 #include "core/Logger.h"
 #include "ui/OverlayState.h"
@@ -13,6 +15,12 @@ namespace
 #ifndef WDA_EXCLUDEFROMCAPTURE
 constexpr DWORD WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 #endif
+
+constexpr std::array<std::pair<int, int>, 8> kOutlineOffsets{{
+    { -1, -1 }, { 0, -1 }, { 1, -1 },
+    { -1,  0 },            { 1,  0 },
+    { -1,  1 }, { 0,  1 }, { 1,  1 }
+}};
 
 COLORREF ToColorRef(OverlayColor color)
 {
@@ -400,10 +408,39 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
                     oldFont = previous;
             }
 
-            SetTextColor(hdc, ToColorRef(text.color));
             const int x = text.x - self->virtualX_;
             const int y = text.y - self->virtualY_;
             RECT rect{ x, y - size, x + 600, y + size };
+
+            if (self->state_.background)
+            {
+                SIZE extent{};
+                GetTextExtentPoint32W(hdc, text.text.c_str(), static_cast<int>(text.text.size()), &extent);
+
+                const RECT backdrop{
+                    x - 4,
+                    y - extent.cy / 2 - 2,
+                    x + extent.cx + 4,
+                    y + extent.cy / 2 + 2
+                };
+
+                HBRUSH shade = CreateSolidBrush(RGB(16, 16, 16));
+                FillRect(hdc, &backdrop, shade);
+                DeleteObject(shade);
+            }
+
+            if (self->state_.outline)
+            {
+                SetTextColor(hdc, RGB(0, 0, 0));
+
+                for (const auto& [dx, dy] : kOutlineOffsets)
+                {
+                    RECT shifted{ rect.left + dx, rect.top + dy, rect.right + dx, rect.bottom + dy };
+                    DrawTextW(hdc, text.text.c_str(), -1, &shifted, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
+                }
+            }
+
+            SetTextColor(hdc, ToColorRef(text.color));
             DrawTextW(hdc, text.text.c_str(), -1, &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }
 

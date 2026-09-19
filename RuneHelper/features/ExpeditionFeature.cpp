@@ -12,6 +12,7 @@
 #include "core/Logger.h"
 #include "ocr/LootParser.h"
 #include "price/PriceService.h"
+#include "ui/UIDraw.h"
 #include "ui/UIManager.h"
 
 namespace
@@ -20,6 +21,10 @@ constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 
 constexpr double kPerWaveTolerance = 0.01;
+
+constexpr int kRowSnap = 6;
+
+constexpr float kMinTableHeight = 120.0f;
 
 std::string FormatPerWave(double value)
 {
@@ -200,28 +205,28 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
     }
 
     if (!settings_.highlightRare)
-        return;
-
-    if (tiles_.Valid())
     {
-        bool everyRowHasBand = true;
+        markSignature_.clear();
+        cachedMarks_.clear();
+        return;
+    }
 
-        for (const ScreenRecipe& entry : found)
-        {
-            const std::vector<cv::Rect> probe = tiles_.TilesForRow(
-                frame.gray,
-                frame.rows[entry.rowIndex].textTop,
-                static_cast<int>(entry.recipe->runes.size()));
+    std::string signature;
 
-            if (probe.empty())
-            {
-                everyRowHasBand = false;
-                break;
-            }
-        }
+    for (const ScreenRecipe& entry : found)
+    {
+        signature += entry.recipe->output;
+        signature += ':';
+        signature += std::to_string(entry.recipe->count);
+        signature += '@';
+        signature += std::to_string(frame.rows[entry.rowIndex].textTop / kRowSnap);
+        signature += ';';
+    }
 
-        if (!everyRowHasBand)
-            tiles_ = RuneTileLocator{};
+    if (signature == markSignature_)
+    {
+        frame.overlay.marks.insert(frame.overlay.marks.end(), cachedMarks_.begin(), cachedMarks_.end());
+        return;
     }
 
     if (!tiles_.Valid())
@@ -230,12 +235,21 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
     if (!tiles_.Valid())
         return;
 
+    std::vector<OverlayMark> marks;
+    bool everyRowResolved = true;
+
     for (const ScreenRecipe& entry : found)
     {
         const std::vector<cv::Rect> tiles = tiles_.TilesForRow(
             frame.gray,
             frame.rows[entry.rowIndex].textTop,
             static_cast<int>(entry.recipe->runes.size()));
+
+        if (tiles.empty())
+        {
+            everyRowResolved = false;
+            continue;
+        }
 
         for (size_t i = 0; i < tiles.size(); ++i)
         {
@@ -249,9 +263,17 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
             mark.height = tiles[i].height;
             mark.color = OverlayRgb(255, 220, 80);
 
-            frame.overlay.marks.push_back(mark);
+            marks.push_back(mark);
         }
     }
+
+    if (!everyRowResolved)
+        tiles_ = RuneTileLocator{};
+
+    markSignature_ = std::move(signature);
+    cachedMarks_ = std::move(marks);
+
+    frame.overlay.marks.insert(frame.overlay.marks.end(), cachedMarks_.begin(), cachedMarks_.end());
 }
 
 void ExpeditionFeature::DrawTab(UIManager& manager)
@@ -367,14 +389,21 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
             return a.recipe->runes.size() < b.recipe->runes.size();
         });
 
+    const float available = ImGui::GetContentRegionAvail().y;
+    const ImVec2 tableSize(0.0f, available > kMinTableHeight ? available : kMinTableHeight);
+
     if (!ImGui::BeginTable("on_screen_table", 4,
         ImGuiTableFlags_Borders |
         ImGuiTableFlags_RowBg |
         ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_SizingStretchProp))
+        ImGuiTableFlags_ScrollY |
+        ImGuiTableFlags_SizingStretchProp,
+        tableSize))
     {
         return;
     }
+
+    ImGui::TableSetupScrollFreeze(0, 1);
 
     ImGui::TableSetupColumn("Combo");
     ImGui::TableSetupColumn("Waves", ImGuiTableColumnFlags_WidthFixed, 45.0f);
@@ -392,9 +421,9 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
         ImGui::TableSetColumnIndex(0);
 
         if (entry.recipe->count > 1)
-            ImGui::TextWrapped("%s x%d", entry.recipe->output.c_str(), entry.recipe->count);
+            UIDraw::CellText((entry.recipe->output + " x" + std::to_string(entry.recipe->count)).c_str());
         else
-            ImGui::TextWrapped("%s", entry.recipe->output.c_str());
+            UIDraw::CellText(entry.recipe->output.c_str());
 
         ImGui::TableSetColumnIndex(1);
         ImGui::Text("%zu", entry.recipe->runes.size());
@@ -425,7 +454,7 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
             adds += entry.recipe->runes[i];
         }
 
-        ImGui::TextWrapped("%s", adds.c_str());
+        UIDraw::CellText(adds.c_str());
 
         first = false;
     }

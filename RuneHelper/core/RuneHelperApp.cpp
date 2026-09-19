@@ -103,6 +103,8 @@ void RuneHelperApp::MainLoop()
         UpdateOverlay();
 
         overlay_.SetFontSize(config.overlayFontSize);
+        overlay_.SetBackground(config.overlayBackground);
+        overlay_.SetOutline(config.overlayOutline);
 
         static auto lastTop = std::chrono::steady_clock::now();
 

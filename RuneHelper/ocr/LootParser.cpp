@@ -7,20 +7,50 @@
 #include <optional>
 #include <string>
 
+namespace
+{
+char DigitFromOcr(char c)
+{
+    switch (c)
+    {
+    case 'i':
+    case 'I':
+    case 'l':
+    case '|':
+    case '!':
+        return '1';
+    case 'O':
+    case 'o':
+        return '0';
+    case 'S':
+        return '5';
+    default:
+        return std::isdigit(static_cast<unsigned char>(c)) ? c : '\0';
+    }
+}
+}
+
 LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& line)
 {
     size_t pos = 0;
     while (pos < line.size() && std::isspace((unsigned char)line[pos]))
         ++pos;
 
-    size_t numStart = pos;
-    while (pos < line.size() && std::isdigit((unsigned char)line[pos]))
-        ++pos;
+    std::string digits;
 
-    if (pos > numStart && pos < line.size() && (line[pos] == 'x' || line[pos] == 'X'))
+    while (pos < line.size())
     {
-        const size_t numEnd = pos;
+        const char digit = DigitFromOcr(line[pos]);
 
+        if (digit == '\0')
+            break;
+
+        digits.push_back(digit);
+        ++pos;
+    }
+
+    if (!digits.empty() && pos < line.size() && (line[pos] == 'x' || line[pos] == 'X'))
+    {
         ++pos;
 
         while (pos < line.size() && std::isspace((unsigned char)line[pos]))
@@ -28,7 +58,7 @@ LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& li
 
         int quantity = 1;
 
-        const auto parsed = std::from_chars(line.data() + numStart, line.data() + numEnd, quantity);
+        const auto parsed = std::from_chars(digits.data(), digits.data() + digits.size(), quantity);
 
         if (parsed.ec != std::errc{} || quantity <= 0)
             quantity = 1;

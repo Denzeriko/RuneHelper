@@ -23,6 +23,8 @@ public:
     void SetRegionPreview(bool enabled, const OverlayRect& rect);
     void SetFrame(OverlayFrame frame);
     void SetFontSize(int size);
+    void SetBackground(bool enabled);
+    void SetOutline(bool enabled);
     void SetFontSizeForce(int size);
     void PumpMessages();
 

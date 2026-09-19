@@ -16,6 +16,7 @@ namespace
 {
 constexpr int kBufferSlots = 2;
 constexpr int kMarkThickness = 2;
+constexpr int kOutlineExtraThickness = 2;
 constexpr int kTextPadding = 6;
 constexpr int kDirtyMargin = 2;
 
@@ -365,12 +366,13 @@ cv::Rect WaylandOverlayBackend::ComputeContentRect() const
         TextMetrics(text, fontScale, thickness);
 
         int baseline = 0;
+        const int outlinePad = state_.outline ? kOutlineExtraThickness : 0;
         const cv::Size size = cv::getTextSize(ToNarrow(text.text), cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
         const cv::Rect box(
-            text.x - kTextPadding,
-            text.y - size.height / 2 - kTextPadding,
-            size.width + 2 * kTextPadding,
-            size.height + baseline + 2 * kTextPadding
+            text.x - kTextPadding - outlinePad,
+            text.y - size.height / 2 - kTextPadding - outlinePad,
+            size.width + 2 * (kTextPadding + outlinePad),
+            size.height + baseline + 2 * (kTextPadding + outlinePad)
         );
 
         bounds = bounds.empty() ? box : (bounds | box);
@@ -487,8 +489,21 @@ void WaylandOverlayBackend::Draw()
 
             const cv::Rect clipped = backdrop & cv::Rect(0, 0, canvas.cols, canvas.rows);
 
-            if (!clipped.empty())
+            if (state_.background && !clipped.empty())
                 canvas(clipped).setTo(cv::Scalar(0, 0, 0, 208));
+
+            if (state_.outline)
+            {
+                cv::putText(
+                    canvas,
+                    narrow,
+                    origin,
+                    cv::FONT_HERSHEY_SIMPLEX,
+                    fontScale,
+                    cv::Scalar(0, 0, 0, 255),
+                    thickness + kOutlineExtraThickness,
+                    cv::LINE_AA);
+            }
 
             cv::putText(canvas, narrow, origin, cv::FONT_HERSHEY_SIMPLEX, fontScale, ToScalar(text.color, 255), thickness, cv::LINE_AA);
         }

@@ -17,6 +17,14 @@ constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
 constexpr double kConfigSaveDelaySeconds = 0.5;
+constexpr int kTrustedMatchConfidence = 85;
+}
+
+void UIDraw::CellText(const char* text)
+{
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
+    ImGui::TextUnformatted(text);
+    ImGui::PopTextWrapPos();
 }
 
 void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
@@ -279,6 +287,16 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
     configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, 8, 48);
 
+    configChanged |= ImGui::Checkbox("Background", &config.overlayBackground);
+
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Draws a dark plate behind the overlay text. Turn it off for bare text over the game.");
+
+    configChanged |= ImGui::Checkbox("Outline", &config.overlayOutline);
+
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Traces the text in black so it stays readable without a background plate.");
+
     ImGui::Spacing();
 
     ImGui::SeparatorText("HOTKEYS");
@@ -344,30 +362,44 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
             ImGui::TableNextRow();
 
             ImGui::TableSetColumnIndex(0);
-            ImGui::TextWrapped("%s", line.ocrText.c_str());
+            CellText(line.ocrText.c_str());
+
+            const bool matched = line.matchedText != "-";
 
             ImGui::TableSetColumnIndex(1);
 
-            if (line.matchedText == "-")
-                ImGui::TextDisabled("-");
+            if (matched)
+                CellText(line.matchedText.c_str());
             else
-                ImGui::TextWrapped("%s", line.matchedText.c_str());
+                ImGui::TextDisabled("not in price list");
 
             ImGui::TableSetColumnIndex(2);
 
-            if (line.confidence >= 90)
-                ImGui::TextColored(ImVec4(0.5f, 1.0f, 0.5f, 1.0f), "%d%%", line.confidence);
-            else if (line.confidence >= 75)
-                ImGui::TextColored(ImVec4(1.0f, 0.8f, 0.2f, 1.0f), "%d%%", line.confidence);
+            if (!matched)
+            {
+                ImGui::TextDisabled("-");
+
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("This item has no price on the market, so RuneHelper has nothing to show.");
+            }
+            else if (line.confidence >= kTrustedMatchConfidence)
+            {
+                ImGui::TextColored(kGreen, "%d%%", line.confidence);
+            }
             else
-                ImGui::TextColored(ImVec4(1.0f, 0.3f, 0.3f, 1.0f), "%d%%", line.confidence);
+            {
+                ImGui::TextColored(kYellow, "%d%% ?", line.confidence);
+
+                if (ImGui::IsItemHovered())
+                    ImGui::SetTooltip("The name was guessed, not read cleanly. Verify before trusting this price.");
+            }
 
             ImGui::TableSetColumnIndex(3);
 
-            if (line.price == "-")
-                ImGui::TextDisabled("-");
-            else
+            if (matched)
                 ImGui::Text("%s", line.price.c_str());
+            else
+                ImGui::TextDisabled("-");
         }
 
         ImGui::EndTable();

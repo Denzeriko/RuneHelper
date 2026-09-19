@@ -60,6 +60,8 @@ struct OverlayState
     OverlayRect previewRect{};
     std::vector<OverlayMark> marks;
     int fontSize = 24;
+    bool background = true;
+    bool outline = false;
 
     std::vector<OverlayText> texts;
 };

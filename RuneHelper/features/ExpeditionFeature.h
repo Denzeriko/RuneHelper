@@ -1,5 +1,8 @@
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include "core/Feature.h"
 #include "ocr/RuneTileLocator.h"
 #include "recipes/RecipeDatabase.h"
@@ -38,4 +41,6 @@ private:
     RecipeDatabase database_;
     RecipeUpdater updater_;
     RuneTileLocator tiles_;
+    std::string markSignature_;
+    std::vector<OverlayMark> cachedMarks_;
 };

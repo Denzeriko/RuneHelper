@@ -21,6 +21,8 @@ public:
 
     std::vector<cv::Rect> TilesForRow(const cv::Mat& gray, int textTop, int count) const;
 
+    static bool StripBounds(const cv::Mat& gray, int top, int bottom, int& left, int& right);
+
 private:
     const RuneTileBand* BandContaining(int y) const;
     const RuneTileBand* BandAbove(int y) const;

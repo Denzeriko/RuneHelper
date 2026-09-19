@@ -22,7 +22,7 @@ public:
     bool Empty() const;
     std::size_t Size() const;
 
-    std::optional<MatchResult> FindBest(std::string_view input, int minConfidence = 72) const;
+    std::optional<MatchResult> FindBest(std::string_view input, int minConfidence = 82) const;
 
 public:
     static constexpr std::size_t kHistogramSize = 37;
