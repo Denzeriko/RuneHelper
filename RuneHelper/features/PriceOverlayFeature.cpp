@@ -3,7 +3,6 @@
 #include <string>
 
 #include "ocr/LootParser.h"
-#include "price/PriceService.h"
 
 namespace
 {
@@ -26,13 +25,13 @@ OverlayColor ColorForPrice(double priceEx, const AppConfig& config)
 
 void PriceOverlayFeature::OnFrame(FrameContext& frame)
 {
-    if (!frame.prices || !frame.config.priceSearchEnabled)
+    if (!frame.config.priceSearchEnabled)
         return;
 
     for (size_t i = 0; i < frame.rows.size(); ++i)
     {
         const FrameRow& row = frame.rows[i];
-        const ResolvedPrice resolved = frame.prices->Resolve(row.name, row.quantity);
+        const ResolvedPrice& resolved = row.price;
 
         if (i < frame.debug.lines.size() && resolved.price)
         {

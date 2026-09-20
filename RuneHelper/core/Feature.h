@@ -12,7 +12,6 @@
 #include "ui/OverlayState.h"
 
 class ConfigManager;
-class PriceService;
 class UIManager;
 
 struct RowOverlay
@@ -42,8 +41,6 @@ struct FrameContext
     const cv::Rect& region;
     const std::vector<FrameRow>& rows;
     const AppConfig& config;
-
-    PriceService* prices;
 
     std::vector<RowOverlay>& rowOverlays;
     OverlayFrame& overlay;

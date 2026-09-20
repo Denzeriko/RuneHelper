@@ -234,6 +234,12 @@ void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv:
 {
     std::vector<FrameRow> rows = ParseLootRows(loot, region, config);
 
+    if (prices_ && config.priceSearchEnabled)
+    {
+        for (FrameRow& row : rows)
+            row.price = prices_->Resolve(row.name, row.quantity);
+    }
+
     DebugData debug;
     debug.lines.reserve(rows.size());
 
@@ -258,7 +264,6 @@ void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv:
             region,
             rows,
             config,
-            prices_,
             rowOverlays,
             overlay,
             debug

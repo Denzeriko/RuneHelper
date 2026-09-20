@@ -165,13 +165,13 @@ int main(int argc, char** argv)
 {
     if (argc < 5)
     {
-        std::printf("usage: ocr_golden <tessdata> <combinations.json> <assets> <golden> [--bless]\n");
+        std::printf("usage: ocr_golden <tessdata> <combinations.json> <panels> <golden> [--bless]\n");
         return 2;
     }
 
     const fs::path tessdata = argv[1];
     const fs::path combinations = argv[2];
-    const fs::path assets = argv[3];
+    const fs::path panels = argv[3];
     const fs::path golden = argv[4];
     const bool bless = argc > 5 && std::string(argv[5]) == "--bless";
 
@@ -196,11 +196,9 @@ int main(int argc, char** argv)
 
     std::vector<fs::path> images;
 
-    for (const auto& entry : fs::directory_iterator(assets))
+    for (const auto& entry : fs::directory_iterator(panels))
     {
-        const std::string name = entry.path().filename().string();
-
-        if (entry.path().extension() == ".png" && name.rfind("test", 0) == 0)
+        if (entry.path().extension() == ".png")
             images.push_back(entry.path());
     }
 
@@ -208,7 +206,7 @@ int main(int argc, char** argv)
 
     if (images.empty())
     {
-        std::printf("ocr_golden: no test*.png found in %s\n", assets.string().c_str());
+        std::printf("ocr_golden: no panels found in %s\n", panels.string().c_str());
         return 2;
     }
 

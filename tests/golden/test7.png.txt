@@ -1,7 +1,11 @@
-rows=6
-y=162 qty=1 name="Medved's Boon" match="Medved's Boon" mconf=100
-y=243 qty=1 name="Uhtred's Boon" match="Uhtred's Boon" mconf=100
-y=325 qty=1 name="Vorana's Boon" match="Vorana's Boon" mconf=100
-y=406 qty=1 name="Olroth's Boon ji" match="-" mconf=0
-y=429 qty=1 name="z" match="-" mconf=0
-y=486 qty=10 name="Divine Orb 7" match="Divine Orb" mconf=84
+rows=10
+y=13 qty=1 name="Ancient Rune of Splinters" match="Ancient Rune of Splinters" mconf=100
+y=75 qty=1 name="Rune of the Blossom" match="Rune of the Blossom" mconf=100
+y=139 qty=1 name="Rune of Culmination" match="Rune of Culmination" mconf=100
+y=202 qty=1 name="Rune of Vitality" match="Rune of Vitality" mconf=100
+y=265 qty=6 name="Armourer's Scrap" match="Armourer's Scrap" mconf=100
+y=328 qty=1 name="Greater Adept Rune" match="Greater Adept Rune" mconf=100
+y=391 qty=1 name="Greater Glacial Rune" match="Greater Glacial Rune" mconf=100
+y=455 qty=4 name="Armourer's Scrap" match="Armourer's Scrap" mconf=100
+y=517 qty=1 name="Adept Rune" match="Adept Rune" mconf=100
+y=580 qty=1 name="Glacial Rune )" match="Glacial Rune" mconf=100

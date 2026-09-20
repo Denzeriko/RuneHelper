@@ -9,7 +9,7 @@ usage()
     cat <<EOF
 usage: $(basename "$0") [--bless] [--tsan]
 
-  (no flags)  compare OCR output on assets/test*.png against tests/golden
+  (no flags)  compare OCR output on tests/panels against tests/golden
   --bless     overwrite tests/golden with the current output
   --tsan      run the comparison under ThreadSanitizer
 

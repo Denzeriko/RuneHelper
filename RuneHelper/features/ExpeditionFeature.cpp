@@ -11,7 +11,6 @@
 #include "core/ConfigManager.h"
 #include "core/Logger.h"
 #include "ocr/LootParser.h"
-#include "price/PriceService.h"
 #include "ui/UIDraw.h"
 #include "ui/UIManager.h"
 
@@ -198,15 +197,12 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
     for (size_t i = 0; i < frame.rows.size(); ++i)
     {
         const FrameRow& row = frame.rows[i];
+        const ResolvedPrice& resolved = row.price;
+        const std::string& matchedName = resolved.name.empty() ? row.name : resolved.name;
 
-        ResolvedPrice resolved;
+        const Recipe* recipe = database_.FindRecipe(matchedName, row.quantity);
 
-        if (frame.prices)
-            resolved = frame.prices->Resolve(row.name, row.quantity);
-
-        const Recipe* recipe = database_.FindRecipe(resolved.name, row.quantity);
-
-        if (!recipe && resolved.name != row.name)
+        if (!recipe && matchedName != row.name)
             recipe = database_.FindRecipe(row.name, row.quantity);
 
         if (!recipe || recipe->runes.empty())

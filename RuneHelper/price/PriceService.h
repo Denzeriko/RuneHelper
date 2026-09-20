@@ -11,19 +11,12 @@
 #include "core/Config.h"
 #include "ocr/NameNormalizer.h"
 #include "price/PriceCache.h"
+#include "price/ResolvedPrice.h"
 
 struct PriceStatus
 {
     bool downloading = false;
     std::size_t priceCount = 0;
-};
-
-struct ResolvedPrice
-{
-    std::string name;
-    std::optional<std::string> price;
-    int confidence = 0;
-    double value = 0.0;
 };
 
 class PriceService

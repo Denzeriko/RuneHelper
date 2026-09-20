@@ -1,5 +1,7 @@
-rows=4
-y=63 qty=10 name="Divine Orb" match="Divine Orb" mconf=100
-y=171 qty=3 name="Divine Orb" match="Divine Orb" mconf=100
-y=279 qty=2 name="Divine Orbf" match="Divine Orb" mconf=91
-y=387 qty=1 name="Divine Orb" match="Divine Orb" mconf=100
+rows=6
+y=162 qty=1 name="Medved's Boon" match="Medved's Boon" mconf=100
+y=243 qty=1 name="Uhtred's Boon" match="Uhtred's Boon" mconf=100
+y=325 qty=1 name="Vorana's Boon" match="Vorana's Boon" mconf=100
+y=406 qty=1 name="Olroth's Boon ji" match="-" mconf=0
+y=429 qty=1 name="z" match="-" mconf=0
+y=486 qty=10 name="Divine Orb 7" match="Divine Orb" mconf=84

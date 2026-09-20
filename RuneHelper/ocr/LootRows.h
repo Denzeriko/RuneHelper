@@ -7,6 +7,7 @@
 
 #include "core/Config.h"
 #include "ocr/OCR.h"
+#include "price/ResolvedPrice.h"
 
 struct FrameRow
 {
@@ -14,6 +15,7 @@ struct FrameRow
     int quantity = 1;
     int textTop = 0;
     int overlayY = 0;
+    ResolvedPrice price;
 };
 
 std::vector<FrameRow> ParseLootRows(

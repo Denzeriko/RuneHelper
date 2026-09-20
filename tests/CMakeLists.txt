@@ -42,7 +42,7 @@ add_test(
     COMMAND ocr_golden
         "${RUNEHELPER_TESSDATA_DIR}"
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-        "${CMAKE_SOURCE_DIR}/assets"
+        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"
 )
 
@@ -50,7 +50,7 @@ add_custom_target(bless_ocr_golden
     COMMAND ocr_golden
         "${RUNEHELPER_TESSDATA_DIR}"
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-        "${CMAKE_SOURCE_DIR}/assets"
+        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"
         --bless
     DEPENDS ocr_golden
