@@ -137,22 +137,18 @@ bool ConfigManager::Load()
 bool ConfigManager::Save() const
 {
     AppConfig config;
-
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        config = config_;
-    }
-
-    Normalize(config);
-
     json j;
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
+        config = config_;
+
         if (!features_.empty())
             j["features"] = features_;
     }
+
+    Normalize(config);
 
     j["regionX"] = config.regionX;
     j["regionY"] = config.regionY;

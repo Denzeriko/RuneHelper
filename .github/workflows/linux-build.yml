@@ -60,7 +60,7 @@ jobs:
             cmake-deps-${{ runner.os }}-${{ matrix.backend }}-
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRUNEHELPER_LINUX_BACKEND=${{ matrix.backend }}
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRUNEHELPER_LINUX_BACKEND=${{ matrix.backend }} -DRUNEHELPER_WERROR=ON
 
       - name: Build
         run: cmake --build build --parallel

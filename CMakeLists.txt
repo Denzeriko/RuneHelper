@@ -32,6 +32,8 @@ list(APPEND CMAKE_MODULE_PATH
 )
 
 option(RUNEHELPER_BUILD_TESTS "Build the OCR golden-file test" OFF)
+option(RUNEHELPER_WERROR "Treat warnings in RuneHelper sources as errors" OFF)
+option(RUNEHELPER_LTO "Build Release with link time optimisation" OFF)
 
 set(RUNEHELPER_LINUX_BACKEND "x11" CACHE STRING "Linux display backend: x11 or wayland")
 set_property(CACHE RUNEHELPER_LINUX_BACKEND PROPERTY STRINGS x11 wayland)

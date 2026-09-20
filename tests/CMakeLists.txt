@@ -27,6 +27,8 @@ add_dependencies(ocr_golden ocr_golden_tessdata)
 
 target_include_directories(ocr_golden PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
 
+target_compile_options(ocr_golden PRIVATE ${RUNEHELPER_WARNINGS})
+
 target_compile_definitions(ocr_golden PRIVATE
     RUNEHELPER_VERSION="${PROJECT_VERSION}"
 )

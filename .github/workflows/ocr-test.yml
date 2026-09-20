@@ -52,7 +52,8 @@ jobs:
           docker run --rm -v "$PWD":/src:ro runehelper-deps:ci bash -lc '
             cmake -S /src -B /tmp/build -G Ninja \
               -DCMAKE_BUILD_TYPE=Release \
-              -DRUNEHELPER_BUILD_TESTS=ON &&
+              -DRUNEHELPER_BUILD_TESTS=ON \
+              -DRUNEHELPER_WERROR=ON &&
             cmake --build /tmp/build --target ocr_golden &&
             ctest --test-dir /tmp/build --output-on-failure'
 
@@ -62,6 +63,7 @@ jobs:
             cmake -S /src -B /tmp/tsan -G Ninja \
               -DCMAKE_BUILD_TYPE=RelWithDebInfo \
               -DRUNEHELPER_BUILD_TESTS=ON \
+              -DRUNEHELPER_WERROR=ON \
               -DCMAKE_CXX_FLAGS="-fsanitize=thread -g" \
               -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" &&
             cmake --build /tmp/tsan --target ocr_golden &&
