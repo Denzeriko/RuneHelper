@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -73,6 +74,7 @@ public:
 
     void SetDebugData(DebugData data);
     const DebugData& GetDebugData() const;
+    std::uint64_t DebugDataVersion() const;
     bool NeedsDebugData() const;
     void FlushPendingConfigSave();
 
@@ -91,6 +93,7 @@ private:
 
     UIState state_;
     DebugData debugData_;
+    std::uint64_t debugDataVersion_ = 0;
 
     std::unique_ptr<UIBackend> backend_;
 };

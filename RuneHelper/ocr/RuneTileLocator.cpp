@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <vector>
 
 namespace
 {
@@ -21,24 +22,86 @@ constexpr int kCentreHalfWidth = 2;
 
 constexpr int kMaxTilesPerRow = 12;
 
-double ColumnSpread(const cv::Mat& gray, int x, const RuneTileBand& band)
+std::vector<double> ColumnSpread(const cv::Mat& gray, const RuneTileBand& band)
 {
-    double sum = 0.0;
-    double sumSquares = 0.0;
-
     const int height = band.Height();
+    const int cols = gray.cols;
+
+    std::vector<double> spread(cols, 0.0);
+
+    if (height <= 0 || cols <= 0)
+        return spread;
+
+    std::vector<double> sum(cols, 0.0);
+    std::vector<double> sumSquares(cols, 0.0);
 
     for (int y = band.top; y <= band.bottom; ++y)
     {
-        const double value = gray.at<unsigned char>(y, x);
-        sum += value;
-        sumSquares += value * value;
+        const unsigned char* row = gray.ptr<unsigned char>(y);
+
+        for (int x = 0; x < cols; ++x)
+        {
+            const double value = row[x];
+            sum[x] += value;
+            sumSquares[x] += value * value;
+        }
     }
 
-    const double mean = sum / height;
-    const double variance = sumSquares / height - mean * mean;
+    for (int x = 0; x < cols; ++x)
+    {
+        const double mean = sum[x] / height;
+        const double variance = sumSquares[x] / height - mean * mean;
 
-    return variance > 0.0 ? std::sqrt(variance) : 0.0;
+        spread[x] = variance > 0.0 ? std::sqrt(variance) : 0.0;
+    }
+
+    return spread;
+}
+
+bool StripBoundsFromSpread(const std::vector<double>& spread, int& left, int& right)
+{
+    double peak = 0.0;
+
+    for (const double value : spread)
+        peak = std::max(peak, value);
+
+    if (peak <= 0.0)
+        return false;
+
+    const double threshold = peak * kStripThresholdShare;
+    const int cols = static_cast<int>(spread.size());
+
+    left = -1;
+
+    for (int x = 0; x < cols; ++x)
+    {
+        if (spread[x] > threshold)
+        {
+            left = x;
+            break;
+        }
+    }
+
+    if (left < 0)
+        return false;
+
+    right = left;
+    int flat = 0;
+
+    for (int x = left; x < cols; ++x)
+    {
+        if (spread[x] > threshold)
+        {
+            right = x;
+            flat = 0;
+            continue;
+        }
+
+        if (++flat > kStripFlatRunToStop)
+            break;
+    }
+
+    return right > left;
 }
 }
 
@@ -138,53 +201,7 @@ bool RuneTileLocator::StripBounds(const cv::Mat& gray, int top, int bottom, int&
     if (top < 0 || bottom >= gray.rows || bottom - top + 1 < kMinBandHeight)
         return false;
 
-    const RuneTileBand band{ top, bottom };
-
-    std::vector<double> spread(gray.cols);
-    double peak = 0.0;
-
-    for (int x = 0; x < gray.cols; ++x)
-    {
-        spread[x] = ColumnSpread(gray, x, band);
-        peak = std::max(peak, spread[x]);
-    }
-
-    if (peak <= 0.0)
-        return false;
-
-    const double threshold = peak * kStripThresholdShare;
-
-    left = -1;
-
-    for (int x = 0; x < gray.cols; ++x)
-    {
-        if (spread[x] > threshold)
-        {
-            left = x;
-            break;
-        }
-    }
-
-    if (left < 0)
-        return false;
-
-    right = left;
-    int flat = 0;
-
-    for (int x = left; x < gray.cols; ++x)
-    {
-        if (spread[x] > threshold)
-        {
-            right = x;
-            flat = 0;
-            continue;
-        }
-
-        if (++flat > kStripFlatRunToStop)
-            break;
-    }
-
-    return right > left;
+    return StripBoundsFromSpread(ColumnSpread(gray, RuneTileBand{ top, bottom }), left, right);
 }
 
 std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const
@@ -195,16 +212,13 @@ std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTi
     if (band.top < 0 || band.bottom >= gray.rows || band.Height() < kMinBandHeight)
         return {};
 
+    const std::vector<double> spread = ColumnSpread(gray, band);
+
     int left = 0;
     int right = 0;
 
-    if (!StripBounds(gray, band.top, band.bottom, left, right))
+    if (!StripBoundsFromSpread(spread, left, right))
         return {};
-
-    std::vector<double> spread(gray.cols);
-
-    for (int x = 0; x < gray.cols; ++x)
-        spread[x] = ColumnSpread(gray, x, band);
 
     const double pitch = static_cast<double>(right - left + 1) / count;
     const double height = band.Height();

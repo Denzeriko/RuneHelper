@@ -58,7 +58,7 @@ std::string Render(OCR& ocr, const CachedItemNames& vocabulary, const fs::path& 
     cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
 
     AppConfig config;
-    const std::vector<LootLine> loot = ocr.RecognizeLoot(cv::Mat(), gray, config);
+    const std::vector<LootLine> loot = ocr.RecognizeLoot(gray, config);
 
     std::ostringstream out;
     out << "rows=" << loot.size() << '\n';

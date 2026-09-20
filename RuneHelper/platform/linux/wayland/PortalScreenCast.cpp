@@ -349,11 +349,11 @@ void PortalScreenCast::Impl::OnProcess()
             {
             case SPA_VIDEO_FORMAT_BGRx:
             case SPA_VIDEO_FORMAT_BGRA:
-                cv::cvtColor(wrapped, converted, cv::COLOR_BGRA2BGR);
+                cv::cvtColor(wrapped, converted, cv::COLOR_BGRA2GRAY);
                 break;
             case SPA_VIDEO_FORMAT_RGBx:
             case SPA_VIDEO_FORMAT_RGBA:
-                cv::cvtColor(wrapped, converted, cv::COLOR_RGBA2BGR);
+                cv::cvtColor(wrapped, converted, cv::COLOR_RGBA2GRAY);
                 break;
             default:
                 converted = cv::Mat();

@@ -33,7 +33,6 @@ public:
     void SetupTesseractApi(tesseract::TessBaseAPI& api);
 
     std::vector<LootLine> RecognizeLoot(
-        const cv::Mat& bgr,
         const cv::Mat& gray,
         const AppConfig& config);
     std::vector<cv::Rect> FindLootRows(const cv::Mat& gray) const;

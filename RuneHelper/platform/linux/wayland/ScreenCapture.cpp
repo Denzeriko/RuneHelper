@@ -104,7 +104,7 @@ const zwlr_screencopy_frame_v1_listener kFrameListener = {
     &HandleBufferDone
 };
 
-cv::Mat ToBgr(const WaylandShmBuffer& buffer, bool yInvert)
+cv::Mat ToGray(const WaylandShmBuffer& buffer, bool yInvert)
 {
     cv::Mat wrapped(buffer.Height(), buffer.Width(), CV_8UC4, buffer.Data(), static_cast<std::size_t>(buffer.Stride()));
     cv::Mat result;
@@ -113,11 +113,11 @@ cv::Mat ToBgr(const WaylandShmBuffer& buffer, bool yInvert)
     {
     case WL_SHM_FORMAT_XRGB8888:
     case WL_SHM_FORMAT_ARGB8888:
-        cv::cvtColor(wrapped, result, cv::COLOR_BGRA2BGR);
+        cv::cvtColor(wrapped, result, cv::COLOR_BGRA2GRAY);
         break;
     case WL_SHM_FORMAT_XBGR8888:
     case WL_SHM_FORMAT_ABGR8888:
-        cv::cvtColor(wrapped, result, cv::COLOR_RGBA2BGR);
+        cv::cvtColor(wrapped, result, cv::COLOR_RGBA2GRAY);
         break;
     default:
         LOG_ERROR("Wayland screen capture failed: unsupported shm format " + std::to_string(buffer.Format()));
@@ -219,7 +219,7 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
     cv::Mat result;
 
     if (!capture.failed && capture.buffer->IsValid())
-        result = ToBgr(*capture.buffer, capture.yInvert);
+        result = ToGray(*capture.buffer, capture.yInvert);
     else
         LOG_ERROR("Wayland screen capture failed: compositor rejected the frame");
 

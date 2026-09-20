@@ -187,11 +187,13 @@ static std::vector<int> FindTextStartX(const cv::Mat& gray, const std::vector<cv
         cv::Mat columns;
         cv::reduce(dark, columns, 0, cv::REDUCE_MAX, CV_8U);
 
+        const unsigned char* columnInk = columns.ptr<unsigned char>(0);
+
         int lastInk = -1;
 
         for (int x = columns.cols - 1; x >= 0; --x)
         {
-            if (columns.at<unsigned char>(0, x) != 0)
+            if (columnInk[x] != 0)
             {
                 lastInk = x;
                 break;
@@ -204,7 +206,7 @@ static std::vector<int> FindTextStartX(const cv::Mat& gray, const std::vector<cv
 
         for (int x = 0; x <= lastInk; ++x)
         {
-            if (columns.at<unsigned char>(0, x) == 0)
+            if (columnInk[x] == 0)
             {
                 if (runStart < 0)
                     runStart = x;
@@ -271,10 +273,11 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
         cv::reduce(dark, columnSums, 0, cv::REDUCE_SUM, CV_32S);
 
         const int limit = static_cast<int>(dark.rows * 255.0 * kVerticalLineInkRatio);
+        const int* sums = columnSums.ptr<int>(0);
 
         for (int x = 0; x < dark.cols; ++x)
         {
-            if (columnSums.at<int>(0, x) >= limit)
+            if (sums[x] >= limit)
                 dark.col(x).setTo(0);
         }
     }
@@ -308,7 +311,7 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
 
     for (int y = 0; y < dark.rows; ++y)
     {
-        const int ink = rowInk.at<int>(y, 0) / 255;
+        const int ink = rowInk.ptr<int>(y)[0] / 255;
         if (ink >= kMinInkPerRow)
         {
             if (!inBand)
@@ -513,7 +516,6 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
     return result;
 }
 std::vector<LootLine> OCR::RecognizeLoot(
-    const cv::Mat& bgr,
     const cv::Mat& gray,
     const AppConfig& config)
 {
@@ -528,7 +530,7 @@ std::vector<LootLine> OCR::RecognizeLoot(
     if (apis_.empty())
         return result;
 
-    bool debugOCR = config.debugOCR && !bgr.empty();
+    bool debugOCR = config.debugOCR;
     std::filesystem::path debugDir;
     cv::Mat debugRows;
 
@@ -541,8 +543,8 @@ std::vector<LootLine> OCR::RecognizeLoot(
         }
         else
         {
-            SaveOcrDebugImage(debugDir / "source.png", bgr);
-            debugRows = bgr.clone();
+            SaveOcrDebugImage(debugDir / "source.png", gray);
+            cv::cvtColor(gray, debugRows, cv::COLOR_GRAY2BGR);
         }
     }
 
@@ -576,8 +578,8 @@ std::vector<LootLine> OCR::RecognizeLoot(
         if (!debugOCR)
             continue;
 
-        SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), bgr(rowRect));
-        SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), bgr(rowRect)(textRect));
+        SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), gray(rowRect));
+        SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), gray(rowRect)(textRect));
         job.debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin").string();
 
         cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);

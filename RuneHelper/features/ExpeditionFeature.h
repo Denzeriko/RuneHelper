@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,12 @@ struct ExpeditionSettings
     std::atomic<bool> enabled = true;
     std::atomic<bool> showRunes = true;
     std::atomic<bool> highlightRare = true;
+};
+
+struct ExpeditionTabRow
+{
+    const Recipe* recipe = nullptr;
+    double perWave = 0.0;
 };
 
 class ExpeditionFeature : public Feature
@@ -35,6 +42,7 @@ public:
 private:
     std::string DataStatus() const;
     void SaveSettings();
+    void RebuildTabRows(const DebugData& debug);
 
     ConfigManager* configManager_ = nullptr;
     ExpeditionSettings settings_;
@@ -45,4 +53,9 @@ private:
     std::atomic<bool> regionDirty_{ false };
     std::string markSignature_;
     std::vector<OverlayMark> cachedMarks_;
+
+    bool tabBuilt_ = false;
+    std::uint64_t tabVersion_ = 0;
+    std::vector<ExpeditionTabRow> tabRows_;
+    std::vector<std::string> tabPlaced_;
 };

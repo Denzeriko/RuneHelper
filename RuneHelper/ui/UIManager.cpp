@@ -220,6 +220,12 @@ void UIManager::UnregisterHotkeys()
 void UIManager::SetDebugData(DebugData data)
 {
     debugData_ = std::move(data);
+    ++debugDataVersion_;
+}
+
+std::uint64_t UIManager::DebugDataVersion() const
+{
+    return debugDataVersion_;
 }
 
 const DebugData& UIManager::GetDebugData() const

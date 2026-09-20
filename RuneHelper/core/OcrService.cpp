@@ -298,9 +298,9 @@ void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv:
 
 void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 {
-    const cv::Mat img = screenCapture_.CaptureRegion(region);
+    cv::Mat gray = screenCapture_.CaptureRegion(region);
 
-    if (img.empty())
+    if (gray.empty())
     {
         if (captureFailures_ < kCaptureFailuresBeforeWarning)
             ++captureFailures_;
@@ -314,12 +314,9 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
     captureFailures_ = 0;
     captureFailing_ = false;
 
-    cv::Mat gray;
-    cv::cvtColor(img, gray, cv::COLOR_BGR2GRAY);
-
     if (NeedsOcr(gray))
     {
-        lastLoot_ = ocr_.RecognizeLoot(img, gray, config);
+        lastLoot_ = ocr_.RecognizeLoot(gray, config);
         frameDiffer_.StoreOcrFrame(gray);
         lastOcrAt_ = std::chrono::steady_clock::now();
     }

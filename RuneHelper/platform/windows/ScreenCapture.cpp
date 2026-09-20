@@ -82,7 +82,7 @@ cv::Mat CaptureRegion(const cv::Rect& region)
                 reinterpret_cast<BITMAPINFO*>(&header),
                 DIB_RGB_COLORS))
         {
-            cv::cvtColor(bgra, result, cv::COLOR_BGRA2BGR);
+            cv::cvtColor(bgra, result, cv::COLOR_BGRA2GRAY);
         }
     }
 

@@ -145,7 +145,7 @@ bool IsPackedBgr(const XImage& image)
            image.blue_mask == 0x000000ffUL;
 }
 
-cv::Mat ToBgr(const XImage& image, const cv::Size& size)
+cv::Mat ToGray(const XImage& image, const cv::Size& size)
 {
     if (IsPackedBgr(image))
     {
@@ -160,7 +160,7 @@ cv::Mat ToBgr(const XImage& image, const cv::Size& size)
             );
 
             cv::Mat result;
-            cv::cvtColor(wrapped, result, cv::COLOR_BGRA2BGR);
+            cv::cvtColor(wrapped, result, cv::COLOR_BGRA2GRAY);
 
             return result;
         }
@@ -175,7 +175,10 @@ cv::Mat ToBgr(const XImage& image, const cv::Size& size)
                 static_cast<std::size_t>(image.bytes_per_line)
             );
 
-            return wrapped.clone();
+            cv::Mat result;
+            cv::cvtColor(wrapped, result, cv::COLOR_BGR2GRAY);
+
+            return result;
         }
     }
 
@@ -183,11 +186,11 @@ cv::Mat ToBgr(const XImage& image, const cv::Size& size)
     const ChannelLayout green = MakeChannelLayout(image.green_mask);
     const ChannelLayout red = MakeChannelLayout(image.red_mask);
 
-    cv::Mat result(size.height, size.width, CV_8UC3);
+    cv::Mat bgr(size.height, size.width, CV_8UC3);
 
     for (int y = 0; y < size.height; ++y)
     {
-        cv::Vec3b* row = result.ptr<cv::Vec3b>(y);
+        cv::Vec3b* row = bgr.ptr<cv::Vec3b>(y);
 
         for (int x = 0; x < size.width; ++x)
         {
@@ -198,6 +201,9 @@ cv::Mat ToBgr(const XImage& image, const cv::Size& size)
             row[x][2] = ScaleChannel(pixel, image.red_mask, red);
         }
     }
+
+    cv::Mat result;
+    cv::cvtColor(bgr, result, cv::COLOR_BGR2GRAY);
 
     return result;
 }
@@ -256,7 +262,7 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
 
     gReportedXCaptureError = false;
 
-    cv::Mat result = ToBgr(*image, cv::Size(clipped.width, clipped.height));
+    cv::Mat result = ToGray(*image, cv::Size(clipped.width, clipped.height));
 
     XDestroyImage(image);
 

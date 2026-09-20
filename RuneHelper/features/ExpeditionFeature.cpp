@@ -102,6 +102,66 @@ void ExpeditionFeature::OnRegionChanged()
     regionDirty_ = true;
 }
 
+void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
+{
+    tabRows_.clear();
+    tabPlaced_.clear();
+
+    for (const auto& line : debug.lines)
+    {
+        const auto parsed = LootParser::ParseLootLine(line.ocrText);
+        const std::string& name = line.matchedText != "-" ? line.matchedText : parsed.itemName;
+
+        const Recipe* recipe = database_.FindRecipe(name, parsed.quantity);
+
+        if (!recipe && name != parsed.itemName)
+            recipe = database_.FindRecipe(parsed.itemName, parsed.quantity);
+
+        if (!recipe || recipe->runes.empty())
+            continue;
+
+        double perWave = 0.0;
+
+        if (line.price != "-")
+        {
+            if (const auto value = LootParser::ParsePriceValue(line.price))
+                perWave = *value * parsed.quantity / static_cast<double>(recipe->runes.size());
+        }
+
+        tabRows_.push_back({ recipe, perWave });
+    }
+
+    if (tabRows_.empty())
+        return;
+
+    tabPlaced_ = tabRows_.front().recipe->runes;
+
+    for (const auto& entry : tabRows_)
+    {
+        size_t common = 0;
+
+        while (common < tabPlaced_.size() &&
+               common < entry.recipe->runes.size() &&
+               tabPlaced_[common] == entry.recipe->runes[common])
+        {
+            ++common;
+        }
+
+        tabPlaced_.resize(common);
+    }
+
+    std::sort(
+        tabRows_.begin(),
+        tabRows_.end(),
+        [](const ExpeditionTabRow& a, const ExpeditionTabRow& b)
+        {
+            if (a.perWave != b.perWave)
+                return a.perWave > b.perWave;
+
+            return a.recipe->runes.size() < b.recipe->runes.size();
+        });
+}
+
 void ExpeditionFeature::SaveSettings()
 {
     if (!configManager_)
@@ -321,58 +381,22 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
 
     ImGui::SeparatorText("ON SCREEN");
 
-    struct TabRecipe
+    const std::uint64_t version = manager.DebugDataVersion();
+
+    if (!tabBuilt_ || tabVersion_ != version)
     {
-        const Recipe* recipe;
-        double perWave;
-    };
-
-    std::vector<TabRecipe> onScreen;
-
-    for (const auto& line : manager.GetDebugData().lines)
-    {
-        const auto parsed = LootParser::ParseLootLine(line.ocrText);
-        const std::string& name = line.matchedText != "-" ? line.matchedText : parsed.itemName;
-
-        const Recipe* recipe = database_.FindRecipe(name, parsed.quantity);
-
-        if (!recipe && name != parsed.itemName)
-            recipe = database_.FindRecipe(parsed.itemName, parsed.quantity);
-
-        if (!recipe || recipe->runes.empty())
-            continue;
-
-        double perWave = 0.0;
-
-        if (line.price != "-")
-        {
-            if (const auto value = LootParser::ParsePriceValue(line.price))
-                perWave = *value * parsed.quantity / static_cast<double>(recipe->runes.size());
-        }
-
-        onScreen.push_back({ recipe, perWave });
+        RebuildTabRows(manager.GetDebugData());
+        tabVersion_ = version;
+        tabBuilt_ = true;
     }
+
+    const std::vector<ExpeditionTabRow>& onScreen = tabRows_;
+    const std::vector<std::string>& placed = tabPlaced_;
 
     if (onScreen.empty())
     {
         ImGui::TextDisabled("No combinations recognised. Point the region at the remnant panel.");
         return;
-    }
-
-    std::vector<std::string> placed = onScreen.front().recipe->runes;
-
-    for (const auto& entry : onScreen)
-    {
-        size_t common = 0;
-
-        while (common < placed.size() &&
-               common < entry.recipe->runes.size() &&
-               placed[common] == entry.recipe->runes[common])
-        {
-            ++common;
-        }
-
-        placed.resize(common);
     }
 
     if (placed.empty())
@@ -395,17 +419,6 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
         ImGui::SameLine();
         ImGui::TextColored(kGreen, "%s", placedText.c_str());
     }
-
-    std::sort(
-        onScreen.begin(),
-        onScreen.end(),
-        [](const TabRecipe& a, const TabRecipe& b)
-        {
-            if (a.perWave != b.perWave)
-                return a.perWave > b.perWave;
-
-            return a.recipe->runes.size() < b.recipe->runes.size();
-        });
 
     const float available = ImGui::GetContentRegionAvail().y;
     const ImVec2 tableSize(0.0f, available > kMinTableHeight ? available : kMinTableHeight);
