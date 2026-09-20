@@ -8,8 +8,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-linux:
+  build:
+    name: Build (${{ matrix.backend }})
     runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [ x11, wayland ]
 
     steps:
       - name: Check out repository
@@ -29,21 +35,32 @@ jobs:
             libtesseract-dev \
             libleptonica-dev \
             libcurl4-openssl-dev \
+            libssl-dev \
             libglfw3-dev \
             libgl1-mesa-dev \
             libx11-dev \
             libxext-dev
 
+      - name: Install Wayland dependencies
+        if: matrix.backend == 'wayland'
+        run: |
+          sudo apt install -y \
+            libwayland-dev \
+            wayland-protocols \
+            libxkbcommon-dev \
+            libdbus-1-dev \
+            libpipewire-0.3-dev
+
       - name: Cache CMake dependencies
         uses: actions/cache@v5
         with:
           path: build/_deps
-          key: cmake-deps-${{ runner.os }}-${{ hashFiles('CMakeLists.txt', 'cmake/DependenciesLinux.cmake') }}
+          key: cmake-deps-${{ runner.os }}-${{ matrix.backend }}-${{ hashFiles('CMakeLists.txt', 'cmake/DependenciesLinux.cmake') }}
           restore-keys: |
-            cmake-deps-${{ runner.os }}-
+            cmake-deps-${{ runner.os }}-${{ matrix.backend }}-
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRUNEHELPER_LINUX_BACKEND=${{ matrix.backend }}
 
       - name: Build
         run: cmake --build build --parallel

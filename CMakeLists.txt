@@ -31,6 +31,8 @@ list(APPEND CMAKE_MODULE_PATH
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
 )
 
+option(RUNEHELPER_BUILD_TESTS "Build the OCR golden-file test" OFF)
+
 set(RUNEHELPER_LINUX_BACKEND "x11" CACHE STRING "Linux display backend: x11 or wayland")
 set_property(CACHE RUNEHELPER_LINUX_BACKEND PROPERTY STRINGS x11 wayland)
 
@@ -69,6 +71,15 @@ target_link_libraries(RuneHelper PRIVATE
 )
 
 include(CompilerOptions)
+
+if(RUNEHELPER_BUILD_TESTS)
+    if(WIN32)
+        message(FATAL_ERROR "RUNEHELPER_BUILD_TESTS is only wired up for Linux so far")
+    endif()
+
+    enable_testing()
+    add_subdirectory(tests)
+endif()
 
 set_target_properties(RuneHelper PROPERTIES
     OUTPUT_NAME "RuneHelper"

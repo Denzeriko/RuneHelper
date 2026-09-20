@@ -1,0 +1,70 @@
+name: OCR golden test
+
+on:
+  push:
+    branches: [ master ]
+    paths:
+      - 'RuneHelper/ocr/**'
+      - 'RuneHelper/core/Config.h'
+      - 'RuneHelper/resources/**'
+      - 'assets/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'Dockerfile'
+      - '.github/workflows/ocr-test.yml'
+  pull_request:
+    branches: [ master ]
+    paths:
+      - 'RuneHelper/ocr/**'
+      - 'RuneHelper/core/Config.h'
+      - 'RuneHelper/resources/**'
+      - 'assets/**'
+      - 'tests/**'
+      - 'CMakeLists.txt'
+      - 'Dockerfile'
+      - '.github/workflows/ocr-test.yml'
+  workflow_dispatch:
+
+jobs:
+  ocr:
+    name: OCR golden test
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          submodules: recursive
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build the pinned dependency image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          target: deps
+          load: true
+          tags: runehelper-deps:ci
+          cache-from: type=gha,scope=linux-deps
+          cache-to: type=gha,mode=max,scope=linux-deps
+
+      - name: Compare OCR output against the golden files
+        run: |
+          docker run --rm -v "$PWD":/src:ro runehelper-deps:ci bash -lc '
+            cmake -S /src -B /tmp/build -G Ninja \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DRUNEHELPER_BUILD_TESTS=ON &&
+            cmake --build /tmp/build --target ocr_golden &&
+            ctest --test-dir /tmp/build --output-on-failure'
+
+      - name: Run the OCR pipeline under ThreadSanitizer
+        run: |
+          docker run --rm -v "$PWD":/src:ro -e TSAN_OPTIONS=halt_on_error=1 runehelper-deps:ci bash -lc '
+            cmake -S /src -B /tmp/tsan -G Ninja \
+              -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+              -DRUNEHELPER_BUILD_TESTS=ON \
+              -DCMAKE_CXX_FLAGS="-fsanitize=thread -g" \
+              -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" &&
+            cmake --build /tmp/tsan --target ocr_golden &&
+            ctest --test-dir /tmp/tsan --output-on-failure'
