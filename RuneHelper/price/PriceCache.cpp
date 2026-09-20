@@ -59,6 +59,19 @@ namespace
     {
         return GetUserDataDir() / DumpFileNameForLeague(league);
     }
+
+    int64_t BackoffSeconds(int failureStreak)
+    {
+        if (failureStreak <= 0)
+            return 0;
+
+        constexpr int64_t kFirstRetrySeconds = 30;
+        constexpr int64_t kMaxRetrySeconds = 30 * 60;
+
+        const int shift = std::min(failureStreak - 1, 10);
+
+        return std::min<int64_t>(kFirstRetrySeconds << shift, kMaxRetrySeconds);
+    }
 }
 
 PriceCache::PriceCache() : provider_(std::make_unique<PoeNinjaPriceProvider>())
@@ -103,7 +116,11 @@ void PriceCache::RefreshIfNeeded()
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
+
         if (!prices_.empty() && now - dump_updated_at_ < refresh_seconds_)
+            return;
+
+        if (now - last_failure_at_ < BackoffSeconds(failure_streak_))
             return;
     }
 
@@ -142,6 +159,8 @@ void PriceCache::SetLeague(std::string league)
         league_ = std::move(league);
         prices_.clear();
         dump_updated_at_ = 0;
+        last_failure_at_ = 0;
+        failure_streak_ = 0;
         ++version_;
     }
 
@@ -187,7 +206,22 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
 
     if (fresh.empty())
     {
-        LOG_ERROR("PriceCache::RefreshWorker() -> refresh failed or empty");
+        int64_t retryIn = 0;
+        int attempt = 0;
+
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            ++failure_streak_;
+            last_failure_at_ = NowUnix();
+            attempt = failure_streak_;
+            retryIn = BackoffSeconds(failure_streak_);
+        }
+
+        LOG_ERROR(
+            "PriceCache::RefreshWorker() -> refresh failed or empty, attempt " +
+            std::to_string(attempt) + ", next try in " + std::to_string(retryIn) + "s"
+        );
+
         return;
     }
 
@@ -201,6 +235,8 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
 
         prices_ = std::move(fresh);
         dump_updated_at_ = now;
+        last_failure_at_ = 0;
+        failure_streak_ = 0;
         ++version_;
     }
 
