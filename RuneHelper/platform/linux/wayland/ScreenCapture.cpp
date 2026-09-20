@@ -12,6 +12,7 @@
 
 #include "PortalScreenCast.h"
 #include "WaylandSession.h"
+#include "core/AtomicFile.h"
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 
@@ -254,10 +255,8 @@ void SaveRestoreToken(const std::string& token)
     if (token.empty())
         return;
 
-    std::ofstream out(RestoreTokenPath(), std::ios::trunc);
-
-    if (out)
-        out << token;
+    if (!WriteFileAtomic(RestoreTokenPath(), token))
+        LOG_ERROR("Portal screencast: could not save the restore token");
 }
 
 bool UsePortal()

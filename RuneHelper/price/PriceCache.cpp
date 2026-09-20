@@ -1,5 +1,6 @@
 #include "PriceCache.h"
 
+#include "core/AtomicFile.h"
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "price/PoeNinjaPriceProvider.h"
@@ -230,15 +231,11 @@ void PriceCache::SaveDump()
             j["items"][name] = info.price;
     }
 
-    std::ofstream file(DumpPathForLeague(league));
-
-    if (!file)
+    if (!WriteFileAtomic(DumpPathForLeague(league), j.dump(4)))
     {
-        LOG_ERROR("PriceCache::SaveDump() -> failed to open file");
+        LOG_ERROR("PriceCache::SaveDump() -> failed to write file");
         return;
     }
-
-    file << j.dump(4);
 
     LOG_INFO("PriceCache::SaveDump() -> return");
 }

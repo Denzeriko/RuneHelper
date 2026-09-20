@@ -26,6 +26,17 @@ constexpr int kRowSnap = 6;
 
 constexpr float kMinTableHeight = 120.0f;
 
+bool AtomicCheckbox(const char* label, std::atomic<bool>& value)
+{
+    bool current = value;
+
+    if (!ImGui::Checkbox(label, &current))
+        return false;
+
+    value = current;
+    return true;
+}
+
 std::string FormatPerWave(double value)
 {
     char buffer[32];
@@ -54,9 +65,9 @@ bool ExpeditionFeature::Init(ConfigManager& configManager)
 
     const nlohmann::json settings = configManager.FeatureSettings(Name());
 
-    settings_.enabled = settings.value("enabled", settings_.enabled);
-    settings_.showRunes = settings.value("showRunes", settings_.showRunes);
-    settings_.highlightRare = settings.value("highlightRare", settings_.highlightRare);
+    settings_.enabled = settings.value("enabled", settings_.enabled.load());
+    settings_.showRunes = settings.value("showRunes", settings_.showRunes.load());
+    settings_.highlightRare = settings.value("highlightRare", settings_.highlightRare.load());
 
     const bool loaded = database_.Load();
 
@@ -88,7 +99,7 @@ void ExpeditionFeature::Shutdown()
 
 void ExpeditionFeature::OnRegionChanged()
 {
-    tiles_ = RuneTileLocator{};
+    regionDirty_ = true;
 }
 
 void ExpeditionFeature::SaveSettings()
@@ -97,9 +108,9 @@ void ExpeditionFeature::SaveSettings()
         return;
 
     nlohmann::json settings;
-    settings["enabled"] = settings_.enabled;
-    settings["showRunes"] = settings_.showRunes;
-    settings["highlightRare"] = settings_.highlightRare;
+    settings["enabled"] = settings_.enabled.load();
+    settings["showRunes"] = settings_.showRunes.load();
+    settings["highlightRare"] = settings_.highlightRare.load();
 
     configManager_->SetFeatureSettings(Name(), std::move(settings));
 
@@ -109,6 +120,13 @@ void ExpeditionFeature::SaveSettings()
 
 void ExpeditionFeature::OnFrame(FrameContext& frame)
 {
+    if (regionDirty_.exchange(false))
+    {
+        tiles_ = RuneTileLocator{};
+        markSignature_.clear();
+        cachedMarks_.clear();
+    }
+
     if (!database_.Loaded())
         return;
 
@@ -287,13 +305,13 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
 
     bool changed = false;
 
-    changed |= ImGui::Checkbox("Enable Pick Advisor", &settings_.enabled);
+    changed |= AtomicCheckbox("Enable Pick Advisor", settings_.enabled);
 
     ImGui::SameLine();
     ImGui::TextDisabled("%s", DataStatus().c_str());
 
     if (settings_.enabled)
-        changed |= ImGui::Checkbox("Show rune names on the overlay", &settings_.showRunes);
+        changed |= AtomicCheckbox("Show rune names on the overlay", settings_.showRunes);
 
     if (changed)
         SaveSettings();
@@ -472,7 +490,7 @@ void ExpeditionFeature::DrawMainControls(UIManager& manager)
         return;
     }
 
-    if (ImGui::Checkbox("Highlight rare runes", &settings_.highlightRare))
+    if (AtomicCheckbox("Highlight rare runes", settings_.highlightRare))
         SaveSettings();
 
     if (ImGui::IsItemHovered())

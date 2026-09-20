@@ -1,9 +1,9 @@
 #include "ResourceHelper.h"
 
-#include <fstream>
 #include <string>
 #include <string_view>
 
+#include "core/AtomicFile.h"
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "platform/linux/EmbeddedResources.h"
@@ -25,17 +25,13 @@ bool WriteEmbedded(const EmbeddedResource& resource, const std::filesystem::path
 {
     std::filesystem::create_directories(destination.parent_path());
 
-    std::ofstream out(destination, std::ios::binary);
-
-    if (!out)
-        return false;
-
-    out.write(
-        reinterpret_cast<const char*>(resource.begin),
-        static_cast<std::streamsize>(resource.end - resource.begin)
+    return WriteFileAtomic(
+        destination,
+        std::string_view(
+            reinterpret_cast<const char*>(resource.begin),
+            static_cast<std::size_t>(resource.end - resource.begin)
+        )
     );
-
-    return out.good();
 }
 }
 

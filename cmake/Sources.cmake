@@ -1,5 +1,6 @@
 set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/RuneHelper.cpp
+    RuneHelper/core/AtomicFile.cpp
     RuneHelper/core/ConfigManager.cpp
     RuneHelper/core/Feature.cpp
     RuneHelper/core/Logger.cpp

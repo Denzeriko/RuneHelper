@@ -5,11 +5,11 @@
 #include <cstdint>
 #include <cstdlib>
 #include <filesystem>
-#include <fstream>
 #include <string>
 
 #include "nlohmann/json.hpp"
 
+#include "core/AtomicFile.h"
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "recipes/RecipeDatabase.h"
@@ -100,15 +100,11 @@ void RecipeUpdater::Fetch(const std::stop_token& stop)
 
     const std::filesystem::path path = DownloadedRecipeDatabasePath();
 
-    std::ofstream file(path, std::ios::trunc);
-
-    if (!file)
+    if (!WriteFileAtomic(path, response.text))
     {
         LOG_ERROR("RecipeUpdater: could not write " + path.string());
         return;
     }
-
-    file << response.text;
 
     LOG_INFO(
         "RecipeUpdater: stored " + std::to_string(parsed["combinations"].size()) +

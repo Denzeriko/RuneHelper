@@ -2,9 +2,10 @@
 
 #include <windows.h>
 
-#include <fstream>
 #include <string>
+#include <string_view>
 
+#include "core/AtomicFile.h"
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "resources/resource.h"
@@ -36,16 +37,13 @@ bool ExtractResourceToFile(int resId, LPCWSTR resType, const std::filesystem::pa
 
     std::filesystem::create_directories(outPath.parent_path());
 
-    std::ofstream file(outPath, std::ios::binary);
-    if (!file)
+    if (!WriteFileAtomic(outPath, std::string_view(static_cast<const char*>(data), size)))
     {
-        LOG_ERROR("Failed to create output file: " + outPath.string());
+        LOG_ERROR("Failed to write output file: " + outPath.string());
         return false;
     }
 
-    file.write(reinterpret_cast<const char*>(data), size);
-
-    return file.good();
+    return true;
 }
 
 std::string PrepareTessdata()

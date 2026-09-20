@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <string>
 #include <vector>
 
@@ -10,9 +11,9 @@
 
 struct ExpeditionSettings
 {
-    bool enabled = true;
-    bool showRunes = true;
-    bool highlightRare = true;
+    std::atomic<bool> enabled = true;
+    std::atomic<bool> showRunes = true;
+    std::atomic<bool> highlightRare = true;
 };
 
 class ExpeditionFeature : public Feature
@@ -41,6 +42,7 @@ private:
     RecipeDatabase database_;
     RecipeUpdater updater_;
     RuneTileLocator tiles_;
+    std::atomic<bool> regionDirty_{ false };
     std::string markSignature_;
     std::vector<OverlayMark> cachedMarks_;
 };

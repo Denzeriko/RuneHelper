@@ -5,6 +5,7 @@
 #include <fstream>
 
 #include "nlohmann/json.hpp"
+#include "core/AtomicFile.h"
 #include "platform/PlatformPaths.h"
 
 using json = nlohmann::json;
@@ -180,11 +181,5 @@ bool ConfigManager::Save() const
 
     j["debugOCR"]       = config.debugOCR;
 
-    std::ofstream file(GetConfigPath());
-
-    if (!file)
-        return false;
-
-    file << j.dump(4);
-    return true;
+    return WriteFileAtomic(GetConfigPath(), j.dump(4));
 }
