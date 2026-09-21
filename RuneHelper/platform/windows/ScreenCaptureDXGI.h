@@ -14,6 +14,8 @@ public:
     void Shutdown();
 
 private:
+    bool HasCachedFrame(const cv::Rect& region) const;
+
     bool initialized_ = false;
 
     int outputLeft_ = 0;

@@ -38,6 +38,11 @@ namespace
     }
 }
 
+bool ScreenCaptureWGC::HasCachedFrame(const cv::Rect& region) const
+{
+    return !lastFrame_.empty() && lastFrameRegion_ == region;
+}
+
 bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
 {
     Shutdown();
@@ -220,7 +225,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     if (hr == DXGI_ERROR_WAIT_TIMEOUT)
     {
-        if (!lastFrame_.empty() && lastFrameRegion_ == region)
+        if (HasCachedFrame(region))
             return lastFrame_.clone();
 
         return {};
@@ -236,6 +241,12 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
             Shutdown();
 
         return {};
+    }
+
+    if (frameInfo.LastPresentTime.QuadPart == 0 && HasCachedFrame(region))
+    {
+        g_duplication->ReleaseFrame();
+        return lastFrame_.clone();
     }
 
     ComPtr<ID3D11Texture2D> desktopTexture;
