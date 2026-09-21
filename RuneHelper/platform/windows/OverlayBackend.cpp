@@ -34,6 +34,10 @@ std::wstring ToWide(const std::string& text)
     return wide;
 }
 
+constexpr COLORREF kTransparentKey = RGB(0, 0, 0);
+constexpr COLORREF kOutlineColor = RGB(8, 8, 8);
+constexpr COLORREF kBackdropColor = RGB(16, 16, 16);
+
 constexpr std::array<std::pair<int, int>, 8> kOutlineOffsets{{
     { -1, -1 }, { 0, -1 }, { 1, -1 },
     { -1,  0 },            { 1,  0 },
@@ -123,7 +127,7 @@ bool WindowsOverlayBackend::Init(const char*, int, int)
         return false;
     }
 
-    SetLayeredWindowAttributes(hwnd_, RGB(0, 0, 0), 0, LWA_COLORKEY);
+    SetLayeredWindowAttributes(hwnd_, kTransparentKey, 0, LWA_COLORKEY);
     if (!SetWindowDisplayAffinity(hwnd_, WDA_EXCLUDEFROMCAPTURE))
         LOG_ERROR("Windows overlay: SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE) failed");
 
@@ -371,7 +375,7 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
         RECT client;
         GetClientRect(hwnd, &client);
 
-        HBRUSH bg = CreateSolidBrush(RGB(0, 0, 0));
+        HBRUSH bg = CreateSolidBrush(kTransparentKey);
         FillRect(hdc, &client, bg);
         DeleteObject(bg);
 
@@ -443,14 +447,14 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
                     y + extent.cy / 2 + 2
                 };
 
-                HBRUSH shade = CreateSolidBrush(RGB(16, 16, 16));
+                HBRUSH shade = CreateSolidBrush(kBackdropColor);
                 FillRect(hdc, &backdrop, shade);
                 DeleteObject(shade);
             }
 
             if (self->state_.outline)
             {
-                SetTextColor(hdc, RGB(0, 0, 0));
+                SetTextColor(hdc, kOutlineColor);
 
                 for (const auto& [dx, dy] : kOutlineOffsets)
                 {
