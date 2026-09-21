@@ -11,7 +11,6 @@
 #include "core/Logger.h"
 #include "ocr/LootRows.h"
 #include "price/PriceService.h"
-#include "ui/OverlayText.h"
 
 #ifdef _WIN32
 #include "platform/windows/ResourceHelper.h"
@@ -281,7 +280,7 @@ void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv:
             continue;
 
         OverlayText text;
-        text.text = OverlayWide(rowOverlays[i].note);
+        text.text = rowOverlays[i].note;
         text.color = rowOverlays[i].color;
         text.x = region.x + region.width + config.overlayOffsetX;
         text.y = y;

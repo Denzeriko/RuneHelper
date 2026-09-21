@@ -23,7 +23,6 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/recipes/RecipeUpdater.cpp
     RuneHelper/ui/ImGuiStyleSetup.cpp
     RuneHelper/ui/Overlay.cpp
-    RuneHelper/ui/OverlayText.cpp
     RuneHelper/ui/UIDraw.cpp
     RuneHelper/ui/UIManager.cpp
 )

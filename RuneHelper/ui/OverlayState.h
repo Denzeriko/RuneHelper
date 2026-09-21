@@ -25,7 +25,7 @@ constexpr OverlayColor OverlayRgb(int r, int g, int b)
 
 struct OverlayText
 {
-    std::wstring text;
+    std::string text;
     int x = 0;
     int y = 0;
     int fontSize = 0;

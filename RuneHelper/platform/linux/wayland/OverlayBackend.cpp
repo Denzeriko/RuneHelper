@@ -21,17 +21,6 @@ constexpr int kOutlineExtraThickness = 2;
 constexpr int kTextPadding = 6;
 constexpr int kDirtyMargin = 2;
 
-std::string ToNarrow(const std::wstring& text)
-{
-    std::string result;
-    result.reserve(text.size());
-
-    for (wchar_t ch : text)
-        result.push_back(ch >= 0 && ch <= 127 ? static_cast<char>(ch) : '?');
-
-    return result;
-}
-
 cv::Scalar ToScalar(OverlayColor color, int alpha)
 {
     const int r = static_cast<int>(color & 0xff);
@@ -368,7 +357,7 @@ cv::Rect WaylandOverlayBackend::ComputeContentRect() const
 
         int baseline = 0;
         const int outlinePad = state_.outline ? kOutlineExtraThickness : 0;
-        const cv::Size size = cv::getTextSize(ToNarrow(text.text), cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
+        const cv::Size size = cv::getTextSize(text.text, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
         const cv::Rect box(
             text.x - kTextPadding - outlinePad,
             text.y - size.height / 2 - kTextPadding - outlinePad,
@@ -476,7 +465,7 @@ void WaylandOverlayBackend::Draw()
             int thickness = 1;
             TextMetrics(text, fontScale, thickness);
 
-            const std::string narrow = ToNarrow(text.text);
+            const std::string& narrow = text.text;
             const int pixelHeight = std::max(8, text.fontSize > 0 ? text.fontSize : state_.fontSize);
             TextRaster& raster = TextRaster::Instance();
             const bool trueType = raster.Ready();

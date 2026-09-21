@@ -33,17 +33,6 @@ bool IsWaylandSession()
     return sessionType && std::string(sessionType) == "wayland";
 }
 
-std::string ToNarrow(const std::wstring& text)
-{
-    std::string result;
-    result.reserve(text.size());
-
-    for (wchar_t ch : text)
-        result.push_back(ch >= 0 && ch <= 127 ? static_cast<char>(ch) : '?');
-
-    return result;
-}
-
 unsigned long XColorFromOverlayColor(Display* display, OverlayColor color)
 {
     int screen = DefaultScreen(display);
@@ -367,7 +356,7 @@ void LinuxOverlayBackend::ResizeAndMove()
     for (const auto& text : state_.texts)
     {
         const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
-        merge(text.x - 6, text.y - size, TextWidth(size, ToNarrow(text.text)) + 12, size * 2);
+        merge(text.x - 6, text.y - size, TextWidth(size, text.text) + 12, size * 2);
     }
 
     for (const OverlayMark& mark : state_.marks)
@@ -432,7 +421,7 @@ void LinuxOverlayBackend::Redraw()
         addShape(
             text.x - windowX_ - 6,
             text.y - windowY_ - size,
-            TextWidth(size, ToNarrow(text.text)) + 12,
+            TextWidth(size, text.text) + 12,
             size * 2);
     }
 
@@ -471,7 +460,7 @@ void LinuxOverlayBackend::Redraw()
 
         for (const auto& text : state_.texts)
         {
-            const std::string narrow = ToNarrow(text.text);
+            const std::string& narrow = text.text;
             const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
 
             if (XFontStruct* font = FontForSize(size))
@@ -571,7 +560,7 @@ void LinuxOverlayBackend::Redraw()
 
     for (const auto& text : state_.texts)
     {
-        const std::string narrow = ToNarrow(text.text);
+        const std::string& narrow = text.text;
         const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
 
         if (XFontStruct* font = FontForSize(size))

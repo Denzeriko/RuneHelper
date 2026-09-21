@@ -7,6 +7,8 @@
 #include <map>
 #include <utility>
 
+#include <string>
+
 #include "core/Logger.h"
 #include "ui/OverlayState.h"
 
@@ -15,6 +17,22 @@ namespace
 #ifndef WDA_EXCLUDEFROMCAPTURE
 constexpr DWORD WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 #endif
+
+std::wstring ToWide(const std::string& text)
+{
+    if (text.empty())
+        return {};
+
+    const int size = MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), nullptr, 0);
+
+    if (size <= 0)
+        return {};
+
+    std::wstring wide(static_cast<std::size_t>(size), L'\0');
+    MultiByteToWideChar(CP_UTF8, 0, text.c_str(), static_cast<int>(text.size()), wide.data(), size);
+
+    return wide;
+}
 
 constexpr std::array<std::pair<int, int>, 8> kOutlineOffsets{{
     { -1, -1 }, { 0, -1 }, { 1, -1 },
@@ -164,7 +182,7 @@ RECT WindowsOverlayBackend::ContentBounds(const OverlayState& state) const
         const int x = text.x - virtualX_;
         const int y = text.y - virtualY_;
         const int size = text.fontSize > 0 ? text.fontSize : state.fontSize;
-        const int width = static_cast<int>(text.text.size()) * std::max(8, size) + 32;
+        const int width = static_cast<int>(ToWide(text.text).size()) * std::max(8, size) + 32;
         const int half = std::max(lineHeight, size + 8);
 
         const RECT box{ x - 8, y - half, x + width, y + half };
@@ -399,6 +417,7 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
         for (const auto& text : self->state_.texts)
         {
             const int size = text.fontSize > 0 ? text.fontSize : self->state_.fontSize;
+            const std::wstring wide = ToWide(text.text);
 
             if (HFONT font = self->FontForSize(size))
             {
@@ -415,7 +434,7 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
             if (self->state_.background)
             {
                 SIZE extent{};
-                GetTextExtentPoint32W(hdc, text.text.c_str(), static_cast<int>(text.text.size()), &extent);
+                GetTextExtentPoint32W(hdc, wide.c_str(), static_cast<int>(wide.size()), &extent);
 
                 const RECT backdrop{
                     x - 4,
@@ -436,12 +455,12 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
                 for (const auto& [dx, dy] : kOutlineOffsets)
                 {
                     RECT shifted{ rect.left + dx, rect.top + dy, rect.right + dx, rect.bottom + dy };
-                    DrawTextW(hdc, text.text.c_str(), -1, &shifted, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
+                    DrawTextW(hdc, wide.c_str(), -1, &shifted, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
                 }
             }
 
             SetTextColor(hdc, ToColorRef(text.color));
-            DrawTextW(hdc, text.text.c_str(), -1, &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
+            DrawTextW(hdc, wide.c_str(), -1, &rect, DT_LEFT | DT_VCENTER | DT_SINGLELINE | DT_NOCLIP);
         }
 
         if (oldFont)
