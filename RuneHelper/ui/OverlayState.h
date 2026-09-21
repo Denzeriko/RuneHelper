@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -41,12 +42,51 @@ struct OverlayMark
     OverlayColor color = OverlayRgb(255, 220, 80);
 };
 
+inline bool ApproxEqual(const OverlayText& a, const OverlayText& b, int yTolerance = 0)
+{
+    return a.x == b.x
+        && std::abs(a.y - b.y) <= yTolerance
+        && a.fontSize == b.fontSize
+        && a.color == b.color
+        && a.text == b.text;
+}
+
+inline bool ApproxEqual(const OverlayMark& a, const OverlayMark& b, int yTolerance = 0)
+{
+    return a.x == b.x
+        && std::abs(a.y - b.y) <= yTolerance
+        && a.width == b.width
+        && a.height == b.height
+        && a.color == b.color;
+}
+
+template <typename T>
+bool ApproxEqual(const std::vector<T>& a, const std::vector<T>& b, int yTolerance = 0)
+{
+    if (a.size() != b.size())
+        return false;
+
+    for (std::size_t i = 0; i < a.size(); ++i)
+    {
+        if (!ApproxEqual(a[i], b[i], yTolerance))
+            return false;
+    }
+
+    return true;
+}
+
 struct OverlayFrame
 {
     std::vector<OverlayText> texts;
     std::vector<OverlayMark> marks;
 
     bool Empty() const { return texts.empty() && marks.empty(); }
+
+    bool ApproxEquals(const OverlayFrame& other, int yTolerance = 0) const
+    {
+        return ApproxEqual(texts, other.texts, yTolerance)
+            && ApproxEqual(marks, other.marks, yTolerance);
+    }
 };
 
 struct OverlayState

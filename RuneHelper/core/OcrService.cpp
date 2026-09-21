@@ -39,49 +39,6 @@ void SleepOcrLoop(std::atomic<bool>& running, const std::atomic<bool>& singleSna
 }
 
 constexpr int kOverlayYJitter = 3;
-
-bool EqualOverlayText(const OverlayText& a, const OverlayText& b)
-{
-    return a.x == b.x
-        && std::abs(a.y - b.y) <= kOverlayYJitter
-        && a.fontSize == b.fontSize
-        && a.color == b.color
-        && a.text == b.text;
-}
-
-bool EqualOverlayMarks(const std::vector<OverlayMark>& a, const std::vector<OverlayMark>& b)
-{
-    if (a.size() != b.size())
-        return false;
-
-    for (size_t i = 0; i < a.size(); ++i)
-    {
-        if (a[i].x != b[i].x
-            || std::abs(a[i].y - b[i].y) > kOverlayYJitter
-            || a[i].width != b[i].width
-            || a[i].height != b[i].height
-            || !(a[i].color == b[i].color))
-        {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-bool EqualOverlayTexts(const std::vector<OverlayText>& a, const std::vector<OverlayText>& b)
-{
-    if (a.size() != b.size())
-        return false;
-
-    for (size_t i = 0; i < a.size(); ++i)
-    {
-        if (!EqualOverlayText(a[i], b[i]))
-            return false;
-    }
-
-    return true;
-}
 }
 
 OcrService::~OcrService()
@@ -431,7 +388,7 @@ void OcrService::SetOverlayFrame(OverlayFrame frame)
 {
     std::lock_guard lock(overlayMutex_);
 
-    if (EqualOverlayTexts(sharedFrame_.texts, frame.texts) && EqualOverlayMarks(sharedFrame_.marks, frame.marks))
+    if (sharedFrame_.ApproxEquals(frame, kOverlayYJitter))
         return;
 
     sharedFrame_ = std::move(frame);
