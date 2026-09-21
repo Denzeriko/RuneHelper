@@ -46,6 +46,7 @@ add_test(
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"
+        "${CMAKE_CURRENT_SOURCE_DIR}/truth"
 )
 
 add_custom_target(bless_ocr_golden
@@ -54,6 +55,7 @@ add_custom_target(bless_ocr_golden
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"
+        "${CMAKE_CURRENT_SOURCE_DIR}/truth"
         --bless
     DEPENDS ocr_golden
     VERBATIM

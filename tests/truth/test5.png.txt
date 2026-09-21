@@ -1,0 +1,7 @@
+rows=6
+qty=1 name="Aldur's Legacy"
+qty=1 name="Medved's Boon"
+qty=1 name="Uhtred's Boon"
+qty=1 name="Vorana's Boon"
+qty=1 name="Olroth's Boon"
+qty=10 name="Divine Orb"

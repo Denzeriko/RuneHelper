@@ -1,0 +1,4 @@
+rows=3
+qty=3 name="Divine Orb"
+qty=2 name="Divine Orb"
+qty=1 name="Divine Orb"

@@ -9,7 +9,8 @@ usage()
     cat <<EOF
 usage: $(basename "$0") [--bless] [--tsan]
 
-  (no flags)  compare OCR output on tests/panels against tests/golden
+  (no flags)  compare OCR output on tests/panels against tests/golden and
+              report accuracy against the labels in tests/truth
   --bless     overwrite tests/golden with the current output
   --tsan      run the comparison under ThreadSanitizer
 
@@ -49,7 +50,7 @@ if [ "$bless" -eq 1 ]; then
     action="cmake --build $build_dir --target bless_ocr_golden"
 else
     mount_mode=ro
-    action="ctest --test-dir $build_dir --output-on-failure"
+    action="ctest --test-dir $build_dir -V | sed -e 's/^[0-9]*: //' -e '/^Test command:/d' -e '/^Test timeout/d'"
 fi
 
 docker run --rm \
@@ -58,7 +59,7 @@ docker run --rm \
     -e TSAN_OPTIONS=halt_on_error=1 \
     -v "$ROOT:/src:$mount_mode" \
     "$IMAGE" bash -lc "
-        set -e
+        set -eo pipefail
         cmake -S /src -B $build_dir -G Ninja $configure -DRUNEHELPER_BUILD_TESTS=ON > /tmp/configure.log 2>&1 ||
             { tail -20 /tmp/configure.log; exit 1; }
         cmake --build $build_dir --target ocr_golden > /tmp/build.log 2>&1 ||
