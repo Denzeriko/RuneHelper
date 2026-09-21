@@ -13,6 +13,7 @@ struct PriceTable
 {
     std::unordered_map<std::string, PriceInfo> items;
     double divineToEx = 0.0;
+    bool complete = true;
 };
 
 class PriceProvider

@@ -8,6 +8,9 @@
 #include <map>
 #include <string>
 #include <utility>
+#include <vector>
+
+#include <opencv2/core.hpp>
 
 #include <X11/Xatom.h>
 #include <X11/Xlib.h>
@@ -15,11 +18,14 @@
 #include <X11/extensions/shape.h>
 
 #include "core/Logger.h"
+#include "platform/linux/TextRaster.h"
 #include "ui/OverlayState.h"
 
 namespace
 {
 constexpr int kMarkThickness = 2;
+constexpr int kTextPadding = 6;
+constexpr int kCoverageThreshold = 96;
 
 constexpr std::array<std::pair<int, int>, 8> kOutlineOffsets{{
     { -1, -1 }, { 0, -1 }, { 1, -1 },
@@ -31,6 +37,84 @@ bool IsWaylandSession()
 {
     const char* sessionType = std::getenv("XDG_SESSION_TYPE");
     return sessionType && std::string(sessionType) == "wayland";
+}
+
+struct TextPlacement
+{
+    cv::Rect box;
+    cv::Point baseline;
+};
+
+struct RenderedText
+{
+    cv::Rect box;
+    XImage* color = nullptr;
+    XImage* coverage = nullptr;
+};
+
+void DestroyRendered(RenderedText& text)
+{
+    if (text.color)
+        XDestroyImage(text.color);
+
+    if (text.coverage)
+        XDestroyImage(text.coverage);
+
+    text.color = nullptr;
+    text.coverage = nullptr;
+}
+
+cv::Size MeasureText(const std::string& utf8, int pixelHeight, int& descent)
+{
+    TextRaster& raster = TextRaster::Instance();
+
+    if (raster.Ready())
+    {
+        descent = raster.Descent(pixelHeight);
+        return raster.Measure(utf8, pixelHeight);
+    }
+
+    descent = pixelHeight / 3;
+
+    return cv::Size(static_cast<int>(utf8.size()) * std::max(6, pixelHeight / 2 + 2), pixelHeight);
+}
+
+TextPlacement PlaceText(const OverlayText& text, int pixelHeight)
+{
+    int descent = 0;
+    const cv::Size size = MeasureText(text.text, pixelHeight, descent);
+    const int baselineY = text.y + size.height / 2;
+
+    TextPlacement placement;
+    placement.baseline = cv::Point(text.x, baselineY);
+    placement.box = cv::Rect(
+        text.x - kTextPadding,
+        baselineY - size.height - kTextPadding,
+        std::max(1, size.width + 2 * kTextPadding),
+        std::max(1, size.height + descent + 2 * kTextPadding)
+    );
+
+    return placement;
+}
+
+cv::Mat RasterizeText(const OverlayText& text, int pixelHeight, const TextPlacement& placement, bool outline)
+{
+    cv::Mat canvas(placement.box.height, placement.box.width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+
+    const double r = static_cast<double>(text.color & 0xff);
+    const double g = static_cast<double>((text.color >> 8) & 0xff);
+    const double b = static_cast<double>((text.color >> 16) & 0xff);
+
+    TextRaster::Instance().Draw(
+        canvas,
+        text.text,
+        placement.baseline - placement.box.tl(),
+        pixelHeight,
+        cv::Scalar(b, g, r, 255),
+        outline
+    );
+
+    return canvas;
 }
 
 unsigned long XColorFromOverlayColor(Display* display, OverlayColor color)
@@ -66,7 +150,8 @@ private:
     void Redraw();
     XFontStruct* FontForSize(int size);
     void ReleaseFonts();
-    int TextWidth(int size, const std::string& text) const;
+    XImage* CreateColorImage(const cv::Mat& bgra) const;
+    XImage* CreateCoverageImage(const cv::Mat& bgra) const;
     void SetOpacity(unsigned long opacity);
 
     Display* display_ = nullptr;
@@ -286,9 +371,96 @@ void LinuxOverlayBackend::BringToTop()
     XFlush(display_);
 }
 
-int LinuxOverlayBackend::TextWidth(int size, const std::string& text) const
+XImage* LinuxOverlayBackend::CreateColorImage(const cv::Mat& bgra) const
 {
-    return static_cast<int>(text.size()) * std::max(6, size / 2 + 2);
+    const int screen = DefaultScreen(display_);
+
+    XImage* image = XCreateImage(
+        display_,
+        DefaultVisual(display_, screen),
+        static_cast<unsigned int>(DefaultDepth(display_, screen)),
+        ZPixmap,
+        0,
+        nullptr,
+        static_cast<unsigned int>(bgra.cols),
+        static_cast<unsigned int>(bgra.rows),
+        32,
+        0
+    );
+
+    if (!image)
+        return nullptr;
+
+    image->data = static_cast<char*>(std::calloc(static_cast<std::size_t>(image->bytes_per_line) * bgra.rows, 1));
+
+    if (!image->data)
+    {
+        XFree(image);
+        return nullptr;
+    }
+
+    for (int y = 0; y < bgra.rows; ++y)
+    {
+        const unsigned char* row = bgra.ptr<unsigned char>(y);
+
+        for (int x = 0; x < bgra.cols; ++x)
+        {
+            const unsigned char* pixel = row + static_cast<std::size_t>(x) * 4;
+
+            XPutPixel(
+                image,
+                x,
+                y,
+                (static_cast<unsigned long>(pixel[2]) << 16) |
+                (static_cast<unsigned long>(pixel[1]) << 8) |
+                static_cast<unsigned long>(pixel[0])
+            );
+        }
+    }
+
+    return image;
+}
+
+XImage* LinuxOverlayBackend::CreateCoverageImage(const cv::Mat& bgra) const
+{
+    const int screen = DefaultScreen(display_);
+
+    XImage* image = XCreateImage(
+        display_,
+        DefaultVisual(display_, screen),
+        1,
+        XYPixmap,
+        0,
+        nullptr,
+        static_cast<unsigned int>(bgra.cols),
+        static_cast<unsigned int>(bgra.rows),
+        8,
+        0
+    );
+
+    if (!image)
+        return nullptr;
+
+    image->data = static_cast<char*>(std::calloc(static_cast<std::size_t>(image->bytes_per_line) * bgra.rows, 1));
+
+    if (!image->data)
+    {
+        XFree(image);
+        return nullptr;
+    }
+
+    for (int y = 0; y < bgra.rows; ++y)
+    {
+        const unsigned char* row = bgra.ptr<unsigned char>(y);
+
+        for (int x = 0; x < bgra.cols; ++x)
+        {
+            if (row[static_cast<std::size_t>(x) * 4 + 3] >= kCoverageThreshold)
+                XPutPixel(image, x, y, 1);
+        }
+    }
+
+    return image;
 }
 
 XFontStruct* LinuxOverlayBackend::FontForSize(int size)
@@ -356,7 +528,8 @@ void LinuxOverlayBackend::ResizeAndMove()
     for (const auto& text : state_.texts)
     {
         const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
-        merge(text.x - 6, text.y - size, TextWidth(size, text.text) + 12, size * 2);
+        const cv::Rect box = PlaceText(text, size).box;
+        merge(box.x, box.y, box.width, box.height);
     }
 
     for (const OverlayMark& mark : state_.marks)
@@ -400,6 +573,34 @@ void LinuxOverlayBackend::Redraw()
         return;
 
     const int screen = DefaultScreen(display_);
+    const bool trueType = TextRaster::Instance().Ready();
+
+    std::vector<RenderedText> rendered;
+
+    if (trueType)
+    {
+        rendered.reserve(state_.texts.size());
+
+        for (const auto& text : state_.texts)
+        {
+            const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+            TextPlacement placement = PlaceText(text, size);
+            const cv::Mat canvas = RasterizeText(text, size, placement, state_.outline);
+
+            placement.box.x -= windowX_;
+            placement.box.y -= windowY_;
+
+            RenderedText entry;
+            entry.box = placement.box;
+            entry.color = CreateColorImage(canvas);
+            entry.coverage = CreateCoverageImage(canvas);
+
+            if (entry.color && entry.coverage)
+                rendered.push_back(entry);
+            else
+                DestroyRendered(entry);
+        }
+    }
 
     Region shape = XCreateRegion();
 
@@ -415,15 +616,8 @@ void LinuxOverlayBackend::Redraw()
             XUnionRectWithRegion(&rect, shape, shape);
         };
 
-    for (const auto& text : state_.texts)
-    {
-        const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
-        addShape(
-            text.x - windowX_ - 6,
-            text.y - windowY_ - size,
-            TextWidth(size, text.text) + 12,
-            size * 2);
-    }
+    for (const RenderedText& text : rendered)
+        addShape(text.box.x, text.box.y, text.box.width, text.box.height);
 
     for (const OverlayMark& mark : state_.marks)
     {
@@ -458,31 +652,56 @@ void LinuxOverlayBackend::Redraw()
 
         XSetForeground(display_, maskGc, 1);
 
-        for (const auto& text : state_.texts)
+        if (trueType)
         {
-            const std::string& narrow = text.text;
-            const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+            XSetFunction(display_, maskGc, GXor);
 
-            if (XFontStruct* font = FontForSize(size))
-                XSetFont(display_, maskGc, font->fid);
-
-            const int maskX = text.x - windowX_;
-            const int maskY = text.y - windowY_ + size / 3;
-
-            XDrawString(display_, mask, maskGc, maskX, maskY, narrow.c_str(), static_cast<int>(narrow.size()));
-
-            if (state_.outline)
+            for (const RenderedText& text : rendered)
             {
-                for (const auto& [dx, dy] : kOutlineOffsets)
+                XPutImage(
+                    display_,
+                    mask,
+                    maskGc,
+                    text.coverage,
+                    0,
+                    0,
+                    text.box.x,
+                    text.box.y,
+                    static_cast<unsigned int>(text.box.width),
+                    static_cast<unsigned int>(text.box.height)
+                );
+            }
+
+            XSetFunction(display_, maskGc, GXcopy);
+        }
+        else
+        {
+            for (const auto& text : state_.texts)
+            {
+                const std::string& narrow = text.text;
+                const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
+
+                if (XFontStruct* font = FontForSize(size))
+                    XSetFont(display_, maskGc, font->fid);
+
+                const int maskX = text.x - windowX_;
+                const int maskY = text.y - windowY_ + size / 3;
+
+                XDrawString(display_, mask, maskGc, maskX, maskY, narrow.c_str(), static_cast<int>(narrow.size()));
+
+                if (state_.outline)
                 {
-                    XDrawString(
-                        display_,
-                        mask,
-                        maskGc,
-                        maskX + dx,
-                        maskY + dy,
-                        narrow.c_str(),
-                        static_cast<int>(narrow.size()));
+                    for (const auto& [dx, dy] : kOutlineOffsets)
+                    {
+                        XDrawString(
+                            display_,
+                            mask,
+                            maskGc,
+                            maskX + dx,
+                            maskY + dy,
+                            narrow.c_str(),
+                            static_cast<int>(narrow.size()));
+                    }
                 }
             }
         }
@@ -558,45 +777,99 @@ void LinuxOverlayBackend::Redraw()
 
     XSetLineAttributes(display_, gc_, 1, LineSolid, CapButt, JoinMiter);
 
-    for (const auto& text : state_.texts)
+    if (trueType)
     {
-        const std::string& narrow = text.text;
-        const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
-
-        if (XFontStruct* font = FontForSize(size))
-            XSetFont(display_, gc_, font->fid);
-
-        const int baseX = text.x - windowX_;
-        const int baseY = text.y - windowY_ + size / 3;
-
-        if (state_.outline)
+        for (RenderedText& text : rendered)
         {
-            XSetForeground(display_, gc_, BlackPixel(display_, screen));
+            const Pixmap clip = XCreatePixmap(
+                display_,
+                window_,
+                static_cast<unsigned int>(text.box.width),
+                static_cast<unsigned int>(text.box.height),
+                1
+            );
 
-            for (const auto& [dx, dy] : kOutlineOffsets)
-            {
-                XDrawString(
-                    display_,
-                    window_,
-                    gc_,
-                    baseX + dx,
-                    baseY + dy,
-                    narrow.c_str(),
-                    static_cast<int>(narrow.size())
-                );
-            }
+            GC clipGc = XCreateGC(display_, clip, 0, nullptr);
+
+            XPutImage(
+                display_,
+                clip,
+                clipGc,
+                text.coverage,
+                0,
+                0,
+                0,
+                0,
+                static_cast<unsigned int>(text.box.width),
+                static_cast<unsigned int>(text.box.height)
+            );
+
+            XSetClipMask(display_, gc_, clip);
+            XSetClipOrigin(display_, gc_, text.box.x, text.box.y);
+
+            XPutImage(
+                display_,
+                window_,
+                gc_,
+                text.color,
+                0,
+                0,
+                text.box.x,
+                text.box.y,
+                static_cast<unsigned int>(text.box.width),
+                static_cast<unsigned int>(text.box.height)
+            );
+
+            XSetClipMask(display_, gc_, None);
+
+            XFreeGC(display_, clipGc);
+            XFreePixmap(display_, clip);
+
+            DestroyRendered(text);
         }
+    }
+    else
+    {
+        for (const auto& text : state_.texts)
+        {
+            const std::string& narrow = text.text;
+            const int size = text.fontSize > 0 ? text.fontSize : state_.fontSize;
 
-        XSetForeground(display_, gc_, XColorFromOverlayColor(display_, text.color));
-        XDrawString(
-            display_,
-            window_,
-            gc_,
-            baseX,
-            baseY,
-            narrow.c_str(),
-            static_cast<int>(narrow.size())
-        );
+            if (XFontStruct* font = FontForSize(size))
+                XSetFont(display_, gc_, font->fid);
+
+            const int baseX = text.x - windowX_;
+            const int baseY = text.y - windowY_ + size / 3;
+
+            if (state_.outline)
+            {
+                XSetForeground(display_, gc_, BlackPixel(display_, screen));
+
+                for (const auto& [dx, dy] : kOutlineOffsets)
+                {
+                    XDrawString(
+                        display_,
+                        window_,
+                        gc_,
+                        baseX + dx,
+                        baseY + dy,
+                        narrow.c_str(),
+                        static_cast<int>(narrow.size())
+                    );
+                }
+            }
+
+            XSetForeground(display_, gc_, XColorFromOverlayColor(display_, text.color));
+            XDrawString(
+                display_,
+                window_,
+                gc_,
+                baseX,
+                baseY,
+                narrow.c_str(),
+                static_cast<int>(narrow.size())
+            );
+        }
     }
 
     XFlush(display_);

@@ -97,6 +97,13 @@ bool Fetch(cpr::Session& session, const std::string& url, std::string& body, con
     return true;
 }
 
+PriceTable FailedTable()
+{
+    PriceTable table;
+    table.complete = false;
+    return table;
+}
+
 const std::vector<std::string> kPoeNinjaCategories =
 {
     "Runes",
@@ -129,20 +136,50 @@ PriceTable PoeNinjaPriceProvider::DownloadPrices(const std::string& league, cons
     cpr::Session session;
     ConfigureSession(session, stop);
 
+    std::vector<std::string> failed;
+
     for (const auto& category : kPoeNinjaCategories)
     {
         if (stop.stop_requested())
-            return {};
+        {
+            result.items.clear();
+            result.complete = false;
+            return result;
+        }
 
         auto dump = DownloadCategory(session, encodedLeague, category, stop);
 
         LOG_INFO("Downloaded " + category + ": " + std::to_string(dump.items.size()));
+
+        if (!dump.complete)
+        {
+            failed.push_back(category);
+            result.complete = false;
+        }
 
         for (auto& [name, info] : dump.items)
             result.items[name] = info;
 
         if (result.divineToEx <= 0.0)
             result.divineToEx = dump.divineToEx;
+    }
+
+    if (!failed.empty())
+    {
+        std::string names;
+
+        for (const auto& category : failed)
+        {
+            if (!names.empty())
+                names += ", ";
+
+            names += category;
+        }
+
+        LOG_ERROR(
+            "PoeNinjaPriceProvider::DownloadPrices() -> " + std::to_string(failed.size()) + " of " +
+            std::to_string(kPoeNinjaCategories.size()) + " categories failed: " + names
+        );
     }
 
     LOG_INFO("PoeNinjaPriceProvider::DownloadPrices() -> total prices: " + std::to_string(result.items.size()));
@@ -188,7 +225,7 @@ PriceTable PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const 
         if (j.is_discarded())
         {
             LOG_ERROR("PoeNinjaPriceProvider JSON parse failed");
-            return {};
+            return FailedTable();
         }
 
         return ParseCategoryDump(j);
@@ -205,7 +242,7 @@ PriceTable PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const 
         }
 
         if (stop.stop_requested())
-            return {};
+            return FailedTable();
 
         const int failures = ProxyFailures().fetch_add(1) + 1;
 
@@ -216,7 +253,7 @@ PriceTable PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const 
     }
 
     if (!Fetch(session, kDirectApi + query, body, stop))
-        return {};
+        return FailedTable();
 
     return parse(body);
 }
@@ -233,6 +270,7 @@ PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
         !j["lines"].is_array())
     {
         LOG_ERROR("PoeNinjaPriceProvider::ParseCategoryDump() invalid JSON structure");
+        result.complete = false;
         return result;
     }
 
@@ -241,6 +279,7 @@ PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
     if (divineToEx <= 0.0)
     {
         LOG_ERROR("PoeNinjaPriceProvider::ParseCategoryDump() invalid exalted rate");
+        result.complete = false;
         return result;
     }
 

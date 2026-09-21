@@ -232,6 +232,10 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
         return;
     }
 
+    const bool partial = !fresh.complete;
+    int64_t retryIn = 0;
+    int attempt = 0;
+
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (league_ != league)
@@ -240,15 +244,42 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
             return;
         }
 
-        prices_ = std::move(fresh.items);
-        divineToEx_ = fresh.divineToEx;
-        dump_updated_at_ = now;
-        last_failure_at_ = 0;
-        failure_streak_ = 0;
+        if (partial)
+        {
+            for (const auto& [name, info] : fresh.items)
+                prices_[name] = info;
+
+            ++failure_streak_;
+            last_failure_at_ = NowUnix();
+            attempt = failure_streak_;
+            retryIn = BackoffSeconds(failure_streak_);
+        }
+        else
+        {
+            prices_ = std::move(fresh.items);
+            dump_updated_at_ = now;
+            last_failure_at_ = 0;
+            failure_streak_ = 0;
+        }
+
+        if (fresh.divineToEx > 0.0)
+            divineToEx_ = fresh.divineToEx;
+
         ++version_;
     }
 
     SaveDump();
+
+    if (partial)
+    {
+        LOG_ERROR(
+            "PriceCache::RefreshWorker() -> partial refresh merged, kept the previous prices for the "
+            "categories that failed, attempt " + std::to_string(attempt) +
+            ", next try in " + std::to_string(retryIn) + "s"
+        );
+
+        return;
+    }
 
     LOG_INFO("PriceCache::RefreshWorker() -> done");
 }
