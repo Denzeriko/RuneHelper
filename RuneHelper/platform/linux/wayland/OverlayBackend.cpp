@@ -9,6 +9,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "WaylandSession.h"
+#include "platform/linux/TextRaster.h"
 #include "core/Logger.h"
 #include "ui/OverlayState.h"
 
@@ -476,8 +477,22 @@ void WaylandOverlayBackend::Draw()
             TextMetrics(text, fontScale, thickness);
 
             const std::string narrow = ToNarrow(text.text);
+            const int pixelHeight = std::max(8, text.fontSize > 0 ? text.fontSize : state_.fontSize);
+            TextRaster& raster = TextRaster::Instance();
+            const bool trueType = raster.Ready();
+
             int baseline = 0;
-            const cv::Size size = cv::getTextSize(narrow, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
+            cv::Size size;
+
+            if (trueType)
+            {
+                size = raster.Measure(narrow, pixelHeight);
+                baseline = raster.Descent(pixelHeight);
+            }
+            else
+            {
+                size = cv::getTextSize(narrow, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
+            }
 
             const cv::Point origin(text.x - surfaceRect_.x, text.y - surfaceRect_.y + size.height / 2);
             const cv::Rect backdrop(
@@ -491,6 +506,12 @@ void WaylandOverlayBackend::Draw()
 
             if (state_.background && !clipped.empty())
                 canvas(clipped).setTo(cv::Scalar(0, 0, 0, 208));
+
+            if (trueType)
+            {
+                raster.Draw(canvas, narrow, origin, pixelHeight, ToScalar(text.color, 255), state_.outline);
+                continue;
+            }
 
             if (state_.outline)
             {

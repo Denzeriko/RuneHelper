@@ -155,6 +155,10 @@ if(NOT EXISTS "${RUNEHELPER_IMGUI_DIR}/imgui.cpp")
     message(FATAL_ERROR "Dear ImGui sources are missing at ${RUNEHELPER_IMGUI_DIR}, ${RUNEHELPER_SUBMODULE_HINT}")
 endif()
 
+if(NOT EXISTS "${RUNEHELPER_IMGUI_DIR}/imstb_truetype.h")
+    message(FATAL_ERROR "imstb_truetype.h is missing at ${RUNEHELPER_IMGUI_DIR}, the overlay needs it to rasterise text")
+endif()
+
 file(STRINGS "${RUNEHELPER_IMGUI_DIR}/imgui.h" RUNEHELPER_IMGUI_VERSION_LINE REGEX "^#define[ \t]+IMGUI_VERSION_NUM[ \t]+[0-9]+")
 string(REGEX MATCH "[0-9]+" RUNEHELPER_IMGUI_VERSION "${RUNEHELPER_IMGUI_VERSION_LINE}")
 

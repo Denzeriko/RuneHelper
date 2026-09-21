@@ -46,6 +46,7 @@ elseif(UNIX AND NOT APPLE)
         RuneHelper/platform/linux/PlatformShell.cpp
         RuneHelper/platform/linux/UIBackend.cpp
         RuneHelper/platform/linux/ResourceHelper.cpp
+        RuneHelper/platform/linux/TextRaster.cpp
     )
 
     if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
