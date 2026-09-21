@@ -106,8 +106,6 @@ void OcrService::Start(ConfigManager& configManager, FeatureRegistry& features, 
     running_ = true;
     ResetState(true);
 
-    const AppConfig config = configManager.Snapshot();
-
     initThread_ = std::jthread(
         [this]
         {

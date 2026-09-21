@@ -31,7 +31,7 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 
 * Select any loot area on the screen.
 * Real-time OCR using Tesseract.
-* Single-pass OCR tuned for the Runeshape loot menu.
+* Row-by-row OCR across up to four worker threads, tuned for the Runeshape loot menu.
 * Fuzzy matching for OCR mistakes.
 * Overlay displaying item prices next to detected items.
 * Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
@@ -150,8 +150,11 @@ sudo apt install \
     libtesseract-dev \
     libleptonica-dev \
     libcurl4-openssl-dev \
+    libssl-dev \
+    libglfw3-dev \
     libgl1-mesa-dev \
-    libx11-dev
+    libx11-dev \
+    libxext-dev
 ```
 
 For the Wayland backend, add:

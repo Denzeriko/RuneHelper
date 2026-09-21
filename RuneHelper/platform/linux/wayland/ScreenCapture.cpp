@@ -266,10 +266,27 @@ bool UsePortal()
         const char* forced = std::getenv("RUNEHELPER_CAPTURE_PORTAL");
 
         if (forced && forced[0] == '1')
+        {
+            LOG_INFO("Wayland capture path: xdg-desktop-portal, forced by RUNEHELPER_CAPTURE_PORTAL");
             return true;
+        }
 
         WaylandSession& session = Session();
-        return !session.Connect() || session.Screencopy() == nullptr;
+
+        if (!session.Connect())
+        {
+            LOG_INFO("Wayland capture path: xdg-desktop-portal, no Wayland connection for wlr-screencopy");
+            return true;
+        }
+
+        if (!session.Screencopy())
+        {
+            LOG_INFO("Wayland capture path: xdg-desktop-portal, the compositor does not offer wlr-screencopy");
+            return true;
+        }
+
+        LOG_INFO("Wayland capture path: wlr-screencopy");
+        return false;
     }();
 
     return value;
@@ -403,6 +420,19 @@ cv::Mat Capture(const cv::Rect& region)
     }
 
     const cv::Rect local(clipped.x - output->x, clipped.y - output->y, clipped.width, clipped.height);
+
+    static bool loggedGeometry = false;
+
+    if (!loggedGeometry)
+    {
+        loggedGeometry = true;
+        LOG_INFO(
+            "Wayland capture: output " + DescribeRect(bounds) +
+            ", requested region " + DescribeRect(region) +
+            ", capturing " + DescribeRect(local) + " inside it"
+        );
+    }
+
     cv::Mat result = CaptureOutputRegion(*output, local);
 
     if (!result.empty() && (result.cols != local.width || result.rows != local.height))
