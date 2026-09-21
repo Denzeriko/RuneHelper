@@ -1,9 +1,7 @@
-rows=8
-y=51 qty=1 name="Orb of Annulment" match="Orb of Annulment" mconf=100
-y=132 qty=2 name="Orb of Chance g" match="Orb of Chance" mconf=87
-y=213 qty=1 name="Perfect Chaos Orb ff" match="Perfect Chaos Orb" mconf=85
-y=294 qty=3 name="Divine Orb" match="Divine Orb" mconf=100
-y=353 qty=1 name="a a cae" match="-" mconf=0
-y=375 qty=1 name="x Void Flux fi" match="-" mconf=0
-y=455 qty=1 name="Perfect Exalted Orb" match="Perfect Exalted Orb" mconf=100
-y=512 qty=1 name="sili Li i a ene ae" match="-" mconf=0
+rows=6
+y=52 qty=1 name="Orb of Annulment" match="Orb of Annulment" mconf=100
+y=133 qty=2 name="Orb of Chance" match="Orb of Chance" mconf=100
+y=214 qty=1 name="Perfect Chaos Orb" match="Perfect Chaos Orb" mconf=100
+y=295 qty=3 name="Divine Orb" match="Divine Orb" mconf=100
+y=376 qty=1 name="Void Flux" match="Void Flux" mconf=100
+y=456 qty=1 name="Perfect Exalted Orb" match="Perfect Exalted Orb" mconf=100

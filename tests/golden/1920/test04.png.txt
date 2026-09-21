@@ -1,13 +1,10 @@
-rows=12
-y=10 qty=1 name="Skill Level 20 Detonate Living" match="-" mconf=0
-y=58 qty=1 name="Uncut Skill Gem (Level 19) )" match="Uncut Skill Gem (Level 19)" mconf=100
-y=105 qty=1 name="Uncut Spirit Gem (Level 19)" match="Uncut Spirit Gem (Level 19)" mconf=100
-y=152 qty=1 name="Support Healing Runes ff" match="-" mconf=0
-y=198 qty=1 name="Skill Skyfall" match="-" mconf=0
-y=247 qty=1 name="Skill Triskelion Cascade" match="-" mconf=0
-y=294 qty=1 name="Skill Refutation" match="-" mconf=0
-y=341 qty=1 name="Skill Runic Reprieve" match="-" mconf=0
-y=366 qty=1 name="ee" match="-" mconf=0
-y=388 qty=1 name="Skill Leylines" match="-" mconf=0
-y=435 qty=1 name="Skill Animus Exchange" match="-" mconf=0
-y=483 qty=2 name="Gemcutter's Prism )" match="Gemcutter's Prism" mconf=100
+rows=9
+y=11 qty=1 name="Skill Level 20 Detonate Living" match="-" mconf=0
+y=59 qty=1 name="Uncut Skill Gem (Level 19)" match="Uncut Skill Gem (Level 19)" mconf=100
+y=106 qty=1 name="Uncut Spirit Gem (Level 19)" match="Uncut Spirit Gem (Level 19)" mconf=100
+y=153 qty=1 name="Support Healing Runes" match="-" mconf=0
+y=199 qty=1 name="Skill Skyfall" match="-" mconf=0
+y=248 qty=1 name="Skill Triskelion Cascade" match="-" mconf=0
+y=342 qty=1 name="Skill Runic Reprieve" match="-" mconf=0
+y=436 qty=1 name="Skill Animus Exchange" match="-" mconf=0
+y=484 qty=2 name="Gemcutter's Prism" match="Gemcutter's Prism" mconf=100

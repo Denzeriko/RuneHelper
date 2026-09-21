@@ -1,13 +1,12 @@
-rows=12
-y=12 qty=1 name="The Greatwolf's Rune of Claws )" match="The Greatwolf's Rune of Claws" mconf=100
-y=61 qty=1 name="Thane Leld's Rune of Spring" match="Thane Leld's Rune of Spring" mconf=100
-y=108 qty=1 name="Lady Hestra's Rune of Winter" match="Lady Hestra's Rune of Winter" mconf=100
-y=155 qty=1 name="Thane Myrk's Rune of Summer" match="Thane Myrk's Rune of Summer" mconf=100
-y=202 qty=1 name="Fenumus' Rune of Draining" match="Fenumus' Rune of Draining" mconf=100
-y=250 qty=1 name="Fenumus' Rune of Spinning" match="Fenumus' Rune of Spinning" mconf=100
-y=297 qty=1 name="Craiceann's Rune of Recovery )" match="Craiceann's Rune of Recovery" mconf=100
-y=344 qty=1 name="Farrul's Rune of the Hunt" match="Farrul's Rune of the Hunt" mconf=100
-y=369 qty=1 name="ee" match="-" mconf=0
-y=391 qty=1 name="Saqawal's Rune of Erosion )" match="Saqawal's Rune of Erosion" mconf=100
-y=439 qty=1 name="Craiceann's Rune of Warding" match="Craiceann's Rune of Warding" mconf=100
-y=486 qty=1 name="Masterwork Rune" match="Masterwork Rune" mconf=100
+rows=11
+y=13 qty=1 name="The Greatwolf's Rune of Claws" match="The Greatwolf's Rune of Claws" mconf=100
+y=62 qty=1 name="Thane Leld's Rune of Spring" match="Thane Leld's Rune of Spring" mconf=100
+y=109 qty=1 name="Lady Hestra's Rune of Winter" match="Lady Hestra's Rune of Winter" mconf=100
+y=156 qty=1 name="Thane Myrk's Rune of Summer" match="Thane Myrk's Rune of Summer" mconf=100
+y=203 qty=1 name="Fenumus' Rune of Draining" match="Fenumus' Rune of Draining" mconf=100
+y=251 qty=1 name="Fenumus' Rune of Spinning" match="Fenumus' Rune of Spinning" mconf=100
+y=298 qty=1 name="Craiceann's Rune of Recovery" match="Craiceann's Rune of Recovery" mconf=100
+y=345 qty=1 name="Farrul's Rune of the Hunt" match="Farrul's Rune of the Hunt" mconf=100
+y=392 qty=1 name="Saqawal's Rune of Erosion" match="Saqawal's Rune of Erosion" mconf=100
+y=440 qty=1 name="Craiceann's Rune of Warding" match="Craiceann's Rune of Warding" mconf=100
+y=487 qty=1 name="Masterwork Rune" match="Masterwork Rune" mconf=100

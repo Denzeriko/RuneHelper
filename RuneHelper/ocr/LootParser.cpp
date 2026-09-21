@@ -2,6 +2,7 @@
 
 #include <cctype>
 #include <charconv>
+#include <cstddef>
 #include <cstdio>
 #include <string>
 
@@ -25,6 +26,29 @@ char DigitFromOcr(char c)
     default:
         return std::isdigit(static_cast<unsigned char>(c)) ? c : '\0';
     }
+}
+
+std::string StripTrailingNoise(std::string name)
+{
+    auto dropSpaces = [&name]
+    {
+        while (!name.empty() && std::isspace(static_cast<unsigned char>(name.back())))
+            name.pop_back();
+    };
+
+    dropSpaces();
+
+    const std::size_t lastSpace = name.find_last_of(' ');
+
+    if (lastSpace != std::string::npos && name.size() - lastSpace == 2)
+        name.erase(lastSpace);
+
+    while (!name.empty() && (name.back() == '-' || name.back() == '\''))
+        name.pop_back();
+
+    dropSpaces();
+
+    return name;
 }
 }
 
@@ -61,10 +85,10 @@ LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& li
         if (parsed.ec != std::errc{} || quantity <= 0)
             quantity = 1;
 
-        return { quantity, line.substr(pos) };
+        return { quantity, StripTrailingNoise(line.substr(pos)) };
     }
 
-    return { 1, line };
+    return { 1, StripTrailingNoise(line) };
 }
 
 std::string LootParser::FormatAmount(double value, const std::string& unit)

@@ -6,11 +6,13 @@
 #include <nlohmann/json.hpp>
 
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <set>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -43,6 +45,7 @@ struct TruthRow
 struct Score
 {
     int truthRows = 0;
+    int ignorableRows = 0;
     int detectedRows = 0;
     int phantom = 0;
     int missed = 0;
@@ -50,6 +53,20 @@ struct Score
     int exactQuantity = 0;
     int priced = 0;
 };
+
+std::string Squash(const std::string& text)
+{
+    std::string out;
+    out.reserve(text.size());
+
+    for (unsigned char c : text)
+    {
+        if (std::isalnum(c))
+            out.push_back(static_cast<char>(std::tolower(c)));
+    }
+
+    return out;
+}
 
 std::vector<std::string> LoadVocabulary(const fs::path& combinations)
 {
@@ -165,10 +182,29 @@ std::vector<TruthRow> LoadTruth(const fs::path& path)
 
 bool Related(const std::string& truth, const Row& row)
 {
-    return row.name.starts_with(truth) || truth.starts_with(row.name) || row.matched == truth;
+    const std::string want = Squash(truth);
+    const std::string got = Squash(row.name);
+
+    if (want.empty() || got.empty())
+        return false;
+
+    if (Squash(row.matched) == want)
+        return true;
+
+    if (!got.starts_with(want) && !want.starts_with(got))
+        return false;
+
+    const std::size_t shorter = (std::min)(want.size(), got.size());
+    const std::size_t longer = (std::max)(want.size(), got.size());
+
+    return shorter * 2 >= longer;
 }
 
-Score ScorePanel(const std::vector<TruthRow>& truth, const std::vector<Row>& rows, std::vector<std::string>& issues)
+Score ScorePanel(
+    const std::vector<TruthRow>& truth,
+    const std::vector<Row>& rows,
+    const std::set<std::string>& vocabulary,
+    std::vector<std::string>& issues)
 {
     const std::size_t n = truth.size();
     const std::size_t m = rows.size();
@@ -225,8 +261,13 @@ Score ScorePanel(const std::vector<TruthRow>& truth, const std::vector<Row>& row
     std::reverse(pairs.begin(), pairs.end());
 
     Score score;
-    score.truthRows = static_cast<int>(n);
     score.detectedRows = static_cast<int>(m);
+
+    for (const TruthRow& row : truth)
+    {
+        if (vocabulary.count(row.name) > 0)
+            ++score.truthRows;
+    }
 
     char buffer[512];
 
@@ -242,6 +283,13 @@ Score ScorePanel(const std::vector<TruthRow>& truth, const std::vector<Row>& row
         }
 
         const TruthRow& want = truth[static_cast<std::size_t>(ti)];
+        const bool reportable = vocabulary.count(want.name) > 0;
+
+        if (!reportable)
+        {
+            ++score.ignorableRows;
+            continue;
+        }
 
         if (ji < 0)
         {
@@ -376,7 +424,9 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    const CachedItemNames vocabulary = CachedItemNames::Build(LoadVocabulary(combinations));
+    const std::vector<std::string> vocabularyNames = LoadVocabulary(combinations);
+    const std::set<std::string> knownNames(vocabularyNames.begin(), vocabularyNames.end());
+    const CachedItemNames vocabulary = CachedItemNames::Build(vocabularyNames);
 
     if (vocabulary.Empty())
     {
@@ -418,9 +468,10 @@ int main(int argc, char** argv)
 
         if (!expectedRows.empty())
         {
-            const Score panel = ScorePanel(expectedRows, rows, issues);
+            const Score panel = ScorePanel(expectedRows, rows, knownNames, issues);
 
             total.truthRows += panel.truthRows;
+            total.ignorableRows += panel.ignorableRows;
             total.detectedRows += panel.detectedRows;
             total.phantom += panel.phantom;
             total.missed += panel.missed;
@@ -466,7 +517,8 @@ int main(int argc, char** argv)
         for (const std::string& issue : issues)
             std::printf("%s\n", issue.c_str());
 
-        std::printf("\n  real rows on the panels      %d\n", total.truthRows);
+        std::printf("\n  rows the tool should report  %d\n", total.truthRows);
+        std::printf("  rows with no data behind them %d\n", total.ignorableRows);
         std::printf("  rows the detector produced   %d\n", total.detectedRows);
         std::printf("  phantom rows                 %d\n", total.phantom);
         std::printf("  rows never detected          %d\n", total.missed);

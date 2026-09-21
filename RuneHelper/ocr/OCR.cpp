@@ -286,7 +286,9 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
     constexpr int kMaxBlankGap = 4;
     constexpr int kMinTextBandHeight = 6;
     constexpr double kMaxTextBandHeightFactor = 2.0;
-    constexpr int kVerticalPadding = 8;
+    constexpr int kPaddingAbovePercent = 66;
+    constexpr int kPaddingBelowPercent = 33;
+    constexpr int kMinVerticalPadding = 2;
     constexpr double kMaxTextBandInkRatio = 0.25;
 
     std::vector<std::pair<int, int>> bands;
@@ -358,8 +360,12 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
         if (h < kMinTextBandHeight || h > maxHeight)
             continue;
 
-        const int y = std::max(0, band.first - kVerticalPadding);
-        const int y2 = (std::min)(gray.rows, band.second + kVerticalPadding + 1);
+        const int reference = median > 0 ? median : h;
+        const int padAbove = std::max(kMinVerticalPadding, reference * kPaddingAbovePercent / 100);
+        const int padBelow = std::max(kMinVerticalPadding, reference * kPaddingBelowPercent / 100);
+
+        const int y = std::max(0, band.first - padAbove);
+        const int y2 = (std::min)(gray.rows, band.second + padBelow + 1);
         const cv::Rect rect(0, y, dark.cols, y2 - y);
         const double inkRatio = static_cast<double>(cv::countNonZero(dark(rect))) / rect.area();
 

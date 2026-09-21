@@ -1,8 +1,9 @@
-rows=7
+rows=8
 y=65 qty=1 name="Uhtred's Saga" match="Uhtred's Saga" mconf=100
 y=175 qty=1 name="Medved's Saga" match="Medved's Saga" mconf=100
-y=391 qty=3 name="Greater Chaos Orb i" match="Greater Chaos Orb" mconf=90
+y=283 qty=3 name="Greater Regal Orb" match="Greater Regal Orb" mconf=100
+y=391 qty=3 name="Greater Chaos Orb" match="Greater Chaos Orb" mconf=100
 y=497 qty=3 name="Greater Exalted Orb" match="Greater Exalted Orb" mconf=100
-y=556 qty=1 name="Thaumaturgic Flux (Level 19) (" match="Thaumaturgic Flux (Level 19)" mconf=100
+y=556 qty=1 name="Thaumaturgic Flux (Level 19)" match="Thaumaturgic Flux (Level 19)" mconf=100
 y=621 qty=2 name="Divine Orb" match="Divine Orb" mconf=100
-y=684 qty=3 name="Chaos Orb )" match="Chaos Orb" mconf=100
+y=684 qty=3 name="Chaos Orb" match="Chaos Orb" mconf=100

@@ -1,8 +1,7 @@
-rows=7
+rows=6
 y=52 qty=1 name="Uhtred's Sidereus" match="Uhtred's Sidereus" mconf=100
 y=133 qty=1 name="Medved's Tending" match="Medved's Tending" mconf=100
 y=214 qty=1 name="Kolr's Hunt" match="Kolr's Hunt" mconf=100
 y=295 qty=1 name="Thrud's Might" match="Thrud's Might" mconf=100
-y=318 qty=1 name="pte      Site    of" match="-" mconf=0
-y=376 qty=1 name="Katla's Gloom ff" match="-" mconf=0
+y=376 qty=1 name="Katla's Gloom" match="Katla's Gloom" mconf=100
 y=457 qty=1 name="Vorana's Carnage" match="Vorana's Carnage" mconf=100

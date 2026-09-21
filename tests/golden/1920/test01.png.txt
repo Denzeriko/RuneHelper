@@ -1,13 +1,12 @@
-rows=12
-y=14 qty=1 name="Thaumaturgic Flux (Level 19)" match="Thaumaturgic Flux (Level 19)" mconf=100
-y=62 qty=2 name="Divine Orb" match="Divine Orb" mconf=100
-y=109 qty=3 name="Chaos Orb J" match="-" mconf=0
-y=156 qty=1 name="Perfect Jeweller's Orb" match="Perfect Jeweller's Orb" mconf=100
-y=203 qty=1 name="Orb of Chance )" match="Orb of Chance" mconf=100
-y=251 qty=3 name="Greater Orb of Transmutation )" match="Greater Orb of Transmutation" mconf=100
-y=276 qty=1 name="ii" match="-" mconf=0
-y=298 qty=3 name="Greater Orb of Augmentation" match="Greater Orb of Augmentation" mconf=100
-y=345 qty=5 name="Random Currency )" match="5x Random Currency" mconf=84
-y=392 qty=1 name="Divine Orb )" match="Divine Orb" mconf=100
-y=440 qty=1 name="Greater Chaos Orb" match="Greater Chaos Orb" mconf=100
-y=487 qty=1 name="Greater Exalted Orb" match="Greater Exalted Orb" mconf=100
+rows=11
+y=16 qty=1 name="Thaumaturgic Flux (Level 19)" match="Thaumaturgic Flux (Level 19)" mconf=100
+y=64 qty=2 name="Divine Orb" match="Divine Orb" mconf=100
+y=111 qty=3 name="Chaos Orb" match="Chaos Orb" mconf=100
+y=158 qty=1 name="Perfect Jeweller's Orb" match="Perfect Jeweller's Orb" mconf=100
+y=205 qty=1 name="Orb of Chance" match="Orb of Chance" mconf=100
+y=253 qty=3 name="Greater Orb of Transmutation" match="Greater Orb of Transmutation" mconf=100
+y=300 qty=3 name="Greater Orb of Augmentation" match="Greater Orb of Augmentation" mconf=100
+y=347 qty=5 name="Random Currency" match="5x Random Currency" mconf=84
+y=394 qty=1 name="Divine Orb" match="Divine Orb" mconf=100
+y=442 qty=1 name="Greater Chaos Orb" match="Greater Chaos Orb" mconf=100
+y=489 qty=1 name="Greater Exalted Orb" match="Greater Exalted Orb" mconf=100

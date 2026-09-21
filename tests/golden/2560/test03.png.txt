@@ -1,7 +1,6 @@
-rows=6
-y=72 qty=3 name="Perfect Exalted Orb )" match="Perfect Exalted Orb" mconf=100
-y=180 qty=3 name="Orb of Annulment" match="Orb of Annulment" mconf=100
-y=288 qty=3 name="Perfect Regal Orb" match="Perfect Regal Orb" mconf=100
-y=396 qty=3 name="Perfect Orb of Transmutation i" match="Perfect Orb of Transmutation" mconf=94
-y=612 qty=2 name="Orb of Annulment" match="Orb of Annulment" mconf=100
-y=687 qty=1 name="ee a ee EN Es" match="-" mconf=0
+rows=5
+y=68 qty=3 name="Perfect Exalted Orb" match="Perfect Exalted Orb" mconf=100
+y=176 qty=3 name="Orb of Annulment" match="Orb of Annulment" mconf=100
+y=284 qty=3 name="Perfect Regal Orb" match="Perfect Regal Orb" mconf=100
+y=392 qty=3 name="Perfect Orb of Transmutation" match="Perfect Orb of Transmutation" mconf=100
+y=608 qty=2 name="Orb of Annulment" match="Orb of Annulment" mconf=100

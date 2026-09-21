@@ -1,11 +1,12 @@
-rows=10
-y=6 qty=1 name="2 el e  a ae                Rare Unique Item f" match="-" mconf=0
-y=38 qty=1 name="af) eS (ai (eI                 -          Unique Ring f" match="-" mconf=0
-y=69 qty=1 name="a (ey (ee eI                             Unique Belt J" match="-" mconf=0
-y=101 qty=1 name="ee icy (aS) kel                               Unique Amulet" match="-" mconf=0
-y=133 qty=1 name="aS 2) Ge Z              Unique Jewellery J" match="-" mconf=0
-y=164 qty=1 name="ar  e (eI Sei                         Unique Wand" match="-" mconf=0
-y=194 qty=1 name="ae ei el i)               Unique Two Hand Mace" match="-" mconf=0
-y=225 qty=1 name="ae toi el ES                            Unique Talisman j" match="-" mconf=0
-y=290 qty=1 name="it fot (Sl e                             Unique Spear J" match="-" mconf=0
-y=320 qty=1 name="Je i (Si                   '            Unique Shield" match="-" mconf=0
+rows=11
+y=9 qty=1 name="Rare Unique Item" match="Rare Unique Item" mconf=100
+y=41 qty=1 name="Unique Ring" match="Unique Ring" mconf=100
+y=72 qty=1 name="Unique Belt" match="Unique Belt" mconf=100
+y=104 qty=1 name="Unique Wnulet" match="Unique Amulet" mconf=85
+y=136 qty=1 name="Unique Jewellery" match="Unique Jewellery" mconf=100
+y=167 qty=1 name="Unique Wand" match="Unique Wand" mconf=100
+y=197 qty=1 name="Unique Twe Hand Mace" match="Unique Two Hand Mace" mconf=95
+y=228 qty=1 name="Unique Talisman" match="Unique Talisman" mconf=100
+y=262 qty=1 name="Unique Staff" match="Unique Staff" mconf=100
+y=293 qty=1 name="Unique Spear" match="Unique Spear" mconf=100
+y=323 qty=1 name="Unique Shield" match="Unique Shield" mconf=100
