@@ -76,6 +76,8 @@ bool RuneHelperApp::Init()
 
 void RuneHelperApp::MainLoop()
 {
+    auto lastTop = std::chrono::steady_clock::now();
+
     while (ui_.IsRunning())
     {
         OcrServiceStatus ocrStatus = ocrService_.GetStatus();
@@ -109,8 +111,6 @@ void RuneHelperApp::MainLoop()
         overlay_.SetFontSize(config.overlayFontSize);
         overlay_.SetBackground(config.overlayBackground);
         overlay_.SetOutline(config.overlayOutline);
-
-        static auto lastTop = std::chrono::steady_clock::now();
 
         auto now = std::chrono::steady_clock::now();
 
@@ -185,7 +185,7 @@ void RuneHelperApp::UpdateRegionPreview(const AppConfig& localConfig)
 {
     if (!ui_.IsRegionHovered() || localConfig.regionW <= 0)
     {
-        static OverlayRect empty{};
+        const OverlayRect empty{};
         overlay_.SetRegionPreview(false, empty);
         return;
     }

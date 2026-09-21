@@ -379,18 +379,13 @@ static cv::Mat TrimTrailingBlock(const cv::Mat& bin)
     if (bin.empty() || bin.cols < 16)
         return bin;
 
-    std::vector<int> ink(bin.cols, 0);
+    cv::Mat dark;
+    cv::threshold(bin, dark, 127, 1, cv::THRESH_BINARY_INV);
 
-    for (int y = 0; y < bin.rows; ++y)
-    {
-        const unsigned char* row = bin.ptr<unsigned char>(y);
+    cv::Mat inkPerColumn;
+    cv::reduce(dark, inkPerColumn, 0, cv::REDUCE_SUM, CV_32S);
 
-        for (int x = 0; x < bin.cols; ++x)
-        {
-            if (row[x] < 128)
-                ++ink[x];
-        }
-    }
+    const int* ink = inkPerColumn.ptr<int>(0);
 
     int end = bin.cols - 1;
 

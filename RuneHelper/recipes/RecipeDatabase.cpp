@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <set>
 
 #include "nlohmann/json.hpp"
 
@@ -117,16 +118,24 @@ const Recipe* RecipeDatabase::FindRecipe(std::string_view output, int count) con
 
 namespace
 {
-std::string GeneratedAt(const std::filesystem::path& path)
+json ReadJson(const std::filesystem::path& path)
 {
     std::ifstream file(path);
 
     if (!file)
-        return {};
+        return json();
 
     json parsed = json::parse(file, nullptr, false);
 
     if (parsed.is_discarded())
+        return json();
+
+    return parsed;
+}
+
+std::string GeneratedAt(const json& parsed)
+{
+    if (!parsed.is_object())
         return {};
 
     return parsed.value("generated", std::string());
@@ -143,15 +152,18 @@ bool RecipeDatabase::Load()
     const std::filesystem::path shipped = PrepareRecipeDatabase();
     const std::filesystem::path downloaded = DownloadedRecipeDatabasePath();
 
+    const json shippedJson = shipped.empty() ? json() : ReadJson(shipped);
+
     std::error_code ec;
 
     if (std::filesystem::exists(downloaded, ec))
     {
-        const std::string downloadedDate = GeneratedAt(downloaded);
+        const json downloadedJson = ReadJson(downloaded);
+        const std::string downloadedDate = GeneratedAt(downloadedJson);
 
-        if (!downloadedDate.empty() && downloadedDate >= GeneratedAt(shipped))
+        if (!downloadedDate.empty() && downloadedDate >= GeneratedAt(shippedJson))
         {
-            if (LoadFromFile(downloaded))
+            if (LoadFromJson(downloadedJson, downloaded))
                 return true;
 
             LOG_ERROR("RecipeDatabase: downloaded database is unusable, falling back to the shipped one");
@@ -164,26 +176,24 @@ bool RecipeDatabase::Load()
         return false;
     }
 
-    return LoadFromFile(shipped);
+    return LoadFromJson(shippedJson, shipped);
 }
 
 bool RecipeDatabase::LoadFromFile(const std::filesystem::path& path)
 {
-    std::ifstream file(path);
+    return LoadFromJson(ReadJson(path), path);
+}
 
-    if (!file)
-        return false;
-
-    json j = json::parse(file, nullptr, false);
-
-    if (j.is_discarded() || !j.contains("combinations") || !j["combinations"].is_array())
+bool RecipeDatabase::LoadFromJson(const json& j, const std::filesystem::path& path)
+{
+    if (!j.is_object() || !j.contains("combinations") || !j["combinations"].is_array())
     {
         LOG_ERROR("RecipeDatabase: invalid combinations.json: " + path.string());
         return false;
     }
 
     std::vector<Recipe> recipes;
-    std::set<std::string> runeNames;
+    std::unordered_set<std::string> runeNames;
 
     for (const auto& entry : j["combinations"])
     {
