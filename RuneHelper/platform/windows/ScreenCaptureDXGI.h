@@ -25,4 +25,7 @@ private:
     UINT stagingWidth_ = 0;
     UINT stagingHeight_ = 0;
     DXGI_FORMAT stagingFormat_ = DXGI_FORMAT_UNKNOWN;
+
+    cv::Mat lastFrame_;
+    cv::Rect lastFrameRegion_;
 };

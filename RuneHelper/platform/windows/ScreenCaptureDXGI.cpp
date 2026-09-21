@@ -178,6 +178,9 @@ void ScreenCaptureWGC::Shutdown()
     stagingHeight_ = 0;
     stagingFormat_ = DXGI_FORMAT_UNKNOWN;
 
+    lastFrame_.release();
+    lastFrameRegion_ = cv::Rect();
+
     g_duplication.Reset();
     g_context.Reset();
     g_device.Reset();
@@ -216,7 +219,12 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     HRESULT hr = g_duplication->AcquireNextFrame(16, &frameInfo, &desktopResource);
 
     if (hr == DXGI_ERROR_WAIT_TIMEOUT)
+    {
+        if (!lastFrame_.empty() && lastFrameRegion_ == region)
+            return lastFrame_.clone();
+
         return {};
+    }
 
     if (FAILED(hr))
     {
@@ -367,6 +375,9 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     g_context->Unmap(stagingTexture_.Get(), 0);
     g_duplication->ReleaseFrame();
+
+    lastFrame_ = result;
+    lastFrameRegion_ = region;
 
     return result;
 }
