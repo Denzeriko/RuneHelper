@@ -12,9 +12,9 @@
 
 struct ExpeditionSettings
 {
-    std::atomic<bool> enabled = true;
+    std::atomic<bool> enabled = false;
     std::atomic<bool> showRunes = true;
-    std::atomic<bool> highlightRare = true;
+    std::atomic<bool> highlightRare = false;
 };
 
 struct ExpeditionTabRow
