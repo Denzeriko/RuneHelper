@@ -6,6 +6,8 @@
 #include <string>
 #include <unordered_map>
 
+#include <cpr/cpr.h>
+
 #include "nlohmann/json.hpp"
 
 class PoeNinjaPriceProvider final : public PriceProvider
@@ -17,6 +19,6 @@ private:
     static std::string EncodeUrlComponent(const std::string& text);
     static std::string FormatExPrice(double value);
 
-    std::unordered_map<std::string, PriceInfo> DownloadCategory(const std::string& encodedLeague, const std::string& type, const std::stop_token& stop);
+    std::unordered_map<std::string, PriceInfo> DownloadCategory(cpr::Session& session, const std::string& encodedLeague, const std::string& type, const std::stop_token& stop);
     std::unordered_map<std::string, PriceInfo> ParseCategoryDump(const nlohmann::json& j);
 };

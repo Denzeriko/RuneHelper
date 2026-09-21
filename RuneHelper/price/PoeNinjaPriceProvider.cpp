@@ -47,24 +47,34 @@ std::atomic<int>& ProxyFailures()
     return failures;
 }
 
-bool Fetch(const std::string& url, std::string& body, const std::stop_token& stop)
+void ConfigureSession(cpr::Session& session, const std::stop_token& stop)
+{
+    session.SetHeader(cpr::Header{
+        { "User-Agent", UserAgent() },
+        { "Accept", "application/json" }
+    });
+
+    session.SetTimeout(cpr::Timeout{ 15000 });
+
+    session.SetAcceptEncoding(cpr::AcceptEncoding{
+        { cpr::AcceptEncodingMethods::gzip, cpr::AcceptEncodingMethods::deflate }
+    });
+
+    session.SetProgressCallback(cpr::ProgressCallback{
+        [&stop](auto, auto, auto, auto, std::intptr_t)
+        {
+            return !stop.stop_requested();
+        }
+    });
+}
+
+bool Fetch(cpr::Session& session, const std::string& url, std::string& body, const std::stop_token& stop)
 {
     LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() -> " + url);
 
-    auto r = cpr::Get(
-        cpr::Url{ url },
-        cpr::Header{
-            { "User-Agent", UserAgent() },
-            { "Accept", "application/json" }
-        },
-        cpr::Timeout{ 15000 },
-        cpr::ProgressCallback{
-            [&stop](auto, auto, auto, auto, std::intptr_t)
-            {
-                return !stop.stop_requested();
-            }
-        }
-    );
+    session.SetUrl(cpr::Url{ url });
+
+    const cpr::Response r = session.Get();
 
     if (stop.stop_requested())
         return false;
@@ -116,12 +126,15 @@ std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::DownloadPrices
 
     const std::string encodedLeague = EncodeUrlComponent(league);
 
+    cpr::Session session;
+    ConfigureSession(session, stop);
+
     for (const auto& category : kPoeNinjaCategories)
     {
         if (stop.stop_requested())
             return {};
 
-        auto dump = DownloadCategory(encodedLeague, category, stop);
+        auto dump = DownloadCategory(session, encodedLeague, category, stop);
 
         LOG_INFO("Downloaded " + category + ": " + std::to_string(dump.size()));
 
@@ -178,7 +191,7 @@ std::string PoeNinjaPriceProvider::FormatExPrice(double value)
 }
 
 std::unordered_map<std::string, PriceInfo>
-PoeNinjaPriceProvider::DownloadCategory(const std::string& encodedLeague, const std::string& type, const std::stop_token& stop)
+PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const std::string& encodedLeague, const std::string& type, const std::stop_token& stop)
 {
     const std::string query = "?league=" + encodedLeague + "&type=" + type;
 
@@ -199,7 +212,7 @@ PoeNinjaPriceProvider::DownloadCategory(const std::string& encodedLeague, const 
 
     if (ProxyFailures().load() < kProxyFailureLimit)
     {
-        if (Fetch(PriceApiBase() + query, body, stop))
+        if (Fetch(session, PriceApiBase() + query, body, stop))
         {
             ProxyFailures().store(0);
             return parse(body);
@@ -216,7 +229,7 @@ PoeNinjaPriceProvider::DownloadCategory(const std::string& encodedLeague, const 
         );
     }
 
-    if (!Fetch(kDirectApi + query, body, stop))
+    if (!Fetch(session, kDirectApi + query, body, stop))
         return {};
 
     return parse(body);
