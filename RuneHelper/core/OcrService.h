@@ -13,6 +13,7 @@
 #include "core/DebugData.h"
 #include "core/ScreenCaptureService.h"
 #include "ocr/OcrFrameDiffer.h"
+#include "ocr/OcrRowCache.h"
 #include "ocr/OCR.h"
 #include "core/Feature.h"
 #include "ui/OverlayState.h"
@@ -71,6 +72,7 @@ private:
     OCR ocr_;
     ScreenCaptureService screenCapture_;
     OcrFrameDiffer frameDiffer_;
+    OcrRowCache rowCache_;
 
     std::atomic<bool> running_ = false;
 

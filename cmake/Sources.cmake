@@ -15,6 +15,7 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/ocr/NameNormalizer.cpp
     RuneHelper/ocr/OCR.cpp
     RuneHelper/ocr/OcrFrameDiffer.cpp
+    RuneHelper/ocr/OcrRowCache.cpp
     RuneHelper/ocr/RuneTileLocator.cpp
     RuneHelper/price/PoeNinjaPriceProvider.cpp
     RuneHelper/price/PriceCache.cpp

@@ -20,6 +20,8 @@ struct LootLine
     float conf = 0.0f;
 };
 
+class OcrRowCache;
+
 class OCR
 {
 public:
@@ -34,7 +36,8 @@ public:
 
     std::vector<LootLine> RecognizeLoot(
         const cv::Mat& gray,
-        const AppConfig& config);
+        const AppConfig& config,
+        OcrRowCache* rowCache = nullptr);
     std::vector<cv::Rect> FindLootRows(const cv::Mat& gray) const;
     std::vector<LootLine> RecognizeTextOnly(tesseract::TessBaseAPI& api, const cv::Mat& textGray, const std::string& debugBinPath = {});
 

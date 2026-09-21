@@ -20,6 +20,8 @@ add_executable(ocr_golden
     "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/LootParser.cpp"
     "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/NameNormalizer.cpp"
     "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OCR.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrFrameDiffer.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrRowCache.cpp"
     "${CMAKE_SOURCE_DIR}/RuneHelper/platform/linux/PlatformPaths.cpp"
 )
 
@@ -37,6 +39,38 @@ target_link_libraries(ocr_golden PRIVATE
     ${OpenCV_LIBS}
     Tesseract::libtesseract
     nlohmann_json::nlohmann_json
+)
+
+add_executable(ocr_row_cache
+    ocr_row_cache.cpp
+    "${CMAKE_SOURCE_DIR}/RuneHelper/core/Logger.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/NameNormalizer.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OCR.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrFrameDiffer.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrRowCache.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/platform/linux/PlatformPaths.cpp"
+)
+
+add_dependencies(ocr_row_cache ocr_golden_tessdata)
+
+target_include_directories(ocr_row_cache PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
+
+target_compile_options(ocr_row_cache PRIVATE ${RUNEHELPER_WARNINGS})
+
+target_compile_definitions(ocr_row_cache PRIVATE
+    RUNEHELPER_VERSION="${PROJECT_VERSION}"
+)
+
+target_link_libraries(ocr_row_cache PRIVATE
+    ${OpenCV_LIBS}
+    Tesseract::libtesseract
+)
+
+add_test(
+    NAME ocr_row_cache
+    COMMAND ocr_row_cache
+        "${RUNEHELPER_TESSDATA_DIR}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
 )
 
 add_test(

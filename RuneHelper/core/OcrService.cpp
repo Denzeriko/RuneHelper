@@ -174,6 +174,7 @@ void OcrService::ResetFrameState()
     captureFailures_ = 0;
     captureFailing_ = false;
     frameErrorReported_ = false;
+    rowCache_.Reset();
 }
 
 namespace
@@ -284,7 +285,7 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 
     if (NeedsOcr(gray))
     {
-        lastLoot_ = ocr_.RecognizeLoot(gray, config);
+        lastLoot_ = ocr_.RecognizeLoot(gray, config, &rowCache_);
         frameDiffer_.StoreOcrFrame(gray);
         lastOcrAt_ = std::chrono::steady_clock::now();
     }

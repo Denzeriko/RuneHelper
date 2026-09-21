@@ -9,7 +9,9 @@ namespace
 constexpr double kOcrPixelDiffThreshold = 8.0;
 constexpr double kOcrChangedPixelRatioThreshold = 0.002;
 
-bool SimilarFrames(const cv::Mat& a, const cv::Mat& b)
+}
+
+bool SimilarImages(const cv::Mat& a, const cv::Mat& b)
 {
     if (a.empty() || b.empty() || a.size() != b.size() || a.type() != b.type())
         return false;
@@ -24,16 +26,15 @@ bool SimilarFrames(const cv::Mat& a, const cv::Mat& b)
 
     return totalPixels > 0.0 && (changedPixels / totalPixels) < kOcrChangedPixelRatioThreshold;
 }
-}
 
 bool OcrFrameDiffer::IsSettled(const cv::Mat& gray) const
 {
-    return SimilarFrames(gray, lastGray_);
+    return SimilarImages(gray, lastGray_);
 }
 
 bool OcrFrameDiffer::ChangedSinceOcr(const cv::Mat& gray) const
 {
-    return !SimilarFrames(gray, lastOcrGray_);
+    return !SimilarImages(gray, lastOcrGray_);
 }
 
 void OcrFrameDiffer::StoreFrame(cv::Mat gray)

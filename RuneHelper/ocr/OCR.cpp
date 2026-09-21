@@ -8,6 +8,7 @@
 #include "core/Logger.h"
 #include "core/ThreadGuard.h"
 #include "ocr/NameNormalizer.h"
+#include "ocr/OcrRowCache.h"
 #include "platform/PlatformPaths.h"
 
 #include <algorithm>
@@ -520,7 +521,8 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
 }
 std::vector<LootLine> OCR::RecognizeLoot(
     const cv::Mat& gray,
-    const AppConfig& config)
+    const AppConfig& config,
+    OcrRowCache* rowCache)
 {
     setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
 
@@ -554,12 +556,17 @@ std::vector<LootLine> OCR::RecognizeLoot(
     auto rows = FindLootRows(gray);
     const std::vector<int> textStarts = FindTextStartX(gray, rows);
 
+    if (debugOCR)
+        rowCache = nullptr;
+
     struct RowJob
     {
         cv::Mat textGray;
+        cv::Mat anchor;
         std::string debugBinPath;
         int offsetX = 0;
         int offsetY = 0;
+        bool reused = false;
         std::vector<LootLine> lines;
     };
 
@@ -578,6 +585,16 @@ std::vector<LootLine> OCR::RecognizeLoot(
         job.offsetX = rowRect.x + textX;
         job.offsetY = rowRect.y;
 
+        if (rowCache)
+        {
+            if (const OcrRowCache::Row* cached = rowCache->Find(job.textGray))
+            {
+                job.lines = cached->lines;
+                job.anchor = cached->textGray;
+                job.reused = true;
+            }
+        }
+
         if (!debugOCR)
             continue;
 
@@ -595,7 +612,16 @@ std::vector<LootLine> OCR::RecognizeLoot(
         );
     }
 
-    const size_t workers = (std::min)(apis_.size(), jobs.size());
+    std::vector<size_t> pending;
+    pending.reserve(jobs.size());
+
+    for (size_t i = 0; i < jobs.size(); ++i)
+    {
+        if (!jobs[i].reused)
+            pending.push_back(i);
+    }
+
+    const size_t workers = (std::min)(apis_.size(), pending.size());
 
     std::atomic<bool> rowErrorLogged{ false };
 
@@ -619,8 +645,8 @@ std::vector<LootLine> OCR::RecognizeLoot(
 
     if (workers <= 1)
     {
-        for (RowJob& job : jobs)
-            runRow(job, *apis_[0]);
+        for (size_t i : pending)
+            runRow(jobs[i], *apis_[0]);
     }
     else
     {
@@ -631,17 +657,28 @@ std::vector<LootLine> OCR::RecognizeLoot(
         for (size_t worker = 0; worker < workers; ++worker)
         {
             pool.emplace_back(
-                [this, worker, &next, &jobs, &runRow]
+                [this, worker, &next, &jobs, &pending, &runRow]
                 {
                     RunLoggingExceptions(
                         "OCR worker",
                         [&]
                         {
-                            for (size_t i = next++; i < jobs.size(); i = next++)
-                                runRow(jobs[i], *apis_[worker]);
+                            for (size_t i = next++; i < pending.size(); i = next++)
+                                runRow(jobs[pending[i]], *apis_[worker]);
                         });
                 });
         }
+    }
+
+    if (rowCache)
+    {
+        std::vector<OcrRowCache::Row> generation;
+        generation.reserve(jobs.size());
+
+        for (const RowJob& job : jobs)
+            generation.push_back({ job.reused ? job.anchor : job.textGray.clone(), job.lines });
+
+        rowCache->Store(std::move(generation));
     }
 
     for (RowJob& job : jobs)

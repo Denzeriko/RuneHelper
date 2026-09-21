@@ -2,6 +2,8 @@
 
 #include <opencv2/core.hpp>
 
+bool SimilarImages(const cv::Mat& a, const cv::Mat& b);
+
 class OcrFrameDiffer
 {
 public:
