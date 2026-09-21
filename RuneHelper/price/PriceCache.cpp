@@ -2,6 +2,7 @@
 
 #include "core/AtomicFile.h"
 #include "core/Logger.h"
+#include "core/ThreadGuard.h"
 #include "platform/PlatformPaths.h"
 #include "price/PoeNinjaPriceProvider.h"
 
@@ -145,7 +146,11 @@ void PriceCache::ForceRefreshAsync()
 
     std::lock_guard<std::mutex> lock(refreshThreadMutex_);
 
-    refreshThread_ = std::jthread([this](const std::stop_token& stop) { RefreshWorker(stop); });
+    refreshThread_ = std::jthread(
+        [this](const std::stop_token& stop)
+        {
+            RunLoggingExceptions("PriceCache refresh thread", [&] { RefreshWorker(stop); });
+        });
 }
 
 void PriceCache::SetRefreshMinutes(int minutes)

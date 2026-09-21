@@ -18,6 +18,7 @@
 #include <opencv2/core.hpp>
 
 #include "core/Logger.h"
+#include "core/ThreadGuard.h"
 
 namespace
 {
@@ -274,20 +275,27 @@ struct PortalScreenCast::Impl
 
 void PortalScreenCast::Impl::ParamChanged(void* data, std::uint32_t id, const spa_pod* param)
 {
-    static_cast<Impl*>(data)->OnParamChanged(id, param);
+    RunLoggingExceptions(
+        "Portal screencast param_changed",
+        [&] { static_cast<Impl*>(data)->OnParamChanged(id, param); });
 }
 
 void PortalScreenCast::Impl::Process(void* data)
 {
-    static_cast<Impl*>(data)->OnProcess();
+    RunLoggingExceptions("Portal screencast process", [&] { static_cast<Impl*>(data)->OnProcess(); });
 }
 
 void PortalScreenCast::Impl::StateChanged(void*, pw_stream_state old, pw_stream_state state, const char* error)
 {
-    LOG_INFO(
-        std::string("Portal screencast: stream state ") + pw_stream_state_as_string(old) + " -> " +
-        pw_stream_state_as_string(state) + (error ? std::string(" (") + error + ")" : std::string())
-    );
+    RunLoggingExceptions(
+        "Portal screencast state_changed",
+        [&]
+        {
+            LOG_INFO(
+                std::string("Portal screencast: stream state ") + pw_stream_state_as_string(old) + " -> " +
+                pw_stream_state_as_string(state) + (error ? std::string(" (") + error + ")" : std::string())
+            );
+        });
 }
 
 const pw_stream_events PortalScreenCast::Impl::kEvents = []

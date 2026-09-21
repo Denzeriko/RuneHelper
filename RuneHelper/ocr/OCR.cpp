@@ -6,12 +6,14 @@
 #include <opencv2/imgproc.hpp>
 
 #include "core/Logger.h"
+#include "core/ThreadGuard.h"
 #include "ocr/NameNormalizer.h"
 #include "platform/PlatformPaths.h"
 
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <exception>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -20,7 +22,7 @@
 
 namespace
 {
-constexpr std::size_t kMaxOcrWorkers = 4;
+constexpr std::size_t kMaxOcrWorkers = 8;
 
 std::size_t OcrWorkerCount()
 {
@@ -595,10 +597,30 @@ std::vector<LootLine> OCR::RecognizeLoot(
 
     const size_t workers = (std::min)(apis_.size(), jobs.size());
 
+    std::atomic<bool> rowErrorLogged{ false };
+
+    auto runRow = [this, &rowErrorLogged](RowJob& job, tesseract::TessBaseAPI& api)
+    {
+        try
+        {
+            job.lines = RecognizeTextOnly(api, job.textGray, job.debugBinPath);
+        }
+        catch (const std::exception& error)
+        {
+            if (!rowErrorLogged.exchange(true))
+                LOG_ERROR(std::string("OCR row failed: ") + error.what());
+        }
+        catch (...)
+        {
+            if (!rowErrorLogged.exchange(true))
+                LOG_ERROR("OCR row failed with an exception of unknown type");
+        }
+    };
+
     if (workers <= 1)
     {
         for (RowJob& job : jobs)
-            job.lines = RecognizeTextOnly(*apis_[0], job.textGray, job.debugBinPath);
+            runRow(job, *apis_[0]);
     }
     else
     {
@@ -609,10 +631,15 @@ std::vector<LootLine> OCR::RecognizeLoot(
         for (size_t worker = 0; worker < workers; ++worker)
         {
             pool.emplace_back(
-                [this, worker, &next, &jobs]
+                [this, worker, &next, &jobs, &runRow]
                 {
-                    for (size_t i = next++; i < jobs.size(); i = next++)
-                        jobs[i].lines = RecognizeTextOnly(*apis_[worker], jobs[i].textGray, jobs[i].debugBinPath);
+                    RunLoggingExceptions(
+                        "OCR worker",
+                        [&]
+                        {
+                            for (size_t i = next++; i < jobs.size(); i = next++)
+                                runRow(jobs[i], *apis_[worker]);
+                        });
                 });
         }
     }

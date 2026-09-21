@@ -96,6 +96,7 @@ private:
     std::atomic<bool> forceOcr_ = false;
     std::chrono::steady_clock::time_point lastOcrAt_{};
     int captureFailures_ = 0;
+    bool frameErrorReported_ = false;
 
     std::jthread initThread_;
     std::jthread workerThread_;

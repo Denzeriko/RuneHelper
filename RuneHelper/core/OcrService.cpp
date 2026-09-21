@@ -4,11 +4,14 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <exception>
 #include <memory>
+#include <string>
 #include <thread>
 #include <utility>
 
 #include "core/Logger.h"
+#include "core/ThreadGuard.h"
 #include "ocr/LootRows.h"
 #include "price/PriceService.h"
 
@@ -65,13 +68,17 @@ void OcrService::Start(ConfigManager& configManager, FeatureRegistry& features, 
     initThread_ = std::jthread(
         [this]
         {
-            InitOcr();
+            if (!RunLoggingExceptions("OcrService init thread", [this] { InitOcr(); }))
+            {
+                ocrFailed_ = true;
+                ocrInitializing_ = false;
+            }
         });
 
     workerThread_ = std::jthread(
         [this]
         {
-            WorkerLoop();
+            RunLoggingExceptions("OcrService worker thread", [this] { WorkerLoop(); });
         });
 }
 
@@ -166,6 +173,7 @@ void OcrService::ResetFrameState()
     lastOcrAt_ = {};
     captureFailures_ = 0;
     captureFailing_ = false;
+    frameErrorReported_ = false;
 }
 
 namespace
@@ -345,7 +353,30 @@ void OcrService::WorkerLoop()
 
         const cv::Rect region(config.regionX, config.regionY, config.regionW, config.regionH);
 
-        ProcessFrame(region, config);
+        try
+        {
+            ProcessFrame(region, config);
+            frameErrorReported_ = false;
+        }
+        catch (const std::exception& error)
+        {
+            if (!frameErrorReported_)
+            {
+                frameErrorReported_ = true;
+                LOG_ERROR(
+                    std::string("OcrService: frame dropped after an exception: ") + error.what() +
+                    " (further frame errors are not repeated until one succeeds)"
+                );
+            }
+        }
+        catch (...)
+        {
+            if (!frameErrorReported_)
+            {
+                frameErrorReported_ = true;
+                LOG_ERROR("OcrService: frame dropped after an exception of unknown type");
+            }
+        }
 
         SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
     }

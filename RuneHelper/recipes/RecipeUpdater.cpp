@@ -11,6 +11,7 @@
 
 #include "core/AtomicFile.h"
 #include "core/Logger.h"
+#include "core/ThreadGuard.h"
 #include "platform/PlatformPaths.h"
 #include "recipes/RecipeDatabase.h"
 
@@ -45,7 +46,7 @@ void RecipeUpdater::Start()
     thread_ = std::jthread(
         [this](const std::stop_token& stop)
         {
-            Fetch(stop);
+            RunLoggingExceptions("RecipeUpdater thread", [&] { Fetch(stop); });
         });
 }
 

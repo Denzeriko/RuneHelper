@@ -1,6 +1,7 @@
 #include "UpdateChecker.h"
 
 #include "Logger.h"
+#include "core/ThreadGuard.h"
 
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
@@ -70,7 +71,8 @@ void UpdateChecker::Start()
 
     thread_ = std::jthread([this](const std::stop_token& stop)
         {
-            Check(stop);
+            RunLoggingExceptions("UpdateChecker thread", [&] { Check(stop); });
+            checking_ = false;
         });
 }
 
