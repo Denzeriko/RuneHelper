@@ -33,4 +33,6 @@ struct UIState
 
     int* waitingForHotkey = nullptr;
     bool hotkeyCaptureSkipFrame = false;
+
+    char customLeague[64] = {};
 };

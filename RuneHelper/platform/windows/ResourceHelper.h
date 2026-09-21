@@ -5,4 +5,4 @@
 
 bool ExtractResourceToFile(int resId, LPCWSTR resType, const std::filesystem::path& outPath);
 std::string PrepareTessdata();
-std::filesystem::path PrepareRecipeDatabase();
+std::string LoadEmbeddedRecipeDatabase();

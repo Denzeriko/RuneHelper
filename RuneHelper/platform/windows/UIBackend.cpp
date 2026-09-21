@@ -5,6 +5,7 @@
 #include <windows.h>
 #include <windowsx.h>
 
+#include <chrono>
 #include <string>
 
 #include <imgui.h>
@@ -33,6 +34,8 @@ bool IsMouseVk(int vk)
         return false;
     }
 }
+
+constexpr int kUnfocusedFrameIntervalMs = 100;
 
 std::string VkToString(int vk)
 {
@@ -63,6 +66,9 @@ struct UIBackend::Impl
     UIManager* manager = nullptr;
     bool running = false;
     bool hotkeysRegistered = false;
+    std::chrono::steady_clock::time_point lastFrame{};
+
+    bool IsInteractive() const;
 
     bool CreateWindowUI();
     bool CreateDeviceD3D();
@@ -73,6 +79,27 @@ struct UIBackend::Impl
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };
+
+bool UIBackend::Impl::IsInteractive() const
+{
+    if (!hwnd)
+        return false;
+
+    if (GetForegroundWindow() == hwnd)
+        return true;
+
+    POINT cursor{};
+
+    if (!GetCursorPos(&cursor))
+        return false;
+
+    RECT bounds{};
+
+    if (!GetWindowRect(hwnd, &bounds))
+        return false;
+
+    return PtInRect(&bounds, cursor) != FALSE;
+}
 
 UIBackend::UIBackend()
     : impl_(new Impl())
@@ -182,6 +209,16 @@ bool UIBackend::BeginFrame()
     if (!impl_->running)
         return false;
 
+    if (IsIconic(impl_->hwnd))
+        return false;
+
+    const auto now = std::chrono::steady_clock::now();
+
+    if (!impl_->IsInteractive() && now - impl_->lastFrame < std::chrono::milliseconds(kUnfocusedFrameIntervalMs))
+        return false;
+
+    impl_->lastFrame = now;
+
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
     ImGui::NewFrame();
@@ -199,7 +236,7 @@ void UIBackend::EndFrame()
     impl_->deviceContext->OMSetRenderTargets(1, &impl_->renderTargetView, nullptr);
     impl_->deviceContext->ClearRenderTargetView(impl_->renderTargetView, clearColor);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-    impl_->swapChain->Present(1, 0);
+    impl_->swapChain->Present(0, 0);
 }
 
 bool UIBackend::IsRunning() const

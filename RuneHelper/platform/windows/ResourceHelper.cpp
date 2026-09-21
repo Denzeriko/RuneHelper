@@ -73,17 +73,25 @@ std::string PrepareTessdata()
     return dir.string();
 }
 
-std::filesystem::path PrepareRecipeDatabase()
+std::string LoadEmbeddedRecipeDatabase()
 {
-    LOG_INFO("PrepareRecipeDatabase() -> call");
+    HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(IDR_COMBINATIONS), MAKEINTRESOURCEW(10));
 
-    const auto path = GetUserDataDir() / "combinations.json";
-
-    if (!ExtractResourceToFile(IDR_COMBINATIONS, MAKEINTRESOURCEW(10), path))
+    if (!hRes)
     {
-        LOG_ERROR("PrepareRecipeDatabase() -> failed to extract " + path.string());
+        LOG_ERROR("Recipe database resource not found: " + std::to_string(GetLastError()));
         return {};
     }
 
-    return path;
+    HGLOBAL hData = LoadResource(nullptr, hRes);
+    const DWORD size = SizeofResource(nullptr, hRes);
+    const void* data = hData ? LockResource(hData) : nullptr;
+
+    if (!data || size == 0)
+    {
+        LOG_ERROR("Recipe database resource could not be locked");
+        return {};
+    }
+
+    return std::string(static_cast<const char*>(data), size);
 }

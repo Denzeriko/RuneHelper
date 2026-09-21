@@ -1,5 +1,6 @@
 #include "ResourceHelper.h"
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 
@@ -70,7 +71,7 @@ std::string PrepareTessdata()
     return dir.string();
 }
 
-std::filesystem::path PrepareRecipeDatabase()
+std::string LoadEmbeddedRecipeDatabase()
 {
     const EmbeddedResource* resource = FindEmbedded("combinations.json");
 
@@ -80,13 +81,8 @@ std::filesystem::path PrepareRecipeDatabase()
         return {};
     }
 
-    std::filesystem::path destination = GetUserDataDir() / "combinations.json";
-
-    if (!WriteEmbedded(*resource, destination))
-    {
-        LOG_ERROR("Linux recipe database extraction failed: " + destination.string());
-        return {};
-    }
-
-    return destination;
+    return std::string(
+        reinterpret_cast<const char*>(resource->begin),
+        static_cast<std::size_t>(resource->end - resource->begin)
+    );
 }

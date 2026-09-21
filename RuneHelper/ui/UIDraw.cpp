@@ -1,7 +1,9 @@
 #include "ui/UIDraw.h"
 
 #include <algorithm>
+#include <cstdio>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <imgui.h>
@@ -249,23 +251,57 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
         "Hardcore"
     };
 
-    int selectedLeague = 0;
-    for (int i = 0; i < IM_ARRAYSIZE(kPriceLeagues); ++i)
+    auto pickLeague = [&config, &configChanged, &state](std::string league)
     {
-        if (config.priceLeague == kPriceLeagues[i])
-        {
-            selectedLeague = i;
-            break;
-        }
-    }
+        if (league.empty() || league == config.priceLeague)
+            return;
 
-    if (ImGui::Combo("League", &selectedLeague, kPriceLeagues, IM_ARRAYSIZE(kPriceLeagues)))
-    {
-        config.priceLeague = kPriceLeagues[selectedLeague];
+        config.priceLeague = std::move(league);
         configChanged = true;
+
         if (config.priceSearchEnabled)
             state.wantsRefreshPrices = true;
+    };
+
+    const bool leagueOpen = ImGui::BeginCombo("League", config.priceLeague.c_str());
+    const bool leagueHovered = ImGui::IsItemHovered();
+
+    if (leagueOpen)
+    {
+        for (const char* league : kPriceLeagues)
+        {
+            const bool selected = config.priceLeague == league;
+
+            if (ImGui::Selectable(league, selected))
+                pickLeague(league);
+
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
+
+        ImGui::Separator();
+
+        if (ImGui::IsWindowAppearing())
+            std::snprintf(state.customLeague, sizeof(state.customLeague), "%s", config.priceLeague.c_str());
+
+        ImGui::SetNextItemWidth(-1.0f);
+
+        if (ImGui::InputTextWithHint(
+                "##custom_league",
+                "another league, then Enter",
+                state.customLeague,
+                sizeof(state.customLeague),
+                ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+            pickLeague(state.customLeague);
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndCombo();
     }
+
+    if (leagueHovered)
+        ImGui::SetTooltip("A league missing from the list can be typed in. New leagues work as soon as the price proxy carries them.");
 
     constexpr const char* kPriceUnits[] = {
         "Exalted",

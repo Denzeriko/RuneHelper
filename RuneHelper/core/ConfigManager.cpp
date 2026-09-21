@@ -1,6 +1,7 @@
 #include "ConfigManager.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <filesystem>
 #include <fstream>
 
@@ -13,15 +14,31 @@ using json = nlohmann::json;
 namespace
 {
 constexpr std::string_view kDefaultPriceLeague = "Forbidden Rites";
+constexpr std::size_t kMaxPriceLeagueLength = 64;
 
-bool IsSupportedPriceLeague(const std::string& league)
+std::string SanitizePriceLeague(std::string_view league)
 {
-    return league == "Standard" ||
-        league == "Hardcore" ||
-        league == "Forbidden Rites" ||
-        league == "HC Forbidden Rites" ||
-        league == "Runes of Aldur" ||
-        league == "HC Runes of Aldur";
+    std::string cleaned;
+    cleaned.reserve(league.size());
+
+    for (unsigned char ch : league)
+    {
+        if (ch >= 0x20 && ch != 0x7f)
+            cleaned.push_back(static_cast<char>(ch));
+    }
+
+    const std::size_t first = cleaned.find_first_not_of(' ');
+
+    if (first == std::string::npos)
+        return {};
+
+    const std::size_t last = cleaned.find_last_not_of(' ');
+    cleaned = cleaned.substr(first, last - first + 1);
+
+    if (cleaned.size() > kMaxPriceLeagueLength)
+        cleaned.resize(kMaxPriceLeagueLength);
+
+    return cleaned;
 }
 
 PriceUnit PriceUnitFromInt(int value)
@@ -70,7 +87,10 @@ void ConfigManager::Normalize(AppConfig& config)
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 5, 360);
     if (config.priceLeague == "Hardcore Runes of Aldur")
         config.priceLeague = "HC Runes of Aldur";
-    if (!IsSupportedPriceLeague(config.priceLeague))
+
+    config.priceLeague = SanitizePriceLeague(config.priceLeague);
+
+    if (config.priceLeague.empty())
         config.priceLeague = std::string(kDefaultPriceLeague);
     ClampPriceThresholds(config);
 }

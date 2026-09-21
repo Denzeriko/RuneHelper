@@ -133,6 +133,19 @@ json ReadJson(const std::filesystem::path& path)
     return parsed;
 }
 
+json ParseJson(std::string_view text)
+{
+    if (text.empty())
+        return json();
+
+    json parsed = json::parse(text, nullptr, false);
+
+    if (parsed.is_discarded())
+        return json();
+
+    return parsed;
+}
+
 std::string GeneratedAt(const json& parsed)
 {
     if (!parsed.is_object())
@@ -149,10 +162,8 @@ std::filesystem::path DownloadedRecipeDatabasePath()
 
 bool RecipeDatabase::Load()
 {
-    const std::filesystem::path shipped = PrepareRecipeDatabase();
+    const json shippedJson = ParseJson(LoadEmbeddedRecipeDatabase());
     const std::filesystem::path downloaded = DownloadedRecipeDatabasePath();
-
-    const json shippedJson = shipped.empty() ? json() : ReadJson(shipped);
 
     std::error_code ec;
 
@@ -163,32 +174,27 @@ bool RecipeDatabase::Load()
 
         if (!downloadedDate.empty() && downloadedDate >= GeneratedAt(shippedJson))
         {
-            if (LoadFromJson(downloadedJson, downloaded))
+            if (LoadFromJson(downloadedJson, downloaded.string()))
                 return true;
 
             LOG_ERROR("RecipeDatabase: downloaded database is unusable, falling back to the shipped one");
         }
     }
 
-    if (shipped.empty())
+    if (shippedJson.is_null())
     {
-        LOG_ERROR("RecipeDatabase: combinations.json could not be prepared");
+        LOG_ERROR("RecipeDatabase: the embedded combinations.json could not be read");
         return false;
     }
 
-    return LoadFromJson(shippedJson, shipped);
+    return LoadFromJson(shippedJson, "the database embedded in the binary");
 }
 
-bool RecipeDatabase::LoadFromFile(const std::filesystem::path& path)
-{
-    return LoadFromJson(ReadJson(path), path);
-}
-
-bool RecipeDatabase::LoadFromJson(const json& j, const std::filesystem::path& path)
+bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
 {
     if (!j.is_object() || !j.contains("combinations") || !j["combinations"].is_array())
     {
-        LOG_ERROR("RecipeDatabase: invalid combinations.json: " + path.string());
+        LOG_ERROR("RecipeDatabase: invalid combinations.json: " + std::string(source));
         return false;
     }
 
@@ -226,7 +232,7 @@ bool RecipeDatabase::LoadFromJson(const json& j, const std::filesystem::path& pa
 
     if (recipes.empty())
     {
-        LOG_ERROR("RecipeDatabase: no valid combinations in " + path.string());
+        LOG_ERROR("RecipeDatabase: no valid combinations in " + std::string(source));
         return false;
     }
 
@@ -244,8 +250,6 @@ bool RecipeDatabase::LoadFromJson(const json& j, const std::filesystem::path& pa
 
     outputNames_ = CachedItemNames::Build(std::vector<std::string>(outputs.begin(), outputs.end()));
 
-    runeNames_ = std::move(runeNames);
-
     rareRunes_.clear();
 
     if (j.contains("rareRunes") && j["rareRunes"].is_array())
@@ -257,12 +261,12 @@ bool RecipeDatabase::LoadFromJson(const json& j, const std::filesystem::path& pa
         }
     }
     complete_ = j.value("complete", false);
-    loadedFrom_ = path.string();
+    loadedFrom_ = std::string(source);
     loaded_ = true;
 
     LOG_INFO(
         "RecipeDatabase: loaded " + std::to_string(recipes_.size()) +
-        " combinations (" + std::to_string(runeNames_.size()) + " rune types) from " + loadedFrom_ +
+        " combinations (" + std::to_string(runeNames.size()) + " rune types) from " + loadedFrom_ +
         (complete_ ? "" : " [PARTIAL dataset - run tools/scrape_poe2db.py]"));
 
     return true;

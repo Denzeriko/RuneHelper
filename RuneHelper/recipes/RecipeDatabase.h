@@ -31,7 +31,6 @@ class RecipeDatabase
 {
 public:
     bool Load();
-    bool LoadFromFile(const std::filesystem::path& path);
 
     bool Loaded() const { return loaded_; }
     bool Complete() const { return complete_; }
@@ -45,14 +44,13 @@ private:
     static std::string NormalizeRune(std::string_view name);
     static std::string StripOcrNoise(std::string_view name);
 
-    bool LoadFromJson(const nlohmann::json& j, const std::filesystem::path& path);
+    bool LoadFromJson(const nlohmann::json& j, std::string_view source);
 
     bool loaded_ = false;
     bool complete_ = false;
     std::string loadedFrom_;
     std::vector<Recipe> recipes_;
     std::unordered_map<std::pair<std::string, int>, size_t, RecipeOutputKeyHash> byOutput_;
-    std::unordered_set<std::string> runeNames_;
     std::unordered_set<std::string> rareRunes_;
     CachedItemNames outputNames_;
 };

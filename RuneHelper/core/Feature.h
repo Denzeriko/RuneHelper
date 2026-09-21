@@ -17,7 +17,6 @@ class UIManager;
 struct RowOverlay
 {
     std::string note;
-    bool hasColor = false;
     OverlayColor color = OverlayRgb(160, 160, 160);
 
     void Append(const std::string& part)
@@ -31,7 +30,6 @@ struct RowOverlay
     void SetColor(OverlayColor value)
     {
         color = value;
-        hasColor = true;
     }
 };
 

@@ -144,13 +144,19 @@ void PriceCache::ForceRefreshAsync()
         return;
     }
 
-    std::lock_guard<std::mutex> lock(refreshThreadMutex_);
+    std::jthread previous;
 
-    refreshThread_ = std::jthread(
-        [this](const std::stop_token& stop)
-        {
-            RunLoggingExceptions("PriceCache refresh thread", [&] { RefreshWorker(stop); });
-        });
+    {
+        std::lock_guard<std::mutex> lock(refreshThreadMutex_);
+
+        previous = std::move(refreshThread_);
+
+        refreshThread_ = std::jthread(
+            [this](const std::stop_token& stop)
+            {
+                RunLoggingExceptions("PriceCache refresh thread", [&] { RefreshWorker(stop); });
+            });
+    }
 }
 
 void PriceCache::SetRefreshMinutes(int minutes)
