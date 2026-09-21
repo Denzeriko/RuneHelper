@@ -43,7 +43,7 @@ const std::string& UserAgent()
 void RecipeUpdater::Start()
 {
     thread_ = std::jthread(
-        [this](std::stop_token stop)
+        [this](const std::stop_token& stop)
         {
             Fetch(stop);
         });

@@ -1,0 +1,19 @@
+Checks: >
+  -*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  misc-*,
+  performance-*,
+  portability-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-narrowing-conversions,
+  -cert-err33-c,
+  -concurrency-mt-unsafe,
+  -misc-const-correctness,
+  -misc-non-private-member-variables-in-classes,
+  -performance-no-int-to-ptr
+
+HeaderFilterRegex: 'RuneHelper/.*'
+FormatStyle: none

@@ -12,7 +12,7 @@
 
 namespace
 {
-    constexpr uintmax_t kMaxLogSize = 16 * 1024 * 1024; // 16 MB
+    constexpr uintmax_t kMaxLogSize = 16ULL * 1024 * 1024;
 }
 
 Logger& Logger::Instance()
@@ -31,7 +31,7 @@ Logger::~Logger()
 
 bool Logger::Init()
 {
-    std::filesystem::path dir = GetUserDataDir();
+    const std::filesystem::path& dir = GetUserDataDir();
 
     std::filesystem::create_directories(dir);
 

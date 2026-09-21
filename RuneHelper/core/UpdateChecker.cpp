@@ -68,7 +68,7 @@ void UpdateChecker::Start()
 {
     checking_ = true;
 
-    thread_ = std::jthread([this](std::stop_token stop)
+    thread_ = std::jthread([this](const std::stop_token& stop)
         {
             Check(stop);
         });

@@ -80,7 +80,7 @@ std::filesystem::path PrepareRecipeDatabase()
         return {};
     }
 
-    const std::filesystem::path destination = GetUserDataDir() / "combinations.json";
+    std::filesystem::path destination = GetUserDataDir() / "combinations.json";
 
     if (!WriteEmbedded(*resource, destination))
     {

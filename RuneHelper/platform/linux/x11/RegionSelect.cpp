@@ -51,8 +51,6 @@ void DrawSelectionRect(Display* display, Window root, GC gc, const cv::Rect& rec
 }
 }
 
-RegionSelector::~RegionSelector() = default;
-
 cv::Rect RegionSelector::Select()
 {
     if (!IsX11Session())

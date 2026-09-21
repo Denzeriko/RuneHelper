@@ -66,7 +66,7 @@ namespace
             return 0;
 
         constexpr int64_t kFirstRetrySeconds = 30;
-        constexpr int64_t kMaxRetrySeconds = 30 * 60;
+        constexpr int64_t kMaxRetrySeconds = 30LL * 60;
 
         const int shift = std::min(failureStreak - 1, 10);
 
@@ -145,14 +145,14 @@ void PriceCache::ForceRefreshAsync()
 
     std::lock_guard<std::mutex> lock(refreshThreadMutex_);
 
-    refreshThread_ = std::jthread([this](std::stop_token stop) { RefreshWorker(stop); });
+    refreshThread_ = std::jthread([this](const std::stop_token& stop) { RefreshWorker(stop); });
 }
 
 void PriceCache::SetRefreshMinutes(int minutes)
 {
     const int clampedMinutes = std::clamp(minutes, 5, 360);
     std::lock_guard<std::mutex> lock(mutex_);
-    refresh_seconds_ = clampedMinutes * 60;
+    refresh_seconds_ = static_cast<int64_t>(clampedMinutes) * 60;
 }
 
 void PriceCache::SetLeague(std::string league)

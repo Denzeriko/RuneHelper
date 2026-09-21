@@ -74,7 +74,7 @@ bool Fetch(cpr::Session& session, const std::string& url, std::string& body, con
 
     session.SetUrl(cpr::Url{ url });
 
-    const cpr::Response r = session.Get();
+    cpr::Response r = session.Get();
 
     if (stop.stop_requested())
         return false;
@@ -104,8 +104,9 @@ PriceTable FailedTable()
     return table;
 }
 
-const std::vector<std::string> kPoeNinjaCategories =
+const std::vector<std::string>& PoeNinjaCategories()
 {
+    static const std::vector<std::string> categories = {
     "Runes",
     "Currency",
     "UncutGems",
@@ -119,7 +120,10 @@ const std::vector<std::string> kPoeNinjaCategories =
     "LineageSupportGems",
     "Abyss",
     "Fragments"
-};
+    };
+
+    return categories;
+}
 }
 
 PriceTable PoeNinjaPriceProvider::DownloadPrices(const std::string& league, const std::stop_token& stop)
@@ -138,7 +142,7 @@ PriceTable PoeNinjaPriceProvider::DownloadPrices(const std::string& league, cons
 
     std::vector<std::string> failed;
 
-    for (const auto& category : kPoeNinjaCategories)
+    for (const auto& category : PoeNinjaCategories())
     {
         if (stop.stop_requested())
         {
@@ -178,7 +182,7 @@ PriceTable PoeNinjaPriceProvider::DownloadPrices(const std::string& league, cons
 
         LOG_ERROR(
             "PoeNinjaPriceProvider::DownloadPrices() -> " + std::to_string(failed.size()) + " of " +
-            std::to_string(kPoeNinjaCategories.size()) + " categories failed: " + names
+            std::to_string(PoeNinjaCategories().size()) + " categories failed: " + names
         );
     }
 

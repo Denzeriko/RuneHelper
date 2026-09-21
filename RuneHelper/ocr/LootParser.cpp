@@ -81,8 +81,13 @@ std::string LootParser::FormatAmount(double value, const std::string& unit)
     }
     else if (value > 0.0 && value < 1.0)
     {
-        for (double scaled = value * 100.0; scaled < 1.0 && decimals < 8; scaled *= 10.0)
+        double threshold = 0.01;
+
+        while (value < threshold && decimals < 8)
+        {
+            threshold /= 10.0;
             ++decimals;
+        }
     }
 
     char buf[64];
@@ -114,7 +119,7 @@ std::string LootParser::FormatDivine(double divines)
 
 std::string LootParser::FormatStack(double unitValue, int quantity, const std::string& unit)
 {
-    const std::string single = FormatAmount(unitValue, unit);
+    std::string single = FormatAmount(unitValue, unit);
 
     if (quantity <= 1)
         return single;

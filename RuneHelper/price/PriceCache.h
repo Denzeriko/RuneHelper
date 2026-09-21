@@ -48,7 +48,7 @@ private:
 
     std::uint64_t version_ = 0;
     int64_t dump_updated_at_ = 0;
-    int64_t refresh_seconds_ = 60 * 60;
+    int64_t refresh_seconds_ = 60LL * 60;
     int64_t last_failure_at_ = 0;
     int failure_streak_ = 0;
     std::string league_;

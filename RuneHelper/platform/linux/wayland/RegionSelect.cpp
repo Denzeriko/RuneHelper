@@ -457,8 +457,6 @@ cv::Rect RegionSelectSession::Run()
 }
 }
 
-RegionSelector::~RegionSelector() = default;
-
 cv::Rect RegionSelector::Select()
 {
     RegionSelectSession session;
