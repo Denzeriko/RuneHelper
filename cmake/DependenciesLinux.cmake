@@ -103,6 +103,10 @@ if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
 else()
     find_package(X11 REQUIRED)
 
+    if(NOT X11_Xext_LIB)
+        message(FATAL_ERROR "The X11 backend needs libXext for MIT-SHM screen capture, install libxext-dev")
+    endif()
+
     set(RUNEHELPER_PLATFORM_LIBRARIES ${X11_LIBRARIES} ${X11_Xext_LIB})
 
     set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)

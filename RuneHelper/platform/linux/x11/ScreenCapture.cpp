@@ -3,8 +3,12 @@
 #include <cstdlib>
 #include <string>
 
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/extensions/XShm.h>
 
 #include <opencv2/imgproc.hpp>
 
@@ -21,42 +25,6 @@ bool IsX11Session()
     }();
 
     return value;
-}
-
-class DisplayConnection
-{
-public:
-    ~DisplayConnection()
-    {
-        if (display_)
-            XCloseDisplay(display_);
-    }
-
-    Display* Get()
-    {
-        if (!display_)
-            display_ = XOpenDisplay(nullptr);
-
-        return display_;
-    }
-
-    void Drop()
-    {
-        if (display_)
-        {
-            XCloseDisplay(display_);
-            display_ = nullptr;
-        }
-    }
-
-private:
-    Display* display_ = nullptr;
-};
-
-DisplayConnection& Connection()
-{
-    static DisplayConnection connection;
-    return connection;
 }
 
 bool gSawXCaptureError = false;
@@ -93,6 +61,171 @@ int TrapXCaptureError(Display*, XErrorEvent* error)
     );
 
     return 0;
+}
+
+bool IsLocalDisplay(Display* display)
+{
+    const char* name = DisplayString(display);
+
+    if (!name || !*name)
+        return true;
+
+    return name[0] == ':' || std::string(name).rfind("unix:", 0) == 0;
+}
+
+class SharedImage
+{
+public:
+    bool Available(Display* display)
+    {
+        if (!checked_)
+        {
+            checked_ = true;
+            available_ = IsLocalDisplay(display) && XShmQueryExtension(display) == True;
+
+            if (available_)
+                LOG_INFO("Linux screen capture: MIT-SHM is available");
+            else
+                LOG_INFO("Linux screen capture: MIT-SHM is unavailable, using XGetImage");
+        }
+
+        return available_;
+    }
+
+    XImage* Acquire(Display* display, Visual* visual, int depth, int width, int height)
+    {
+        if (image_ && image_->width == width && image_->height == height)
+            return image_;
+
+        Destroy(display);
+
+        XImage* image = XShmCreateImage(
+            display,
+            visual,
+            static_cast<unsigned int>(depth),
+            ZPixmap,
+            nullptr,
+            &segment_,
+            static_cast<unsigned int>(width),
+            static_cast<unsigned int>(height)
+        );
+
+        if (!image)
+            return nullptr;
+
+        const std::size_t size = static_cast<std::size_t>(image->bytes_per_line) * static_cast<std::size_t>(height);
+
+        segment_.shmid = shmget(IPC_PRIVATE, size, IPC_CREAT | 0600);
+
+        if (segment_.shmid < 0)
+        {
+            XDestroyImage(image);
+            return nullptr;
+        }
+
+        void* address = shmat(segment_.shmid, nullptr, 0);
+
+        if (address == reinterpret_cast<void*>(-1))
+        {
+            shmctl(segment_.shmid, IPC_RMID, nullptr);
+            XDestroyImage(image);
+            return nullptr;
+        }
+
+        segment_.shmaddr = static_cast<char*>(address);
+        segment_.readOnly = False;
+        image->data = segment_.shmaddr;
+
+        gSawXCaptureError = false;
+        XErrorHandler previous = XSetErrorHandler(TrapXCaptureError);
+        const Bool attached = XShmAttach(display, &segment_);
+        XSync(display, False);
+        XSetErrorHandler(previous);
+
+        shmctl(segment_.shmid, IPC_RMID, nullptr);
+
+        if (!attached || gSawXCaptureError)
+        {
+            shmdt(segment_.shmaddr);
+            segment_.shmaddr = nullptr;
+            XDestroyImage(image);
+            available_ = false;
+            LOG_ERROR("Linux screen capture: MIT-SHM attach failed, falling back to XGetImage");
+            return nullptr;
+        }
+
+        image_ = image;
+
+        return image_;
+    }
+
+    void Destroy(Display* display)
+    {
+        if (image_)
+        {
+            if (display)
+                XShmDetach(display, &segment_);
+
+            XDestroyImage(image_);
+            image_ = nullptr;
+        }
+
+        if (segment_.shmaddr)
+        {
+            shmdt(segment_.shmaddr);
+            segment_.shmaddr = nullptr;
+        }
+
+        segment_ = XShmSegmentInfo{};
+    }
+
+private:
+    XImage* image_ = nullptr;
+    XShmSegmentInfo segment_{};
+    bool checked_ = false;
+    bool available_ = false;
+};
+
+class DisplayConnection
+{
+public:
+    ~DisplayConnection()
+    {
+        Drop();
+    }
+
+    Display* Get()
+    {
+        if (!display_)
+            display_ = XOpenDisplay(nullptr);
+
+        return display_;
+    }
+
+    void Drop()
+    {
+        if (!display_)
+            return;
+
+        shared_.Destroy(display_);
+        XCloseDisplay(display_);
+        display_ = nullptr;
+    }
+
+    SharedImage& Shared()
+    {
+        return shared_;
+    }
+
+private:
+    Display* display_ = nullptr;
+    SharedImage shared_;
+};
+
+DisplayConnection& Connection()
+{
+    static DisplayConnection connection;
+    return connection;
 }
 
 struct ChannelLayout
@@ -208,7 +341,7 @@ cv::Mat ToGray(const XImage& image, const cv::Size& size)
     return result;
 }
 
-cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
+cv::Mat CaptureRootRegion(Display* display, SharedImage& shared, const cv::Rect& region)
 {
     Window root = DefaultRootWindow(display);
 
@@ -228,32 +361,61 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
         return {};
     }
 
+    const cv::Size size(clipped.width, clipped.height);
+
     gSawXCaptureError = false;
     XErrorHandler previousErrorHandler = XSetErrorHandler(TrapXCaptureError);
 
-    XImage* image = XGetImage(
-        display,
-        root,
-        clipped.x,
-        clipped.y,
-        static_cast<unsigned int>(clipped.width),
-        static_cast<unsigned int>(clipped.height),
-        AllPlanes,
-        ZPixmap
-    );
+    cv::Mat result;
 
-    XSync(display, False);
-    XSetErrorHandler(previousErrorHandler);
-
-    if (gSawXCaptureError || !image)
+    if (shared.Available(display))
     {
+        if (XImage* image = shared.Acquire(display, attrs.visual, attrs.depth, clipped.width, clipped.height))
+        {
+            gSawXCaptureError = false;
+
+            if (XShmGetImage(display, root, image, clipped.x, clipped.y, AllPlanes))
+            {
+                XSync(display, False);
+
+                if (!gSawXCaptureError)
+                    result = ToGray(*image, size);
+            }
+        }
+    }
+
+    if (result.empty())
+    {
+        gSawXCaptureError = false;
+
+        XImage* image = XGetImage(
+            display,
+            root,
+            clipped.x,
+            clipped.y,
+            static_cast<unsigned int>(clipped.width),
+            static_cast<unsigned int>(clipped.height),
+            AllPlanes,
+            ZPixmap
+        );
+
+        XSync(display, False);
+
+        if (!gSawXCaptureError && image)
+            result = ToGray(*image, size);
+
         if (image)
             XDestroyImage(image);
+    }
 
+    XSetErrorHandler(previousErrorHandler);
+
+    if (result.empty())
+    {
         if (!gReportedXCaptureError)
         {
             gReportedXCaptureError = true;
-            LOG_ERROR("Linux screen capture failed: XGetImage did not return an image");
+            LOG_ERROR("Linux screen capture failed: neither XShmGetImage nor XGetImage returned an image");
             LogXwaylandHint();
         }
 
@@ -261,10 +423,6 @@ cv::Mat CaptureRootRegion(Display* display, const cv::Rect& region)
     }
 
     gReportedXCaptureError = false;
-
-    cv::Mat result = ToGray(*image, cv::Size(clipped.width, clipped.height));
-
-    XDestroyImage(image);
 
     return result;
 }
@@ -286,7 +444,7 @@ cv::Mat CaptureRegion(const cv::Rect& region)
         return {};
     }
 
-    cv::Mat result = CaptureRootRegion(display, region);
+    cv::Mat result = CaptureRootRegion(display, Connection().Shared(), region);
 
     if (result.empty() && XConnectionNumber(display) < 0)
         Connection().Drop();
