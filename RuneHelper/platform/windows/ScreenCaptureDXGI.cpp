@@ -15,10 +15,6 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    ComPtr<ID3D11Device> g_device;
-    ComPtr<ID3D11DeviceContext> g_context;
-    ComPtr<IDXGIOutputDuplication> g_duplication;
-
     bool IntersectsOutput(const cv::Rect& region, const RECT& rc)
     {
         const int left = region.x;
@@ -140,9 +136,9 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
         nullptr,
         0,
         D3D11_SDK_VERSION,
-        &g_device,
+        &device_,
         &featureLevel,
-        &g_context);
+        &context_);
 
     if (FAILED(hr))
     {
@@ -159,7 +155,7 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
         return false;
     }
 
-    hr = output1->DuplicateOutput(g_device.Get(), &g_duplication);
+    hr = output1->DuplicateOutput(device_.Get(), &duplication_);
 
     if (FAILED(hr))
     {
@@ -186,9 +182,9 @@ void ScreenCaptureWGC::Shutdown()
     lastFrame_.release();
     lastFrameRegion_ = cv::Rect();
 
-    g_duplication.Reset();
-    g_context.Reset();
-    g_device.Reset();
+    duplication_.Reset();
+    context_.Reset();
+    device_.Reset();
 
     initialized_ = false;
 
@@ -221,7 +217,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     DXGI_OUTDUPL_FRAME_INFO frameInfo{};
     ComPtr<IDXGIResource> desktopResource;
 
-    HRESULT hr = g_duplication->AcquireNextFrame(16, &frameInfo, &desktopResource);
+    HRESULT hr = duplication_->AcquireNextFrame(16, &frameInfo, &desktopResource);
 
     if (hr == DXGI_ERROR_WAIT_TIMEOUT)
     {
@@ -245,7 +241,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     if (frameInfo.LastPresentTime.QuadPart == 0 && HasCachedFrame(region))
     {
-        g_duplication->ReleaseFrame();
+        duplication_->ReleaseFrame();
         return lastFrame_.clone();
     }
 
@@ -254,7 +250,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     if (FAILED(hr))
     {
-        g_duplication->ReleaseFrame();
+        duplication_->ReleaseFrame();
         return {};
     }
 
@@ -282,7 +278,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
             " localX=" + std::to_string(localX) +
             " localY=" + std::to_string(localY));
 
-        g_duplication->ReleaseFrame();
+        duplication_->ReleaseFrame();
         Shutdown();
 
         return {};
@@ -305,7 +301,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     {
         stagingTexture_.Reset();
 
-        hr = g_device->CreateTexture2D(
+        hr = device_->CreateTexture2D(
             &stagingDesc,
             nullptr,
             &stagingTexture_);
@@ -323,9 +319,9 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
             LOG_ERROR(buf);
 
-            if (g_device)
+            if (device_)
             {
-                HRESULT reason = g_device->GetDeviceRemovedReason();
+                HRESULT reason = device_->GetDeviceRemovedReason();
 
                 char reasonBuf[128];
                 sprintf_s(reasonBuf, "Device removed reason: 0x%08X", static_cast<unsigned>(reason));
@@ -333,7 +329,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
                 LOG_ERROR(reasonBuf);
             }
 
-            g_duplication->ReleaseFrame();
+            duplication_->ReleaseFrame();
 
             if (IsRecoverableDxgiError(hr))
                 Shutdown();
@@ -354,11 +350,11 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     srcBox.front = 0;
     srcBox.back = 1;
 
-    g_context->CopySubresourceRegion(stagingTexture_.Get(), 0, 0, 0, 0, desktopTexture.Get(), 0, &srcBox);
+    context_->CopySubresourceRegion(stagingTexture_.Get(), 0, 0, 0, 0, desktopTexture.Get(), 0, &srcBox);
 
     D3D11_MAPPED_SUBRESOURCE mapped{};
 
-    hr = g_context->Map(
+    hr = context_->Map(
         stagingTexture_.Get(),
         0,
         D3D11_MAP_READ,
@@ -371,7 +367,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
         sprintf_s(buf, "Map failed: 0x%08X", static_cast<unsigned>(hr));
         LOG_ERROR(buf);
 
-        g_duplication->ReleaseFrame();
+        duplication_->ReleaseFrame();
 
         if (IsRecoverableDxgiError(hr))
             Shutdown();
@@ -384,8 +380,8 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     cv::Mat result;
     cv::cvtColor(bgra, result, cv::COLOR_BGRA2GRAY);
 
-    g_context->Unmap(stagingTexture_.Get(), 0);
-    g_duplication->ReleaseFrame();
+    context_->Unmap(stagingTexture_.Get(), 0);
+    duplication_->ReleaseFrame();
 
     lastFrame_ = result;
     lastFrameRegion_ = region;

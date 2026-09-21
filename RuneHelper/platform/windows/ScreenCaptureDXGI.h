@@ -3,7 +3,7 @@
 #include <opencv2/core.hpp>
 
 #include <d3d11.h>
-#include <dxgi.h>
+#include <dxgi1_2.h>
 #include <wrl/client.h>
 
 class ScreenCaptureWGC
@@ -17,6 +17,10 @@ private:
     bool HasCachedFrame(const cv::Rect& region) const;
 
     bool initialized_ = false;
+
+    Microsoft::WRL::ComPtr<ID3D11Device> device_;
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> context_;
+    Microsoft::WRL::ComPtr<IDXGIOutputDuplication> duplication_;
 
     int outputLeft_ = 0;
     int outputTop_ = 0;
