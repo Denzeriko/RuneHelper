@@ -1,7 +1,0 @@
-rows=6
-qty=1 name="Uncut Skill Gem"
-qty=1 name="Mind Rune"
-qty=1 name="Ward Rune"
-qty=1 name="Uncut Skill Gem (Level 19)"
-qty=3 name="Greater Orb of Transmutation"
-qty=1 name="Passion of Aldur"

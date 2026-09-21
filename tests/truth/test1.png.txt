@@ -1,7 +1,0 @@
-rows=6
-qty=6 name="Blacksmith's Whetstone"
-qty=6 name="Arcanist's Etcher"
-qty=6 name="Armourer's Scrap"
-qty=4 name="Blacksmith's Whetstone"
-qty=4 name="Arcanist's Etcher"
-qty=4 name="Armourer's Scrap"

@@ -386,7 +386,7 @@ int main(int argc, char** argv)
 
     std::vector<fs::path> images;
 
-    for (const auto& entry : fs::directory_iterator(panels))
+    for (const auto& entry : fs::recursive_directory_iterator(panels))
     {
         if (entry.path().extension() == ".png")
             images.push_back(entry.path());
@@ -408,12 +408,13 @@ int main(int argc, char** argv)
 
     for (const fs::path& image : images)
     {
-        const std::string name = image.filename().string();
-        const fs::path expectedPath = golden / (name + ".txt");
+        const fs::path relative = fs::relative(image, panels);
+        const std::string name = relative.generic_string();
+        const fs::path expectedPath = golden / (relative.string() + ".txt");
         const std::vector<Row> rows = Recognize(ocr, vocabulary, image);
         const std::string actual = Serialize(rows);
 
-        const std::vector<TruthRow> expectedRows = LoadTruth(truth / (name + ".txt"));
+        const std::vector<TruthRow> expectedRows = LoadTruth(truth / (relative.string() + ".txt"));
 
         if (!expectedRows.empty())
         {
@@ -430,9 +431,11 @@ int main(int argc, char** argv)
 
         if (bless)
         {
+            fs::create_directories(expectedPath.parent_path());
+
             std::ofstream out(expectedPath, std::ios::binary | std::ios::trunc);
             out << actual;
-            std::printf("blessed %s\n", expectedPath.filename().string().c_str());
+            std::printf("blessed %s\n", name.c_str());
             continue;
         }
 

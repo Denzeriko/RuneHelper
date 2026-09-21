@@ -1,5 +1,0 @@
-rows=4
-y=57 qty=1 name="Chilling Flux" match="Chilling Flux" mconf=100
-y=112 qty=1 name="Lesser Adept Rune" match="Lesser Adept Rune" mconf=100
-y=170 qty=1 name="Lesser Glacial Rune" match="Lesser Glacial Rune" mconf=100
-y=228 qty=2 name="Armourer's Scrap" match="Armourer's Scrap" mconf=100

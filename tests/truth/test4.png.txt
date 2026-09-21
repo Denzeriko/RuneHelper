@@ -1,5 +1,0 @@
-rows=4
-qty=1 name="Chilling Flux"
-qty=1 name="Lesser Adept Rune"
-qty=1 name="Lesser Glacial Rune"
-qty=2 name="Armourer's Scrap"

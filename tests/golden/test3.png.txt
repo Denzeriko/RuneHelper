@@ -1,5 +1,0 @@
-rows=4
-y=63 qty=10 name="Divine Orb" match="Divine Orb" mconf=100
-y=171 qty=3 name="Divine Orb" match="Divine Orb" mconf=100
-y=279 qty=2 name="Divine Orbf" match="Divine Orb" mconf=91
-y=387 qty=1 name="Divine Orb" match="Divine Orb" mconf=100

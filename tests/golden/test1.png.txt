@@ -1,7 +1,0 @@
-rows=6
-y=8 qty=6 name="Blacksmith's Whetstone" match="Blacksmith's Whetstone" mconf=100
-y=56 qty=6 name="Arcanist's Etcher )" match="Arcanist's Etcher" mconf=100
-y=103 qty=6 name="Armourer's Scrap '" match="Armourer's Scrap" mconf=100
-y=150 qty=4 name="Blacksmith's Whetstone" match="Blacksmith's Whetstone" mconf=100
-y=197 qty=4 name="Arcanist's Etcher )" match="Arcanist's Etcher" mconf=100
-y=248 qty=4 name="Armourer's Scrap )" match="Armourer's Scrap" mconf=100
