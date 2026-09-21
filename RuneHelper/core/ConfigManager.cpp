@@ -24,6 +24,14 @@ bool IsSupportedPriceLeague(const std::string& league)
         league == "HC Runes of Aldur";
 }
 
+PriceUnit PriceUnitFromInt(int value)
+{
+    if (value < static_cast<int>(PriceUnit::Exalted) || value > static_cast<int>(PriceUnit::Divine))
+        return PriceUnit::ExaltedWithDivine;
+
+    return static_cast<PriceUnit>(value);
+}
+
 void ClampPriceThresholds(AppConfig& config)
 {
     config.priceColorMedium = std::max(0, config.priceColorMedium);
@@ -120,6 +128,8 @@ bool ConfigManager::Load()
     config_.overlayOffsetY  = j.value("overlayOffsetY",  config_.overlayOffsetY);
     config_.overlayFontSize = j.value("overlayFontSize", config_.overlayFontSize);
 
+    config_.priceUnit = PriceUnitFromInt(j.value("priceUnit", static_cast<int>(config_.priceUnit)));
+
     config_.priceColorMedium    = j.value("priceColorMedium",   config_.priceColorMedium);
     config_.priceColorHigh      = j.value("priceColorHigh",     config_.priceColorHigh);
     config_.priceColorVeryHigh  = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
@@ -168,6 +178,7 @@ bool ConfigManager::Save() const
     j["hotkeySingleSnapshot"]   = config.hotkeySingleSnapshot;
     j["hotkeySelectRegion"]     = config.hotkeySelectRegion;
 
+    j["priceUnit"]              = static_cast<int>(config.priceUnit);
     j["priceColorMedium"]       = config.priceColorMedium;
     j["priceColorHigh"]         = config.priceColorHigh;
     j["priceColorVeryHigh"]     = config.priceColorVeryHigh;

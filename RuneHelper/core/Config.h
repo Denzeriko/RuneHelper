@@ -2,6 +2,13 @@
 
 #include <string>
 
+enum class PriceUnit
+{
+    Exalted,
+    ExaltedWithDivine,
+    Divine
+};
+
 struct AppConfig
 {
     int regionX = 0;
@@ -22,6 +29,8 @@ struct AppConfig
     int overlayFontSize = 24;
     bool overlayBackground = true;
     bool overlayOutline    = false;
+
+    PriceUnit priceUnit = PriceUnit::ExaltedWithDivine;
 
     int priceColorMedium    = 5;
     int priceColorHigh      = 20;

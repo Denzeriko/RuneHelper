@@ -6,7 +6,7 @@
 struct ResolvedPrice
 {
     std::string name;
-    std::optional<std::string> price;
+    std::optional<double> unitEx;
     int confidence = 0;
-    double value = 0.0;
+    double totalEx = 0.0;
 };

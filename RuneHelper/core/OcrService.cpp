@@ -218,6 +218,7 @@ void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv:
             region,
             rows,
             config,
+            prices_ ? prices_->DivineRate() : 0.0,
             rowOverlays,
             overlay,
             debug

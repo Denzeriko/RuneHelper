@@ -30,6 +30,8 @@ public:
 
     ResolvedPrice Resolve(const std::string& rawName, int quantity);
 
+    double DivineRate() const;
+
 private:
     void RebuildNames();
 

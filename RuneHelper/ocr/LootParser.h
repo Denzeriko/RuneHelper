@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <string>
 
 namespace LootParser
@@ -12,7 +11,8 @@ namespace LootParser
     };
 
     ParsedLootLineStruct ParseLootLine(const std::string& line);
-    std::optional<double> ParsePriceValue(const std::string& price);
+    std::string FormatAmount(double value, const std::string& unit);
     std::string FormatPrice(double value);
-    std::string FormatStackPrice(const std::string& singlePrice, int quantity);
+    std::string FormatDivine(double divines);
+    std::string FormatStack(double unitValue, int quantity, const std::string& unit);
 }

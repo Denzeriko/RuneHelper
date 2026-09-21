@@ -6,7 +6,13 @@
 
 struct PriceInfo
 {
-    std::string price;
+    double ex = 0.0;
+};
+
+struct PriceTable
+{
+    std::unordered_map<std::string, PriceInfo> items;
+    double divineToEx = 0.0;
 };
 
 class PriceProvider
@@ -14,5 +20,5 @@ class PriceProvider
 public:
     virtual ~PriceProvider() = default;
 
-    virtual std::unordered_map<std::string, PriceInfo> DownloadPrices(const std::string& league, const std::stop_token& stop) = 0;
+    virtual PriceTable DownloadPrices(const std::string& league, const std::stop_token& stop) = 0;
 };

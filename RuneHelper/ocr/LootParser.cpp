@@ -3,8 +3,6 @@
 #include <cctype>
 #include <charconv>
 #include <cstdio>
-#include <cstdlib>
-#include <optional>
 #include <string>
 
 namespace
@@ -69,51 +67,57 @@ LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& li
     return { 1, line };
 }
 
-std::optional<double> LootParser::ParsePriceValue(const std::string& price)
+std::string LootParser::FormatAmount(double value, const std::string& unit)
 {
-    const char* s = price.c_str();
-    char* end = nullptr;
-    double value = std::strtod(s, &end);
+    int decimals = 2;
 
-    if (end == s)
-        return std::nullopt;
+    if (value >= 100.0)
+    {
+        decimals = 0;
+    }
+    else if (value >= 10.0)
+    {
+        decimals = 1;
+    }
+    else if (value > 0.0 && value < 1.0)
+    {
+        for (double scaled = value * 100.0; scaled < 1.0 && decimals < 8; scaled *= 10.0)
+            ++decimals;
+    }
 
-    return value;
+    char buf[64];
+    std::snprintf(buf, sizeof(buf), "%.*f", decimals, value);
+
+    std::string s = buf;
+
+    if (s.find('.') != std::string::npos)
+    {
+        while (!s.empty() && s.back() == '0')
+            s.pop_back();
+
+        if (!s.empty() && s.back() == '.')
+            s.pop_back();
+    }
+
+    return s + " " + unit;
 }
 
 std::string LootParser::FormatPrice(double value)
 {
-    char buf[64];
-
-    if (value >= 10.0)
-        std::snprintf(buf, sizeof(buf), "%.1f ex", value);
-    else
-        std::snprintf(buf, sizeof(buf), "%.2f ex", value);
-
-    std::string s = buf;
-
-    while (s.find('.') != std::string::npos &&
-        s.find(" ex") != std::string::npos &&
-        s[s.find(" ex") - 1] == '0')
-    {
-        s.erase(s.find(" ex") - 1, 1);
-    }
-
-    size_t dotEx = s.find(". ex");
-    if (dotEx != std::string::npos)
-        s.erase(dotEx, 1);
-
-    return s;
+    return FormatAmount(value, "ex");
 }
 
-std::string LootParser::FormatStackPrice(const std::string& singlePrice, int quantity)
+std::string LootParser::FormatDivine(double divines)
 {
-    auto value = ParsePriceValue(singlePrice);
+    return FormatAmount(divines, "div");
+}
 
-    if (!value || quantity <= 1)
-        return singlePrice;
+std::string LootParser::FormatStack(double unitValue, int quantity, const std::string& unit)
+{
+    const std::string single = FormatAmount(unitValue, unit);
 
-    double total = *value * quantity;
+    if (quantity <= 1)
+        return single;
 
-    return singlePrice + " (" + FormatPrice(total) + ")";
+    return single + " (" + FormatAmount(unitValue * quantity, unit) + ")";
 }

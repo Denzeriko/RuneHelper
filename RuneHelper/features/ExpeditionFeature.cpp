@@ -121,11 +121,8 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
 
         double perWave = 0.0;
 
-        if (line.price != "-")
-        {
-            if (const auto value = LootParser::ParsePriceValue(line.price))
-                perWave = *value * parsed.quantity / static_cast<double>(recipe->runes.size());
-        }
+        if (line.priceEx > 0.0)
+            perWave = line.priceEx * parsed.quantity / static_cast<double>(recipe->runes.size());
 
         tabRows_.push_back({ recipe, perWave });
     }
@@ -212,8 +209,8 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
         entry.recipe = recipe;
         entry.rowIndex = i;
 
-        if (resolved.value > 0.0)
-            entry.perWave = resolved.value / static_cast<double>(recipe->runes.size());
+        if (resolved.totalEx > 0.0)
+            entry.perWave = resolved.totalEx / static_cast<double>(recipe->runes.size());
 
         found.push_back(entry);
     }

@@ -41,6 +41,7 @@ struct FrameContext
     const cv::Rect& region;
     const std::vector<FrameRow>& rows;
     const AppConfig& config;
+    double divineToEx = 0.0;
 
     std::vector<RowOverlay>& rowOverlays;
     OverlayFrame& overlay;

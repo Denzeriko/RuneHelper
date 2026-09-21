@@ -33,22 +33,37 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
         const FrameRow& row = frame.rows[i];
         const ResolvedPrice& resolved = row.price;
 
-        if (i < frame.debug.lines.size() && resolved.price)
+        if (!resolved.unitEx)
+            continue;
+
+        if (i < frame.debug.lines.size())
         {
             frame.debug.lines[i].matchedText = resolved.name;
-            frame.debug.lines[i].price = *resolved.price;
+            frame.debug.lines[i].price = LootParser::FormatPrice(*resolved.unitEx);
+            frame.debug.lines[i].priceEx = *resolved.unitEx;
             frame.debug.lines[i].confidence = resolved.confidence;
         }
 
-        if (!resolved.price)
-            continue;
+        const bool hasRate = frame.divineToEx > 0.0;
+        const bool inDivine = hasRate && frame.config.priceUnit == PriceUnit::Divine;
 
-        std::string note = LootParser::FormatStackPrice(*resolved.price, row.quantity);
+        std::string note = inDivine
+            ? LootParser::FormatStack(*resolved.unitEx / frame.divineToEx, row.quantity, "div")
+            : LootParser::FormatStack(*resolved.unitEx, row.quantity, "ex");
 
         if (resolved.confidence < kTrustedMatchConfidence)
             note += " ?";
 
         frame.rowOverlays[i].Append(note);
-        frame.rowOverlays[i].SetColor(ColorForPrice(resolved.value, frame.config));
+
+        if (hasRate && frame.config.priceUnit == PriceUnit::ExaltedWithDivine)
+        {
+            const double divines = resolved.totalEx / frame.divineToEx;
+
+            if (divines >= 1.0)
+                frame.rowOverlays[i].Append(LootParser::FormatDivine(divines));
+        }
+
+        frame.rowOverlays[i].SetColor(ColorForPrice(resolved.totalEx, frame.config));
     }
 }

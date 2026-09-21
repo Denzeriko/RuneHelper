@@ -192,33 +192,6 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     if (ImGui::IsItemHovered())
         ImGui::SetTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
 
-    constexpr const char* kPriceLeagues[] = {
-        "Forbidden Rites",
-        "HC Forbidden Rites",
-        "Runes of Aldur",
-        "HC Runes of Aldur",
-        "Standard",
-        "Hardcore"
-    };
-
-    int selectedLeague = 0;
-    for (int i = 0; i < IM_ARRAYSIZE(kPriceLeagues); ++i)
-    {
-        if (config.priceLeague == kPriceLeagues[i])
-        {
-            selectedLeague = i;
-            break;
-        }
-    }
-
-    if (ImGui::Combo("League", &selectedLeague, kPriceLeagues, IM_ARRAYSIZE(kPriceLeagues)))
-    {
-        config.priceLeague = kPriceLeagues[selectedLeague];
-        configChanged = true;
-        if (config.priceSearchEnabled)
-            state.wantsRefreshPrices = true;
-    }
-
     if (!config.priceSearchEnabled)
         ImGui::BeginDisabled();
 
@@ -266,6 +239,52 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     bool configChanged = false;
 
     ImGui::SeparatorText("PRICES");
+
+    constexpr const char* kPriceLeagues[] = {
+        "Forbidden Rites",
+        "HC Forbidden Rites",
+        "Runes of Aldur",
+        "HC Runes of Aldur",
+        "Standard",
+        "Hardcore"
+    };
+
+    int selectedLeague = 0;
+    for (int i = 0; i < IM_ARRAYSIZE(kPriceLeagues); ++i)
+    {
+        if (config.priceLeague == kPriceLeagues[i])
+        {
+            selectedLeague = i;
+            break;
+        }
+    }
+
+    if (ImGui::Combo("League", &selectedLeague, kPriceLeagues, IM_ARRAYSIZE(kPriceLeagues)))
+    {
+        config.priceLeague = kPriceLeagues[selectedLeague];
+        configChanged = true;
+        if (config.priceSearchEnabled)
+            state.wantsRefreshPrices = true;
+    }
+
+    constexpr const char* kPriceUnits[] = {
+        "Exalted",
+        "Exalted + divine",
+        "Divine"
+    };
+
+    int priceUnit = static_cast<int>(config.priceUnit);
+
+    if (ImGui::Combo("Units", &priceUnit, kPriceUnits, IM_ARRAYSIZE(kPriceUnits)))
+    {
+        config.priceUnit = static_cast<PriceUnit>(priceUnit);
+        configChanged = true;
+    }
+
+    if (ImGui::IsItemHovered())
+        ImGui::SetTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows every price in divine orbs.");
+
+    ImGui::Spacing();
 
     configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
     configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);

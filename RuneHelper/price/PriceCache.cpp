@@ -99,7 +99,7 @@ std::vector<std::string> PriceCache::GetAllItemNames() const
     return result;
 }
 
-std::optional<std::string> PriceCache::GetPrice(const std::string& itemName)
+std::optional<double> PriceCache::GetPrice(const std::string& itemName)
 {
     std::lock_guard<std::mutex> lock(mutex_);
     auto it = prices_.find(itemName);
@@ -107,7 +107,13 @@ std::optional<std::string> PriceCache::GetPrice(const std::string& itemName)
     if (it == prices_.end())
         return std::nullopt;
 
-    return it->second.price;
+    return it->second.ex;
+}
+
+double PriceCache::DivineRate() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return divineToEx_;
 }
 
 void PriceCache::RefreshIfNeeded()
@@ -158,6 +164,7 @@ void PriceCache::SetLeague(std::string league)
 
         league_ = std::move(league);
         prices_.clear();
+        divineToEx_ = 0.0;
         dump_updated_at_ = 0;
         last_failure_at_ = 0;
         failure_streak_ = 0;
@@ -204,7 +211,7 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
         return;
     }
 
-    if (fresh.empty())
+    if (fresh.items.empty())
     {
         int64_t retryIn = 0;
         int attempt = 0;
@@ -233,7 +240,8 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
             return;
         }
 
-        prices_ = std::move(fresh);
+        prices_ = std::move(fresh.items);
+        divineToEx_ = fresh.divineToEx;
         dump_updated_at_ = now;
         last_failure_at_ = 0;
         failure_streak_ = 0;
@@ -263,8 +271,9 @@ void PriceCache::SaveDump()
         league = league_;
         j["league"] = league;
         j["dump_updated_at"] = dump_updated_at_;
+        j["divine_to_ex"] = divineToEx_;
         for (const auto& [name, info] : prices_)
-            j["items"][name] = info.price;
+            j["items"][name] = info.ex;
     }
 
     if (!WriteFileAtomic(DumpPathForLeague(league), j.dump(4)))
@@ -303,10 +312,10 @@ void PriceCache::LoadDump()
     std::unordered_map<std::string, PriceInfo> loaded;
     for (auto it = j["items"].begin(); it != j["items"].end(); ++it)
     {
-        if (!it.value().is_string())
+        if (!it.value().is_number())
             continue;
 
-        loaded[it.key()] = PriceInfo{it.value().get<std::string>()};
+        loaded[it.key()] = PriceInfo{it.value().get<double>()};
     }
 
     {
@@ -315,6 +324,7 @@ void PriceCache::LoadDump()
             return;
 
         prices_ = std::move(loaded);
+        divineToEx_ = j.value("divine_to_ex", 0.0);
         dump_updated_at_ = j.value("dump_updated_at", 0LL);
         ++version_;
     }

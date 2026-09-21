@@ -115,14 +115,14 @@ const std::vector<std::string> kPoeNinjaCategories =
 };
 }
 
-std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::DownloadPrices(const std::string& league, const std::stop_token& stop)
+PriceTable PoeNinjaPriceProvider::DownloadPrices(const std::string& league, const std::stop_token& stop)
 {
     LOG_INFO("PoeNinjaPriceProvider::DownloadPrices() -> " + PriceApiBase());
 
     ProxyFailures().store(0);
 
-    std::unordered_map<std::string, PriceInfo> result;
-    result.reserve(512);
+    PriceTable result;
+    result.items.reserve(512);
 
     const std::string encodedLeague = EncodeUrlComponent(league);
 
@@ -136,13 +136,16 @@ std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::DownloadPrices
 
         auto dump = DownloadCategory(session, encodedLeague, category, stop);
 
-        LOG_INFO("Downloaded " + category + ": " + std::to_string(dump.size()));
+        LOG_INFO("Downloaded " + category + ": " + std::to_string(dump.items.size()));
 
-        for (auto& [name, info] : dump)
-            result[name] = std::move(info);
+        for (auto& [name, info] : dump.items)
+            result.items[name] = info;
+
+        if (result.divineToEx <= 0.0)
+            result.divineToEx = dump.divineToEx;
     }
 
-    LOG_INFO("PoeNinjaPriceProvider::DownloadPrices() -> total prices: " + std::to_string(result.size()));
+    LOG_INFO("PoeNinjaPriceProvider::DownloadPrices() -> total prices: " + std::to_string(result.items.size()));
 
     return result;
 }
@@ -174,28 +177,11 @@ std::string PoeNinjaPriceProvider::EncodeUrlComponent(const std::string& text)
     return out.str();
 }
 
-std::string PoeNinjaPriceProvider::FormatExPrice(double value)
-{
-    std::ostringstream ss;
-
-    if (value >= 100.0)
-        ss << std::fixed << std::setprecision(0);
-    else if (value >= 10.0)
-        ss << std::fixed << std::setprecision(1);
-    else
-        ss << std::fixed << std::setprecision(2);
-
-    ss << value << " ex";
-
-    return ss.str();
-}
-
-std::unordered_map<std::string, PriceInfo>
-PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const std::string& encodedLeague, const std::string& type, const std::stop_token& stop)
+PriceTable PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const std::string& encodedLeague, const std::string& type, const std::stop_token& stop)
 {
     const std::string query = "?league=" + encodedLeague + "&type=" + type;
 
-    auto parse = [this](const std::string& text) -> std::unordered_map<std::string, PriceInfo>
+    auto parse = [this](const std::string& text) -> PriceTable
     {
         json j = json::parse(text, nullptr, false);
 
@@ -235,9 +221,9 @@ PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const std::string
     return parse(body);
 }
 
-std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
+PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
 {
-    std::unordered_map<std::string, PriceInfo> result;
+    PriceTable result;
 
     if (!j.contains("core") ||
         !j["core"].contains("rates") ||
@@ -258,6 +244,8 @@ std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::ParseCategoryD
         return result;
     }
 
+    result.divineToEx = divineToEx;
+
     std::unordered_map<std::string, std::string> idToName;
     idToName.reserve(j["items"].size());
 
@@ -270,7 +258,7 @@ std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::ParseCategoryD
             idToName.emplace(std::move(id), std::move(name));
     }
 
-    result.reserve(j["lines"].size());
+    result.items.reserve(j["lines"].size());
     for (const auto& line : j["lines"])
     {
         std::string id = line.value("id", "");
@@ -288,14 +276,10 @@ std::unordered_map<std::string, PriceInfo> PoeNinjaPriceProvider::ParseCategoryD
         if (primaryValue <= 0.0)
             continue;
 
-        double exValue = primaryValue * divineToEx;
-
-        result[it->second] = PriceInfo{
-            FormatExPrice(exValue)
-        };
+        result.items[it->second] = PriceInfo{ primaryValue * divineToEx };
     }
 
-    LOG_INFO("PoeNinjaPriceProvider::ParseCategoryDump() parsed prices: " + std::to_string(result.size()));
+    LOG_INFO("PoeNinjaPriceProvider::ParseCategoryDump() parsed prices: " + std::to_string(result.items.size()));
 
     return result;
 }

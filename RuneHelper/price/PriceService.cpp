@@ -2,8 +2,6 @@
 
 #include <chrono>
 
-#include "ocr/LootParser.h"
-
 namespace
 {
 constexpr std::chrono::seconds kRefreshCheckInterval{ 10 };
@@ -93,12 +91,14 @@ ResolvedPrice PriceService::Resolve(const std::string& rawName, int quantity)
     }
 
     if (price)
-    {
-        if (const auto value = LootParser::ParsePriceValue(*price))
-            resolved.value = *value * quantity;
-    }
+        resolved.totalEx = *price * quantity;
 
-    resolved.price = std::move(price);
+    resolved.unitEx = price;
 
     return resolved;
+}
+
+double PriceService::DivineRate() const
+{
+    return cache_.DivineRate();
 }
