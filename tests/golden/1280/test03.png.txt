@@ -1,0 +1,7 @@
+rows=6
+y=31 qty=1 name="Exalted Orb  i" match="Exalted Orb" mconf=85
+y=87 qty=1 name="Annulment 5" match="-" mconf=0
+y=139 qty=1 name="t Regal Orb i" match="-" mconf=0
+y=208 qty=1 name="arn" match="-" mconf=0
+y=247 qty=1 name="gmentation i" match="-" mconf=0
+y=303 qty=1 name="Annulment 5" match="-" mconf=0

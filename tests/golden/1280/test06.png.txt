@@ -1,0 +1,11 @@
+rows=10
+y=6 qty=1 name="2 el e  a ae                Rare Unique Item f" match="-" mconf=0
+y=38 qty=1 name="af) eS (ai (eI                 -          Unique Ring f" match="-" mconf=0
+y=69 qty=1 name="a (ey (ee eI                             Unique Belt J" match="-" mconf=0
+y=101 qty=1 name="ee icy (aS) kel                               Unique Amulet" match="-" mconf=0
+y=133 qty=1 name="aS 2) Ge Z              Unique Jewellery J" match="-" mconf=0
+y=164 qty=1 name="ar  e (eI Sei                         Unique Wand" match="-" mconf=0
+y=194 qty=1 name="ae ei el i)               Unique Two Hand Mace" match="-" mconf=0
+y=225 qty=1 name="ae toi el ES                            Unique Talisman j" match="-" mconf=0
+y=290 qty=1 name="it fot (Sl e                             Unique Spear J" match="-" mconf=0
+y=320 qty=1 name="Je i (Si                   '            Unique Shield" match="-" mconf=0

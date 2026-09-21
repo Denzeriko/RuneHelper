@@ -1,0 +1,7 @@
+rows=6
+qty=3 name="Perfect Exalted Orb"
+qty=3 name="Orb of Annulment"
+qty=3 name="Perfect Regal Orb"
+qty=3 name="Perfect Orb of Transmutation"
+qty=3 name="Perfect Orb of Augmentation"
+qty=2 name="Orb of Annulment"

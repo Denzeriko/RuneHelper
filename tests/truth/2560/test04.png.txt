@@ -1,0 +1,7 @@
+rows=6
+qty=1 name="Perfect Exalted Orb"
+qty=1 name="Crackling Flux"
+qty=1 name="Blazing Flux"
+qty=1 name="Chilling Flux"
+qty=1 name="Olroth's Saga"
+qty=1 name="Vorana's Saga"

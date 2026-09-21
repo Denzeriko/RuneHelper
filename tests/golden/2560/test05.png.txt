@@ -1,0 +1,12 @@
+rows=11
+y=18 qty=1 name="Farrul's Rune of the Hunt" match="Farrul's Rune of the Hunt" mconf=100
+y=82 qty=1 name="Saqawal's Rune of Erosion" match="Saqawal's Rune of Erosion" mconf=100
+y=145 qty=1 name="Craiceann's Rune of Warding" match="Craiceann's Rune of Warding" mconf=100
+y=209 qty=1 name="Masterwork Rune" match="Masterwork Rune" mconf=100
+y=270 qty=1 name="Warding Rune of Hollowing" match="Warding Rune of Hollowing" mconf=100
+y=333 qty=1 name="Warding Rune of Bodyguards 1" match="Warding Rune of Bodyguards" mconf=93
+y=397 qty=1 name="Warding Rune of Equinox (" match="Warding Rune of Equinox" mconf=100
+y=459 qty=1 name="Warding Rune of Obsession H" match="Warding Rune of Obsession" mconf=93
+y=523 qty=1 name="Warding Rune of Armature '" match="Warding Rune of Armature" mconf=100
+y=585 qty=1 name="Ancient Rune of Witchcraft" match="Ancient Rune of Witchcraft" mconf=100
+y=648 qty=1 name="Ancient Rune of Decay" match="Ancient Rune of Decay" mconf=100

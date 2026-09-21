@@ -1,0 +1,11 @@
+rows=10
+y=11 qty=1 name="Rare Unique Item )" match="Rare Unique Item" mconf=100
+y=59 qty=1 name="Unique Ring" match="Unique Ring" mconf=100
+y=106 qty=1 name="a     Unique Belt" match="Unique Belt" mconf=85
+y=153 qty=1 name="Unique Amulet" match="Unique Amulet" mconf=100
+y=200 qty=1 name="Unique Jewellery y" match="Unique Jewellery" mconf=89
+y=248 qty=1 name="Unique Wand" match="Unique Wand" mconf=100
+y=295 qty=1 name="Un ique Two  Hand  M ace j" match="Unique Two Hand Mace" mconf=84
+y=342 qty=1 name="Unique Talisman" match="Unique Talisman" mconf=100
+y=368 qty=1 name="7" match="-" mconf=0
+y=389 qty=1 name="Unique Staff jf" match="-" mconf=0

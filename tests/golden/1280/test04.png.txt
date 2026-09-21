@@ -1,0 +1,11 @@
+rows=10
+y=8 qty=1 name="Support Healing Runes ff" match="-" mconf=0
+y=71 qty=1 name="Skill Triskelion Cascade J" match="-" mconf=0
+y=103 qty=1 name="Skill Refutation" match="-" mconf=0
+y=134 qty=1 name="Skill Runic Reprieve" match="-" mconf=0
+y=166 qty=1 name="Skill Leyline sf" match="-" mconf=0
+y=197 qty=1 name="Skill Animus Exchange" match="-" mconf=0
+y=229 qty=2 name="Gemceutter's Prism" match="Gemcutter's Prism" mconf=95
+y=259 qty=1 name="Skill Rain of Blades" match="-" mconf=0
+y=292 qty=1 name="Support Runic infusion" match="-" mconf=0
+y=323 qty=1 name="Support Runic Extraction" match="-" mconf=0

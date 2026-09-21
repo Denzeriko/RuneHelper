@@ -1,0 +1,11 @@
+rows=10
+y=29 qty=1 name="x The Runefather's Alloy" match="The Runefather's Alloy" mconf=92
+y=85 qty=1 name="Sovereign Alloy" match="Sovereign Alloy" mconf=100
+y=114 qty=1 name="Wx Mystic Alloy f" match="-" mconf=0
+y=144 qty=1 name="tx Prismatic Alloy" match="Prismatic Alloy" mconf=84
+y=176 qty=1 name="x Suaft Alloy" match="-" mconf=0
+y=209 qty=1 name="Cyclonic Alloy jl" match="Cyclonic Alloy" mconf=83
+y=241 qty=1 name="Expansive Alloy f" match="Expansive Alloy" mconf=89
+y=271 qty=1 name="Protective Alloy" match="Protective Alloy" mconf=100
+y=303 qty=1 name="Adaptive Alloy" match="Adaptive Alloy" mconf=100
+y=334 qty=2 name="Runic Alloy J" match="Runic Alloy" mconf=85

@@ -1,0 +1,9 @@
+rows=8
+qty=1 name="Uhtred's Saga"
+qty=1 name="Medved's Saga"
+qty=3 name="Greater Regal Orb"
+qty=3 name="Greater Chaos Orb"
+qty=3 name="Greater Exalted Orb"
+qty=1 name="Thaumaturgic Flux (Level 19)"
+qty=2 name="Divine Orb"
+qty=3 name="Chaos Orb"

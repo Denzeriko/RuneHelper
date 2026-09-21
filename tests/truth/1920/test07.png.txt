@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="The Greatwolf's Rune of Claws"
+qty=1 name="Thane Leld's Rune of Spring"
+qty=1 name="Lady Hestra's Rune of Winter"
+qty=1 name="Thane Myrk's Rune of Summer"
+qty=1 name="Fenumus' Rune of Draining"
+qty=1 name="Fenumus' Rune of Spinning"
+qty=1 name="Craiceann's Rune of Recovery"
+qty=1 name="Farrul's Rune of the Hunt"
+qty=1 name="Saqawal's Rune of Erosion"
+qty=1 name="Craiceann's Rune of Warding"
+qty=1 name="Masterwork Rune"

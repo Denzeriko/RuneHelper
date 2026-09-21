@@ -1,0 +1,8 @@
+rows=7
+y=9 qty=1 name="7" match="-" mconf=0
+y=31 qty=1 name="ed's Sidercus i" match="-" mconf=0
+y=85 qty=1 name="ved's Tending j" match="-" mconf=0
+y=100 qty=1 name="ee" match="-" mconf=0
+y=141 qty=1 name="Kol's Hunt fl" match="-" mconf=0
+y=249 qty=1 name="Katla's Gloom" match="Katla's Gloom" mconf=100
+y=303 qty=1 name="'ana's Carnage )" match="-" mconf=0

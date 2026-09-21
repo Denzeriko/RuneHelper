@@ -1,0 +1,7 @@
+rows=6
+qty=1 name="Uhtred's Sidereus"
+qty=1 name="Medved's Tending"
+qty=1 name="Kolr's Hunt"
+qty=1 name="Thrud's Might"
+qty=1 name="Katla's Gloom"
+qty=1 name="Vorana's Carnage"

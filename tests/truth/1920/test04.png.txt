@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="Skill Level 20: Detonate Living"
+qty=1 name="Uncut Skill Gem (Level 19)"
+qty=1 name="Uncut Spirit Gem (Level 19)"
+qty=1 name="Support: Healing Runes"
+qty=1 name="Skill: Skyfall"
+qty=1 name="Skill: Triskelion Cascade"
+qty=1 name="Skill: Refutation"
+qty=1 name="Skill: Runic Reprieve"
+qty=1 name="Skill: Leylines"
+qty=1 name="Skill: Animus Exchange"
+qty=2 name="Gemcutter's Prism"

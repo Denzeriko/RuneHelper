@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="Rare Unique Item"
+qty=1 name="Unique Ring"
+qty=1 name="Unique Belt"
+qty=1 name="Unique Amulet"
+qty=1 name="Unique Jewellery"
+qty=1 name="Unique Wand"
+qty=1 name="Unique Two Hand Mace"
+qty=1 name="Unique Talisman"
+qty=1 name="Unique Staff"
+qty=1 name="Unique Spear"
+qty=1 name="Unique Shield"

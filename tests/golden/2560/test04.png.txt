@@ -1,0 +1,9 @@
+rows=8
+y=40 qty=1 name="pee CAT OMB Cp Te A  -" match="-" mconf=0
+y=65 qty=1 name="Perfect Exalted Orb" match="Perfect Exalted Orb" mconf=100
+y=175 qty=1 name="Crackling Flux i" match="Crackling Flux" mconf=88
+y=281 qty=1 name="Blazing Flux" match="Blazing Flux" mconf=100
+y=389 qty=1 name="Chilling Flux" match="Chilling Flux" mconf=100
+y=478 qty=1 name="ibd" match="-" mconf=0
+y=498 qty=1 name="Olroth's Saga f" match="Olroth's Saga" mconf=86
+y=686 qty=1 name="lien ee eens Dis 2 es De edie ae" match="-" mconf=0

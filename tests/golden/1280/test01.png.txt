@@ -1,0 +1,12 @@
+rows=11
+y=6 qty=1 name="Greater Orb of Augmentation" match="Greater Orb of Augmentation" mconf=100
+y=38 qty=6 name="Blacksmith's Whetstone J" match="Blacksmith's Whetstone" mconf=92
+y=69 qty=6 name="Arcanist's Eicher" match="Arcanist's Etcher" mconf=94
+y=103 qty=6 name="Armourer's  Scrap J" match="Armourer's Scrap" mconf=89
+y=132 qty=1 name="x Lesser Jeweller's Orb" match="Lesser Jeweller's Orb" mconf=91
+y=164 qty=3 name="Regal Orb" match="Regal Orb" mconf=100
+y=195 qty=1 name="- x Chaos Orb" match="-" mconf=0
+y=227 qty=2 name="Exalted Orb" match="Exalted Orb" mconf=100
+y=258 qty=3 name="Artificer's Orb" match="Artificer's Orb" mconf=100
+y=289 qty=1 name="Ax Blacksmith's Whetstone" match="Blacksmith's Whetstone" mconf=88
+y=323 qty=4 name="Arcanist's Etcher" match="Arcanist's Etcher" mconf=100

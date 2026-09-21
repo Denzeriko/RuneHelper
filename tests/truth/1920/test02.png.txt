@@ -1,0 +1,7 @@
+rows=6
+qty=1 name="Orb of Annulment"
+qty=2 name="Orb of Chance"
+qty=1 name="Perfect Chaos Orb"
+qty=3 name="Divine Orb"
+qty=1 name="Void Flux"
+qty=1 name="Perfect Exalted Orb"

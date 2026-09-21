@@ -1,0 +1,12 @@
+rows=11
+qty=3 name="Chaos Orb"
+qty=1 name="Perfect Jeweller's Orb"
+qty=1 name="Orb of Chance"
+qty=3 name="Greater Orb of Transmutation"
+qty=3 name="Greater Orb of Augmentation"
+qty=5 name="Random Currency"
+qty=1 name="Divine Orb"
+qty=1 name="Greater Chaos Orb"
+qty=1 name="Greater Exalted Orb"
+qty=1 name="Greater Regal Orb"
+qty=1 name="Greater Jeweller's Orb"
