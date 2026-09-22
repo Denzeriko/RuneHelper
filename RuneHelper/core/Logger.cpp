@@ -7,12 +7,14 @@
 #include "platform/PlatformPaths.h"
 
 #include <chrono>
+#include <cstddef>
 #include <ctime>
 #include <filesystem>
 
 namespace
 {
     constexpr uintmax_t kMaxLogSize = 16ULL * 1024 * 1024;
+    constexpr std::size_t kMaxPendingLines = 64;
 }
 
 Logger& Logger::Instance()
@@ -45,10 +47,20 @@ bool Logger::Init()
         std::filesystem::rename(logPath, oldLogPath, ec);
     }
 
-    file_.open(logPath, std::ios::app);
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
 
-    if (!file_)
-        return false;
+        file_.open(logPath, std::ios::app);
+
+        if (!file_)
+            return false;
+
+        for (const std::string& line : pending_)
+            file_ << line;
+
+        pending_.clear();
+        file_.flush();
+    }
 
     Info("Logger initialized");
 
@@ -76,7 +88,12 @@ void Logger::Write(const char* level, const std::string& msg)
 #endif
 
     if (!file_)
+    {
+        if (pending_.size() < kMaxPendingLines)
+            pending_.push_back(line);
+
         return;
+    }
 
     file_ << line;
     file_.flush(); //make sure log will be saved after crash

@@ -1,5 +1,5 @@
 rows=6
-y=34 qty=3 name="Perfect Exalted Qrb" match="Perfect Exalted Orb" mconf=95
+y=34 qty=3 name="Perfect Exalted Orb" match="Perfect Exalted Orb" mconf=100
 y=90 qty=3 name="Orb of Annulment" match="Orb of Annulment" mconf=100
 y=142 qty=3 name="Perfect Regal Orb" match="Perfect Regal Orb" mconf=100
 y=196 qty=3 name="Perfect Orb of Transmutation" match="Perfect Orb of Transmutation" mconf=100

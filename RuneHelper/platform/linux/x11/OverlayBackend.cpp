@@ -271,6 +271,22 @@ void LinuxOverlayBackend::BringToTop()
     if (!display_ || !window_)
         return;
 
+    Window root = 0;
+    Window parent = 0;
+    Window* children = nullptr;
+    unsigned int count = 0;
+
+    if (XQueryTree(display_, DefaultRootWindow(display_), &root, &parent, &children, &count))
+    {
+        const bool alreadyOnTop = count > 0 && children[count - 1] == window_;
+
+        if (children)
+            XFree(children);
+
+        if (alreadyOnTop)
+            return;
+    }
+
     XRaiseWindow(display_, window_);
     XFlush(display_);
 }

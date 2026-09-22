@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <atomic>
 #include <cctype>
+#include <cmath>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -24,6 +25,10 @@
 namespace
 {
 constexpr std::size_t kMaxOcrWorkers = 8;
+
+constexpr double kTargetRowHeight = 48.0;
+constexpr double kMinRowScale = 2.0;
+constexpr double kMaxRowScale = 5.0;
 
 std::size_t OcrWorkerCount()
 {
@@ -453,8 +458,13 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
     if (textGray.empty())
         return result;
 
+    const double scale = std::clamp(
+        std::round(kTargetRowHeight / static_cast<double>(textGray.rows)),
+        kMinRowScale,
+        kMaxRowScale);
+
     cv::Mat scaled;
-    cv::resize(textGray, scaled, cv::Size(), 2.0, 2.0, cv::INTER_CUBIC);
+    cv::resize(textGray, scaled, cv::Size(), scale, scale, cv::INTER_CUBIC);
 
     cv::Mat bin;
     cv::threshold(scaled, bin, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);

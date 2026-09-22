@@ -22,6 +22,14 @@
 
 namespace
 {
+constexpr long long kFrameWantedWindowMs = 1000;
+
+long long NowMs()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+
 constexpr const char* kPortalService = "org.freedesktop.portal.Desktop";
 constexpr const char* kPortalPath = "/org/freedesktop/portal/desktop";
 constexpr const char* kScreenCastInterface = "org.freedesktop.portal.ScreenCast";
@@ -258,6 +266,7 @@ struct PortalScreenCast::Impl
     std::atomic<bool> running{false};
 
     std::mutex frameMutex;
+    std::atomic<long long> frameWantedAtMs{ 0 };
     cv::Mat frame;
     cv::Point position{0, 0};
     bool hasPosition = false;
@@ -341,7 +350,9 @@ void PortalScreenCast::Impl::OnProcess()
 
     spa_buffer* spaBuffer = buffer->buffer;
 
-    if (spaBuffer->n_datas > 0 && spaBuffer->datas[0].data)
+    const bool wanted = NowMs() - frameWantedAtMs.load() <= kFrameWantedWindowMs;
+
+    if (wanted && spaBuffer->n_datas > 0 && spaBuffer->datas[0].data)
     {
         const spa_data& data = spaBuffer->datas[0];
         const int width = static_cast<int>(format.info.raw.size.width);
@@ -401,7 +412,17 @@ cv::Mat PortalScreenCast::LatestFrame()
     if (!impl_)
         return {};
 
+    const long long now = NowMs();
+    const long long previous = impl_->frameWantedAtMs.exchange(now);
+
     std::lock_guard lock(impl_->frameMutex);
+
+    if (now - previous > kFrameWantedWindowMs)
+    {
+        impl_->frame.release();
+        return {};
+    }
+
     return impl_->frame;
 }
 

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <mutex>
 #include <string>
+#include <vector>
 
 class Logger
 {
@@ -27,6 +28,7 @@ private:
 private:
     std::ofstream file_;
     std::mutex mutex_;
+    std::vector<std::string> pending_;
 };
 
 #define LOG_INFO(msg)  Logger::Instance().Info(msg)
