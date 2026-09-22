@@ -122,7 +122,13 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
 
     row("Version");
-    ImGui::Text("v%s", RUNEHELPER_VERSION_LABEL);
+    ImGui::Text("v%s", RUNEHELPER_VERSION);
+
+    if (RUNEHELPER_COMMIT[0] != '\0')
+    {
+        ImGui::SameLine(0.0f, 0.0f);
+        ImGui::TextDisabled(" (%s)", RUNEHELPER_COMMIT);
+    }
 
     if (manager.IsCheckingForUpdate())
     {

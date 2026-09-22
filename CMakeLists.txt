@@ -44,7 +44,12 @@ endif()
 
 set(RUNEHELPER_COMMIT "" CACHE STRING "Commit hash shown next to the version in the UI")
 
-if(NOT RUNEHELPER_COMMIT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
+if(NOT RUNEHELPER_COMMIT)
+    include(GitCommit)
+    runehelper_read_commit(RUNEHELPER_COMMIT)
+endif()
+
+if(NOT RUNEHELPER_COMMIT)
     find_package(Git QUIET)
 
     if(GIT_FOUND)
@@ -55,17 +60,6 @@ if(NOT RUNEHELPER_COMMIT AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git")
             OUTPUT_STRIP_TRAILING_WHITESPACE
             ERROR_QUIET
         )
-    endif()
-
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD")
-        set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD")
-
-        file(READ "${CMAKE_CURRENT_SOURCE_DIR}/.git/HEAD" RUNEHELPER_GIT_HEAD)
-        string(STRIP "${RUNEHELPER_GIT_HEAD}" RUNEHELPER_GIT_HEAD)
-
-        if(RUNEHELPER_GIT_HEAD MATCHES "^ref: (.+)$" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/.git/${CMAKE_MATCH_1}")
-            set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/.git/${CMAKE_MATCH_1}")
-        endif()
     endif()
 endif()
 
@@ -109,6 +103,7 @@ target_include_directories(RuneHelper PRIVATE
 target_compile_definitions(RuneHelper PRIVATE
     RUNEHELPER_VERSION="${PROJECT_VERSION}"
     RUNEHELPER_VERSION_LABEL="${RUNEHELPER_VERSION_LABEL}"
+    RUNEHELPER_COMMIT="${RUNEHELPER_COMMIT}"
     ${RUNEHELPER_DEFINITIONS}
 )
 
