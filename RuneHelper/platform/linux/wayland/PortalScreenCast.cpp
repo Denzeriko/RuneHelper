@@ -307,7 +307,7 @@ void PortalScreenCast::Impl::StateChanged(void*, pw_stream_state old, pw_stream_
         });
 }
 
-const pw_stream_events PortalScreenCast::Impl::kEvents = []
+const pw_stream_events PortalScreenCast::Impl::kEvents = []() noexcept
 {
     pw_stream_events events{};
     events.version = PW_VERSION_STREAM_EVENTS;

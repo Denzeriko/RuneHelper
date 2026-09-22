@@ -53,29 +53,79 @@ docker run --rm \
     -e TIDY_TARGETS="$selector" \
     "$IMAGE" bash -lc '
         set -e
-        cmake -S /src -B /tmp/tidy -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_BUILD_TYPE=Release > /tmp/configure.log 2>&1 ||
-            { tail -20 /tmp/configure.log; exit 1; }
 
-        if [ -n "$TIDY_TARGETS" ]; then
-            echo "$TIDY_TARGETS" > /tmp/files.txt
-        else
-            python3 -c "
-import json
-db = json.load(open(\"/tmp/tidy/compile_commands.json\"))
-files = sorted({e[\"file\"] for e in db if \"/src/RuneHelper/\" in e[\"file\"]})
-open(\"/tmp/files.txt\", \"w\").write(\"\n\".join(files))
-"
-        fi
+        for backend in x11 wayland; do
+            cmake -S /src -B "/tmp/tidy-$backend" -G Ninja \
+                -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+                -DCMAKE_BUILD_TYPE=Release \
+                -DRUNEHELPER_LINUX_BACKEND="$backend" > "/tmp/configure-$backend.log" 2>&1 ||
+                { echo "configure failed for $backend"; tail -20 "/tmp/configure-$backend.log"; exit 1; }
+        done
+
+        ninja -C /tmp/tidy-wayland \
+            wayland-protocols/wlr-screencopy-unstable-v1-client-protocol.h \
+            wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
+            wayland-protocols/xdg-shell-client-protocol.h > /tmp/protocols.log 2>&1 ||
+            { echo "could not generate the wayland protocol headers"; tail -20 /tmp/protocols.log; exit 1; }
+
+        cat > /tmp/pick.py <<"PY"
+import json, os, sys
+
+def files_in(tree):
+    path = os.path.join(tree, "compile_commands.json")
+    return {e["file"] for e in json.load(open(path))}
+
+x11 = files_in("/tmp/tidy-x11")
+wayland = files_in("/tmp/tidy-wayland")
+
+requested = [line.strip() for line in sys.stdin if line.strip()]
+
+if not requested:
+    requested = sorted(x11 | wayland)
+
+requested = [f for f in requested if "/src/RuneHelper/" in f]
+
+buckets = {"x11": [], "wayland": [], "": []}
+
+for f in requested:
+    if f in x11:
+        buckets["x11"].append(f)
+    elif f in wayland:
+        buckets["wayland"].append(f)
+    else:
+        buckets[""].append(f)
+
+for backend in ("x11", "wayland"):
+    with open("/tmp/files-%s.txt" % backend, "w") as out:
+        out.write("\n".join(buckets[backend]))
+
+if buckets[""]:
+    print("not in any compilation database:", file=sys.stderr)
+    for f in buckets[""]:
+        print("  " + f.replace("/src/", ""), file=sys.stderr)
+    sys.exit(1)
+PY
+
+        printf "%s" "$TIDY_TARGETS" | python3 /tmp/pick.py
 
         extra=""
         [ "$TIDY_FIX" = "1" ] && extra="--fix"
 
-        xargs -a /tmp/files.txt -P "$(nproc)" -I{} \
-            clang-tidy -p /tmp/tidy --quiet $extra {} 2>/dev/null > /tmp/report.txt || true
+        : > /tmp/report.txt
+
+        for backend in x11 wayland; do
+            [ -s "/tmp/files-$backend.txt" ] || continue
+
+            xargs -a "/tmp/files-$backend.txt" -P "$(nproc)" -I{} \
+                clang-tidy -p "/tmp/tidy-$backend" --quiet $extra {} 2>/dev/null >> /tmp/report.txt || true
+        done
 
         sed "s|/src/||" /tmp/report.txt
 
-        count=$(grep -c "warning:" /tmp/report.txt || true)
+        warnings=$(grep -c "warning:" /tmp/report.txt || true)
+        errors=$(grep -c "error:" /tmp/report.txt || true)
+
         echo
-        echo "$count warnings"
-        [ "$count" = "0" ]'
+        echo "$warnings warnings, $errors errors"
+
+        [ "$warnings" = "0" ] && [ "$errors" = "0" ]'

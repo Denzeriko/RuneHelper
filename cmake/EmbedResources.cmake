@@ -27,7 +27,8 @@ foreach(resource ${RUNEHELPER_EMBEDDED_FILES})
     )
 
     set_source_files_properties("${resource_object}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
-    list(APPEND RUNEHELPER_GENERATED_SOURCES "${resource_object}")
+    list(APPEND RUNEHELPER_EMBEDDED_SOURCES "${resource_object}")
+    list(APPEND RUNEHELPER_EMBEDDED_OBJECTS "${resource_object}")
 
     string(APPEND RUNEHELPER_EMBED_EXTERNS
         "extern const unsigned char _binary_${resource_symbol}_start[];\n"
@@ -55,4 +56,8 @@ ${RUNEHELPER_EMBED_ENTRIES}    };
 }
 ")
 
-list(APPEND RUNEHELPER_GENERATED_SOURCES "${RUNEHELPER_EMBED_DIR}/EmbeddedResources.cpp")
+list(APPEND RUNEHELPER_EMBEDDED_SOURCES "${RUNEHELPER_EMBED_DIR}/EmbeddedResources.cpp")
+
+list(APPEND RUNEHELPER_GENERATED_SOURCES ${RUNEHELPER_EMBEDDED_SOURCES})
+
+add_custom_target(runehelper_embedded_resources DEPENDS ${RUNEHELPER_EMBEDDED_OBJECTS})

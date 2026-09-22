@@ -97,7 +97,7 @@ const zwlr_layer_surface_v1_listener RegionSelectSession::kLayerSurfaceListener 
     &RegionSelectSession::HandleClosed
 };
 
-const wl_pointer_listener RegionSelectSession::kPointerListener = []
+const wl_pointer_listener RegionSelectSession::kPointerListener = []() noexcept
 {
     wl_pointer_listener listener{};
     listener.enter = &RegionSelectSession::HandlePointerEnter;
@@ -108,7 +108,7 @@ const wl_pointer_listener RegionSelectSession::kPointerListener = []
     return listener;
 }();
 
-const wl_keyboard_listener RegionSelectSession::kKeyboardListener = []
+const wl_keyboard_listener RegionSelectSession::kKeyboardListener = []() noexcept
 {
     wl_keyboard_listener listener{};
     listener.keymap = &RegionSelectSession::HandleKeyboardKeymap;

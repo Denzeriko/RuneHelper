@@ -14,56 +14,50 @@ add_custom_target(ocr_golden_tessdata
     DEPENDS "${RUNEHELPER_TESSDATA_DIR}/eng.traineddata"
 )
 
-add_executable(ocr_golden
-    ocr_golden.cpp
-    "${CMAKE_SOURCE_DIR}/RuneHelper/core/Logger.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/LootParser.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/NameNormalizer.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OCR.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrFrameDiffer.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrRowCache.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/platform/linux/PlatformPaths.cpp"
+list(TRANSFORM RUNEHELPER_CORE_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/" OUTPUT_VARIABLE RUNEHELPER_TEST_CORE)
+list(TRANSFORM RUNEHELPER_CORE_PLATFORM_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/" OUTPUT_VARIABLE RUNEHELPER_TEST_PLATFORM)
+
+set(RUNEHELPER_TEST_SOURCES
+    ${RUNEHELPER_TEST_CORE}
+    ${RUNEHELPER_TEST_PLATFORM}
+    ${RUNEHELPER_EMBEDDED_SOURCES}
 )
 
-add_dependencies(ocr_golden ocr_golden_tessdata)
-
-target_include_directories(ocr_golden PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
-
-target_compile_options(ocr_golden PRIVATE ${RUNEHELPER_WARNINGS})
-
-target_compile_definitions(ocr_golden PRIVATE
-    RUNEHELPER_VERSION="${PROJECT_VERSION}"
-)
-
-target_link_libraries(ocr_golden PRIVATE
+set(RUNEHELPER_TEST_LIBRARIES
     ${OpenCV_LIBS}
     Tesseract::libtesseract
+    cpr::cpr
     nlohmann_json::nlohmann_json
 )
 
-add_executable(ocr_row_cache
-    ocr_row_cache.cpp
-    "${CMAKE_SOURCE_DIR}/RuneHelper/core/Logger.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/NameNormalizer.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OCR.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrFrameDiffer.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/ocr/OcrRowCache.cpp"
-    "${CMAKE_SOURCE_DIR}/RuneHelper/platform/linux/PlatformPaths.cpp"
-)
+foreach(object IN LISTS RUNEHELPER_EMBEDDED_OBJECTS)
+    set_source_files_properties("${object}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
+endforeach()
 
-add_dependencies(ocr_row_cache ocr_golden_tessdata)
+function(runehelper_add_test name)
+    add_executable(${name} ${name}.cpp ${RUNEHELPER_TEST_SOURCES})
 
-target_include_directories(ocr_row_cache PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
+    add_dependencies(${name} ocr_golden_tessdata runehelper_embedded_resources)
 
-target_compile_options(ocr_row_cache PRIVATE ${RUNEHELPER_WARNINGS})
+    target_include_directories(${name} PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
+    target_compile_options(${name} PRIVATE ${RUNEHELPER_WARNINGS})
 
-target_compile_definitions(ocr_row_cache PRIVATE
-    RUNEHELPER_VERSION="${PROJECT_VERSION}"
-)
+    target_compile_definitions(${name} PRIVATE
+        RUNEHELPER_VERSION="${PROJECT_VERSION}"
+        RUNEHELPER_VERSION_LABEL="${RUNEHELPER_VERSION_LABEL}"
+        RUNEHELPER_COMMIT="${RUNEHELPER_COMMIT}"
+    )
 
-target_link_libraries(ocr_row_cache PRIVATE
-    ${OpenCV_LIBS}
-    Tesseract::libtesseract
+    target_link_libraries(${name} PRIVATE ${RUNEHELPER_TEST_LIBRARIES})
+endfunction()
+
+runehelper_add_test(ocr_golden)
+runehelper_add_test(ocr_row_cache)
+runehelper_add_test(unit_tests)
+
+add_test(
+    NAME unit_tests
+    COMMAND unit_tests
 )
 
 add_test(
@@ -84,7 +78,7 @@ add_test(
 )
 
 add_custom_target(runehelper_tests
-    DEPENDS ocr_golden ocr_row_cache
+    DEPENDS ocr_golden ocr_row_cache unit_tests
 )
 
 add_custom_target(bless_ocr_golden
