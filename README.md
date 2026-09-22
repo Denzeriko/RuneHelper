@@ -7,7 +7,7 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![Windows build](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
 [![Linux build](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml?query=branch%3Amaster)
-[![VirusTotal](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FDenzeriko%2FRuneHelper%2Fmaster%2F.github%2Fbadges%2Fvirustotal.json)](https://www.virustotal.com/gui/file/e7c544fc56954ae6416f2ce3fd12d87565673d14215b59516af51f2ea68e01de)<!-- vt-badge -->
+[![VirusTotal](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FDenzeriko%2FRuneHelper%2Fmaster%2F.github%2Fbadges%2Fvirustotal.json)](https://www.virustotal.com/gui/file/37272781e8d4edfb27878427bf6c4fd80f8bb017311704bdca73242f9613829c)<!-- vt-badge -->
 
 ## Download
 
