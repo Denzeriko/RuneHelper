@@ -83,6 +83,10 @@ add_test(
         "${CMAKE_CURRENT_SOURCE_DIR}/truth"
 )
 
+add_custom_target(runehelper_tests
+    DEPENDS ocr_golden ocr_row_cache
+)
+
 add_custom_target(bless_ocr_golden
     COMMAND ocr_golden
         "${RUNEHELPER_TESSDATA_DIR}"

@@ -62,6 +62,6 @@ docker run --rm \
         set -eo pipefail
         cmake -S /src -B $build_dir -G Ninja $configure -DRUNEHELPER_BUILD_TESTS=ON > /tmp/configure.log 2>&1 ||
             { tail -20 /tmp/configure.log; exit 1; }
-        cmake --build $build_dir --target ocr_golden > /tmp/build.log 2>&1 ||
+        cmake --build $build_dir --target runehelper_tests > /tmp/build.log 2>&1 ||
             { grep -E 'error:' /tmp/build.log | head -20; exit 1; }
         $action"
