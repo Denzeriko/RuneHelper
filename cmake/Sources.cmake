@@ -23,7 +23,9 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/recipes/RecipeDatabase.cpp
     RuneHelper/recipes/RecipeUpdater.cpp
     RuneHelper/ui/ImGuiStyleSetup.cpp
+    RuneHelper/ui/TextRaster.cpp
     RuneHelper/ui/Overlay.cpp
+    RuneHelper/ui/OverlayRenderer.cpp
     RuneHelper/ui/UIDraw.cpp
     RuneHelper/ui/UIManager.cpp
 )
@@ -46,7 +48,6 @@ elseif(UNIX AND NOT APPLE)
         RuneHelper/platform/linux/PlatformShell.cpp
         RuneHelper/platform/linux/UIBackend.cpp
         RuneHelper/platform/linux/ResourceHelper.cpp
-        RuneHelper/platform/linux/TextRaster.cpp
     )
 
     if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")

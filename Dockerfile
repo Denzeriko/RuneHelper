@@ -117,6 +117,7 @@ RUN git clone --depth 1 --branch "${TESSERACT_VERSION}" https://github.com/tesse
 FROM deps AS builder
 
 ARG RUNEHELPER_LINUX_BACKEND=wayland
+ARG RUNEHELPER_COMMIT=""
 
 WORKDIR /src
 COPY . .
@@ -126,6 +127,7 @@ RUN --mount=type=cache,target=/build,sharing=locked \
         -DCMAKE_BUILD_TYPE=Release \
         -DBUILD_SHARED_LIBS=OFF \
         -DRUNEHELPER_LINUX_BACKEND="${RUNEHELPER_LINUX_BACKEND}" \
+        -DRUNEHELPER_COMMIT="${RUNEHELPER_COMMIT}" \
         -DCMAKE_EXE_LINKER_FLAGS="-static-libgcc -static-libstdc++" && \
     cmake --build "/build/${RUNEHELPER_LINUX_BACKEND}" --parallel && \
     install -Dm755 -s "/build/${RUNEHELPER_LINUX_BACKEND}/RuneHelper" /out/RuneHelper

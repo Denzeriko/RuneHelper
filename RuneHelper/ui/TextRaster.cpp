@@ -1,4 +1,4 @@
-#include "platform/linux/TextRaster.h"
+#include "ui/TextRaster.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -28,6 +28,22 @@ namespace
 constexpr int kMinPixelHeight = 6;
 constexpr int kMaxPixelHeight = 256;
 
+#ifdef _WIN32
+const char* const kFontNames[] = {
+    "segoeui.ttf",
+    "arial.ttf",
+    "tahoma.ttf",
+    "verdana.ttf",
+};
+
+std::filesystem::path SystemFontDir()
+{
+    if (const char* windir = std::getenv("WINDIR"); windir && *windir)
+        return std::filesystem::path(windir) / "Fonts";
+
+    return "C:/Windows/Fonts";
+}
+#else
 const char* const kFontCandidates[] = {
     "/usr/share/fonts/TTF/DejaVuSans.ttf",
     "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
@@ -39,6 +55,7 @@ const char* const kFontCandidates[] = {
     "/usr/share/fonts/truetype/noto/NotoSans-Regular.ttf",
     "/usr/share/fonts/TTF/Roboto-Regular.ttf",
 };
+#endif
 
 std::vector<unsigned char> ReadFile(const std::filesystem::path& path)
 {
@@ -102,6 +119,19 @@ std::filesystem::path FindFont()
 
     std::error_code ec;
 
+#ifdef _WIN32
+    const std::filesystem::path fonts = SystemFontDir();
+
+    for (const char* name : kFontNames)
+    {
+        const std::filesystem::path candidate = fonts / name;
+
+        if (std::filesystem::exists(candidate, ec))
+            return candidate;
+    }
+
+    return ScanForFont(fonts);
+#else
     for (const char* candidate : kFontCandidates)
     {
         if (std::filesystem::exists(candidate, ec))
@@ -115,6 +145,7 @@ std::filesystem::path FindFont()
     }
 
     return ScanForFont("/usr/share/fonts");
+#endif
 }
 
 std::vector<std::uint32_t> DecodeUtf8(const std::string& text)

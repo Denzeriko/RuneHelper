@@ -38,7 +38,7 @@ void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
 
     ImGui::TextUnformatted("RuneHelper");
     ImGui::SameLine();
-    ImGui::TextDisabled("v%s", RUNEHELPER_VERSION);
+    ImGui::TextDisabled("v%s", RUNEHELPER_VERSION_LABEL);
 
     ImGui::SameLine(ImGui::GetWindowWidth() - 40.0f);
 
@@ -122,7 +122,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
 
     row("Version");
-    ImGui::Text("v%s", RUNEHELPER_VERSION);
+    ImGui::Text("v%s", RUNEHELPER_VERSION_LABEL);
 
     if (manager.IsCheckingForUpdate())
     {

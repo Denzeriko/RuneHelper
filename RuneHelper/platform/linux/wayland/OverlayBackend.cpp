@@ -9,26 +9,15 @@
 #include <opencv2/imgproc.hpp>
 
 #include "WaylandSession.h"
-#include "platform/linux/TextRaster.h"
 #include "core/Logger.h"
+#include "ui/OverlayRenderer.h"
 #include "ui/OverlayState.h"
 
 namespace
 {
 constexpr int kBufferSlots = 2;
-constexpr int kMarkThickness = 2;
-constexpr int kOutlineExtraThickness = 2;
-constexpr int kTextPadding = 6;
 constexpr int kDirtyMargin = 2;
 
-cv::Scalar ToScalar(OverlayColor color, int alpha)
-{
-    const int r = static_cast<int>(color & 0xff);
-    const int g = static_cast<int>((color >> 8) & 0xff);
-    const int b = static_cast<int>((color >> 16) & 0xff);
-
-    return cv::Scalar(b, g, r, alpha);
-}
 
 cv::Rect UnionRect(const cv::Rect& a, const cv::Rect& b)
 {
@@ -70,9 +59,7 @@ private:
     void Draw();
 
     const WaylandOutput* CurrentOutput() const;
-    void TextMetrics(const OverlayText& text, double& fontScale, int& thickness) const;
     cv::Rect ComputeContentRect() const;
-    cv::Rect PreviewRect() const;
     int AcquireBuffer(int width, int height);
 
     WaylandSession session_;
@@ -327,66 +314,11 @@ const WaylandOutput* WaylandOverlayBackend::CurrentOutput() const
     return session_.OutputByName(outputName_);
 }
 
-cv::Rect WaylandOverlayBackend::PreviewRect() const
-{
-    return cv::Rect(
-        static_cast<int>(state_.previewRect.left),
-        static_cast<int>(state_.previewRect.top),
-        static_cast<int>(state_.previewRect.right - state_.previewRect.left),
-        static_cast<int>(state_.previewRect.bottom - state_.previewRect.top)
-    );
-}
 
-void WaylandOverlayBackend::TextMetrics(const OverlayText& text, double& fontScale, int& thickness) const
-{
-    const int size = std::max(8, text.fontSize > 0 ? text.fontSize : state_.fontSize);
-
-    thickness = std::max(1, size / 16);
-    fontScale = cv::getFontScaleFromHeight(cv::FONT_HERSHEY_SIMPLEX, size, thickness);
-}
 
 cv::Rect WaylandOverlayBackend::ComputeContentRect() const
 {
-    cv::Rect bounds;
-
-    for (const OverlayText& text : state_.texts)
-    {
-        double fontScale = 1.0;
-        int thickness = 1;
-        TextMetrics(text, fontScale, thickness);
-
-        int baseline = 0;
-        const int outlinePad = state_.outline ? kOutlineExtraThickness : 0;
-        const cv::Size size = cv::getTextSize(text.text, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
-        const cv::Rect box(
-            text.x - kTextPadding - outlinePad,
-            text.y - size.height / 2 - kTextPadding - outlinePad,
-            size.width + 2 * (kTextPadding + outlinePad),
-            size.height + baseline + 2 * (kTextPadding + outlinePad)
-        );
-
-        bounds = bounds.empty() ? box : (bounds | box);
-    }
-
-    for (const OverlayMark& mark : state_.marks)
-    {
-        const cv::Rect box(mark.x, mark.y, mark.width, mark.height);
-
-        if (box.empty())
-            continue;
-
-        bounds = bounds.empty() ? box : (bounds | box);
-    }
-
-    if (state_.previewEnabled)
-    {
-        const cv::Rect preview = PreviewRect();
-
-        if (!preview.empty())
-            bounds = bounds.empty() ? preview : (bounds | preview);
-    }
-
-    return bounds;
+    return OverlayRenderer::ContentBounds(state_);
 }
 
 int WaylandOverlayBackend::AcquireBuffer(int width, int height)
@@ -457,100 +389,7 @@ void WaylandOverlayBackend::Draw()
     if (!clearRect.empty())
         canvas(clearRect).setTo(cv::Scalar(0, 0, 0, 0));
 
-    if (!state_.texts.empty())
-    {
-        for (const OverlayText& text : state_.texts)
-        {
-            double fontScale = 1.0;
-            int thickness = 1;
-            TextMetrics(text, fontScale, thickness);
-
-            const std::string& narrow = text.text;
-            const int pixelHeight = std::max(8, text.fontSize > 0 ? text.fontSize : state_.fontSize);
-            TextRaster& raster = TextRaster::Instance();
-            const bool trueType = raster.Ready();
-
-            int baseline = 0;
-            cv::Size size;
-
-            if (trueType)
-            {
-                size = raster.Measure(narrow, pixelHeight);
-                baseline = raster.Descent(pixelHeight);
-            }
-            else
-            {
-                size = cv::getTextSize(narrow, cv::FONT_HERSHEY_SIMPLEX, fontScale, thickness, &baseline);
-            }
-
-            const cv::Point origin(text.x - surfaceRect_.x, text.y - surfaceRect_.y + size.height / 2);
-            const cv::Rect backdrop(
-                origin.x - kTextPadding,
-                origin.y - size.height - kTextPadding,
-                size.width + 2 * kTextPadding,
-                size.height + baseline + 2 * kTextPadding
-            );
-
-            const cv::Rect clipped = backdrop & cv::Rect(0, 0, canvas.cols, canvas.rows);
-
-            if (state_.background && !clipped.empty())
-                canvas(clipped).setTo(cv::Scalar(0, 0, 0, 208));
-
-            if (trueType)
-            {
-                raster.Draw(canvas, narrow, origin, pixelHeight, ToScalar(text.color, 255), state_.outline);
-                continue;
-            }
-
-            if (state_.outline)
-            {
-                cv::putText(
-                    canvas,
-                    narrow,
-                    origin,
-                    cv::FONT_HERSHEY_SIMPLEX,
-                    fontScale,
-                    cv::Scalar(0, 0, 0, 255),
-                    thickness + kOutlineExtraThickness,
-                    cv::LINE_AA);
-            }
-
-            cv::putText(canvas, narrow, origin, cv::FONT_HERSHEY_SIMPLEX, fontScale, ToScalar(text.color, 255), thickness, cv::LINE_AA);
-        }
-    }
-    for (const OverlayMark& mark : state_.marks)
-    {
-        const cv::Rect box(
-            mark.x - surfaceRect_.x,
-            mark.y - surfaceRect_.y,
-            std::max(1, mark.width - 1),
-            std::max(1, mark.height - 1));
-
-        if ((box & cv::Rect(0, 0, canvas.cols, canvas.rows)).empty())
-            continue;
-
-        cv::rectangle(canvas, box, ToScalar(mark.color, 255), kMarkThickness, cv::LINE_AA);
-    }
-
-    if (state_.previewEnabled)
-    {
-        const cv::Rect preview = PreviewRect();
-
-        if (!preview.empty())
-        {
-            cv::rectangle(
-                canvas,
-                cv::Rect(
-                    preview.x - surfaceRect_.x,
-                    preview.y - surfaceRect_.y,
-                    std::max(1, preview.width - 1),
-                    std::max(1, preview.height - 1)
-                ),
-                ToScalar(OverlayRgb(0, 255, 0), 255),
-                2
-            );
-        }
-    }
+    OverlayRenderer::Paint(canvas, surfaceRect_.tl(), state_);
 
     canvasRect_ = localContent;
 

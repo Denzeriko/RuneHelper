@@ -31,7 +31,9 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          build-args: RUNEHELPER_LINUX_BACKEND=x11
+          build-args: |
+            RUNEHELPER_LINUX_BACKEND=x11
+            RUNEHELPER_COMMIT=${{ github.sha }}
           outputs: type=local,dest=out-x11
           cache-from: type=gha,scope=linux-deps
 
@@ -39,7 +41,9 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          build-args: RUNEHELPER_LINUX_BACKEND=wayland
+          build-args: |
+            RUNEHELPER_LINUX_BACKEND=wayland
+            RUNEHELPER_COMMIT=${{ github.sha }}
           outputs: type=local,dest=out-wayland
           cache-from: type=gha,scope=linux-deps
 
