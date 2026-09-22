@@ -4,15 +4,15 @@
 
 namespace LootParser
 {
-    struct ParsedLootLineStruct
-    {
-        int quantity = 1;
-        std::string itemName;
-    };
+struct ParsedLootLineStruct
+{
+    int quantity = 1;
+    std::string itemName;
+};
 
-    ParsedLootLineStruct ParseLootLine(const std::string& line);
-    std::string FormatAmount(double value, const std::string& unit);
-    std::string FormatPrice(double value);
-    std::string FormatDivine(double divines);
-    std::string FormatStack(double unitValue, int quantity, const std::string& unit);
+ParsedLootLineStruct ParseLootLine(const std::string& line);
+std::string FormatAmount(double value, const std::string& unit);
+std::string FormatPrice(double value);
+std::string FormatDivine(double divines);
+std::string FormatStack(double unitValue, int quantity, const std::string& unit);
 }

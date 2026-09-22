@@ -7,124 +7,121 @@
 
 namespace
 {
-    constexpr size_t kMaxLen = 128;
+constexpr size_t kMaxLen = 128;
 
-    int BoundedLevenshteinDistance(std::string_view a, std::string_view b, int maxDistance)
+int BoundedLevenshteinDistance(std::string_view a, std::string_view b, int maxDistance)
+{
+    if (a == b)
+        return 0;
+
+    if (a.empty())
+        return static_cast<int>(b.size());
+
+    if (b.empty())
+        return static_cast<int>(a.size());
+
+    if (b.size() > a.size())
+        std::swap(a, b);
+
+    const int n = static_cast<int>(a.size());
+    const int m = static_cast<int>(b.size());
+
+    if (m > static_cast<int>(kMaxLen))
+        return maxDistance + 1;
+
+    if (std::abs(n - m) > maxDistance)
+        return maxDistance + 1;
+
+    std::array<int, kMaxLen + 1> prev{};
+    std::array<int, kMaxLen + 1> cur{};
+
+    for (int j = 0; j <= m; ++j)
+        prev[j] = j;
+
+    for (int i = 1; i <= n; ++i)
     {
-        if (a == b)
-            return 0;
+        cur[0] = i;
 
-        if (a.empty())
-            return static_cast<int>(b.size());
+        int rowMin = cur[0];
+        const char ca = a[i - 1];
 
-        if (b.empty())
-            return static_cast<int>(a.size());
+        for (int j = 1; j <= m; ++j)
+        {
+            const int insertCost = cur[j - 1] + 1;
+            const int deleteCost = prev[j] + 1;
+            const int replaceCost = prev[j - 1] + (ca == b[j - 1] ? 0 : 1);
 
-        if (b.size() > a.size())
-            std::swap(a, b);
+            int best = insertCost < deleteCost ? insertCost : deleteCost;
+            best = best < replaceCost ? best : replaceCost;
 
-        const int n = static_cast<int>(a.size());
-        const int m = static_cast<int>(b.size());
+            cur[j] = best;
 
-        if (m > static_cast<int>(kMaxLen))
+            if (best < rowMin)
+                rowMin = best;
+        }
+
+        if (rowMin > maxDistance)
             return maxDistance + 1;
 
-        if (std::abs(n - m) > maxDistance)
-            return maxDistance + 1;
-
-        std::array<int, kMaxLen + 1> prev{};
-        std::array<int, kMaxLen + 1> cur{};
-
-        for (int j = 0; j <= m; ++j)
-            prev[j] = j;
-
-        for (int i = 1; i <= n; ++i)
-        {
-            cur[0] = i;
-
-            int rowMin = cur[0];
-            const char ca = a[i - 1];
-
-            for (int j = 1; j <= m; ++j)
-            {
-                const int insertCost = cur[j - 1] + 1;
-                const int deleteCost = prev[j] + 1;
-                const int replaceCost = prev[j - 1] + (ca == b[j - 1] ? 0 : 1);
-
-                int best = insertCost < deleteCost ? insertCost : deleteCost;
-                best = best < replaceCost ? best : replaceCost;
-
-                cur[j] = best;
-
-                if (best < rowMin)
-                    rowMin = best;
-            }
-
-            if (rowMin > maxDistance)
-                return maxDistance + 1;
-
-            std::swap(prev, cur);
-        }
-
-        return prev[m];
+        std::swap(prev, cur);
     }
 
-    CachedItemNames::Histogram MakeHistogram(std::string_view text)
+    return prev[m];
+}
+
+CachedItemNames::Histogram MakeHistogram(std::string_view text)
+{
+    CachedItemNames::Histogram histogram{};
+
+    for (unsigned char ch : text)
     {
-        CachedItemNames::Histogram histogram{};
+        std::size_t bucket = CachedItemNames::kHistogramSize - 1;
 
-        for (unsigned char ch : text)
-        {
-            std::size_t bucket = CachedItemNames::kHistogramSize - 1;
+        if (ch >= 'a' && ch <= 'z')
+            bucket = static_cast<std::size_t>(ch - 'a');
+        else if (ch >= '0' && ch <= '9')
+            bucket = 26 + static_cast<std::size_t>(ch - '0');
 
-            if (ch >= 'a' && ch <= 'z')
-                bucket = static_cast<std::size_t>(ch - 'a');
-            else if (ch >= '0' && ch <= '9')
-                bucket = 26 + static_cast<std::size_t>(ch - '0');
-
-            if (histogram[bucket] < 255)
-                ++histogram[bucket];
-        }
-
-        return histogram;
+        if (histogram[bucket] < 255)
+            ++histogram[bucket];
     }
 
-    bool HistogramAllows(
-        const CachedItemNames::Histogram& a,
-        const CachedItemNames::Histogram& b,
-        int maxDistance)
+    return histogram;
+}
+
+bool HistogramAllows(const CachedItemNames::Histogram& a, const CachedItemNames::Histogram& b, int maxDistance)
+{
+    const int limit = 2 * maxDistance;
+    int difference = 0;
+
+    for (std::size_t i = 0; i < CachedItemNames::kHistogramSize; ++i)
     {
-        const int limit = 2 * maxDistance;
-        int difference = 0;
+        difference += std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i]));
 
-        for (std::size_t i = 0; i < CachedItemNames::kHistogramSize; ++i)
-        {
-            difference += std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i]));
-
-            if (difference > limit)
-                return false;
-        }
-
-        return true;
+        if (difference > limit)
+            return false;
     }
 
-    int SimilarityPercentNormalized(std::string_view a, std::string_view b, int minConfidence)
-    {
-        if (a.empty() || b.empty())
-            return 0;
+    return true;
+}
 
-        if (a == b)
-            return 100;
+int SimilarityPercentNormalized(std::string_view a, std::string_view b, int minConfidence)
+{
+    if (a.empty() || b.empty())
+        return 0;
 
-        const int maxLen = static_cast<int>((std::max)(a.size(), b.size()));
-        const int maxAllowedDistance = (maxLen * (100 - minConfidence)) / 100;
-        const int dist = BoundedLevenshteinDistance(a, b, maxAllowedDistance);
+    if (a == b)
+        return 100;
 
-        if (dist > maxAllowedDistance)
-            return 0;
+    const int maxLen = static_cast<int>((std::max)(a.size(), b.size()));
+    const int maxAllowedDistance = (maxLen * (100 - minConfidence)) / 100;
+    const int dist = BoundedLevenshteinDistance(a, b, maxAllowedDistance);
 
-        return 100 - static_cast<int>((static_cast<double>(dist) / maxLen) * 100.0);
-    }
+    if (dist > maxAllowedDistance)
+        return 0;
+
+    return 100 - static_cast<int>((static_cast<double>(dist) / maxLen) * 100.0);
+}
 }
 
 std::string NormalizeName(std::string_view s)
@@ -183,7 +180,8 @@ CachedItemNames CachedItemNames::Build(const std::vector<std::string>& names)
                 return a.normalized.size() < b.normalized.size();
 
             return a.normalized < b.normalized;
-        });
+        }
+    );
 
     return cache;
 }
@@ -221,19 +219,15 @@ std::optional<MatchResult> CachedItemNames::FindBest(std::string_view input, int
         entries_.begin(),
         entries_.end(),
         static_cast<std::size_t>(minLen),
-        [](const Entry& entry, std::size_t length)
-        {
-            return entry.normalized.size() < length;
-        });
+        [](const Entry& entry, std::size_t length) { return entry.normalized.size() < length; }
+    );
 
     const auto last = std::upper_bound(
         entries_.begin(),
         entries_.end(),
         static_cast<std::size_t>(maxLen),
-        [](std::size_t length, const Entry& entry)
-        {
-            return length < entry.normalized.size();
-        });
+        [](std::size_t length, const Entry& entry) { return length < entry.normalized.size(); }
+    );
 
     const Histogram inputHistogram = MakeHistogram(normalizedInput);
 

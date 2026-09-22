@@ -61,8 +61,26 @@ private:
     static void HandleGlobal(void* data, wl_registry* registry, std::uint32_t name, const char* interface, std::uint32_t version);
     static void HandleGlobalRemove(void* data, wl_registry* registry, std::uint32_t name);
 
-    static void HandleOutputGeometry(void* data, wl_output* output, std::int32_t x, std::int32_t y, std::int32_t physicalWidth, std::int32_t physicalHeight, std::int32_t subpixel, const char* make, const char* model, std::int32_t transform);
-    static void HandleOutputMode(void* data, wl_output* output, std::uint32_t flags, std::int32_t width, std::int32_t height, std::int32_t refresh);
+    static void HandleOutputGeometry(
+        void* data,
+        wl_output* output,
+        std::int32_t x,
+        std::int32_t y,
+        std::int32_t physicalWidth,
+        std::int32_t physicalHeight,
+        std::int32_t subpixel,
+        const char* make,
+        const char* model,
+        std::int32_t transform
+    );
+    static void HandleOutputMode(
+        void* data,
+        wl_output* output,
+        std::uint32_t flags,
+        std::int32_t width,
+        std::int32_t height,
+        std::int32_t refresh
+    );
     static void HandleOutputDone(void* data, wl_output* output);
     static void HandleOutputScale(void* data, wl_output* output, std::int32_t factor);
     static void HandleOutputName(void* data, wl_output* output, const char* name);

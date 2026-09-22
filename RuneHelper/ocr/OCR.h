@@ -34,12 +34,13 @@ public:
     bool Init(const std::string& tessdataPath);
     void SetupTesseractApi(tesseract::TessBaseAPI& api);
 
-    std::vector<LootLine> RecognizeLoot(
-        const cv::Mat& gray,
-        const AppConfig& config,
-        OcrRowCache* rowCache = nullptr);
+    std::vector<LootLine> RecognizeLoot(const cv::Mat& gray, const AppConfig& config, OcrRowCache* rowCache = nullptr);
     std::vector<cv::Rect> FindLootRows(const cv::Mat& gray) const;
-    std::vector<LootLine> RecognizeTextOnly(tesseract::TessBaseAPI& api, const cv::Mat& textGray, const std::string& debugBinPath = {});
+    std::vector<LootLine> RecognizeTextOnly(
+        tesseract::TessBaseAPI& api,
+        const cv::Mat& textGray,
+        const std::string& debugBinPath = {}
+    );
 
 private:
     bool initialized_ = false;

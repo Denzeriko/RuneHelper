@@ -21,7 +21,9 @@ public:
     void Reset();
 
     std::size_t Hits() const { return hits_; }
+
     std::size_t Misses() const { return misses_; }
+
     void ResetCounters();
 
 private:

@@ -28,7 +28,6 @@ struct OcrServiceStatus
     bool captureFailing = false;
 };
 
-
 class OcrService
 {
 public:
@@ -92,7 +91,6 @@ private:
     std::atomic<bool> debugDirty_ = false;
     std::mutex debugMutex_;
     DebugData debugData_;
-
 
     std::vector<LootLine> lastLoot_;
     std::atomic<bool> forceOcr_ = false;

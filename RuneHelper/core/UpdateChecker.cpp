@@ -48,7 +48,7 @@ static bool IsNewerVersion(const std::string& latest, const std::string& current
     auto l = ParseVersion(latest);
     auto c = ParseVersion(current);
 
-    size_t n = (std::max)(l.size(), c.size()); //#define NOMINMAX
+    size_t n = (std::max)(l.size(), c.size()); // #define NOMINMAX
 
     l.resize(n);
     c.resize(n);
@@ -69,11 +69,13 @@ void UpdateChecker::Start()
 {
     checking_ = true;
 
-    thread_ = std::jthread([this](const std::stop_token& stop)
+    thread_ = std::jthread(
+        [this](const std::stop_token& stop)
         {
             RunLoggingExceptions("UpdateChecker thread", [&] { Check(stop); });
             checking_ = false;
-        });
+        }
+    );
 }
 
 void UpdateChecker::Stop()
@@ -109,20 +111,10 @@ void UpdateChecker::Check(const std::stop_token& stop)
     LOG_INFO("UpdateChecker::Check() -> call");
 
     auto r = cpr::Get(
-        cpr::Url{
-            "https://api.github.com/repos/Denzeriko/RuneHelper/releases/latest"
-        },
-        cpr::Header{
-            { "User-Agent", "RuneHelper/" RUNEHELPER_VERSION },
-            { "Accept", "application/vnd.github+json" }
-        },
+        cpr::Url{ "https://api.github.com/repos/Denzeriko/RuneHelper/releases/latest" },
+        cpr::Header{ { "User-Agent", "RuneHelper/" RUNEHELPER_VERSION }, { "Accept", "application/vnd.github+json" } },
         cpr::Timeout{ 10000 },
-        cpr::ProgressCallback{
-            [&stop](auto, auto, auto, auto, std::intptr_t)
-            {
-                return !stop.stop_requested();
-            }
-        }
+        cpr::ProgressCallback{ [&stop](auto, auto, auto, auto, std::intptr_t) { return !stop.stop_requested(); } }
     );
 
     checking_ = false;

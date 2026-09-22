@@ -23,8 +23,7 @@ namespace
 std::string ToLower(std::string_view s)
 {
     std::string out(s);
-    std::transform(out.begin(), out.end(), out.begin(),
-        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
     return out;
 }
 
@@ -82,8 +81,7 @@ std::string RecipeDatabase::StripOcrNoise(std::string_view name)
         const std::string tail = text.substr(space + 1);
 
         const bool shortWord = tail.size() <= 2 && !tail.empty() &&
-            std::all_of(tail.begin(), tail.end(),
-                [](unsigned char c) { return std::isalpha(c) != 0; });
+                               std::all_of(tail.begin(), tail.end(), [](unsigned char c) { return std::isalpha(c) != 0; });
 
         if (shortWord)
             text = Trim(text.substr(0, space));
@@ -265,9 +263,9 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
     loaded_ = true;
 
     LOG_INFO(
-        "RecipeDatabase: loaded " + std::to_string(recipes_.size()) +
-        " combinations (" + std::to_string(runeNames.size()) + " rune types) from " + loadedFrom_ +
-        (complete_ ? "" : " [PARTIAL dataset - run tools/scrape_poe2db.py]"));
+        "RecipeDatabase: loaded " + std::to_string(recipes_.size()) + " combinations (" + std::to_string(runeNames.size()) +
+        " rune types) from " + loadedFrom_ + (complete_ ? "" : " [PARTIAL dataset - run tools/scrape_poe2db.py]")
+    );
 
     return true;
 }

@@ -92,7 +92,7 @@ bool OCR::Init(const std::string& tessdataPath)
 
 void OCR::SetupTesseractApi(tesseract::TessBaseAPI& api)
 {
-    //api.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
+    // api.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
     api.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
 
     api.SetVariable(
@@ -148,7 +148,8 @@ static void SaveOcrDebugText(
     const std::string& rawText,
     const std::string& trimmedText,
     int confidence,
-    const char* status)
+    const char* status
+)
 {
     if (debugBinPath.empty())
         return;
@@ -166,10 +167,7 @@ static void SaveOcrDebugText(
     file << "trimmed: " << trimmedText << '\n';
 }
 
-static std::filesystem::path OcrDebugRowPath(
-    const std::filesystem::path& dir,
-    size_t index,
-    const char* suffix)
+static std::filesystem::path OcrDebugRowPath(const std::filesystem::path& dir, size_t index, const char* suffix)
 {
     std::ostringstream name;
     name << "row_" << std::setw(2) << std::setfill('0') << index << "_" << suffix << ".png";
@@ -448,20 +446,14 @@ static cv::Mat TrimTrailingBlock(const cv::Mat& bin)
     return bin(cv::Rect(0, 0, start, bin.rows));
 }
 
-std::vector<LootLine> OCR::RecognizeTextOnly(
-    tesseract::TessBaseAPI& api,
-    const cv::Mat& textGray,
-    const std::string& debugBinPath)
+std::vector<LootLine> OCR::RecognizeTextOnly(tesseract::TessBaseAPI& api, const cv::Mat& textGray, const std::string& debugBinPath)
 {
     std::vector<LootLine> result;
 
     if (textGray.empty())
         return result;
 
-    const double scale = std::clamp(
-        std::round(kTargetRowHeight / static_cast<double>(textGray.rows)),
-        kMinRowScale,
-        kMaxRowScale);
+    const double scale = std::clamp(std::round(kTargetRowHeight / static_cast<double>(textGray.rows)), kMinRowScale, kMaxRowScale);
 
     cv::Mat scaled;
     cv::resize(textGray, scaled, cv::Size(), scale, scale, cv::INTER_CUBIC);
@@ -476,13 +468,7 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
 
     api.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
 
-    api.SetImage(
-        bin.data,
-        bin.cols,
-        bin.rows,
-        1,
-        static_cast<int>(bin.step)
-    );
+    api.SetImage(bin.data, bin.cols, bin.rows, 1, static_cast<int>(bin.step));
 
     api.Recognize(nullptr);
 
@@ -518,21 +504,12 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
 
     SaveOcrDebugText(debugBinPath, rawText, line, conf, "accepted");
 
-    result.push_back({
-        line,
-        0,
-        0,
-        textGray.cols,
-        textGray.rows,
-        static_cast<float>(conf)
-    });
+    result.push_back({ line, 0, 0, textGray.cols, textGray.rows, static_cast<float>(conf) });
 
     return result;
 }
-std::vector<LootLine> OCR::RecognizeLoot(
-    const cv::Mat& gray,
-    const AppConfig& config,
-    OcrRowCache* rowCache)
+
+std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& gray, const AppConfig& config, OcrRowCache* rowCache)
 {
     setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
 
@@ -675,8 +652,10 @@ std::vector<LootLine> OCR::RecognizeLoot(
                         {
                             for (size_t i = next++; i < pending.size(); i = next++)
                                 runRow(jobs[pending[i]], *apis_[worker]);
-                        });
-                });
+                        }
+                    );
+                }
+            );
         }
     }
 
@@ -712,23 +691,7 @@ std::vector<LootLine> OCR::RecognizeLoot(
 
 void OCR::Trim(std::string& s)
 {
-    s.erase(
-        s.begin(),
-        std::find_if(
-            s.begin(),
-            s.end(),
-            [](unsigned char c)
-            {
-                return !std::isspace(c);
-            }));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isspace(c); }));
 
-    s.erase(
-        std::find_if(
-            s.rbegin(),
-            s.rend(),
-            [](unsigned char c)
-            {
-                return !std::isspace(c);
-            }).base(),
-                s.end());
+    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char c) { return !std::isspace(c); }).base(), s.end());
 }

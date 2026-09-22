@@ -136,9 +136,7 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
     {
         size_t common = 0;
 
-        while (common < tabPlaced_.size() &&
-               common < entry.recipe->runes.size() &&
-               tabPlaced_[common] == entry.recipe->runes[common])
+        while (common < tabPlaced_.size() && common < entry.recipe->runes.size() && tabPlaced_[common] == entry.recipe->runes[common])
         {
             ++common;
         }
@@ -155,7 +153,8 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
                 return a.perWave > b.perWave;
 
             return a.recipe->runes.size() < b.recipe->runes.size();
-        });
+        }
+    );
 }
 
 void ExpeditionFeature::SaveSettings()
@@ -311,10 +310,8 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
 
     for (const ScreenRecipe& entry : found)
     {
-        const std::vector<cv::Rect> tiles = tiles_.TilesForRow(
-            frame.gray,
-            frame.rows[entry.rowIndex].textTop,
-            static_cast<int>(entry.recipe->runes.size()));
+        const std::vector<cv::Rect> tiles =
+            tiles_.TilesForRow(frame.gray, frame.rows[entry.rowIndex].textTop, static_cast<int>(entry.recipe->runes.size()));
 
         if (tiles.empty())
         {
@@ -416,13 +413,13 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
     const float available = ImGui::GetContentRegionAvail().y;
     const ImVec2 tableSize(0.0f, available > kMinTableHeight ? available : kMinTableHeight);
 
-    if (!ImGui::BeginTable("on_screen_table", 4,
-        ImGuiTableFlags_Borders |
-        ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_ScrollY |
-        ImGuiTableFlags_SizingStretchProp,
-        tableSize))
+    if (!ImGui::BeginTable(
+            "on_screen_table",
+            4,
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
+                ImGuiTableFlags_SizingStretchProp,
+            tableSize
+        ))
     {
         return;
     }

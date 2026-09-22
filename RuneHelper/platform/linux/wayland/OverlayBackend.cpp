@@ -18,7 +18,6 @@ namespace
 constexpr int kBufferSlots = 2;
 constexpr int kDirtyMargin = 2;
 
-
 cv::Rect UnionRect(const cv::Rect& a, const cv::Rect& b)
 {
     if (a.empty())
@@ -47,7 +46,13 @@ public:
     void BringToTop() override;
 
 private:
-    static void HandleConfigure(void* data, zwlr_layer_surface_v1* surface, std::uint32_t serial, std::uint32_t width, std::uint32_t height);
+    static void HandleConfigure(
+        void* data,
+        zwlr_layer_surface_v1* surface,
+        std::uint32_t serial,
+        std::uint32_t width,
+        std::uint32_t height
+    );
     static void HandleClosed(void* data, zwlr_layer_surface_v1* surface);
     static void HandleBufferRelease(void* data, wl_buffer* buffer);
 
@@ -68,7 +73,7 @@ private:
     std::uint32_t outputName_ = 0;
     bool hasOutput_ = false;
     WaylandShmBuffer buffers_[kBufferSlots];
-    bool busy_[kBufferSlots] = {false, false};
+    bool busy_[kBufferSlots] = { false, false };
 
     OverlayState state_;
     cv::Rect surfaceRect_;
@@ -90,16 +95,18 @@ private:
     static const wl_buffer_listener kBufferListener;
 };
 
-const zwlr_layer_surface_v1_listener WaylandOverlayBackend::kLayerSurfaceListener = {
-    &WaylandOverlayBackend::HandleConfigure,
-    &WaylandOverlayBackend::HandleClosed
-};
+const zwlr_layer_surface_v1_listener WaylandOverlayBackend::kLayerSurfaceListener = { &WaylandOverlayBackend::HandleConfigure,
+                                                                                      &WaylandOverlayBackend::HandleClosed };
 
-const wl_buffer_listener WaylandOverlayBackend::kBufferListener = {
-    &WaylandOverlayBackend::HandleBufferRelease
-};
+const wl_buffer_listener WaylandOverlayBackend::kBufferListener = { &WaylandOverlayBackend::HandleBufferRelease };
 
-void WaylandOverlayBackend::HandleConfigure(void* data, zwlr_layer_surface_v1* surface, std::uint32_t serial, std::uint32_t width, std::uint32_t height)
+void WaylandOverlayBackend::HandleConfigure(
+    void* data,
+    zwlr_layer_surface_v1* surface,
+    std::uint32_t serial,
+    std::uint32_t width,
+    std::uint32_t height
+)
 {
     auto* backend = static_cast<WaylandOverlayBackend*>(data);
     zwlr_layer_surface_v1_ack_configure(surface, serial);
@@ -192,8 +199,8 @@ bool WaylandOverlayBackend::CreateSurface(const WaylandOutput* output)
     zwlr_layer_surface_v1_add_listener(layerSurface_, &kLayerSurfaceListener, this);
     zwlr_layer_surface_v1_set_anchor(
         layerSurface_,
-        ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-        ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+        ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
+            ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
     );
     zwlr_layer_surface_v1_set_size(layerSurface_, 0, 0);
     zwlr_layer_surface_v1_set_margin(layerSurface_, 0, 0, 0, 0);
@@ -314,8 +321,6 @@ const WaylandOutput* WaylandOverlayBackend::CurrentOutput() const
     return session_.OutputByName(outputName_);
 }
 
-
-
 cv::Rect WaylandOverlayBackend::ComputeContentRect() const
 {
     return OverlayRenderer::ContentBounds(state_);
@@ -377,11 +382,12 @@ void WaylandOverlayBackend::Draw()
     if (!content.empty())
     {
         localContent = cv::Rect(
-            content.x - surfaceRect_.x - kDirtyMargin,
-            content.y - surfaceRect_.y - kDirtyMargin,
-            content.width + 2 * kDirtyMargin,
-            content.height + 2 * kDirtyMargin
-        ) & surfaceBounds;
+                           content.x - surfaceRect_.x - kDirtyMargin,
+                           content.y - surfaceRect_.y - kDirtyMargin,
+                           content.width + 2 * kDirtyMargin,
+                           content.height + 2 * kDirtyMargin
+                       ) &
+                       surfaceBounds;
     }
 
     const cv::Rect clearRect = UnionRect(canvasRect_, localContent) & surfaceBounds;
@@ -414,9 +420,7 @@ void WaylandOverlayBackend::Draw()
     slotRect_[slot] = localContent;
     busy_[slot] = true;
 
-    const cv::Rect damageRect = fullDamage
-        ? surfaceBounds
-        : (UnionRect(copyRect, presentedRect_) & surfaceBounds);
+    const cv::Rect damageRect = fullDamage ? surfaceBounds : (UnionRect(copyRect, presentedRect_) & surfaceBounds);
 
     wl_surface_attach(surface_, buffer.Buffer(), 0, 0);
 
@@ -450,8 +454,8 @@ void WaylandOverlayBackend::Render(const OverlayState& state)
     const WaylandOutput* current = CurrentOutput();
     const WaylandOutput* target = nullptr;
 
-    if (current && (content.empty() ||
-        !(content & cv::Rect(current->x, current->y, current->LogicalWidth(), current->LogicalHeight())).empty()))
+    if (current &&
+        (content.empty() || !(content & cv::Rect(current->x, current->y, current->LogicalWidth(), current->LogicalHeight())).empty()))
     {
         target = current;
     }

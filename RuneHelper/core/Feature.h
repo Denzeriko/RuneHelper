@@ -27,10 +27,7 @@ struct RowOverlay
         note += part;
     }
 
-    void SetColor(OverlayColor value)
-    {
-        color = value;
-    }
+    void SetColor(OverlayColor value) { color = value; }
 };
 
 struct FrameContext
@@ -53,15 +50,22 @@ public:
 
     virtual std::string Name() const = 0;
 
-    virtual bool Init(ConfigManager& configManager) { (void)configManager; return true; }
+    virtual bool Init(ConfigManager& configManager)
+    {
+        (void)configManager;
+        return true;
+    }
+
     virtual void Shutdown() {}
 
     virtual void OnRegionChanged() {}
+
     virtual void OnFrame(FrameContext& frame) { (void)frame; }
 
     virtual void DrawMainControls(UIManager& manager) { (void)manager; }
 
     virtual const char* TabTitle() const { return nullptr; }
+
     virtual void DrawTab(UIManager& manager) { (void)manager; }
 };
 

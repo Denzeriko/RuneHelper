@@ -166,13 +166,12 @@ void WaylandHotkeys::Register(int, int, int)
     if (loggedUsage_ || socket_ < 0)
         return;
 
-    LOG_INFO("Wayland has no global key grabs: bind keys in the compositor to 'RuneHelper --toggle-ocr', '--snapshot' or '--select-region'");
+    LOG_INFO("Wayland has no global key grabs: bind keys in the compositor to 'RuneHelper --toggle-ocr', '--snapshot' "
+             "or '--select-region'");
     loggedUsage_ = true;
 }
 
-void WaylandHotkeys::Unregister()
-{
-}
+void WaylandHotkeys::Unregister() {}
 }
 
 std::unique_ptr<LinuxHotkeys> CreateLinuxHotkeys()
@@ -206,14 +205,7 @@ int RunLinuxHotkeyClient(int argc, char** argv)
     }
 
     const std::string payload = command.substr(command.find_first_not_of('-'));
-    const ssize_t sent = sendto(
-        handle,
-        payload.c_str(),
-        payload.size(),
-        0,
-        reinterpret_cast<sockaddr*>(&address),
-        sizeof(address)
-    );
+    const ssize_t sent = sendto(handle, payload.c_str(), payload.size(), 0, reinterpret_cast<sockaddr*>(&address), sizeof(address));
 
     close(handle);
     return sent == static_cast<ssize_t>(payload.size()) ? 0 : 1;

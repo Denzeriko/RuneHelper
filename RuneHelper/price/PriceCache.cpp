@@ -18,66 +18,59 @@ using json = nlohmann::json;
 
 namespace
 {
-    struct RefreshGuard
-    {
-        std::atomic<bool>& flag;
-
-        ~RefreshGuard()
-        {
-            flag.store(false);
-        }
-    };
-
-    std::string DumpFileNameForLeague(const std::string& league)
-    {
-        std::string suffix;
-        suffix.reserve(league.size());
-
-        for (unsigned char ch : league)
-        {
-            if ((ch >= 'A' && ch <= 'Z') ||
-                (ch >= 'a' && ch <= 'z') ||
-                (ch >= '0' && ch <= '9'))
-            {
-                suffix.push_back(static_cast<char>(ch));
-            }
-            else if (suffix.empty() || suffix.back() != '_')
-            {
-                suffix.push_back('_');
-            }
-        }
-
-        while (!suffix.empty() && suffix.back() == '_')
-            suffix.pop_back();
-
-        if (suffix.empty())
-            suffix = "unknown";
-
-        return "prices_dump_" + suffix + ".json";
-    }
-
-    std::filesystem::path DumpPathForLeague(const std::string& league)
-    {
-        return GetUserDataDir() / DumpFileNameForLeague(league);
-    }
-
-    int64_t BackoffSeconds(int failureStreak)
-    {
-        if (failureStreak <= 0)
-            return 0;
-
-        constexpr int64_t kFirstRetrySeconds = 30;
-        constexpr int64_t kMaxRetrySeconds = 30LL * 60;
-
-        const int shift = std::min(failureStreak - 1, 10);
-
-        return std::min<int64_t>(kFirstRetrySeconds << shift, kMaxRetrySeconds);
-    }
-}
-
-PriceCache::PriceCache() : provider_(std::make_unique<PoeNinjaPriceProvider>())
+struct RefreshGuard
 {
+    std::atomic<bool>& flag;
+
+    ~RefreshGuard() { flag.store(false); }
+};
+
+std::string DumpFileNameForLeague(const std::string& league)
+{
+    std::string suffix;
+    suffix.reserve(league.size());
+
+    for (unsigned char ch : league)
+    {
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9'))
+        {
+            suffix.push_back(static_cast<char>(ch));
+        }
+        else if (suffix.empty() || suffix.back() != '_')
+        {
+            suffix.push_back('_');
+        }
+    }
+
+    while (!suffix.empty() && suffix.back() == '_')
+        suffix.pop_back();
+
+    if (suffix.empty())
+        suffix = "unknown";
+
+    return "prices_dump_" + suffix + ".json";
 }
+
+std::filesystem::path DumpPathForLeague(const std::string& league)
+{
+    return GetUserDataDir() / DumpFileNameForLeague(league);
+}
+
+int64_t BackoffSeconds(int failureStreak)
+{
+    if (failureStreak <= 0)
+        return 0;
+
+    constexpr int64_t kFirstRetrySeconds = 30;
+    constexpr int64_t kMaxRetrySeconds = 30LL * 60;
+
+    const int shift = std::min(failureStreak - 1, 10);
+
+    return std::min<int64_t>(kFirstRetrySeconds << shift, kMaxRetrySeconds);
+}
+}
+
+PriceCache::PriceCache() : provider_(std::make_unique<PoeNinjaPriceProvider>()) {}
 
 PriceCache::~PriceCache()
 {
@@ -151,11 +144,8 @@ void PriceCache::ForceRefreshAsync()
 
         previous = std::move(refreshThread_);
 
-        refreshThread_ = std::jthread(
-            [this](const std::stop_token& stop)
-            {
-                RunLoggingExceptions("PriceCache refresh thread", [&] { RefreshWorker(stop); });
-            });
+        refreshThread_ = std::jthread([this](const std::stop_token& stop)
+                                      { RunLoggingExceptions("PriceCache refresh thread", [&] { RefreshWorker(stop); }); });
     }
 }
 
@@ -236,8 +226,8 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
         }
 
         LOG_ERROR(
-            "PriceCache::RefreshWorker() -> refresh failed or empty, attempt " +
-            std::to_string(attempt) + ", next try in " + std::to_string(retryIn) + "s"
+            "PriceCache::RefreshWorker() -> refresh failed or empty, attempt " + std::to_string(attempt) + ", next try in " +
+            std::to_string(retryIn) + "s"
         );
 
         return;
@@ -285,8 +275,8 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
     {
         LOG_ERROR(
             "PriceCache::RefreshWorker() -> partial refresh merged, kept the previous prices for the "
-            "categories that failed, attempt " + std::to_string(attempt) +
-            ", next try in " + std::to_string(retryIn) + "s"
+            "categories that failed, attempt " +
+            std::to_string(attempt) + ", next try in " + std::to_string(retryIn) + "s"
         );
 
         return;
@@ -357,7 +347,7 @@ void PriceCache::LoadDump()
         if (!it.value().is_number())
             continue;
 
-        loaded[it.key()] = PriceInfo{it.value().get<double>()};
+        loaded[it.key()] = PriceInfo{ it.value().get<double>() };
     }
 
     {

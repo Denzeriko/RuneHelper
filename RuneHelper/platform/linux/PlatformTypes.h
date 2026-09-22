@@ -14,9 +14,5 @@ struct RECT
 
 constexpr COLORREF RGB(int r, int g, int b)
 {
-    return static_cast<COLORREF>(
-        (r & 0xff) |
-        ((g & 0xff) << 8) |
-        ((b & 0xff) << 16)
-    );
+    return static_cast<COLORREF>((r & 0xff) | ((g & 0xff) << 8) | ((b & 0xff) << 16));
 }

@@ -237,17 +237,7 @@ void WindowsOverlayBackend::Render(const OverlayState& state)
 
     HDC screenDC = GetDC(nullptr);
 
-    const BOOL updated = UpdateLayeredWindow(
-        hwnd_,
-        screenDC,
-        &destination,
-        &size,
-        memoryDC_,
-        &source,
-        0,
-        &blend,
-        ULW_ALPHA
-    );
+    const BOOL updated = UpdateLayeredWindow(hwnd_, screenDC, &destination, &size, memoryDC_, &source, 0, &blend, ULW_ALPHA);
 
     ReleaseDC(nullptr, screenDC);
 
@@ -282,15 +272,7 @@ void WindowsOverlayBackend::SetAlwaysOnTop(bool enabled)
     if (!hwnd_)
         return;
 
-    SetWindowPos(
-        hwnd_,
-        enabled ? HWND_TOPMOST : HWND_NOTOPMOST,
-        0,
-        0,
-        0,
-        0,
-        SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
-    );
+    SetWindowPos(hwnd_, enabled ? HWND_TOPMOST : HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
 }
 
 void WindowsOverlayBackend::BringToTop()
@@ -335,15 +317,11 @@ LRESULT CALLBACK WindowsOverlayBackend::WndProc(HWND hwnd, UINT msg, WPARAM wp, 
 
     switch (msg)
     {
-    case WM_ERASEBKGND:
-        return 1;
+    case WM_ERASEBKGND: return 1;
 
-    case WM_DESTROY:
-        self->running_ = false;
-        return 0;
+    case WM_DESTROY: self->running_ = false; return 0;
 
-    default:
-        return DefWindowProcW(hwnd, msg, wp, lp);
+    default: return DefWindowProcW(hwnd, msg, wp, lp);
     }
 }
 }

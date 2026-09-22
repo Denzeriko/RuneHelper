@@ -15,23 +15,21 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
-    bool IntersectsOutput(const cv::Rect& region, const RECT& rc)
-    {
-        const int left = region.x;
-        const int top = region.y;
-        const int right = region.x + region.width;
-        const int bottom = region.y + region.height;
+bool IntersectsOutput(const cv::Rect& region, const RECT& rc)
+{
+    const int left = region.x;
+    const int top = region.y;
+    const int right = region.x + region.width;
+    const int bottom = region.y + region.height;
 
-        return left < rc.right && right > rc.left && top < rc.bottom && bottom > rc.top;
-    }
+    return left < rc.right && right > rc.left && top < rc.bottom && bottom > rc.top;
+}
 
-    bool IsRecoverableDxgiError(HRESULT hr)
-    {
-        return hr == DXGI_ERROR_DEVICE_REMOVED ||
-            hr == DXGI_ERROR_DEVICE_RESET ||
-            hr == DXGI_ERROR_ACCESS_LOST ||
-            hr == DXGI_ERROR_INVALID_CALL;
-    }
+bool IsRecoverableDxgiError(HRESULT hr)
+{
+    return hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET || hr == DXGI_ERROR_ACCESS_LOST ||
+           hr == DXGI_ERROR_INVALID_CALL;
+}
 }
 
 bool ScreenCaptureWGC::HasCachedFrame(const cv::Rect& region) const
@@ -58,10 +56,9 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
     ComPtr<IDXGIOutput> selectedOutput;
 
     LOG_INFO(
-        "InitForRegion region: x=" + std::to_string(region.x) +
-        " y=" + std::to_string(region.y) +
-        " w=" + std::to_string(region.width) +
-        " h=" + std::to_string(region.height));
+        "InitForRegion region: x=" + std::to_string(region.x) + " y=" + std::to_string(region.y) +
+        " w=" + std::to_string(region.width) + " h=" + std::to_string(region.height)
+    );
 
     for (UINT adapterIndex = 0;; ++adapterIndex)
     {
@@ -97,10 +94,9 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
             RECT rc = outputDesc.DesktopCoordinates;
 
             LOG_INFO(
-                "Output: left=" + std::to_string(rc.left) +
-                " top=" + std::to_string(rc.top) +
-                " right=" + std::to_string(rc.right) +
-                " bottom=" + std::to_string(rc.bottom));
+                "Output: left=" + std::to_string(rc.left) + " top=" + std::to_string(rc.top) + " right=" + std::to_string(rc.right) +
+                " bottom=" + std::to_string(rc.bottom)
+            );
 
             if (!IntersectsOutput(region, rc))
                 continue;
@@ -138,7 +134,8 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
         D3D11_SDK_VERSION,
         &device_,
         &featureLevel,
-        &context_);
+        &context_
+    );
 
     if (FAILED(hr))
     {
@@ -199,12 +196,8 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     if (region.width <= 0 || region.height <= 0)
         return {};
 
-    bool regionInsideCurrentOutput =
-        initialized_ &&
-        region.x >= outputLeft_ &&
-        region.y >= outputTop_ &&
-        region.x + region.width <= outputRight_ &&
-        region.y + region.height <= outputBottom_;
+    bool regionInsideCurrentOutput = initialized_ && region.x >= outputLeft_ && region.y >= outputTop_ &&
+                                     region.x + region.width <= outputRight_ && region.y + region.height <= outputBottom_;
 
     if (!regionInsideCurrentOutput)
     {
@@ -267,16 +260,12 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     {
         LOG_ERROR(
             "Capture region is outside selected output: "
-            "region x=" + std::to_string(region.x) +
-            " y=" + std::to_string(region.y) +
-            " w=" + std::to_string(region.width) +
-            " h=" + std::to_string(region.height) +
-            " output left=" + std::to_string(outputLeft_) +
-            " top=" + std::to_string(outputTop_) +
-            " right=" + std::to_string(outputRight_) +
-            " bottom=" + std::to_string(outputBottom_) +
-            " localX=" + std::to_string(localX) +
-            " localY=" + std::to_string(localY));
+            "region x=" +
+            std::to_string(region.x) + " y=" + std::to_string(region.y) + " w=" + std::to_string(region.width) +
+            " h=" + std::to_string(region.height) + " output left=" + std::to_string(outputLeft_) +
+            " top=" + std::to_string(outputTop_) + " right=" + std::to_string(outputRight_) +
+            " bottom=" + std::to_string(outputBottom_) + " localX=" + std::to_string(localX) + " localY=" + std::to_string(localY)
+        );
 
         duplication_->ReleaseFrame();
         Shutdown();
@@ -297,14 +286,12 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
     stagingDesc.MiscFlags = 0;
 
-    if (!stagingTexture_ || stagingWidth_ != stagingDesc.Width || stagingHeight_ != stagingDesc.Height || stagingFormat_ != stagingDesc.Format)
+    if (!stagingTexture_ || stagingWidth_ != stagingDesc.Width || stagingHeight_ != stagingDesc.Height ||
+        stagingFormat_ != stagingDesc.Format)
     {
         stagingTexture_.Reset();
 
-        hr = device_->CreateTexture2D(
-            &stagingDesc,
-            nullptr,
-            &stagingTexture_);
+        hr = device_->CreateTexture2D(&stagingDesc, nullptr, &stagingTexture_);
 
         if (FAILED(hr))
         {
@@ -315,7 +302,8 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
                 static_cast<unsigned>(hr),
                 stagingDesc.Width,
                 stagingDesc.Height,
-                stagingDesc.Format);
+                stagingDesc.Format
+            );
 
             LOG_ERROR(buf);
 
@@ -354,12 +342,7 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     D3D11_MAPPED_SUBRESOURCE mapped{};
 
-    hr = context_->Map(
-        stagingTexture_.Get(),
-        0,
-        D3D11_MAP_READ,
-        0,
-        &mapped);
+    hr = context_->Map(stagingTexture_.Get(), 0, D3D11_MAP_READ, 0, &mapped);
 
     if (FAILED(hr))
     {

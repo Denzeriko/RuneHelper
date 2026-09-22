@@ -61,16 +61,10 @@ void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
 
 void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 {
-
-    //Status
+    // Status
     ImGui::SeparatorText("STATUS");
 
-    if (!ImGui::BeginTable(
-        "status_table",
-        2,
-        ImGuiTableFlags_Borders |
-        ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_SizingStretchProp))
+    if (!ImGui::BeginTable("status_table", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
     {
         return;
     }
@@ -79,12 +73,12 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     ImGui::TableSetupColumn("Value");
 
     auto row = [](const char* name)
-        {
-            ImGui::TableNextRow();
-            ImGui::TableSetColumnIndex(0);
-            ImGui::TextDisabled("%s", name);
-            ImGui::TableSetColumnIndex(1);
-        };
+    {
+        ImGui::TableNextRow();
+        ImGui::TableSetColumnIndex(0);
+        ImGui::TextDisabled("%s", name);
+        ImGui::TableSetColumnIndex(1);
+    };
 
     row("OCR");
 
@@ -151,11 +145,10 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
             ImGui::SetTooltip("%s", url.empty() ? "No download link was reported" : url.c_str());
     }
 
-
     ImGui::EndTable();
     ImGui::Spacing();
 
-    //Region
+    // Region
     if (!manager.HasConfig())
         return;
 
@@ -175,8 +168,8 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kYellow, "No region selected");
 
     ImGui::Spacing();
-    
-    //OCR
+
+    // OCR
     ImGui::SeparatorText("OCR");
     configChanged |= ImGui::Checkbox("Enable OCR", &config.ocrEnabled);
     ImGui::SameLine();
@@ -188,7 +181,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
 
     ImGui::Spacing();
 
-    //PRICES
+    // PRICES
     ImGui::SeparatorText("PRICES");
 
     if (ImGui::Checkbox("Enable Price Search", &config.priceSearchEnabled))
@@ -229,7 +222,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         state.configSaveAt = ImGui::GetTime() + kConfigSaveDelaySeconds;
     }
 
-    //Bottom
+    // Bottom
     ImGui::Separator();
 
     const char* DenzTag = "Denz";
@@ -248,14 +241,8 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
 
     ImGui::SeparatorText("PRICES");
 
-    constexpr const char* kPriceLeagues[] = {
-        "Forbidden Rites",
-        "HC Forbidden Rites",
-        "Runes of Aldur",
-        "HC Runes of Aldur",
-        "Standard",
-        "Hardcore"
-    };
+    constexpr const char* kPriceLeagues[] = { "Forbidden Rites",   "HC Forbidden Rites", "Runes of Aldur",
+                                              "HC Runes of Aldur", "Standard",           "Hardcore" };
 
     auto pickLeague = [&config, &configChanged, &state](std::string league)
     {
@@ -297,7 +284,8 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
                 "another league, then Enter",
                 state.customLeague,
                 sizeof(state.customLeague),
-                ImGuiInputTextFlags_EnterReturnsTrue))
+                ImGuiInputTextFlags_EnterReturnsTrue
+            ))
         {
             pickLeague(state.customLeague);
             ImGui::CloseCurrentPopup();
@@ -309,11 +297,7 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     if (leagueHovered)
         ImGui::SetTooltip("A league missing from the list can be typed in. New leagues work as soon as the price proxy carries them.");
 
-    constexpr const char* kPriceUnits[] = {
-        "Exalted",
-        "Exalted + divine",
-        "Divine"
-    };
+    constexpr const char* kPriceUnits[] = { "Exalted", "Exalted + divine", "Divine" };
 
     int priceUnit = static_cast<int>(config.priceUnit);
 
@@ -324,7 +308,8 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     }
 
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows every price in divine orbs.");
+        ImGui::SetTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows "
+                          "every price in divine orbs.");
 
     ImGui::Spacing();
 
@@ -401,13 +386,13 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
     const float available = ImGui::GetContentRegionAvail().y;
     const ImVec2 tableSize(0.0f, available > kMinDebugTableHeight ? available : kMinDebugTableHeight);
 
-    if (ImGui::BeginTable("ocr_debug_table", 4,
-        ImGuiTableFlags_Borders |
-        ImGuiTableFlags_RowBg |
-        ImGuiTableFlags_Resizable |
-        ImGuiTableFlags_ScrollY |
-        ImGuiTableFlags_SizingStretchProp,
-        tableSize))
+    if (ImGui::BeginTable(
+            "ocr_debug_table",
+            4,
+            ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
+                ImGuiTableFlags_SizingStretchProp,
+            tableSize
+        ))
     {
         ImGui::TableSetupScrollFreeze(0, 1);
 
@@ -477,14 +462,10 @@ void UIDraw::Draw(UIManager& manager)
     ImGui::Begin(
         "RuneHelper",
         nullptr,
-        ImGuiWindowFlags_NoMove |
-        ImGuiWindowFlags_NoResize |
-        ImGuiWindowFlags_NoCollapse |
-        ImGuiWindowFlags_NoTitleBar |
-        ImGuiWindowFlags_NoScrollbar |
-        ImGuiWindowFlags_NoScrollWithMouse
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
+            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
     );
-    
+
     DrawTitleBar(manager, state);
 
     state.debugTabOpen = false;

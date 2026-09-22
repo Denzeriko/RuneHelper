@@ -18,7 +18,4 @@ struct FrameRow
     ResolvedPrice price;
 };
 
-std::vector<FrameRow> ParseLootRows(
-    const std::vector<LootLine>& loot,
-    const cv::Rect& region,
-    const AppConfig& config);
+std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config);

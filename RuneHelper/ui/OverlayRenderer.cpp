@@ -131,14 +131,8 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
 
         if (layout.trueType)
         {
-            TextRaster::Instance().Draw(
-                canvas,
-                text.text,
-                baseline,
-                PixelHeight(text, state),
-                ToScalar(text.color, 255),
-                state.outline
-            );
+            TextRaster::Instance()
+                .Draw(canvas, text.text, baseline, PixelHeight(text, state), ToScalar(text.color, 255), state.outline);
 
             continue;
         }
@@ -171,12 +165,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
 
     for (const OverlayMark& mark : state.marks)
     {
-        const cv::Rect box(
-            mark.x - origin.x,
-            mark.y - origin.y,
-            std::max(1, mark.width - 1),
-            std::max(1, mark.height - 1)
-        );
+        const cv::Rect box(mark.x - origin.x, mark.y - origin.y, std::max(1, mark.width - 1), std::max(1, mark.height - 1));
 
         if ((box & canvasBounds).empty())
             continue;
@@ -192,12 +181,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
     if (preview.empty())
         return;
 
-    const cv::Rect box(
-        preview.x - origin.x,
-        preview.y - origin.y,
-        std::max(1, preview.width - 1),
-        std::max(1, preview.height - 1)
-    );
+    const cv::Rect box(preview.x - origin.x, preview.y - origin.y, std::max(1, preview.width - 1), std::max(1, preview.height - 1));
 
     if ((box & canvasBounds).empty())
         return;

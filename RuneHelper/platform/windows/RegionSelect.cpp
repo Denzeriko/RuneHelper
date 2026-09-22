@@ -41,7 +41,6 @@ cv::Rect RegionSelector::Select()
         LOG_ERROR("RegionSelector::Select() -> cancelled");
         return {};
     }
-        
 
     LOG_INFO("RegionSelector::Select() -> return");
 
@@ -71,9 +70,7 @@ bool RegionSelector::CreateOverlayWindow()
     int h = GetSystemMetrics(SM_CYVIRTUALSCREEN);
 
     hwnd_ = CreateWindowExW(
-        WS_EX_TOPMOST |
-        WS_EX_LAYERED |
-        WS_EX_NOACTIVATE,
+        WS_EX_TOPMOST | WS_EX_LAYERED | WS_EX_NOACTIVATE,
         wc.lpszClassName,
         L"Select region",
         WS_POPUP,
@@ -87,7 +84,8 @@ bool RegionSelector::CreateOverlayWindow()
         this
     );
 
-    if (!hwnd_) {
+    if (!hwnd_)
+    {
         LOG_ERROR("RegionSelector::CreateOverlayWindow() -> no HWND!");
         return false;
     }
@@ -118,12 +116,7 @@ cv::Rect RegionSelector::GetSelectedRect() const
     int right = std::max(result_.left, result_.right);
     int bottom = std::max(result_.top, result_.bottom);
 
-    return cv::Rect(
-        left + virtualX_,
-        top + virtualY_,
-        right - left,
-        bottom - top
-    );
+    return cv::Rect(left + virtualX_, top + virtualY_, right - left, bottom - top);
 }
 
 void RegionSelector::OnLeftButtonDown(LPARAM lp)
@@ -227,34 +220,23 @@ LRESULT CALLBACK RegionSelector::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM 
     }
     else
         self = reinterpret_cast<RegionSelector*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
-    
 
     if (!self)
         return DefWindowProcW(hwnd, msg, wp, lp);
 
     switch (msg)
     {
-    case WM_LBUTTONDOWN:
-        self->OnLeftButtonDown(lp);
-        return 0;
+    case WM_LBUTTONDOWN: self->OnLeftButtonDown(lp); return 0;
 
-    case WM_MOUSEMOVE:
-        self->OnMouseMove(lp);
-        return 0;
+    case WM_MOUSEMOVE: self->OnMouseMove(lp); return 0;
 
-    case WM_LBUTTONUP:
-        self->OnLeftButtonUp(lp);
-        return 0;
+    case WM_LBUTTONUP: self->OnLeftButtonUp(lp); return 0;
 
-    case WM_KEYDOWN:
-        self->OnKeyDown(wp);
-        return 0;
+    case WM_KEYDOWN: self->OnKeyDown(wp); return 0;
 
-    case WM_PAINT:
-        self->OnPaint();
-        return 0;
+    case WM_PAINT: self->OnPaint(); return 0;
 
-    case WM_ERASEBKGND: //should fix box flickering
+    case WM_ERASEBKGND: // should fix box flickering
         return 1;
     }
 

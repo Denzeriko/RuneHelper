@@ -2,7 +2,6 @@
 
 #include <cstddef>
 
-
 struct UIState
 {
     bool running = false;
@@ -29,7 +28,6 @@ struct UIState
 
     bool priceDownloading = false;
     size_t priceCount = 0;
-
 
     int* waitingForHotkey = nullptr;
     bool hotkeyCaptureSkipFrame = false;

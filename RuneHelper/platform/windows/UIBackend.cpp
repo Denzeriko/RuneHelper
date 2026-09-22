@@ -28,10 +28,8 @@ bool IsMouseVk(int vk)
     case VK_RBUTTON:
     case VK_MBUTTON:
     case VK_XBUTTON1:
-    case VK_XBUTTON2:
-        return true;
-    default:
-        return false;
+    case VK_XBUTTON2: return true;
+    default: return false;
     }
 }
 
@@ -101,10 +99,7 @@ bool UIBackend::Impl::IsInteractive() const
     return PtInRect(&bounds, cursor) != FALSE;
 }
 
-UIBackend::UIBackend()
-    : impl_(new Impl())
-{
-}
+UIBackend::UIBackend() : impl_(new Impl()) {}
 
 UIBackend::~UIBackend()
 {
@@ -232,7 +227,7 @@ void UIBackend::EndFrame()
 
     ImGui::Render();
 
-    const float clearColor[4] = {0.08f, 0.08f, 0.08f, 1.0f};
+    const float clearColor[4] = { 0.08f, 0.08f, 0.08f, 1.0f };
     impl_->deviceContext->OMSetRenderTargets(1, &impl_->renderTargetView, nullptr);
     impl_->deviceContext->ClearRenderTargetView(impl_->renderTargetView, clearColor);
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
@@ -318,20 +313,8 @@ void UIBackend::UnregisterHotkeys()
 
 bool UIBackend::Impl::CreateWindowUI()
 {
-    windowClass = {
-        sizeof(WNDCLASSEXW),
-        CS_CLASSDC,
-        WndProc,
-        0L,
-        0L,
-        GetModuleHandle(nullptr),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        L"RuneHelperConfig",
-        nullptr
-    };
+    windowClass = { sizeof(WNDCLASSEXW), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
+                    L"RuneHelperConfig", nullptr };
 
     RegisterClassExW(&windowClass);
 
@@ -377,7 +360,7 @@ bool UIBackend::Impl::CreateDeviceD3D()
 
     UINT createDeviceFlags = 0;
     D3D_FEATURE_LEVEL featureLevel;
-    const D3D_FEATURE_LEVEL featureLevelArray[2] = {D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0};
+    const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0 };
 
     HRESULT result = D3D11CreateDeviceAndSwapChain(
         nullptr,
@@ -534,7 +517,6 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
 
         return HTCLIENT;
     }
-    default:
-        return DefWindowProcW(hwnd, msg, wp, lp);
+    default: return DefWindowProcW(hwnd, msg, wp, lp);
     }
 }

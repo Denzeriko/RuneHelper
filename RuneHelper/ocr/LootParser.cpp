@@ -16,15 +16,11 @@ char DigitFromOcr(char c)
     case 'I':
     case 'l':
     case '|':
-    case '!':
-        return '1';
+    case '!': return '1';
     case 'O':
-    case 'o':
-        return '0';
-    case 'S':
-        return '5';
-    default:
-        return std::isdigit(static_cast<unsigned char>(c)) ? c : '\0';
+    case 'o': return '0';
+    case 'S': return '5';
+    default: return std::isdigit(static_cast<unsigned char>(c)) ? c : '\0';
     }
 }
 

@@ -32,8 +32,7 @@ const std::string& PriceApiBase()
 
 const std::string& UserAgent()
 {
-    static const std::string agent =
-        std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
+    static const std::string agent = std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
 
     return agent;
 }
@@ -43,29 +42,20 @@ constexpr int kProxyFailureLimit = 3;
 
 std::atomic<int>& ProxyFailures()
 {
-    static std::atomic<int> failures{0};
+    static std::atomic<int> failures{ 0 };
     return failures;
 }
 
 void ConfigureSession(cpr::Session& session, const std::stop_token& stop)
 {
-    session.SetHeader(cpr::Header{
-        { "User-Agent", UserAgent() },
-        { "Accept", "application/json" }
-    });
+    session.SetHeader(cpr::Header{ { "User-Agent", UserAgent() }, { "Accept", "application/json" } });
 
     session.SetTimeout(cpr::Timeout{ 15000 });
 
-    session.SetAcceptEncoding(cpr::AcceptEncoding{
-        { cpr::AcceptEncodingMethods::gzip, cpr::AcceptEncodingMethods::deflate }
-    });
+    session.SetAcceptEncoding(cpr::AcceptEncoding{ { cpr::AcceptEncodingMethods::gzip, cpr::AcceptEncodingMethods::deflate } });
 
-    session.SetProgressCallback(cpr::ProgressCallback{
-        [&stop](auto, auto, auto, auto, std::intptr_t)
-        {
-            return !stop.stop_requested();
-        }
-    });
+    session.SetProgressCallback(cpr::ProgressCallback{ [&stop](auto, auto, auto, auto, std::intptr_t)
+                                                       { return !stop.stop_requested(); } });
 }
 
 bool Fetch(cpr::Session& session, const std::string& url, std::string& body, const std::stop_token& stop)
@@ -79,11 +69,15 @@ bool Fetch(cpr::Session& session, const std::string& url, std::string& body, con
     if (stop.stop_requested())
         return false;
 
-    LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size()));
+    LOG_INFO(
+        "PoeNinjaPriceProvider::DownloadCategory() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size())
+    );
 
     if (r.error.code != cpr::ErrorCode::OK)
     {
-        LOG_ERROR("PoeNinjaPriceProvider CPR error: code=" + std::to_string(static_cast<int>(r.error.code)) + " message=" + r.error.message);
+        LOG_ERROR(
+            "PoeNinjaPriceProvider CPR error: code=" + std::to_string(static_cast<int>(r.error.code)) + " message=" + r.error.message
+        );
         return false;
     }
 
@@ -106,21 +100,10 @@ PriceTable FailedTable()
 
 const std::vector<std::string>& PoeNinjaCategories()
 {
-    static const std::vector<std::string> categories = {
-    "Runes",
-    "Currency",
-    "UncutGems",
-    "Expedition",
-    "Ritual",
-    "Breach",
-    "Verisium",
-    "Idols",
-    "SoulCores",
-    "Essences",
-    "LineageSupportGems",
-    "Abyss",
-    "Fragments"
-    };
+    static const std::vector<std::string> categories = { "Runes",     "Currency", "UncutGems",          "Expedition",
+                                                         "Ritual",    "Breach",   "Verisium",           "Idols",
+                                                         "SoulCores", "Essences", "LineageSupportGems", "Abyss",
+                                                         "Fragments" };
 
     return categories;
 }
@@ -198,10 +181,8 @@ std::string PoeNinjaPriceProvider::EncodeUrlComponent(const std::string& text)
 
     for (unsigned char ch : text)
     {
-        if ((ch >= 'A' && ch <= 'Z') ||
-            (ch >= 'a' && ch <= 'z') ||
-            (ch >= '0' && ch <= '9') ||
-            ch == '-' || ch == '_' || ch == '.' || ch == '~')
+        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' || ch == '_' || ch == '.' ||
+            ch == '~')
         {
             out << static_cast<char>(ch);
         }
@@ -218,7 +199,12 @@ std::string PoeNinjaPriceProvider::EncodeUrlComponent(const std::string& text)
     return out.str();
 }
 
-PriceTable PoeNinjaPriceProvider::DownloadCategory(cpr::Session& session, const std::string& encodedLeague, const std::string& type, const std::stop_token& stop)
+PriceTable PoeNinjaPriceProvider::DownloadCategory(
+    cpr::Session& session,
+    const std::string& encodedLeague,
+    const std::string& type,
+    const std::stop_token& stop
+)
 {
     const std::string query = "?league=" + encodedLeague + "&type=" + type;
 
@@ -266,12 +252,8 @@ PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
 {
     PriceTable result;
 
-    if (!j.contains("core") ||
-        !j["core"].contains("rates") ||
-        !j.contains("items") ||
-        !j["items"].is_array() ||
-        !j.contains("lines") ||
-        !j["lines"].is_array())
+    if (!j.contains("core") || !j["core"].contains("rates") || !j.contains("items") || !j["items"].is_array() ||
+        !j.contains("lines") || !j["lines"].is_array())
     {
         LOG_ERROR("PoeNinjaPriceProvider::ParseCategoryDump() invalid JSON structure");
         result.complete = false;

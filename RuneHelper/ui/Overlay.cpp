@@ -4,10 +4,7 @@
 
 #include "platform/OverlayBackend.h"
 
-OverlayWindow::OverlayWindow()
-    : backend_(CreateOverlayBackend())
-{
-}
+OverlayWindow::OverlayWindow() : backend_(CreateOverlayBackend()) {}
 
 OverlayWindow::~OverlayWindow()
 {
@@ -50,11 +47,8 @@ void OverlayWindow::BringToTop()
 
 void OverlayWindow::SetRegionPreview(bool enabled, const OverlayRect& rect)
 {
-    bool sameRect =
-        state_.previewRect.left == rect.left &&
-        state_.previewRect.top == rect.top &&
-        state_.previewRect.right == rect.right &&
-        state_.previewRect.bottom == rect.bottom;
+    bool sameRect = state_.previewRect.left == rect.left && state_.previewRect.top == rect.top &&
+                    state_.previewRect.right == rect.right && state_.previewRect.bottom == rect.bottom;
 
     if (state_.previewEnabled == enabled && sameRect)
         return;

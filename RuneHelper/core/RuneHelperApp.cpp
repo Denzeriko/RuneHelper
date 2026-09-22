@@ -128,11 +128,7 @@ void RuneHelperApp::HandleUIActions()
 {
     if (ui_.WantsToggleOCR())
     {
-        configManager_.Update(
-            [](AppConfig& config)
-            {
-                config.ocrEnabled = !config.ocrEnabled;
-            });
+        configManager_.Update([](AppConfig& config) { config.ocrEnabled = !config.ocrEnabled; });
 
         configManager_.Save();
     }
@@ -160,7 +156,8 @@ void RuneHelperApp::HandleUIActions()
                     config.regionY = newRegion.y;
                     config.regionW = newRegion.width;
                     config.regionH = newRegion.height;
-                });
+                }
+            );
 
             configManager_.Save();
             features_.NotifyRegionChanged();
@@ -190,12 +187,10 @@ void RuneHelperApp::UpdateRegionPreview(const AppConfig& localConfig)
         return;
     }
 
-    OverlayRect rect{
-        localConfig.regionX,
-        localConfig.regionY,
-        localConfig.regionX + localConfig.regionW,
-        localConfig.regionY + localConfig.regionH
-    };
+    OverlayRect rect{ localConfig.regionX,
+                      localConfig.regionY,
+                      localConfig.regionX + localConfig.regionW,
+                      localConfig.regionY + localConfig.regionH };
 
     overlay_.SetRegionPreview(true, rect);
 }

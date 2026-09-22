@@ -31,5 +31,5 @@ private:
     std::vector<std::string> pending_;
 };
 
-#define LOG_INFO(msg)  Logger::Instance().Info(msg)
+#define LOG_INFO(msg) Logger::Instance().Info(msg)
 #define LOG_ERROR(msg) Logger::Instance().Error(msg)

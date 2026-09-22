@@ -138,10 +138,8 @@ bool LinuxOverlayBackend::Init(const char* title, int width, int height)
 
     Visual* visual = DefaultVisual(display_, screen);
 
-    packedBgrx_ = ImageByteOrder(display_) == LSBFirst &&
-        visual->red_mask == 0x00ff0000UL &&
-        visual->green_mask == 0x0000ff00UL &&
-        visual->blue_mask == 0x000000ffUL;
+    packedBgrx_ = ImageByteOrder(display_) == LSBFirst && visual->red_mask == 0x00ff0000UL && visual->green_mask == 0x0000ff00UL &&
+                  visual->blue_mask == 0x000000ffUL;
 
     if (!packedBgrx_)
         LOG_INFO("Linux overlay: the X visual is not packed BGRX, falling back to per-pixel upload");
@@ -247,16 +245,7 @@ void LinuxOverlayBackend::SetAlwaysOnTop(bool enabled)
 
     if (enabled)
     {
-        XChangeProperty(
-            display_,
-            window_,
-            stateAtom,
-            XA_ATOM,
-            32,
-            PropModeReplace,
-            reinterpret_cast<unsigned char*>(&aboveAtom),
-            1
-        );
+        XChangeProperty(display_, window_, stateAtom, XA_ATOM, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&aboveAtom), 1);
     }
     else
     {
@@ -365,11 +354,11 @@ bool LinuxOverlayBackend::EnsureSurfaces(int width, int height)
         return false;
     }
 
-    colorImage_->data = static_cast<char*>(
-        std::calloc(static_cast<std::size_t>(colorImage_->bytes_per_line) * static_cast<std::size_t>(height), 1));
+    colorImage_->data =
+        static_cast<char*>(std::calloc(static_cast<std::size_t>(colorImage_->bytes_per_line) * static_cast<std::size_t>(height), 1));
 
-    maskImage_->data = static_cast<char*>(
-        std::calloc(static_cast<std::size_t>(maskImage_->bytes_per_line) * static_cast<std::size_t>(height), 1));
+    maskImage_->data =
+        static_cast<char*>(std::calloc(static_cast<std::size_t>(maskImage_->bytes_per_line) * static_cast<std::size_t>(height), 1));
 
     if (!colorImage_->data || !maskImage_->data)
     {
@@ -378,13 +367,7 @@ bool LinuxOverlayBackend::EnsureSurfaces(int width, int height)
         return false;
     }
 
-    maskPixmap_ = XCreatePixmap(
-        display_,
-        window_,
-        static_cast<unsigned int>(width),
-        static_cast<unsigned int>(height),
-        1
-    );
+    maskPixmap_ = XCreatePixmap(display_, window_, static_cast<unsigned int>(width), static_cast<unsigned int>(height), 1);
 
     if (!maskPixmap_)
     {
@@ -441,9 +424,8 @@ void LinuxOverlayBackend::FillColorImage(const cv::Mat& canvas)
                 colorImage_,
                 x,
                 y,
-                (static_cast<unsigned long>(pixel[2]) << 16) |
-                (static_cast<unsigned long>(pixel[1]) << 8) |
-                static_cast<unsigned long>(pixel[0])
+                (static_cast<unsigned long>(pixel[2]) << 16) | (static_cast<unsigned long>(pixel[1]) << 8) |
+                    static_cast<unsigned long>(pixel[0])
             );
         }
     }
@@ -492,14 +474,7 @@ void LinuxOverlayBackend::ResizeAndMove()
         windowH_ = std::max(1, content.y + content.height - windowY_);
     }
 
-    XMoveResizeWindow(
-        display_,
-        window_,
-        windowX_,
-        windowY_,
-        static_cast<unsigned int>(windowW_),
-        static_cast<unsigned int>(windowH_)
-    );
+    XMoveResizeWindow(display_, window_, windowX_, windowY_, static_cast<unsigned int>(windowW_), static_cast<unsigned int>(windowH_));
 }
 
 void LinuxOverlayBackend::Redraw()
@@ -561,16 +536,7 @@ void LinuxOverlayBackend::SetOpacity(unsigned long opacity)
         return;
 
     Atom opacityAtom = XInternAtom(display_, "_NET_WM_WINDOW_OPACITY", False);
-    XChangeProperty(
-        display_,
-        window_,
-        opacityAtom,
-        XA_CARDINAL,
-        32,
-        PropModeReplace,
-        reinterpret_cast<unsigned char*>(&opacity),
-        1
-    );
+    XChangeProperty(display_, window_, opacityAtom, XA_CARDINAL, 32, PropModeReplace, reinterpret_cast<unsigned char*>(&opacity), 1);
 }
 }
 

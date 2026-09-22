@@ -73,13 +73,10 @@ void OcrService::Start(ConfigManager& configManager, FeatureRegistry& features, 
                 ocrFailed_ = true;
                 ocrInitializing_ = false;
             }
-        });
+        }
+    );
 
-    workerThread_ = std::jthread(
-        [this]
-        {
-            RunLoggingExceptions("OcrService worker thread", [this] { WorkerLoop(); });
-        });
+    workerThread_ = std::jthread([this] { RunLoggingExceptions("OcrService worker thread", [this] { WorkerLoop(); }); });
 }
 
 void OcrService::Stop()
@@ -113,12 +110,7 @@ void OcrService::RequestSingleSnapshot()
 
 OcrServiceStatus OcrService::GetStatus() const
 {
-    return {
-        ocrInitializing_.load(),
-        ocrReady_.load(),
-        ocrFailed_.load(),
-        captureFailing_.load()
-    };
+    return { ocrInitializing_.load(), ocrReady_.load(), ocrFailed_.load(), captureFailing_.load() };
 }
 
 bool OcrService::ConsumeDebugData(DebugData& data)
@@ -193,7 +185,12 @@ bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDi
 }
 }
 
-void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv::Mat& gray, const cv::Rect& region, const AppConfig& config)
+void OcrService::PublishFrameResult(
+    const std::vector<LootLine>& loot,
+    const cv::Mat& gray,
+    const cv::Rect& region,
+    const AppConfig& config
+)
 {
     std::vector<FrameRow> rows = ParseLootRows(loot, region, config);
 
@@ -223,14 +220,7 @@ void OcrService::PublishFrameResult(const std::vector<LootLine>& loot, const cv:
     if (features_)
     {
         FrameContext frame{
-            gray,
-            region,
-            rows,
-            config,
-            prices_ ? prices_->DivineRate() : 0.0,
-            rowOverlays,
-            overlay,
-            debug
+            gray, region, rows, config, prices_ ? prices_->DivineRate() : 0.0, rowOverlays, overlay, debug,
         };
 
         features_->RunFrame(frame);
@@ -320,7 +310,6 @@ void OcrService::WorkerLoop()
 
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
     }
-
 
     while (running_)
     {

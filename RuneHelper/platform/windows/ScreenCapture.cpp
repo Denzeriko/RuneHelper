@@ -45,17 +45,7 @@ cv::Mat CaptureRegion(const cv::Rect& region)
 
     HGDIOBJ oldBitmap = SelectObject(memoryDC, bitmap);
 
-    const BOOL blitted = BitBlt(
-        memoryDC,
-        0,
-        0,
-        safeRegion.width,
-        safeRegion.height,
-        screenDC,
-        safeRegion.x,
-        safeRegion.y,
-        SRCCOPY
-    );
+    const BOOL blitted = BitBlt(memoryDC, 0, 0, safeRegion.width, safeRegion.height, screenDC, safeRegion.x, safeRegion.y, SRCCOPY);
 
     SelectObject(memoryDC, oldBitmap);
 
@@ -80,7 +70,8 @@ cv::Mat CaptureRegion(const cv::Rect& region)
                 static_cast<UINT>(safeRegion.height),
                 bgra.data,
                 reinterpret_cast<BITMAPINFO*>(&header),
-                DIB_RGB_COLORS))
+                DIB_RGB_COLORS
+            ))
         {
             cv::cvtColor(bgra, result, cv::COLOR_BGRA2GRAY);
         }

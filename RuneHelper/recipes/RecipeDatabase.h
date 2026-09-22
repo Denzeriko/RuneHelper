@@ -33,10 +33,13 @@ public:
     bool Load();
 
     bool Loaded() const { return loaded_; }
+
     bool Complete() const { return complete_; }
+
     const std::string& LoadedFrom() const { return loadedFrom_; }
 
     const std::vector<Recipe>& Recipes() const { return recipes_; }
+
     const Recipe* FindRecipe(std::string_view output, int count) const;
     bool IsRareRune(const std::string& rune) const;
 

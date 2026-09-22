@@ -21,7 +21,8 @@ public:
         const cv::Point& baseline,
         int pixelHeight,
         const cv::Scalar& color,
-        bool outline);
+        bool outline
+    );
 
 private:
     TextRaster();

@@ -52,8 +52,7 @@ void PriceService::RebuildNames()
     if (names_ && namesVersion_ == version)
         return;
 
-    names_ = std::make_shared<const CachedItemNames>(
-        CachedItemNames::Build(cache_.GetAllItemNames()));
+    names_ = std::make_shared<const CachedItemNames>(CachedItemNames::Build(cache_.GetAllItemNames()));
 
     namesVersion_ = version;
 }

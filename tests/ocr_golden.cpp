@@ -136,12 +136,8 @@ std::string Serialize(const std::vector<Row>& rows)
 
     for (const Row& row : rows)
     {
-        out << "y=" << row.y
-            << " qty=" << row.quantity
-            << " name=\"" << row.name << '"'
-            << " match=\"" << row.matched << '"'
-            << " mconf=" << row.confidence
-            << '\n';
+        out << "y=" << row.y << " qty=" << row.quantity << " name=\"" << row.name << '"' << " match=\"" << row.matched << '"'
+            << " mconf=" << row.confidence << '\n';
     }
 
     return out.str();
@@ -204,7 +200,8 @@ Score ScorePanel(
     const std::vector<TruthRow>& truth,
     const std::vector<Row>& rows,
     const std::set<std::string>& vocabulary,
-    std::vector<std::string>& issues)
+    std::vector<std::string>& issues
+)
 {
     const std::size_t n = truth.size();
     const std::size_t m = rows.size();
@@ -315,7 +312,8 @@ Score ScorePanel(
                 want.name.c_str(),
                 row.quantity,
                 row.name.c_str(),
-                row.matched == want.name ? "" : "   PRICE LOST");
+                row.matched == want.name ? "" : "   PRICE LOST"
+            );
 
             issues.emplace_back(buffer);
         }
@@ -360,9 +358,7 @@ void PrintDiff(const std::string& name, const std::string& expected, const std::
     {
         for (std::size_t j = m; j-- > 0;)
         {
-            lcs[i][j] = want[i] == got[j]
-                ? lcs[i + 1][j + 1] + 1
-                : (std::max)(lcs[i + 1][j], lcs[i][j + 1]);
+            lcs[i][j] = want[i] == got[j] ? lcs[i + 1][j + 1] + 1 : (std::max)(lcs[i + 1][j], lcs[i][j + 1]);
         }
     }
 

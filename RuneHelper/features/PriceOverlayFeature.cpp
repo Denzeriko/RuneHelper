@@ -47,9 +47,8 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
         const bool hasRate = frame.divineToEx > 0.0;
         const bool inDivine = hasRate && frame.config.priceUnit == PriceUnit::Divine;
 
-        std::string note = inDivine
-            ? LootParser::FormatStack(*resolved.unitEx / frame.divineToEx, row.quantity, "div")
-            : LootParser::FormatStack(*resolved.unitEx, row.quantity, "ex");
+        std::string note = inDivine ? LootParser::FormatStack(*resolved.unitEx / frame.divineToEx, row.quantity, "div")
+                                    : LootParser::FormatStack(*resolved.unitEx, row.quantity, "ex");
 
         if (resolved.confidence < kTrustedMatchConfidence)
             note += " ?";

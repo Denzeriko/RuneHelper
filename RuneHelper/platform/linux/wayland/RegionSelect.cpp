@@ -50,20 +50,55 @@ private:
         bool configured = false;
     };
 
-    static void HandleConfigure(void* data, zwlr_layer_surface_v1* layerSurface, std::uint32_t serial, std::uint32_t width, std::uint32_t height);
+    static void HandleConfigure(
+        void* data,
+        zwlr_layer_surface_v1* layerSurface,
+        std::uint32_t serial,
+        std::uint32_t width,
+        std::uint32_t height
+    );
     static void HandleClosed(void* data, zwlr_layer_surface_v1* layerSurface);
 
-    static void HandlePointerEnter(void* data, wl_pointer* pointer, std::uint32_t serial, wl_surface* surface, wl_fixed_t x, wl_fixed_t y);
+    static void HandlePointerEnter(
+        void* data,
+        wl_pointer* pointer,
+        std::uint32_t serial,
+        wl_surface* surface,
+        wl_fixed_t x,
+        wl_fixed_t y
+    );
     static void HandlePointerLeave(void* data, wl_pointer* pointer, std::uint32_t serial, wl_surface* surface);
     static void HandlePointerMotion(void* data, wl_pointer* pointer, std::uint32_t time, wl_fixed_t x, wl_fixed_t y);
-    static void HandlePointerButton(void* data, wl_pointer* pointer, std::uint32_t serial, std::uint32_t time, std::uint32_t button, std::uint32_t state);
+    static void HandlePointerButton(
+        void* data,
+        wl_pointer* pointer,
+        std::uint32_t serial,
+        std::uint32_t time,
+        std::uint32_t button,
+        std::uint32_t state
+    );
     static void HandlePointerAxis(void* data, wl_pointer* pointer, std::uint32_t time, std::uint32_t axis, wl_fixed_t value);
 
     static void HandleKeyboardKeymap(void* data, wl_keyboard* keyboard, std::uint32_t format, std::int32_t fd, std::uint32_t size);
     static void HandleKeyboardEnter(void* data, wl_keyboard* keyboard, std::uint32_t serial, wl_surface* surface, wl_array* keys);
     static void HandleKeyboardLeave(void* data, wl_keyboard* keyboard, std::uint32_t serial, wl_surface* surface);
-    static void HandleKeyboardKey(void* data, wl_keyboard* keyboard, std::uint32_t serial, std::uint32_t time, std::uint32_t key, std::uint32_t state);
-    static void HandleKeyboardModifiers(void* data, wl_keyboard* keyboard, std::uint32_t serial, std::uint32_t depressed, std::uint32_t latched, std::uint32_t locked, std::uint32_t group);
+    static void HandleKeyboardKey(
+        void* data,
+        wl_keyboard* keyboard,
+        std::uint32_t serial,
+        std::uint32_t time,
+        std::uint32_t key,
+        std::uint32_t state
+    );
+    static void HandleKeyboardModifiers(
+        void* data,
+        wl_keyboard* keyboard,
+        std::uint32_t serial,
+        std::uint32_t depressed,
+        std::uint32_t latched,
+        std::uint32_t locked,
+        std::uint32_t group
+    );
 
     Surface* FindSurface(wl_surface* surface);
     Surface* ActiveSurface();
@@ -92,10 +127,8 @@ private:
     static const wl_keyboard_listener kKeyboardListener;
 };
 
-const zwlr_layer_surface_v1_listener RegionSelectSession::kLayerSurfaceListener = {
-    &RegionSelectSession::HandleConfigure,
-    &RegionSelectSession::HandleClosed
-};
+const zwlr_layer_surface_v1_listener RegionSelectSession::kLayerSurfaceListener = { &RegionSelectSession::HandleConfigure,
+                                                                                    &RegionSelectSession::HandleClosed };
 
 const wl_pointer_listener RegionSelectSession::kPointerListener = []() noexcept
 {
@@ -179,7 +212,13 @@ RegionSelectSession::Surface* RegionSelectSession::ActiveSurface()
     return activeSurface_ ? FindSurface(activeSurface_) : nullptr;
 }
 
-void RegionSelectSession::HandleConfigure(void* data, zwlr_layer_surface_v1* layerSurface, std::uint32_t serial, std::uint32_t width, std::uint32_t height)
+void RegionSelectSession::HandleConfigure(
+    void* data,
+    zwlr_layer_surface_v1* layerSurface,
+    std::uint32_t serial,
+    std::uint32_t width,
+    std::uint32_t height
+)
 {
     auto* session = static_cast<RegionSelectSession*>(data);
     zwlr_layer_surface_v1_ack_configure(layerSurface, serial);
@@ -251,7 +290,14 @@ void RegionSelectSession::HandlePointerMotion(void* data, wl_pointer*, std::uint
     session->DrawAll();
 }
 
-void RegionSelectSession::HandlePointerButton(void* data, wl_pointer*, std::uint32_t, std::uint32_t, std::uint32_t button, std::uint32_t state)
+void RegionSelectSession::HandlePointerButton(
+    void* data,
+    wl_pointer*,
+    std::uint32_t,
+    std::uint32_t,
+    std::uint32_t button,
+    std::uint32_t state
+)
 {
     auto* session = static_cast<RegionSelectSession*>(data);
 
@@ -274,9 +320,7 @@ void RegionSelectSession::HandlePointerButton(void* data, wl_pointer*, std::uint
     session->finished_ = true;
 }
 
-void RegionSelectSession::HandlePointerAxis(void*, wl_pointer*, std::uint32_t, std::uint32_t, wl_fixed_t)
-{
-}
+void RegionSelectSession::HandlePointerAxis(void*, wl_pointer*, std::uint32_t, std::uint32_t, wl_fixed_t) {}
 
 void RegionSelectSession::HandleKeyboardKeymap(void*, wl_keyboard*, std::uint32_t, std::int32_t fd, std::uint32_t)
 {
@@ -284,15 +328,18 @@ void RegionSelectSession::HandleKeyboardKeymap(void*, wl_keyboard*, std::uint32_
         close(fd);
 }
 
-void RegionSelectSession::HandleKeyboardEnter(void*, wl_keyboard*, std::uint32_t, wl_surface*, wl_array*)
-{
-}
+void RegionSelectSession::HandleKeyboardEnter(void*, wl_keyboard*, std::uint32_t, wl_surface*, wl_array*) {}
 
-void RegionSelectSession::HandleKeyboardLeave(void*, wl_keyboard*, std::uint32_t, wl_surface*)
-{
-}
+void RegionSelectSession::HandleKeyboardLeave(void*, wl_keyboard*, std::uint32_t, wl_surface*) {}
 
-void RegionSelectSession::HandleKeyboardKey(void* data, wl_keyboard*, std::uint32_t, std::uint32_t, std::uint32_t key, std::uint32_t state)
+void RegionSelectSession::HandleKeyboardKey(
+    void* data,
+    wl_keyboard*,
+    std::uint32_t,
+    std::uint32_t,
+    std::uint32_t key,
+    std::uint32_t state
+)
 {
     if (state != WL_KEYBOARD_KEY_STATE_PRESSED || key != KEY_ESC)
         return;
@@ -302,7 +349,15 @@ void RegionSelectSession::HandleKeyboardKey(void* data, wl_keyboard*, std::uint3
     session->finished_ = true;
 }
 
-void RegionSelectSession::HandleKeyboardModifiers(void*, wl_keyboard*, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t)
+void RegionSelectSession::HandleKeyboardModifiers(
+    void*,
+    wl_keyboard*,
+    std::uint32_t,
+    std::uint32_t,
+    std::uint32_t,
+    std::uint32_t,
+    std::uint32_t
+)
 {
 }
 
@@ -412,10 +467,8 @@ bool RegionSelectSession::Start()
         zwlr_layer_surface_v1_add_listener(surface->layerSurface, &kLayerSurfaceListener, this);
         zwlr_layer_surface_v1_set_anchor(
             surface->layerSurface,
-            ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP |
-            ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM |
-            ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
-            ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
+            ZWLR_LAYER_SURFACE_V1_ANCHOR_TOP | ZWLR_LAYER_SURFACE_V1_ANCHOR_BOTTOM | ZWLR_LAYER_SURFACE_V1_ANCHOR_LEFT |
+                ZWLR_LAYER_SURFACE_V1_ANCHOR_RIGHT
         );
         zwlr_layer_surface_v1_set_exclusive_zone(surface->layerSurface, -1);
         zwlr_layer_surface_v1_set_keyboard_interactivity(surface->layerSurface, 1);
@@ -475,10 +528,8 @@ cv::Rect RegionSelector::Select()
     }
 
     LOG_INFO(
-        "Wayland region selected: x=" + std::to_string(selected.x) +
-        " y=" + std::to_string(selected.y) +
-        " w=" + std::to_string(selected.width) +
-        " h=" + std::to_string(selected.height)
+        "Wayland region selected: x=" + std::to_string(selected.x) + " y=" + std::to_string(selected.y) +
+        " w=" + std::to_string(selected.width) + " h=" + std::to_string(selected.height)
     );
 
     return selected;

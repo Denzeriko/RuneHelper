@@ -28,10 +28,7 @@ bool WriteEmbedded(const EmbeddedResource& resource, const std::filesystem::path
 
     return WriteFileAtomic(
         destination,
-        std::string_view(
-            reinterpret_cast<const char*>(resource.begin),
-            static_cast<std::size_t>(resource.end - resource.begin)
-        )
+        std::string_view(reinterpret_cast<const char*>(resource.begin), static_cast<std::size_t>(resource.end - resource.begin))
     );
 }
 }
@@ -81,8 +78,5 @@ std::string LoadEmbeddedRecipeDatabase()
         return {};
     }
 
-    return std::string(
-        reinterpret_cast<const char*>(resource->begin),
-        static_cast<std::size_t>(resource->end - resource->begin)
-    );
+    return std::string(reinterpret_cast<const char*>(resource->begin), static_cast<std::size_t>(resource->end - resource->begin));
 }

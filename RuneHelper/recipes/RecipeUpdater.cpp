@@ -34,8 +34,7 @@ const std::string& RecipeApiUrl()
 
 const std::string& UserAgent()
 {
-    static const std::string agent =
-        std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
+    static const std::string agent = std::string("RuneHelper/") + RUNEHELPER_VERSION + " (+https://github.com/Denzeriko/RuneHelper)";
 
     return agent;
 }
@@ -43,11 +42,8 @@ const std::string& UserAgent()
 
 void RecipeUpdater::Start()
 {
-    thread_ = std::jthread(
-        [this](const std::stop_token& stop)
-        {
-            RunLoggingExceptions("RecipeUpdater thread", [&] { Fetch(stop); });
-        });
+    thread_ =
+        std::jthread([this](const std::stop_token& stop) { RunLoggingExceptions("RecipeUpdater thread", [&] { Fetch(stop); }); });
 }
 
 void RecipeUpdater::Stop()
@@ -62,17 +58,9 @@ void RecipeUpdater::Fetch(const std::stop_token& stop)
 
     auto response = cpr::Get(
         cpr::Url{ RecipeApiUrl() },
-        cpr::Header{
-            { "User-Agent", UserAgent() },
-            { "Accept", "application/json" }
-        },
+        cpr::Header{ { "User-Agent", UserAgent() }, { "Accept", "application/json" } },
         cpr::Timeout{ 15000 },
-        cpr::ProgressCallback{
-            [&stop](auto, auto, auto, auto, std::intptr_t)
-            {
-                return !stop.stop_requested();
-            }
-        }
+        cpr::ProgressCallback{ [&stop](auto, auto, auto, auto, std::intptr_t) { return !stop.stop_requested(); } }
     );
 
     if (stop.stop_requested())
@@ -108,8 +96,7 @@ void RecipeUpdater::Fetch(const std::stop_token& stop)
     }
 
     LOG_INFO(
-        "RecipeUpdater: stored " + std::to_string(parsed["combinations"].size()) +
-        " combinations generated " + parsed.value("generated", std::string("?")) +
-        ", it will be used on the next start"
+        "RecipeUpdater: stored " + std::to_string(parsed["combinations"].size()) + " combinations generated " +
+        parsed.value("generated", std::string("?")) + ", it will be used on the next start"
     );
 }

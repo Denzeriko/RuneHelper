@@ -8,10 +8,7 @@
 #include "platform/UIBackend.h"
 #include "ui/UIDraw.h"
 
-UIManager::UIManager()
-    : backend_(std::make_unique<UIBackend>())
-{
-}
+UIManager::UIManager() : backend_(std::make_unique<UIBackend>()) {}
 
 UIManager::~UIManager()
 {
@@ -98,7 +95,6 @@ void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
     state_.priceCount = priceCount;
 }
 
-
 void UIManager::SetUpdateChecker(UpdateChecker* checker)
 {
     updateChecker_ = checker;
@@ -134,11 +130,7 @@ void UIManager::ApplyConfigDraft()
     if (!configManager_)
         return;
 
-    configManager_->Update(
-        [this](AppConfig& config)
-        {
-            config = configDraft_;
-        });
+    configManager_->Update([this](AppConfig& config) { config = configDraft_; });
 
     configDraft_ = configManager_->Snapshot();
 }
@@ -196,18 +188,13 @@ bool UIManager::SaveConfig()
     return configManager_ && configManager_->Save();
 }
 
-
 void UIManager::RegisterHotkeys()
 {
     if (backend_ && configManager_)
     {
         const AppConfig config = configManager_->Snapshot();
 
-        backend_->RegisterHotkeys(
-            config.hotkeyToggleOCR,
-            config.hotkeySingleSnapshot,
-            config.hotkeySelectRegion
-        );
+        backend_->RegisterHotkeys(config.hotkeyToggleOCR, config.hotkeySingleSnapshot, config.hotkeySelectRegion);
     }
 }
 

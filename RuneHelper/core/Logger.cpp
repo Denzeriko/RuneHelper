@@ -13,8 +13,8 @@
 
 namespace
 {
-    constexpr uintmax_t kMaxLogSize = 16ULL * 1024 * 1024;
-    constexpr std::size_t kMaxPendingLines = 64;
+constexpr uintmax_t kMaxLogSize = 16ULL * 1024 * 1024;
+constexpr std::size_t kMaxPendingLines = 64;
 }
 
 Logger& Logger::Instance()
@@ -96,7 +96,7 @@ void Logger::Write(const char* level, const std::string& msg)
     }
 
     file_ << line;
-    file_.flush(); //make sure log will be saved after crash
+    file_.flush(); // make sure log will be saved after crash
 }
 
 std::string Logger::TimeNow()

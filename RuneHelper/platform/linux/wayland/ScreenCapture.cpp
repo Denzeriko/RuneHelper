@@ -44,7 +44,14 @@ void RequestCopy(CaptureFrame* capture)
     zwlr_screencopy_frame_v1_copy(capture->frame, capture->buffer->Buffer());
 }
 
-void HandleBuffer(void* data, zwlr_screencopy_frame_v1* frame, std::uint32_t format, std::uint32_t width, std::uint32_t height, std::uint32_t stride)
+void HandleBuffer(
+    void* data,
+    zwlr_screencopy_frame_v1* frame,
+    std::uint32_t format,
+    std::uint32_t width,
+    std::uint32_t height,
+    std::uint32_t stride
+)
 {
     auto* capture = static_cast<CaptureFrame*>(data);
 
@@ -81,28 +88,17 @@ void HandleFailed(void* data, zwlr_screencopy_frame_v1*)
     capture->done = true;
 }
 
-void HandleDamage(void*, zwlr_screencopy_frame_v1*, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t)
-{
-}
+void HandleDamage(void*, zwlr_screencopy_frame_v1*, std::uint32_t, std::uint32_t, std::uint32_t, std::uint32_t) {}
 
-void HandleLinuxDmabuf(void*, zwlr_screencopy_frame_v1*, std::uint32_t, std::uint32_t, std::uint32_t)
-{
-}
+void HandleLinuxDmabuf(void*, zwlr_screencopy_frame_v1*, std::uint32_t, std::uint32_t, std::uint32_t) {}
 
 void HandleBufferDone(void* data, zwlr_screencopy_frame_v1*)
 {
     RequestCopy(static_cast<CaptureFrame*>(data));
 }
 
-const zwlr_screencopy_frame_v1_listener kFrameListener = {
-    &HandleBuffer,
-    &HandleFlags,
-    &HandleReady,
-    &HandleFailed,
-    &HandleDamage,
-    &HandleLinuxDmabuf,
-    &HandleBufferDone
-};
+const zwlr_screencopy_frame_v1_listener kFrameListener = { &HandleBuffer, &HandleFlags,       &HandleReady,     &HandleFailed,
+                                                           &HandleDamage, &HandleLinuxDmabuf, &HandleBufferDone };
 
 cv::Mat ToGray(const WaylandShmBuffer& buffer, bool yInvert)
 {
@@ -112,16 +108,10 @@ cv::Mat ToGray(const WaylandShmBuffer& buffer, bool yInvert)
     switch (buffer.Format())
     {
     case WL_SHM_FORMAT_XRGB8888:
-    case WL_SHM_FORMAT_ARGB8888:
-        cv::cvtColor(wrapped, result, cv::COLOR_BGRA2GRAY);
-        break;
+    case WL_SHM_FORMAT_ARGB8888: cv::cvtColor(wrapped, result, cv::COLOR_BGRA2GRAY); break;
     case WL_SHM_FORMAT_XBGR8888:
-    case WL_SHM_FORMAT_ABGR8888:
-        cv::cvtColor(wrapped, result, cv::COLOR_RGBA2GRAY);
-        break;
-    default:
-        LOG_ERROR("Wayland screen capture failed: unsupported shm format " + std::to_string(buffer.Format()));
-        return {};
+    case WL_SHM_FORMAT_ABGR8888: cv::cvtColor(wrapped, result, cv::COLOR_RGBA2GRAY); break;
+    default: LOG_ERROR("Wayland screen capture failed: unsupported shm format " + std::to_string(buffer.Format())); return {};
     }
 
     if (yInvert)
@@ -138,8 +128,8 @@ WaylandSession& Session()
 
 std::string DescribeRect(const cv::Rect& rect)
 {
-    return std::to_string(rect.x) + "," + std::to_string(rect.y) + " " +
-           std::to_string(rect.width) + "x" + std::to_string(rect.height);
+    return std::to_string(rect.x) + "," + std::to_string(rect.y) + " " + std::to_string(rect.width) + "x" +
+           std::to_string(rect.height);
 }
 
 std::string DescribeOutputs(const WaylandSession& session)
@@ -347,13 +337,10 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
         if (mismatches == 1)
         {
             LOG_ERROR(
-                "Portal screencast: the shared output covers " +
-                std::to_string(origin.x) + "," + std::to_string(origin.y) + " " +
-                std::to_string(frame.cols) + "x" + std::to_string(frame.rows) +
-                " but the configured region is " +
-                std::to_string(region.x) + "," + std::to_string(region.y) + " " +
-                std::to_string(region.width) + "x" + std::to_string(region.height) +
-                "; share the monitor that contains the region"
+                "Portal screencast: the shared output covers " + std::to_string(origin.x) + "," + std::to_string(origin.y) + " " +
+                std::to_string(frame.cols) + "x" + std::to_string(frame.rows) + " but the configured region is " +
+                std::to_string(region.x) + "," + std::to_string(region.y) + " " + std::to_string(region.width) + "x" +
+                std::to_string(region.height) + "; share the monitor that contains the region"
             );
         }
 
@@ -413,8 +400,7 @@ cv::Mat Capture(const cv::Rect& region)
     if (clipped.empty())
     {
         LOG_ERROR(
-            "Wayland screen capture failed: region " + DescribeRect(region) +
-            " is outside every output" + DescribeOutputs(session)
+            "Wayland screen capture failed: region " + DescribeRect(region) + " is outside every output" + DescribeOutputs(session)
         );
         return {};
     }
@@ -427,9 +413,8 @@ cv::Mat Capture(const cv::Rect& region)
     {
         loggedGeometry = true;
         LOG_INFO(
-            "Wayland capture: output " + DescribeRect(bounds) +
-            ", requested region " + DescribeRect(region) +
-            ", capturing " + DescribeRect(local) + " inside it"
+            "Wayland capture: output " + DescribeRect(bounds) + ", requested region " + DescribeRect(region) + ", capturing " +
+            DescribeRect(local) + " inside it"
         );
     }
 

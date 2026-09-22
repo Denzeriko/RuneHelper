@@ -26,8 +26,7 @@ constexpr long long kFrameWantedWindowMs = 1000;
 
 long long NowMs()
 {
-    return std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::steady_clock::now().time_since_epoch()).count();
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
 }
 
 constexpr const char* kPortalService = "org.freedesktop.portal.Desktop";
@@ -108,7 +107,7 @@ struct PortalResponse
     std::string restoreToken;
     dbus_uint32_t nodeId = 0;
     bool hasNode = false;
-    cv::Point position{0, 0};
+    cv::Point position{ 0, 0 };
     bool hasPosition = false;
 };
 
@@ -116,8 +115,7 @@ void ParseStreamProperties(DBusMessageIter* props, PortalResponse& response)
 {
     DBusMessageIter dict;
 
-    for (dbus_message_iter_recurse(props, &dict);
-         dbus_message_iter_get_arg_type(&dict) == DBUS_TYPE_DICT_ENTRY;
+    for (dbus_message_iter_recurse(props, &dict); dbus_message_iter_get_arg_type(&dict) == DBUS_TYPE_DICT_ENTRY;
          dbus_message_iter_next(&dict))
     {
         DBusMessageIter entry;
@@ -155,8 +153,7 @@ void ParseResults(DBusMessageIter* results, PortalResponse& response)
 {
     DBusMessageIter dict;
 
-    for (dbus_message_iter_recurse(results, &dict);
-         dbus_message_iter_get_arg_type(&dict) == DBUS_TYPE_DICT_ENTRY;
+    for (dbus_message_iter_recurse(results, &dict); dbus_message_iter_get_arg_type(&dict) == DBUS_TYPE_DICT_ENTRY;
          dbus_message_iter_next(&dict))
     {
         DBusMessageIter entry;
@@ -263,12 +260,12 @@ struct PortalScreenCast::Impl
     spa_hook streamListener{};
 
     int pipewireFd = -1;
-    std::atomic<bool> running{false};
+    std::atomic<bool> running{ false };
 
     std::mutex frameMutex;
     std::atomic<long long> frameWantedAtMs{ 0 };
     cv::Mat frame;
-    cv::Point position{0, 0};
+    cv::Point position{ 0, 0 };
     bool hasPosition = false;
     spa_video_info format{};
 
@@ -284,9 +281,7 @@ struct PortalScreenCast::Impl
 
 void PortalScreenCast::Impl::ParamChanged(void* data, std::uint32_t id, const spa_pod* param)
 {
-    RunLoggingExceptions(
-        "Portal screencast param_changed",
-        [&] { static_cast<Impl*>(data)->OnParamChanged(id, param); });
+    RunLoggingExceptions("Portal screencast param_changed", [&] { static_cast<Impl*>(data)->OnParamChanged(id, param); });
 }
 
 void PortalScreenCast::Impl::Process(void* data)
@@ -304,7 +299,8 @@ void PortalScreenCast::Impl::StateChanged(void*, pw_stream_state old, pw_stream_
                 std::string("Portal screencast: stream state ") + pw_stream_state_as_string(old) + " -> " +
                 pw_stream_state_as_string(state) + (error ? std::string(" (") + error + ")" : std::string())
             );
-        });
+        }
+    );
 }
 
 const pw_stream_events PortalScreenCast::Impl::kEvents = []() noexcept
@@ -336,8 +332,8 @@ void PortalScreenCast::Impl::OnParamChanged(std::uint32_t id, const spa_pod* par
     format = info;
 
     LOG_INFO(
-        "Portal screencast: negotiated " + std::to_string(info.info.raw.size.width) + "x" +
-        std::to_string(info.info.raw.size.height) + " format " + std::to_string(static_cast<int>(info.info.raw.format))
+        "Portal screencast: negotiated " + std::to_string(info.info.raw.size.width) + "x" + std::to_string(info.info.raw.size.height) +
+        " format " + std::to_string(static_cast<int>(info.info.raw.format))
     );
 }
 
@@ -367,16 +363,10 @@ void PortalScreenCast::Impl::OnProcess()
             switch (format.info.raw.format)
             {
             case SPA_VIDEO_FORMAT_BGRx:
-            case SPA_VIDEO_FORMAT_BGRA:
-                cv::cvtColor(wrapped, converted, cv::COLOR_BGRA2GRAY);
-                break;
+            case SPA_VIDEO_FORMAT_BGRA: cv::cvtColor(wrapped, converted, cv::COLOR_BGRA2GRAY); break;
             case SPA_VIDEO_FORMAT_RGBx:
-            case SPA_VIDEO_FORMAT_RGBA:
-                cv::cvtColor(wrapped, converted, cv::COLOR_RGBA2GRAY);
-                break;
-            default:
-                converted = cv::Mat();
-                break;
+            case SPA_VIDEO_FORMAT_RGBA: cv::cvtColor(wrapped, converted, cv::COLOR_RGBA2GRAY); break;
+            default: converted = cv::Mat(); break;
             }
 
             if (!converted.empty())
@@ -390,10 +380,7 @@ void PortalScreenCast::Impl::OnProcess()
     pw_stream_queue_buffer(stream, buffer);
 }
 
-PortalScreenCast::PortalScreenCast()
-    : impl_(new Impl())
-{
-}
+PortalScreenCast::PortalScreenCast() : impl_(new Impl()) {}
 
 PortalScreenCast::~PortalScreenCast()
 {
@@ -446,8 +433,7 @@ bool CallAndWait(
     int timeoutMs
 )
 {
-    const std::string match =
-        "type='signal',interface='" + std::string(kRequestInterface) + "',path='" + requestPath + "'";
+    const std::string match = "type='signal',interface='" + std::string(kRequestInterface) + "',path='" + requestPath + "'";
 
     DBusError error;
     dbus_error_init(&error);
@@ -680,12 +666,7 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     impl_->stream = pw_stream_new(
         impl_->core,
         "runehelper-capture",
-        pw_properties_new(
-            PW_KEY_MEDIA_TYPE, "Video",
-            PW_KEY_MEDIA_CATEGORY, "Capture",
-            PW_KEY_MEDIA_ROLE, "Screen",
-            nullptr
-        )
+        pw_properties_new(PW_KEY_MEDIA_TYPE, "Video", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Screen", nullptr)
     );
 
     if (!impl_->stream)
@@ -701,19 +682,22 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     std::uint8_t podBuffer[1024];
     spa_pod_builder builder = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
 
-    spa_rectangle sizeDefault{1920, 1080};
-    spa_rectangle sizeMin{1, 1};
-    spa_rectangle sizeMax{8192, 8192};
-    spa_fraction rateDefault{10, 1};
-    spa_fraction rateMin{0, 1};
-    spa_fraction rateMax{15, 1};
+    spa_rectangle sizeDefault{ 1920, 1080 };
+    spa_rectangle sizeMin{ 1, 1 };
+    spa_rectangle sizeMax{ 8192, 8192 };
+    spa_fraction rateDefault{ 10, 1 };
+    spa_fraction rateMin{ 0, 1 };
+    spa_fraction rateMax{ 15, 1 };
 
     const spa_pod* params[1];
     params[0] = static_cast<const spa_pod*>(spa_pod_builder_add_object(
         &builder,
-        SPA_TYPE_OBJECT_Format, SPA_PARAM_EnumFormat,
-        SPA_FORMAT_mediaType, SPA_POD_Id(SPA_MEDIA_TYPE_video),
-        SPA_FORMAT_mediaSubtype, SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw),
+        SPA_TYPE_OBJECT_Format,
+        SPA_PARAM_EnumFormat,
+        SPA_FORMAT_mediaType,
+        SPA_POD_Id(SPA_MEDIA_TYPE_video),
+        SPA_FORMAT_mediaSubtype,
+        SPA_POD_Id(SPA_MEDIA_SUBTYPE_raw),
         SPA_FORMAT_VIDEO_format,
         SPA_POD_CHOICE_ENUM_Id(
             5,
@@ -723,8 +707,10 @@ bool PortalScreenCast::Start(std::string& restoreToken)
             SPA_VIDEO_FORMAT_BGRA,
             SPA_VIDEO_FORMAT_RGBA
         ),
-        SPA_FORMAT_VIDEO_size, SPA_POD_CHOICE_RANGE_Rectangle(&sizeDefault, &sizeMin, &sizeMax),
-        SPA_FORMAT_VIDEO_framerate, SPA_POD_CHOICE_RANGE_Fraction(&rateDefault, &rateMin, &rateMax)
+        SPA_FORMAT_VIDEO_size,
+        SPA_POD_CHOICE_RANGE_Rectangle(&sizeDefault, &sizeMin, &sizeMax),
+        SPA_FORMAT_VIDEO_framerate,
+        SPA_POD_CHOICE_RANGE_Fraction(&rateDefault, &rateMin, &rateMax)
     ));
 
     const int connectResult = pw_stream_connect(
@@ -756,9 +742,8 @@ bool PortalScreenCast::Start(std::string& restoreToken)
 
     LOG_INFO(
         "Portal screencast: capture stream started on node " + std::to_string(nodeId) +
-        (impl_->hasPosition
-            ? " at " + std::to_string(impl_->position.x) + "," + std::to_string(impl_->position.y)
-            : " without a reported position")
+        (impl_->hasPosition ? " at " + std::to_string(impl_->position.x) + "," + std::to_string(impl_->position.y)
+                            : " without a reported position")
     );
     return true;
 }
@@ -807,12 +792,8 @@ void PortalScreenCast::Stop()
     {
         if (!impl_->sessionHandle.empty())
         {
-            DBusMessage* message = dbus_message_new_method_call(
-                kPortalService,
-                impl_->sessionHandle.c_str(),
-                "org.freedesktop.portal.Session",
-                "Close"
-            );
+            DBusMessage* message =
+                dbus_message_new_method_call(kPortalService, impl_->sessionHandle.c_str(), "org.freedesktop.portal.Session", "Close");
 
             if (message)
             {

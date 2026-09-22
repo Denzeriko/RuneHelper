@@ -14,7 +14,6 @@
 #include "ui/ImGuiStyleSetup.h"
 #include "ui/UIManager.h"
 
-
 struct UIBackend::Impl
 {
     GLFWwindow* window = nullptr;
@@ -124,22 +123,13 @@ void UIBackend::Impl::DispatchHotkeyAction(HotkeyAction action)
 
     switch (action)
     {
-    case HotkeyAction::ToggleOcr:
-        manager->RequestToggleOCR();
-        break;
-    case HotkeyAction::SingleSnapshot:
-        manager->RequestSingleSnapshot();
-        break;
-    case HotkeyAction::SelectRegion:
-        manager->RequestSelectRegion();
-        break;
+    case HotkeyAction::ToggleOcr: manager->RequestToggleOCR(); break;
+    case HotkeyAction::SingleSnapshot: manager->RequestSingleSnapshot(); break;
+    case HotkeyAction::SelectRegion: manager->RequestSelectRegion(); break;
     }
 }
 
-UIBackend::UIBackend()
-    : impl_(new Impl())
-{
-}
+UIBackend::UIBackend() : impl_(new Impl()) {}
 
 UIBackend::~UIBackend()
 {
@@ -265,9 +255,7 @@ bool UIBackend::BeginFrame()
 
     const auto now = std::chrono::steady_clock::now();
 
-    const bool interactive =
-        glfwGetWindowAttrib(impl_->window, GLFW_FOCUSED) ||
-        glfwGetWindowAttrib(impl_->window, GLFW_HOVERED);
+    const bool interactive = glfwGetWindowAttrib(impl_->window, GLFW_FOCUSED) || glfwGetWindowAttrib(impl_->window, GLFW_HOVERED);
 
     if (!interactive && now - impl_->lastFrame < std::chrono::milliseconds(kUnfocusedFrameIntervalMs))
         return false;
@@ -363,7 +351,6 @@ bool UIBackend::CaptureNextHotkey(int& key)
 
     return false;
 }
-
 
 void UIBackend::RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int selectRegionKey)
 {

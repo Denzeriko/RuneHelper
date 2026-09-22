@@ -9,18 +9,11 @@
 
 #include "core/Logger.h"
 
-const wl_registry_listener WaylandSession::kRegistryListener = {
-    &WaylandSession::HandleGlobal,
-    &WaylandSession::HandleGlobalRemove
-};
+const wl_registry_listener WaylandSession::kRegistryListener = { &WaylandSession::HandleGlobal, &WaylandSession::HandleGlobalRemove };
 
 const wl_output_listener WaylandSession::kOutputListener = {
-    &WaylandSession::HandleOutputGeometry,
-    &WaylandSession::HandleOutputMode,
-    &WaylandSession::HandleOutputDone,
-    &WaylandSession::HandleOutputScale,
-    &WaylandSession::HandleOutputName,
-    &WaylandSession::HandleOutputDescription
+    &WaylandSession::HandleOutputGeometry, &WaylandSession::HandleOutputMode, &WaylandSession::HandleOutputDone,
+    &WaylandSession::HandleOutputScale,    &WaylandSession::HandleOutputName, &WaylandSession::HandleOutputDescription
 };
 
 int WaylandOutput::LogicalWidth() const
@@ -50,9 +43,8 @@ void WaylandSession::HandleGlobal(void* data, wl_registry* registry, std::uint32
 
     if (iface == wl_compositor_interface.name)
     {
-        session->compositor_ = static_cast<wl_compositor*>(
-            wl_registry_bind(registry, name, &wl_compositor_interface, std::min(version, 4u))
-        );
+        session->compositor_ =
+            static_cast<wl_compositor*>(wl_registry_bind(registry, name, &wl_compositor_interface, std::min(version, 4u)));
     }
     else if (iface == wl_shm_interface.name)
     {
@@ -64,9 +56,8 @@ void WaylandSession::HandleGlobal(void* data, wl_registry* registry, std::uint32
     }
     else if (iface == zwlr_layer_shell_v1_interface.name)
     {
-        session->layerShell_ = static_cast<zwlr_layer_shell_v1*>(
-            wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, std::min(version, 4u))
-        );
+        session->layerShell_ =
+            static_cast<zwlr_layer_shell_v1*>(wl_registry_bind(registry, name, &zwlr_layer_shell_v1_interface, std::min(version, 4u)));
     }
     else if (iface == zwlr_screencopy_manager_v1_interface.name)
     {
@@ -78,9 +69,7 @@ void WaylandSession::HandleGlobal(void* data, wl_registry* registry, std::uint32
     {
         WaylandOutput entry;
         entry.globalName = name;
-        entry.output = static_cast<wl_output*>(
-            wl_registry_bind(registry, name, &wl_output_interface, std::min(version, 4u))
-        );
+        entry.output = static_cast<wl_output*>(wl_registry_bind(registry, name, &wl_output_interface, std::min(version, 4u)));
 
         session->outputs_.push_back(entry);
         wl_output_add_listener(session->outputs_.back().output, &kOutputListener, session);
@@ -108,16 +97,23 @@ void WaylandSession::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t 
 
 WaylandOutput* WaylandSession::FindOutput(wl_output* output)
 {
-    auto it = std::find_if(
-        outputs_.begin(),
-        outputs_.end(),
-        [output](const WaylandOutput& entry) { return entry.output == output; }
-    );
+    auto it = std::find_if(outputs_.begin(), outputs_.end(), [output](const WaylandOutput& entry) { return entry.output == output; });
 
     return it == outputs_.end() ? nullptr : &(*it);
 }
 
-void WaylandSession::HandleOutputGeometry(void* data, wl_output* output, std::int32_t x, std::int32_t y, std::int32_t, std::int32_t, std::int32_t, const char*, const char*, std::int32_t)
+void WaylandSession::HandleOutputGeometry(
+    void* data,
+    wl_output* output,
+    std::int32_t x,
+    std::int32_t y,
+    std::int32_t,
+    std::int32_t,
+    std::int32_t,
+    const char*,
+    const char*,
+    std::int32_t
+)
 {
     if (WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(output))
     {
@@ -126,7 +122,14 @@ void WaylandSession::HandleOutputGeometry(void* data, wl_output* output, std::in
     }
 }
 
-void WaylandSession::HandleOutputMode(void* data, wl_output* output, std::uint32_t flags, std::int32_t width, std::int32_t height, std::int32_t)
+void WaylandSession::HandleOutputMode(
+    void* data,
+    wl_output* output,
+    std::uint32_t flags,
+    std::int32_t width,
+    std::int32_t height,
+    std::int32_t
+)
 {
     if (!(flags & WL_OUTPUT_MODE_CURRENT))
         return;
@@ -138,9 +141,7 @@ void WaylandSession::HandleOutputMode(void* data, wl_output* output, std::uint32
     }
 }
 
-void WaylandSession::HandleOutputDone(void*, wl_output*)
-{
-}
+void WaylandSession::HandleOutputDone(void*, wl_output*) {}
 
 void WaylandSession::HandleOutputScale(void* data, wl_output* output, std::int32_t factor)
 {
@@ -148,13 +149,9 @@ void WaylandSession::HandleOutputScale(void* data, wl_output* output, std::int32
         entry->scale = factor > 0 ? factor : 1;
 }
 
-void WaylandSession::HandleOutputName(void*, wl_output*, const char*)
-{
-}
+void WaylandSession::HandleOutputName(void*, wl_output*, const char*) {}
 
-void WaylandSession::HandleOutputDescription(void*, wl_output*, const char*)
-{
-}
+void WaylandSession::HandleOutputDescription(void*, wl_output*, const char*) {}
 
 bool WaylandSession::Connect()
 {
@@ -426,12 +423,7 @@ bool WaylandShmBuffer::Create(wl_shm* shm, int width, int height, int stride, st
 
 bool WaylandShmBuffer::Matches(int width, int height, int stride, std::uint32_t format) const
 {
-    return buffer_ != nullptr &&
-           data_ != nullptr &&
-           width_ == width &&
-           height_ == height &&
-           stride_ == stride &&
-           format_ == format;
+    return buffer_ != nullptr && data_ != nullptr && width_ == width && height_ == height && stride_ == stride && format_ == format;
 }
 
 void WaylandShmBuffer::Destroy()

@@ -37,10 +37,8 @@ void LogXwaylandHint()
     if (!wayland || !*wayland)
         return;
 
-    LOG_ERROR(
-        "This looks like Xwayland: the X11 build cannot capture the screen on a Wayland compositor. "
-        "Use the Wayland build of RuneHelper instead."
-    );
+    LOG_ERROR("This looks like Xwayland: the X11 build cannot capture the screen on a Wayland compositor. "
+              "Use the Wayland build of RuneHelper instead.");
 }
 
 int TrapXCaptureError(Display*, XErrorEvent* error)
@@ -55,9 +53,8 @@ int TrapXCaptureError(Display*, XErrorEvent* error)
     LogXwaylandHint();
 
     LOG_ERROR(
-        "Linux screen capture: X error, code " + std::to_string(static_cast<int>(error->error_code)) +
-        ", request " + std::to_string(static_cast<int>(error->request_code)) +
-        " (further capture errors are not repeated until a capture succeeds)"
+        "Linux screen capture: X error, code " + std::to_string(static_cast<int>(error->error_code)) + ", request " +
+        std::to_string(static_cast<int>(error->request_code)) + " (further capture errors are not repeated until a capture succeeds)"
     );
 
     return 0;
@@ -189,10 +186,7 @@ private:
 class DisplayConnection
 {
 public:
-    ~DisplayConnection()
-    {
-        Drop();
-    }
+    ~DisplayConnection() { Drop(); }
 
     Display* Get()
     {
@@ -212,10 +206,7 @@ public:
         display_ = nullptr;
     }
 
-    SharedImage& Shared()
-    {
-        return shared_;
-    }
+    SharedImage& Shared() { return shared_; }
 
 private:
     Display* display_ = nullptr;
@@ -272,9 +263,7 @@ unsigned char ScaleChannel(unsigned long pixel, unsigned long mask, const Channe
 
 bool IsPackedBgr(const XImage& image)
 {
-    return image.byte_order == LSBFirst &&
-           image.red_mask == 0x00ff0000UL &&
-           image.green_mask == 0x0000ff00UL &&
+    return image.byte_order == LSBFirst && image.red_mask == 0x00ff0000UL && image.green_mask == 0x0000ff00UL &&
            image.blue_mask == 0x000000ffUL;
 }
 
@@ -284,13 +273,7 @@ cv::Mat ToGray(const XImage& image, const cv::Size& size)
     {
         if (image.bits_per_pixel == 32)
         {
-            const cv::Mat wrapped(
-                size.height,
-                size.width,
-                CV_8UC4,
-                image.data,
-                static_cast<std::size_t>(image.bytes_per_line)
-            );
+            const cv::Mat wrapped(size.height, size.width, CV_8UC4, image.data, static_cast<std::size_t>(image.bytes_per_line));
 
             cv::Mat result;
             cv::cvtColor(wrapped, result, cv::COLOR_BGRA2GRAY);
@@ -300,13 +283,7 @@ cv::Mat ToGray(const XImage& image, const cv::Size& size)
 
         if (image.bits_per_pixel == 24)
         {
-            const cv::Mat wrapped(
-                size.height,
-                size.width,
-                CV_8UC3,
-                image.data,
-                static_cast<std::size_t>(image.bytes_per_line)
-            );
+            const cv::Mat wrapped(size.height, size.width, CV_8UC3, image.data, static_cast<std::size_t>(image.bytes_per_line));
 
             cv::Mat result;
             cv::cvtColor(wrapped, result, cv::COLOR_BGR2GRAY);

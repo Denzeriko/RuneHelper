@@ -14,12 +14,7 @@
 
 namespace
 {
-constexpr std::array<unsigned int, 4> kGrabModifiers = {
-    0,
-    LockMask,
-    Mod2Mask,
-    LockMask | Mod2Mask
-};
+constexpr std::array<unsigned int, 4> kGrabModifiers = { 0, LockMask, Mod2Mask, LockMask | Mod2Mask };
 
 struct RegisteredHotkey
 {
@@ -202,18 +197,10 @@ void X11Hotkeys::Register(int toggleOcrKey, int singleSnapshotKey, int selectReg
 
         for (unsigned int modifier : kGrabModifiers)
         {
-            XGrabKey(
-                display_,
-                keycode,
-                modifier,
-                rootWindow_,
-                False,
-                GrabModeAsync,
-                GrabModeAsync
-            );
+            XGrabKey(display_, keycode, modifier, rootWindow_, False, GrabModeAsync, GrabModeAsync);
         }
 
-        registered_.push_back({keycode, action});
+        registered_.push_back({ keycode, action });
     };
 
     grabHotkey(toggleOcrKey, HotkeyAction::ToggleOcr, "toggle OCR");

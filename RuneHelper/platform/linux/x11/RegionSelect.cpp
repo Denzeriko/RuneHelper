@@ -38,15 +38,7 @@ void DrawSelectionRect(Display* display, Window root, GC gc, const cv::Rect& rec
     if (rect.empty())
         return;
 
-    XDrawRectangle(
-        display,
-        root,
-        gc,
-        rect.x,
-        rect.y,
-        static_cast<unsigned int>(rect.width),
-        static_cast<unsigned int>(rect.height)
-    );
+    XDrawRectangle(display, root, gc, rect.x, rect.y, static_cast<unsigned int>(rect.width), static_cast<unsigned int>(rect.height));
     XFlush(display);
 }
 }
@@ -98,12 +90,7 @@ cv::Rect RegionSelector::Select()
     values.subwindow_mode = IncludeInferiors;
     values.line_width = 2;
 
-    GC gc = XCreateGC(
-        display,
-        root,
-        GCFunction | GCForeground | GCSubwindowMode | GCLineWidth,
-        &values
-    );
+    GC gc = XCreateGC(display, root, GCFunction | GCForeground | GCSubwindowMode | GCLineWidth, &values);
 
     LOG_INFO("Linux region selection started");
 
@@ -183,10 +170,8 @@ cv::Rect RegionSelector::Select()
     }
 
     LOG_INFO(
-        "Linux region selected: x=" + std::to_string(selectedRect.x) +
-        " y=" + std::to_string(selectedRect.y) +
-        " w=" + std::to_string(selectedRect.width) +
-        " h=" + std::to_string(selectedRect.height)
+        "Linux region selected: x=" + std::to_string(selectedRect.x) + " y=" + std::to_string(selectedRect.y) +
+        " w=" + std::to_string(selectedRect.width) + " h=" + std::to_string(selectedRect.height)
     );
 
     return selectedRect;

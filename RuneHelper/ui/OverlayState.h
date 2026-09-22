@@ -17,11 +17,7 @@ struct OverlayRect
 
 constexpr OverlayColor OverlayRgb(int r, int g, int b)
 {
-    return static_cast<OverlayColor>(
-        (r & 0xff) |
-        ((g & 0xff) << 8) |
-        ((b & 0xff) << 16)
-    );
+    return static_cast<OverlayColor>((r & 0xff) | ((g & 0xff) << 8) | ((b & 0xff) << 16));
 }
 
 struct OverlayText
@@ -44,20 +40,12 @@ struct OverlayMark
 
 inline bool ApproxEqual(const OverlayText& a, const OverlayText& b, int yTolerance = 0)
 {
-    return a.x == b.x
-        && std::abs(a.y - b.y) <= yTolerance
-        && a.fontSize == b.fontSize
-        && a.color == b.color
-        && a.text == b.text;
+    return a.x == b.x && std::abs(a.y - b.y) <= yTolerance && a.fontSize == b.fontSize && a.color == b.color && a.text == b.text;
 }
 
 inline bool ApproxEqual(const OverlayMark& a, const OverlayMark& b, int yTolerance = 0)
 {
-    return a.x == b.x
-        && std::abs(a.y - b.y) <= yTolerance
-        && a.width == b.width
-        && a.height == b.height
-        && a.color == b.color;
+    return a.x == b.x && std::abs(a.y - b.y) <= yTolerance && a.width == b.width && a.height == b.height && a.color == b.color;
 }
 
 template <typename T>
@@ -84,8 +72,7 @@ struct OverlayFrame
 
     bool ApproxEquals(const OverlayFrame& other, int yTolerance = 0) const
     {
-        return ApproxEqual(texts, other.texts, yTolerance)
-            && ApproxEqual(marks, other.marks, yTolerance);
+        return ApproxEqual(texts, other.texts, yTolerance) && ApproxEqual(marks, other.marks, yTolerance);
     }
 };
 

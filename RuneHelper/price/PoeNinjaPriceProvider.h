@@ -17,6 +17,11 @@ public:
 private:
     static std::string EncodeUrlComponent(const std::string& text);
 
-    PriceTable DownloadCategory(cpr::Session& session, const std::string& encodedLeague, const std::string& type, const std::stop_token& stop);
+    PriceTable DownloadCategory(
+        cpr::Session& session,
+        const std::string& encodedLeague,
+        const std::string& type,
+        const std::stop_token& stop
+    );
     PriceTable ParseCategoryDump(const nlohmann::json& j);
 };

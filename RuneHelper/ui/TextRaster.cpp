@@ -273,7 +273,8 @@ struct TextRaster::Impl
                 glyph.width,
                 scale,
                 scale,
-                static_cast<int>(codepoint));
+                static_cast<int>(codepoint)
+            );
         }
 
         return glyphs.emplace(key, std::move(glyph)).first->second;
@@ -293,8 +294,7 @@ struct TextRaster::Impl
     }
 };
 
-TextRaster::TextRaster()
-    : impl_(std::make_unique<Impl>())
+TextRaster::TextRaster() : impl_(std::make_unique<Impl>())
 {
     const std::filesystem::path path = FindFont();
 
@@ -367,10 +367,7 @@ cv::Size TextRaster::Measure(const std::string& utf8, int pixelHeight)
 
         if (i + 1 < points.size())
         {
-            const int kern = stbtt_GetCodepointKernAdvance(
-                &impl_->info,
-                static_cast<int>(points[i]),
-                static_cast<int>(points[i + 1]));
+            const int kern = stbtt_GetCodepointKernAdvance(&impl_->info, static_cast<int>(points[i]), static_cast<int>(points[i + 1]));
 
             width += static_cast<int>(std::lround(kern * scale));
         }
@@ -389,7 +386,8 @@ void TextRaster::Draw(
     const cv::Point& baseline,
     int pixelHeight,
     const cv::Scalar& color,
-    bool outline)
+    bool outline
+)
 {
     if (!impl_->ready || canvas.empty() || canvas.type() != CV_8UC4)
         return;
@@ -466,10 +464,7 @@ void TextRaster::Draw(
 
         if (i + 1 < points.size())
         {
-            const int kern = stbtt_GetCodepointKernAdvance(
-                &impl_->info,
-                static_cast<int>(points[i]),
-                static_cast<int>(points[i + 1]));
+            const int kern = stbtt_GetCodepointKernAdvance(&impl_->info, static_cast<int>(points[i]), static_cast<int>(points[i + 1]));
 
             pen += static_cast<int>(std::lround(kern * scale));
         }

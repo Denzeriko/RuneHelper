@@ -37,6 +37,7 @@ public:
     void DrawMainControls(UIManager& manager) override;
 
     const char* TabTitle() const override { return "Expedition"; }
+
     void DrawTab(UIManager& manager) override;
 
 private:

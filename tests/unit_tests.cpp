@@ -108,10 +108,7 @@ void TestLootParser()
 {
     Section("LootParser::ParseLootLine");
 
-    auto parse = [](const std::string& line)
-    {
-        return LootParser::ParseLootLine(line);
-    };
+    auto parse = [](const std::string& line) { return LootParser::ParseLootLine(line); };
 
     auto name = [&parse](const std::string& line) { return parse(line).itemName; };
     auto qty = [&parse](const std::string& line) { return parse(line).quantity; };
@@ -261,8 +258,7 @@ void TestPriceCacheDump()
 
 int main()
 {
-    const std::filesystem::path sandbox =
-        std::filesystem::temp_directory_path() / "runehelper-unit-tests";
+    const std::filesystem::path sandbox = std::filesystem::temp_directory_path() / "runehelper-unit-tests";
 
     std::error_code ec;
     std::filesystem::remove_all(sandbox, ec);
