@@ -41,6 +41,15 @@ constexpr double kReferenceTextP95 = 190.0;
 constexpr double kTextLevelTolerance = 12.0;
 constexpr double kHeldLevelTolerance = 6.0;
 
+constexpr int kMinPanelSide = 64;
+constexpr int kMinPanelEdgeContrast = 12;
+constexpr int kPanelEdgeSpan = 3;
+constexpr double kPanelEdgeShare = 0.30;
+constexpr double kPanelLeftEdgeShare = 0.50;
+constexpr float kPanelRowDensity = 0.40f;
+constexpr double kPanelMinMargin = 0.05;
+constexpr int kHeldPanelTolerance = 2;
+
 struct PreparedGray
 {
     cv::Mat gray;
@@ -101,7 +110,7 @@ PreparedGray PrepareGray(const cv::Mat& source, const std::optional<TextLevels>&
     if (source.cols > kMaxNativeWidth)
     {
         cv::Mat reduced;
-        prepared.scale = static_cast<double>(kReducedWidth) / source.cols;
+        prepared.scale = ReadingScale(source.cols);
         cv::resize(source, reduced, cv::Size(), prepared.scale, prepared.scale, cv::INTER_AREA);
 
         prepared.gray = reduced;
@@ -123,20 +132,155 @@ PreparedGray PrepareGray(const cv::Mat& source, const std::optional<TextLevels>&
             return prepared;
     }
 
-    const double gain = (kReferenceTextP95 - kReferenceTextP25) / (prepared.levels.p95 - prepared.levels.p25);
-
-    cv::Mat lut(1, 256, CV_8U);
-
-    for (int level = 0; level < 256; ++level)
-        lut.at<unsigned char>(level) = cv::saturate_cast<unsigned char>(kReferenceTextP25 + (level - prepared.levels.p25) * gain);
-
-    cv::Mat normalized;
-    cv::LUT(prepared.gray, lut, normalized);
-
-    prepared.gray = normalized;
+    prepared.gray = NormalizeTextLevels(prepared.gray, prepared.levels);
     prepared.normalized = true;
 
     return prepared;
+}
+
+int EdgeThreshold(const cv::Mat& gray)
+{
+    std::array<int, 256> histogram{};
+
+    for (int y = 0; y < gray.rows; ++y)
+    {
+        const unsigned char* row = gray.ptr<unsigned char>(y);
+
+        for (int x = 0; x < gray.cols; ++x)
+            ++histogram[row[x]];
+    }
+
+    auto percentile = [&histogram, &gray](double share)
+    {
+        const double wanted = share * static_cast<double>(gray.total());
+        double seen = 0.0;
+
+        for (int level = 0; level < 256; ++level)
+        {
+            seen += histogram[level];
+
+            if (seen >= wanted)
+                return level;
+        }
+
+        return 255;
+    };
+
+    return std::max(kMinPanelEdgeContrast, (percentile(0.95) - percentile(0.05)) / 5);
+}
+
+int StrongestColumn(const int* counts, int from, int to)
+{
+    int best = -1;
+
+    for (int x = std::max(0, from); x < to; ++x)
+    {
+        if (best < 0 || counts[x] > counts[best])
+            best = x;
+    }
+
+    return best;
+}
+
+cv::Rect FindPanel(const cv::Mat& gray)
+{
+    const cv::Rect whole(0, 0, gray.cols, gray.rows);
+
+    if (gray.cols < kMinPanelSide || gray.rows < kMinPanelSide)
+        return whole;
+
+    const int threshold = EdgeThreshold(gray);
+
+    cv::Mat smooth;
+    cv::blur(gray, smooth, cv::Size(2 * kPanelEdgeSpan + 1, 1));
+
+    const int width = gray.cols - 2 * kPanelEdgeSpan;
+
+    cv::Mat change;
+    cv::subtract(
+        smooth(cv::Rect(0, 0, width, gray.rows)),
+        smooth(cv::Rect(2 * kPanelEdgeSpan, 0, width, gray.rows)),
+        change,
+        cv::noArray(),
+        CV_16S
+    );
+
+    const cv::Mat darkening = change > threshold;
+    const cv::Mat brightening = change < -threshold;
+
+    cv::Mat darkeningPerColumn;
+    cv::Mat brighteningPerColumn;
+    cv::reduce(darkening, darkeningPerColumn, 0, cv::REDUCE_SUM, CV_32S);
+    cv::reduce(brightening, brighteningPerColumn, 0, cv::REDUCE_SUM, CV_32S);
+
+    const int* darkeningRows = darkeningPerColumn.ptr<int>(0);
+    const int* brighteningRows = brighteningPerColumn.ptr<int>(0);
+
+    const int right = StrongestColumn(darkeningRows, width * 55 / 100, width);
+
+    if (right < 0 || darkeningRows[right] < kPanelEdgeShare * 255.0 * gray.rows)
+        return whole;
+
+    std::vector<float> edgeRows(static_cast<std::size_t>(gray.rows), 0.0f);
+
+    for (int y = 0; y < gray.rows; ++y)
+    {
+        const unsigned char* row = darkening.ptr<unsigned char>(y);
+
+        for (int x = std::max(0, right - 1); x <= std::min(width - 1, right + 1); ++x)
+        {
+            if (row[x] != 0)
+                edgeRows[static_cast<std::size_t>(y)] = 1.0f;
+        }
+    }
+
+    cv::Mat density;
+    cv::blur(
+        cv::Mat(gray.rows, 1, CV_32F, edgeRows.data()),
+        density,
+        cv::Size(1, std::max(8, gray.rows / 16)),
+        cv::Point(-1, -1),
+        cv::BORDER_REPLICATE
+    );
+
+    int top = -1;
+    int bottom = -1;
+
+    for (int y = 0; y < gray.rows; ++y)
+    {
+        if (density.at<float>(y) < kPanelRowDensity)
+            continue;
+
+        if (top < 0)
+            top = y;
+
+        bottom = y;
+    }
+
+    if (top < 0)
+        return whole;
+
+    const int left = StrongestColumn(brighteningRows, 0, width / 4);
+    const bool framedLeft = left >= 0 && brighteningRows[left] >= kPanelLeftEdgeShare * darkeningRows[right];
+
+    const int panelLeft = framedLeft ? left + kPanelEdgeSpan : 0;
+    const int panelRight = right + kPanelEdgeSpan;
+
+    const int sideMargin = static_cast<int>(gray.cols * kPanelMinMargin);
+    const int endMargin = static_cast<int>(gray.rows * kPanelMinMargin);
+
+    const int cropLeft = panelLeft >= sideMargin ? panelLeft : 0;
+    const int cropRight = gray.cols - panelRight >= sideMargin ? panelRight : gray.cols;
+    const int cropTop = top >= endMargin ? top : 0;
+    const int cropBottom = gray.rows - 1 - bottom >= endMargin ? bottom + 1 : gray.rows;
+
+    return cv::Rect(cropLeft, cropTop, cropRight - cropLeft, cropBottom - cropTop) & whole;
+}
+
+bool ClosePanels(const cv::Rect& a, const cv::Rect& b)
+{
+    return std::abs(a.x - b.x) <= kHeldPanelTolerance && std::abs(a.y - b.y) <= kHeldPanelTolerance &&
+           std::abs(a.br().x - b.br().x) <= kHeldPanelTolerance && std::abs(a.br().y - b.br().y) <= kHeldPanelTolerance;
 }
 
 int ToSource(int value, double scale)
@@ -153,6 +297,29 @@ std::size_t OcrWorkerCount()
 
     return (std::min)(kMaxOcrWorkers, static_cast<std::size_t>(hardware / 2));
 }
+}
+
+double ReadingScale(int width)
+{
+    return width > kMaxNativeWidth ? static_cast<double>(kReducedWidth) / width : 1.0;
+}
+
+cv::Mat NormalizeTextLevels(const cv::Mat& gray, const TextLevels& levels)
+{
+    if (levels.p95 <= levels.p25)
+        return gray;
+
+    const double gain = (kReferenceTextP95 - kReferenceTextP25) / (levels.p95 - levels.p25);
+
+    cv::Mat lut(1, 256, CV_8U);
+
+    for (int level = 0; level < 256; ++level)
+        lut.at<unsigned char>(level) = cv::saturate_cast<unsigned char>(kReferenceTextP25 + (level - levels.p25) * gain);
+
+    cv::Mat normalized;
+    cv::LUT(gray, lut, normalized);
+
+    return normalized;
 }
 
 bool OCR::Init(std::string_view traineddata)
@@ -710,12 +877,12 @@ void OCR::ReportPreparation(bool scaled, bool normalized, int sourceWidth, int r
         if (scaled)
         {
             LOG_INFO(
-                "OCR: the region is " + std::to_string(sourceWidth) + " px wide, text is read at " + std::to_string(readWidth) + " px"
+                "OCR: the panel is " + std::to_string(sourceWidth) + " px wide, text is read at " + std::to_string(readWidth) + " px"
             );
         }
         else
         {
-            LOG_INFO("OCR: the region is read at its own size");
+            LOG_INFO("OCR: the panel is read at its own size");
         }
     }
 
@@ -737,6 +904,29 @@ void OCR::ReportPreparation(bool scaled, bool normalized, int sourceWidth, int r
     }
 }
 
+void OCR::ReportPanel(const cv::Rect& panel, const cv::Size& source)
+{
+    const bool trimmed = panel.size() != source;
+
+    if (trimmed == readTrimmed_)
+        return;
+
+    readTrimmed_ = trimmed;
+
+    if (trimmed)
+    {
+        LOG_INFO(
+            "OCR: the region is " + std::to_string(source.width) + "x" + std::to_string(source.height) + ", only the " +
+            std::to_string(panel.width) + "x" + std::to_string(panel.height) + " loot panel at " + std::to_string(panel.x) + "," +
+            std::to_string(panel.y) + " inside it is read"
+        );
+    }
+    else
+    {
+        LOG_INFO("OCR: the whole region is read");
+    }
+}
+
 std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig& config, OcrRowCache* rowCache)
 {
     setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
@@ -750,13 +940,27 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
     if (apis_.empty())
         return result;
 
-    const PreparedGray prepared = PrepareGray(source, rowCache ? rowCache->Levels() : std::nullopt);
+    const cv::Rect whole(0, 0, source.cols, source.rows);
+    cv::Rect panel = FindPanel(source);
+
+    if (rowCache)
+    {
+        const std::optional<cv::Rect>& held = rowCache->Panel();
+
+        if (held && ClosePanels(*held, panel) && (*held & whole) == *held)
+            panel = *held;
+
+        rowCache->SetPanel(panel);
+    }
+
+    const PreparedGray prepared = PrepareGray(source(panel), rowCache ? rowCache->Levels() : std::nullopt);
     const cv::Mat& gray = prepared.gray;
 
     if (rowCache)
         rowCache->SetLevels(prepared.normalized ? std::optional<TextLevels>(prepared.levels) : std::nullopt);
 
-    ReportPreparation(prepared.scaled, prepared.normalized, source.cols, gray.cols, prepared.levels.p50, prepared.levels.p95);
+    ReportPanel(panel, source.size());
+    ReportPreparation(prepared.scaled, prepared.normalized, panel.width, gray.cols, prepared.levels.p50, prepared.levels.p95);
 
     bool debugOCR = config.debugOCR;
     std::filesystem::path debugDir;
@@ -773,7 +977,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
         {
             SaveOcrDebugImage(debugDir / "source.png", source);
 
-            if (prepared.scaled || prepared.normalized)
+            if (prepared.scaled || prepared.normalized || panel != whole)
                 SaveOcrDebugImage(debugDir / "prepared.png", gray);
 
             cv::cvtColor(gray, debugRows, cv::COLOR_GRAY2BGR);
@@ -914,10 +1118,10 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
     {
         for (LootLine& line : job.lines)
         {
-            line.x1 = ToSource(line.x1 + job.offsetX, prepared.scale);
-            line.x2 = ToSource(line.x2 + job.offsetX, prepared.scale);
-            line.y1 = ToSource(line.y1 + job.offsetY, prepared.scale);
-            line.y2 = ToSource(line.y2 + job.offsetY, prepared.scale);
+            line.x1 = panel.x + ToSource(line.x1 + job.offsetX, prepared.scale);
+            line.x2 = panel.x + ToSource(line.x2 + job.offsetX, prepared.scale);
+            line.y1 = panel.y + ToSource(line.y1 + job.offsetY, prepared.scale);
+            line.y2 = panel.y + ToSource(line.y2 + job.offsetY, prepared.scale);
 
             result.push_back(std::move(line));
         }

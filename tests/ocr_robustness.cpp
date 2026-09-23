@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "OcrScoring.h"
+#include "TestScenes.h"
 #include "core/Config.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OCR.h"
@@ -29,7 +30,8 @@ struct Case
     double offset = 0.0;
     double gamma = 1.0;
     double screenWidth = 0.0;
-    bool looseCrop = false;
+    Surroundings surroundings = Surroundings::None;
+    double margin = 1.0;
     int minimumPriced = 0;
 };
 
@@ -56,26 +58,9 @@ cv::Mat ApplyLevels(const cv::Mat& gray, const Case& shift)
     return shifted;
 }
 
-cv::Mat SurroundWithGame(const cv::Mat& gray)
-{
-    const int side = gray.cols / 5;
-    const int top = gray.rows / 10;
-
-    cv::Mat framed(gray.rows + 2 * top, gray.cols + 2 * side, CV_8UC1);
-    cv::RNG rng(12345);
-    rng.fill(framed, cv::RNG::UNIFORM, 15, 70);
-    cv::GaussianBlur(framed, framed, cv::Size(9, 9), 3);
-    gray.copyTo(framed(cv::Rect(side, top, gray.cols, gray.rows)));
-
-    return framed;
-}
-
 cv::Mat Render(const Panel& panel, const Case& shift)
 {
-    cv::Mat gray = ApplyLevels(panel.gray, shift);
-
-    if (shift.looseCrop)
-        gray = SurroundWithGame(gray);
+    cv::Mat gray = SurroundWithGame(ApplyLevels(panel.gray, shift), shift.surroundings, shift.margin);
 
     if (shift.screenWidth > 0.0)
     {
@@ -154,8 +139,11 @@ int main(int argc, char** argv)
         { .label = "3200 wide screen", .screenWidth = 3200.0, .minimumPriced = 225 },
         { .label = "4K screen", .screenWidth = 3840.0, .minimumPriced = 225 },
         { .label = "4K screen, dim 0.7x", .gain = 0.7, .screenWidth = 3840.0, .minimumPriced = 225 },
-        { .label = "loose crop over the game", .looseCrop = true, .minimumPriced = 204 },
-        { .label = "loose crop, dim 0.7x", .gain = 0.7, .looseCrop = true, .minimumPriced = 218 },
+        { .label = "loose crop over the game", .surroundings = Surroundings::Dark, .minimumPriced = 225 },
+        { .label = "loose crop, dim 0.7x", .gain = 0.7, .surroundings = Surroundings::Dark, .minimumPriced = 225 },
+        { .label = "loose crop, bright game", .surroundings = Surroundings::Bright, .minimumPriced = 225 },
+        { .label = "loose crop, busy game", .surroundings = Surroundings::Busy, .minimumPriced = 225 },
+        { .label = "narrow margin, busy game", .surroundings = Surroundings::Busy, .margin = 0.3, .minimumPriced = 225 },
     };
 
     const AppConfig config;

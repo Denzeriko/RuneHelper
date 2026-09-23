@@ -1,8 +1,11 @@
 #pragma once
 
+#include <optional>
 #include <vector>
 
 #include <opencv2/core.hpp>
+
+#include "ocr/OCR.h"
 
 struct RuneTileBand
 {
@@ -15,7 +18,7 @@ struct RuneTileBand
 class RuneTileLocator
 {
 public:
-    bool Analyze(const cv::Mat& gray);
+    bool Analyze(const cv::Mat& gray, const cv::Rect& panel, const std::optional<TextLevels>& levels);
 
     bool Valid() const { return valid_; }
 
@@ -26,8 +29,11 @@ public:
 private:
     const RuneTileBand* BandContaining(int y) const;
     const RuneTileBand* BandAbove(int y) const;
-    std::vector<cv::Rect> TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const;
+    std::vector<cv::Rect> TilesIn(const cv::Mat& image, const RuneTileBand& band, int count) const;
+    cv::Mat PanelView(const cv::Mat& image) const;
 
     bool valid_ = false;
+    cv::Rect panel_;
+    double scale_ = 1.0;
     std::vector<RuneTileBand> bands_;
 };

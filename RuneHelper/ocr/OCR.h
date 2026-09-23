@@ -29,6 +29,9 @@ struct TextLevels
     double p95 = 0.0;
 };
 
+double ReadingScale(int width);
+cv::Mat NormalizeTextLevels(const cv::Mat& gray, const TextLevels& levels);
+
 class OcrRowCache;
 
 class OCR
@@ -53,10 +56,12 @@ public:
 
 private:
     void ReportPreparation(bool scaled, bool normalized, int sourceWidth, int readWidth, double p50, double p95);
+    void ReportPanel(const cv::Rect& panel, const cv::Size& source);
 
     bool initialized_ = false;
     bool readScaled_ = false;
     bool readNormalized_ = false;
+    bool readTrimmed_ = false;
 
     std::vector<std::unique_ptr<tesseract::TessBaseAPI>> apis_;
     std::mutex apiMutex_;

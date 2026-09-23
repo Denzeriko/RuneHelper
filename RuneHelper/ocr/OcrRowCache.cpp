@@ -37,6 +37,7 @@ void OcrRowCache::Reset()
 {
     rows_.clear();
     levels_.reset();
+    panel_.reset();
     ResetCounters();
 }
 

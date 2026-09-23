@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -9,6 +10,7 @@
 #include "core/Config.h"
 #include "core/DebugData.h"
 #include "ocr/LootRows.h"
+#include "ocr/OCR.h"
 #include "ui/OverlayState.h"
 
 class ConfigManager;
@@ -41,6 +43,9 @@ struct FrameContext
     std::vector<RowOverlay>& rowOverlays;
     OverlayFrame& overlay;
     DebugData& debug;
+
+    cv::Rect panel;
+    std::optional<TextLevels> levels;
 };
 
 class Feature

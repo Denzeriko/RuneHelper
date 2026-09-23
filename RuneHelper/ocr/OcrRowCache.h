@@ -25,6 +25,10 @@ public:
 
     void SetLevels(const std::optional<TextLevels>& levels) { levels_ = levels; }
 
+    const std::optional<cv::Rect>& Panel() const { return panel_; }
+
+    void SetPanel(const cv::Rect& panel) { panel_ = panel; }
+
     std::size_t Hits() const { return hits_; }
 
     std::size_t Misses() const { return misses_; }
@@ -34,6 +38,7 @@ public:
 private:
     std::vector<Row> rows_;
     std::optional<TextLevels> levels_;
+    std::optional<cv::Rect> panel_;
     std::size_t hits_ = 0;
     std::size_t misses_ = 0;
 };

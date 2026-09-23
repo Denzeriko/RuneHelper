@@ -32,7 +32,9 @@ bool TimesSignAt(const std::string& line, std::size_t pos, std::size_t digitCoun
     if (line[pos] == 'x' || line[pos] == 'X')
         return true;
 
-    return digitCount == 1 && line[pos] == 'n' && pos + 1 < line.size() && line[pos + 1] == ' ';
+    const bool misreadTimes = line[pos] == 'n' || line[pos] == 'w';
+
+    return digitCount == 1 && misreadTimes && pos + 1 < line.size() && line[pos + 1] == ' ';
 }
 
 std::string StripTrailingNoise(std::string name)

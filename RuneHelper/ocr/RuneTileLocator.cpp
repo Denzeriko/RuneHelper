@@ -4,6 +4,8 @@
 #include <cmath>
 #include <vector>
 
+#include <opencv2/imgproc.hpp>
+
 namespace
 {
 constexpr int kBrightLevel = 180;
@@ -21,6 +23,50 @@ constexpr int kSeamHalfWidth = 1;
 constexpr int kCentreHalfWidth = 2;
 
 constexpr int kMaxTilesPerRow = 12;
+
+constexpr int kLightingWindowRows = 41;
+
+cv::Mat EvenRowLighting(const cv::Mat& view)
+{
+    std::vector<float> level(static_cast<std::size_t>(view.rows), 0.0f);
+    std::vector<unsigned char> values(static_cast<std::size_t>(view.cols));
+
+    for (int y = 0; y < view.rows; ++y)
+    {
+        const unsigned char* row = view.ptr<unsigned char>(y);
+        values.assign(row, row + view.cols);
+
+        auto quartile = values.begin() + static_cast<std::ptrdiff_t>(values.size() * 3 / 4);
+        std::nth_element(values.begin(), quartile, values.end());
+
+        level[static_cast<std::size_t>(y)] = *quartile;
+    }
+
+    cv::Mat reach;
+    cv::dilate(
+        cv::Mat(view.rows, 1, CV_32F, level.data()),
+        reach,
+        cv::getStructuringElement(cv::MORPH_RECT, cv::Size(1, kLightingWindowRows)),
+        cv::Point(-1, -1),
+        1,
+        cv::BORDER_REPLICATE
+    );
+
+    double brightest = 0.0;
+    cv::minMaxLoc(reach, nullptr, &brightest);
+
+    cv::Mat even(view.size(), CV_8UC1);
+
+    for (int y = 0; y < view.rows; ++y)
+    {
+        const float local = reach.at<float>(y);
+        const double gain = local > 0.0f ? brightest / local : 1.0;
+
+        view.row(y).convertTo(even.row(y), CV_8U, gain);
+    }
+
+    return even;
+}
 
 std::vector<double> ColumnSpread(const cv::Mat& gray, const RuneTileBand& band)
 {
@@ -105,7 +151,7 @@ bool StripBoundsFromSpread(const std::vector<double>& spread, int& left, int& ri
 }
 }
 
-bool RuneTileLocator::Analyze(const cv::Mat& gray)
+bool RuneTileLocator::Analyze(const cv::Mat& gray, const cv::Rect& panel, const std::optional<TextLevels>& levels)
 {
     valid_ = false;
     bands_.clear();
@@ -113,21 +159,31 @@ bool RuneTileLocator::Analyze(const cv::Mat& gray)
     if (gray.empty() || gray.type() != CV_8UC1)
         return false;
 
+    const cv::Rect whole(0, 0, gray.cols, gray.rows);
+    panel_ = panel & whole;
+
+    if (panel_.empty())
+        panel_ = whole;
+
+    scale_ = ReadingScale(panel_.width);
+
+    const cv::Mat view = EvenRowLighting(levels ? NormalizeTextLevels(PanelView(gray), *levels) : PanelView(gray));
+
     int start = -1;
 
-    for (int y = 0; y < gray.rows; ++y)
+    for (int y = 0; y < view.rows; ++y)
     {
-        const unsigned char* row = gray.ptr<unsigned char>(y);
+        const unsigned char* row = view.ptr<unsigned char>(y);
 
         int bright = 0;
 
-        for (int x = 0; x < gray.cols; ++x)
+        for (int x = 0; x < view.cols; ++x)
         {
             if (row[x] > kBrightLevel)
                 ++bright;
         }
 
-        const bool covered = static_cast<double>(bright) / gray.cols > kBandRowCoverage;
+        const bool covered = static_cast<double>(bright) / view.cols > kBandRowCoverage;
 
         if (covered && start < 0)
         {
@@ -142,8 +198,8 @@ bool RuneTileLocator::Analyze(const cv::Mat& gray)
         }
     }
 
-    if (start >= 0 && gray.rows - start >= kMinBandHeight)
-        bands_.push_back({ start, gray.rows - 1 });
+    if (start >= 0 && view.rows - start >= kMinBandHeight)
+        bands_.push_back({ start, view.rows - 1 });
 
     valid_ = !bands_.empty();
 
@@ -179,7 +235,9 @@ const RuneTileBand* RuneTileLocator::BandAbove(int y) const
 
 std::vector<cv::Rect> RuneTileLocator::TilesForRow(const cv::Mat& gray, int textTop, int count) const
 {
-    if (const RuneTileBand* band = BandContaining(textTop))
+    const int y = static_cast<int>(std::lround((textTop - panel_.y) * scale_));
+
+    if (const RuneTileBand* band = BandContaining(y))
     {
         std::vector<cv::Rect> tiles = TilesIn(gray, *band, count);
 
@@ -187,10 +245,21 @@ std::vector<cv::Rect> RuneTileLocator::TilesForRow(const cv::Mat& gray, int text
             return tiles;
     }
 
-    if (const RuneTileBand* band = BandAbove(textTop))
+    if (const RuneTileBand* band = BandAbove(y))
         return TilesIn(gray, *band, count);
 
     return {};
+}
+
+cv::Mat RuneTileLocator::PanelView(const cv::Mat& image) const
+{
+    if (scale_ >= 1.0)
+        return image(panel_);
+
+    cv::Mat reduced;
+    cv::resize(image(panel_), reduced, cv::Size(), scale_, scale_, cv::INTER_AREA);
+
+    return reduced;
 }
 
 bool RuneTileLocator::StripBounds(const cv::Mat& gray, int top, int bottom, int& left, int& right)
@@ -204,10 +273,15 @@ bool RuneTileLocator::StripBounds(const cv::Mat& gray, int top, int bottom, int&
     return StripBoundsFromSpread(ColumnSpread(gray, RuneTileBand{ top, bottom }), left, right);
 }
 
-std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTileBand& band, int count) const
+std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& image, const RuneTileBand& band, int count) const
 {
-    if (count <= 0 || count > kMaxTilesPerRow || gray.empty() || gray.type() != CV_8UC1)
+    if (count <= 0 || count > kMaxTilesPerRow || image.empty() || image.type() != CV_8UC1)
         return {};
+
+    if ((panel_ & cv::Rect(0, 0, image.cols, image.rows)) != panel_)
+        return {};
+
+    const cv::Mat gray = PanelView(image);
 
     if (band.top < 0 || band.bottom >= gray.rows || band.Height() < kMinBandHeight)
         return {};
@@ -285,7 +359,12 @@ std::vector<cv::Rect> RuneTileLocator::TilesIn(const cv::Mat& gray, const RuneTi
         if (x + w > gray.cols)
             break;
 
-        tiles.push_back(cv::Rect(x, band.top, w, band.Height()));
+        tiles.push_back(cv::Rect(
+            panel_.x + static_cast<int>(std::lround(x / scale_)),
+            panel_.y + static_cast<int>(std::lround(band.top / scale_)),
+            static_cast<int>(std::lround(w / scale_)),
+            static_cast<int>(std::lround(band.Height() / scale_))
+        ));
     }
 
     return tiles;

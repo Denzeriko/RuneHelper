@@ -50,7 +50,7 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 
 ## How to use
 
-Click **Select Region**, then drag a rectangle around the Runeshape loot list. This only needs to be done once; RuneHelper saves the selected region in its config. Select it again only if the game window, UI scale, or menu position changes.
+Click **Select Region**, then drag a rectangle around the Runeshape loot list. It does not have to be tight: when the rectangle takes in some of the game around the list, RuneHelper finds the list inside it and reads only that. This only needs to be done once; RuneHelper saves the selected region in its config. Select it again only if the game window, UI scale, or menu position changes.
 
 ![Region selection guide](assets/howto.gif)
 
@@ -58,7 +58,7 @@ Click **Select Region**, then drag a rectangle around the Runeshape loot list. T
 
 1. Select the loot area on your screen.
 2. RuneHelper periodically captures the selected region.
-3. A region wider than 750 px, as on 4K screens, is scaled down to 680 px before reading. When the text column is much darker, brighter or flatter than usual, as happens with HDR or a dimmed display, its brightness is normalised first. Correctly exposed regions of normal size are read untouched.
+3. When the region takes in part of the game around the loot panel, the panel is found by the edge where its parchment bars meet the dark frame, and only the panel is read. A panel wider than 750 px, as on 4K screens, is scaled down to 680 px before reading. When the text column is much darker, brighter or flatter than usual, as happens with HDR or a dimmed display, its brightness is normalised first. Correctly exposed regions of normal size are read untouched.
 4. The OCR pipeline finds text rows in the right side of the Runeshape loot menu. The panel frame on the right is cut off first, and only rows that reach the right edge where item names end are read, so rune icons of long recipes that spill into that side are skipped.
 5. Each detected row is cropped, binarized, and passed to Tesseract.
 6. OCR mistakes are corrected using fuzzy matching.
@@ -77,7 +77,7 @@ Linux:   ~/.config/RuneHelper/ocr_debug/latest
 The folder is overwritten on each OCR run and may contain:
 
 * `source.png` - captured source region.
-* `prepared.png` - the region as OCR reads it, written only when it was scaled down or its brightness was normalised.
+* `prepared.png` - the panel as OCR reads it, written only when it was cut out of a larger region, scaled down or had its brightness normalised.
 * `rows_detected.png` - detected text rows and crop start markers, drawn on the image OCR reads.
 * `row_XX_row.png` - detected row crop.
 * `row_XX_text.png` - text crop sent to OCR preprocessing.

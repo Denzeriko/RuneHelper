@@ -302,7 +302,7 @@ void ExpeditionFeature::OnFrame(FrameContext& frame)
     }
 
     if (!tiles_.Valid())
-        tiles_.Analyze(frame.gray);
+        tiles_.Analyze(frame.gray, frame.panel, frame.levels);
 
     if (!tiles_.Valid())
         return;

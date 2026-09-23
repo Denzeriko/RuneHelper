@@ -220,7 +220,16 @@ void OcrService::PublishFrameResult(
     if (features_)
     {
         FrameContext frame{
-            gray, region, rows, config, prices_ ? prices_->DivineRate() : 0.0, rowOverlays, overlay, debug,
+            gray,
+            region,
+            rows,
+            config,
+            prices_ ? prices_->DivineRate() : 0.0,
+            rowOverlays,
+            overlay,
+            debug,
+            rowCache_.Panel().value_or(cv::Rect(0, 0, gray.cols, gray.rows)),
+            rowCache_.Levels(),
         };
 
         features_->RunFrame(frame);

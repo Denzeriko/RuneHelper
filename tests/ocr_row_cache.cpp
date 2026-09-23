@@ -12,6 +12,7 @@
 #include <string>
 #include <vector>
 
+#include "TestScenes.h"
 #include "core/Config.h"
 #include "ocr/OCR.h"
 #include "ocr/OcrRowCache.h"
@@ -128,10 +129,19 @@ struct Totals
     std::size_t driftSteps = 0;
 };
 
-std::string ReadThroughColdCache(OCR& ocr, const cv::Mat& gray, const AppConfig& config, const std::optional<TextLevels>& levels)
+std::string ReadThroughColdCache(
+    OCR& ocr,
+    const cv::Mat& gray,
+    const AppConfig& config,
+    const std::optional<TextLevels>& levels,
+    const std::optional<cv::Rect>& panel
+)
 {
     OcrRowCache cold;
     cold.SetLevels(levels);
+
+    if (panel)
+        cold.SetPanel(*panel);
 
     return Serialize(ocr.RecognizeLoot(gray, config, &cold));
 }
@@ -189,9 +199,10 @@ void Exercise(
         ocr.RecognizeLoot(gray, config, &editedCache);
         editedCache.ResetCounters();
 
-        const std::optional<TextLevels> held = editedCache.Levels();
+        const std::optional<TextLevels> heldLevels = editedCache.Levels();
+        const std::optional<cv::Rect> heldPanel = editedCache.Panel();
         const std::string cached = Serialize(ocr.RecognizeLoot(edited, config, &editedCache));
-        const std::string uncached = ReadThroughColdCache(ocr, edited, config, held);
+        const std::string uncached = ReadThroughColdCache(ocr, edited, config, heldLevels, heldPanel);
 
         if (cached != uncached)
         {
@@ -389,8 +400,33 @@ int main(int argc, char** argv)
         Exercise(ocr, fs::relative(images[i], panels).generic_string() + " dimmed", dim, rows[i], config, dimmed, failures);
     }
 
+    Totals surrounded;
+
+    for (std::size_t i = 0; i < images.size(); ++i)
+    {
+        if (grays[i].empty())
+            continue;
+
+        const cv::Point offset = SurroundingOffset(grays[i]);
+        std::vector<cv::Rect> shifted;
+
+        for (const cv::Rect& row : rows[i])
+            shifted.push_back(row + offset);
+
+        Exercise(
+            ocr,
+            fs::relative(images[i], panels).generic_string() + " inside a busy scene",
+            SurroundWithGame(grays[i], Surroundings::Busy),
+            shifted,
+            config,
+            surrounded,
+            failures
+        );
+    }
+
     Report("as captured", captured, images.size());
     Report("dimmed to 70%, brightness normalised on every frame", dimmed, images.size());
+    Report("inside a busy game scene, only the loot panel is read", surrounded, images.size());
 
     if (failures.empty())
     {
