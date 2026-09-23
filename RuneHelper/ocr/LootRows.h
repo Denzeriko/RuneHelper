@@ -1,5 +1,6 @@
 #pragma once
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -19,3 +20,4 @@ struct FrameRow
 };
 
 std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config);
+int OverlayTextX(const cv::Rect& region, const std::optional<cv::Rect>& panel, const AppConfig& config);

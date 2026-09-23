@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iterator>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -14,6 +15,7 @@
 #include "core/ConfigManager.h"
 #include "core/Logger.h"
 #include "ocr/LootParser.h"
+#include "ocr/LootRows.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OcrFrameDiffer.h"
 #include "platform/PlatformPaths.h"
@@ -142,6 +144,25 @@ void TestLootParser()
     CheckEqual(name("1x Runic Alloy-"), "Runic Alloy", "a trailing dash is stripped");
     CheckEqual(name("1x Runic Alloy'"), "Runic Alloy", "a trailing apostrophe is stripped");
     CheckEqual(name("1x The Runefather's Alloy"), "The Runefather's Alloy", "an inner apostrophe is kept");
+}
+
+void TestOverlayAnchor()
+{
+    Section("OverlayTextX");
+
+    AppConfig config;
+    config.overlayOffsetX = 20;
+
+    const cv::Rect region(100, 50, 400, 300);
+
+    CheckEqual(OverlayTextX(region, std::nullopt, config), 520, "before the first read the text sits past the region");
+    CheckEqual(OverlayTextX(region, cv::Rect(0, 0, 400, 300), config), 520, "a panel filling the region keeps the old place");
+    CheckEqual(
+        OverlayTextX(region, cv::Rect(40, 30, 300, 240), config),
+        460,
+        "a panel inside a loose region anchors the text to its edge"
+    );
+    CheckEqual(OverlayTextX(region, cv::Rect(0, 0, 900, 300), config), 520, "a panel never pushes the text past the region");
 }
 
 void TestFormatting()
@@ -497,6 +518,7 @@ int main()
     TestConfigLeagues();
     TestConfigClamps();
     TestLootParser();
+    TestOverlayAnchor();
     TestFormatting();
     TestNameMatching();
     TestFrameSimilarity();

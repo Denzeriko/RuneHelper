@@ -1,5 +1,7 @@
 #include "ocr/LootRows.h"
 
+#include <algorithm>
+
 #include "ocr/LootParser.h"
 
 std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config)
@@ -21,4 +23,11 @@ std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv:
     }
 
     return rows;
+}
+
+int OverlayTextX(const cv::Rect& region, const std::optional<cv::Rect>& panel, const AppConfig& config)
+{
+    const int right = panel && !panel->empty() ? std::min(panel->x + panel->width, region.width) : region.width;
+
+    return region.x + right + config.overlayOffsetX;
 }

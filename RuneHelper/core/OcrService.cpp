@@ -248,7 +248,7 @@ void OcrService::PublishFrameResult(
         OverlayText text;
         text.text = rowOverlays[i].note;
         text.color = rowOverlays[i].color;
-        text.x = region.x + region.width + config.overlayOffsetX;
+        text.x = OverlayTextX(region, rowCache_.Panel(), config);
         text.y = y;
 
         overlay.texts.push_back(std::move(text));
