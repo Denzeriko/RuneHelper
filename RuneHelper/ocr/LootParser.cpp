@@ -24,6 +24,17 @@ char DigitFromOcr(char c)
     }
 }
 
+bool TimesSignAt(const std::string& line, std::size_t pos, std::size_t digitCount)
+{
+    if (pos >= line.size())
+        return false;
+
+    if (line[pos] == 'x' || line[pos] == 'X')
+        return true;
+
+    return digitCount == 1 && line[pos] == 'n' && pos + 1 < line.size() && line[pos + 1] == ' ';
+}
+
 std::string StripTrailingNoise(std::string name)
 {
     auto dropSpaces = [&name]
@@ -67,7 +78,7 @@ LootParser::ParsedLootLineStruct LootParser::ParseLootLine(const std::string& li
         ++pos;
     }
 
-    if (!digits.empty() && pos < line.size() && (line[pos] == 'x' || line[pos] == 'X'))
+    if (!digits.empty() && TimesSignAt(line, pos, digits.size()))
     {
         ++pos;
 

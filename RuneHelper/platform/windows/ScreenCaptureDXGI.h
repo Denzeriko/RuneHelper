@@ -34,4 +34,6 @@ private:
 
     cv::Mat lastFrame_;
     cv::Rect lastFrameRegion_;
+
+    bool loggedScaledDesktop_ = false;
 };

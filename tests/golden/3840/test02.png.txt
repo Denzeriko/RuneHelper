@@ -1,0 +1,12 @@
+rows=11
+y=33 qty=3 name="Regal Orb" match="Regal Orb" mconf=100
+y=127 qty=1 name="Chaos Orb" match="Chaos Orb" mconf=100
+y=222 qty=2 name="Exalted Orb" match="Exalted Orb" mconf=100
+y=314 qty=3 name="Artificer's Orb" match="Artificer's Orb" mconf=100
+y=407 qty=4 name="Blacksmith's Whetstone" match="Blacksmith's Whetstone" mconf=100
+y=503 qty=4 name="Arcanist's Etcher" match="Arcanist's Etcher" mconf=100
+y=603 qty=4 name="Armourer's Scrap" match="Armourer's Scrap" mconf=100
+y=692 qty=2 name="Regal Orb" match="Regal Orb" mconf=100
+y=786 qty=1 name="Gemcutter's Prism" match="Gemcutter's Prism" mconf=100
+y=876 qty=1 name="Glassblower's Bauble" match="Glassblower's Bauble" mconf=100
+y=973 qty=2 name="Orb of Transmutation" match="Orb of Transmutation" mconf=100

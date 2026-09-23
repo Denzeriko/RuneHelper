@@ -1,7 +1,7 @@
 rows=11
-y=9 qty=1 name="Rare Unigue tem" match="Rare Unique Item" mconf=88
+y=10 qty=1 name="Rare Unigue tem" match="Rare Unique Item" mconf=88
 y=41 qty=1 name="Unique Ring" match="Unique Ring" mconf=100
-y=72 qty=1 name="Unigue Belt" match="Unique Belt" mconf=91
+y=73 qty=1 name="Unique Belt" match="Unique Belt" mconf=100
 y=104 qty=1 name="Unique Amulet" match="Unique Amulet" mconf=100
 y=136 qty=1 name="Unique lewellery" match="Unique Jewellery" mconf=94
 y=167 qty=1 name="Unique Wand" match="Unique Wand" mconf=100
@@ -9,4 +9,4 @@ y=197 qty=1 name="Unigue Twe Hand Mace" match="Unique Two Hand Mace" mconf=90
 y=228 qty=1 name="Unique Talisman" match="Unique Talisman" mconf=100
 y=262 qty=1 name="Unique Stat" match="Unique Staff" mconf=84
 y=293 qty=1 name="Unique Spear" match="Unique Spear" mconf=100
-y=323 qty=1 name="Unigue Shield" match="Unique Shield" mconf=93
+y=325 qty=1 name="Unique Shield" match="Unique Shield" mconf=100

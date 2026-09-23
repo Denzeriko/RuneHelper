@@ -386,6 +386,23 @@ static std::vector<int> FindTextStartX(const cv::Mat& gray, const std::vector<cv
     return starts;
 }
 
+static int RightmostInkColumn(const cv::Mat& dark, int minimumRows)
+{
+    cv::Mat columnSums;
+    cv::reduce(dark, columnSums, 0, cv::REDUCE_SUM, CV_32S);
+
+    const int* sums = columnSums.ptr<int>(0);
+    const int limit = minimumRows * 255;
+
+    for (int x = columnSums.cols - 1; x >= 0; --x)
+    {
+        if (sums[x] >= limit)
+            return x;
+    }
+
+    return -1;
+}
+
 std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
 {
     std::vector<cv::Rect> rows;
@@ -400,6 +417,8 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
     cv::threshold(rightGray, dark, 115, 255, cv::THRESH_BINARY_INV);
 
     constexpr double kVerticalLineInkRatio = 0.95;
+    constexpr double kFrameInkRatio = 0.50;
+    constexpr int kFrameSearchPercent = 15;
 
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 2));
     cv::morphologyEx(dark, dark, cv::MORPH_CLOSE, kernel);
@@ -418,6 +437,23 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
         }
     }
 
+    {
+        cv::Mat columnSums;
+        cv::reduce(dark, columnSums, 0, cv::REDUCE_SUM, CV_32S);
+
+        const int limit = static_cast<int>(dark.rows * 255.0 * kFrameInkRatio);
+        const int* sums = columnSums.ptr<int>(0);
+
+        for (int x = dark.cols - dark.cols * kFrameSearchPercent / 100; x < dark.cols; ++x)
+        {
+            if (sums[x] >= limit)
+            {
+                dark.colRange(std::max(0, x - 1), dark.cols).setTo(0);
+                break;
+            }
+        }
+    }
+
     constexpr int kMinInkPerRow = 12;
     constexpr int kMaxBlankGap = 4;
     constexpr int kMinTextBandHeight = 6;
@@ -426,6 +462,8 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
     constexpr int kPaddingBelowPercent = 33;
     constexpr int kMinVerticalPadding = 2;
     constexpr double kMaxTextBandInkRatio = 0.25;
+    constexpr int kTextEdgeRowPercent = 20;
+    constexpr double kTextEdgeTolerance = 0.08;
 
     std::vector<std::pair<int, int>> bands;
 
@@ -473,14 +511,33 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
 
     finishBand();
 
+    std::vector<int> rightEdges(bands.size(), -1);
+    int textRightEdge = -1;
+
+    for (std::size_t i = 0; i < bands.size(); ++i)
+    {
+        const int h = bands[i].second - bands[i].first + 1;
+        const int minimumRows = std::max(1, (h * kTextEdgeRowPercent + 99) / 100);
+
+        rightEdges[i] = RightmostInkColumn(dark(cv::Rect(0, bands[i].first, dark.cols, h)), minimumRows);
+
+        if (h >= kMinTextBandHeight)
+            textRightEdge = std::max(textRightEdge, rightEdges[i]);
+    }
+
+    const int alignedFrom = textRightEdge - static_cast<int>(dark.cols * kTextEdgeTolerance);
+
+    auto reachesTextEdge = [&rightEdges, alignedFrom](std::size_t band)
+    { return rightEdges[band] >= 0 && rightEdges[band] >= alignedFrom; };
+
     std::vector<int> heights;
     heights.reserve(bands.size());
 
-    for (const auto& band : bands)
+    for (std::size_t i = 0; i < bands.size(); ++i)
     {
-        const int h = band.second - band.first + 1;
+        const int h = bands[i].second - bands[i].first + 1;
 
-        if (h >= kMinTextBandHeight)
+        if (h >= kMinTextBandHeight && reachesTextEdge(i))
             heights.push_back(h);
     }
 
@@ -489,11 +546,12 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
     const int median = heights.empty() ? 0 : heights[heights.size() / 2];
     const int maxHeight = median > 0 ? static_cast<int>(median * kMaxTextBandHeightFactor) : gray.rows;
 
-    for (const auto& band : bands)
+    for (std::size_t i = 0; i < bands.size(); ++i)
     {
+        const auto& band = bands[i];
         const int h = band.second - band.first + 1;
 
-        if (h < kMinTextBandHeight || h > maxHeight)
+        if (h < kMinTextBandHeight || h > maxHeight || !reachesTextEdge(i))
             continue;
 
         const int reference = median > 0 ? median : h;

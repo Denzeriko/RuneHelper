@@ -59,7 +59,7 @@ Click **Select Region**, then drag a rectangle around the Runeshape loot list. T
 1. Select the loot area on your screen.
 2. RuneHelper periodically captures the selected region.
 3. A region wider than 750 px, as on 4K screens, is scaled down to 680 px before reading. When the text column is much darker, brighter or flatter than usual, as happens with HDR or a dimmed display, its brightness is normalised first. Correctly exposed regions of normal size are read untouched.
-4. The OCR pipeline finds text rows in the right side of the Runeshape loot menu.
+4. The OCR pipeline finds text rows in the right side of the Runeshape loot menu. The panel frame on the right is cut off first, and only rows that reach the right edge where item names end are read, so rune icons of long recipes that spill into that side are skipped.
 5. Each detected row is cropped, binarized, and passed to Tesseract.
 6. OCR mistakes are corrected using fuzzy matching.
 7. Prices are loaded from cache or downloaded from the API.

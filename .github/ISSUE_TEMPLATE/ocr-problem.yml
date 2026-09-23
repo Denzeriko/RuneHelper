@@ -1,0 +1,78 @@
+name: Prices missing or wrong
+description: RuneHelper does not read some rows, or shows a price for the wrong item
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        A capture of the panel is what makes these fixable. Turn on **Debug OCR** in the **Debug Menu** tab, wait until the panel has been read once, then attach the files from the `ocr_debug/latest` folder:
+
+        - Windows: `%APPDATA%\Denz\RuneHelper\ocr_debug\latest`
+        - Linux: `~/.config/RuneHelper/ocr_debug/latest`
+
+        `source.png` matters most. Please attach it as a file rather than a screenshot of it, so no pixels change.
+  - type: input
+    id: version
+    attributes:
+      label: RuneHelper version
+      description: Shown on the RuneHelper tab, next to Version.
+      placeholder: 1.7.5 (abc12)
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - Windows
+        - Linux, X11
+        - Linux, Wayland (Hyprland, Sway or another wlroots compositor)
+        - Linux, Wayland (KDE Plasma or GNOME)
+    validations:
+      required: true
+  - type: input
+    id: resolution
+    attributes:
+      label: Screen resolution
+      placeholder: 1920x1080
+    validations:
+      required: true
+  - type: input
+    id: scaling
+    attributes:
+      label: Display scaling
+      description: Windows Settings > Display > Scale, or the scale set in your compositor.
+      placeholder: 150%
+    validations:
+      required: true
+  - type: dropdown
+    id: hdr
+    attributes:
+      label: HDR
+      options:
+        - "Off"
+        - "On"
+        - Not sure
+    validations:
+      required: true
+  - type: input
+    id: language
+    attributes:
+      label: Game language
+      placeholder: English
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What went wrong
+      description: Which rows were missing, or which price belonged to another item.
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files from ocr_debug/latest
+      description: Drag source.png here, plus prepared.png and rows_detected.png when they exist.
+    validations:
+      required: true

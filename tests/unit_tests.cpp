@@ -128,6 +128,10 @@ void TestLootParser()
     CheckEqual(qty("|x Runic Alloy"), 1, "a pipe reads as one");
     CheckEqual(qty("Sx Runic Alloy"), 5, "an S reads as five");
     CheckEqual(qty("Ox Runic Alloy"), 1, "a leading O parses as zero and falls back to one");
+    CheckEqual(name("In Swift Alloy"), "Swift Alloy", "an x misread as n still ends the quantity");
+    CheckEqual(qty("3n Chaos Orb"), 3, "a digit before a misread x keeps its value");
+    CheckEqual(name("Inspiration Rune"), "Inspiration Rune", "a name starting with In is left whole");
+    CheckEqual(name("12n Chaos Orb"), "12n Chaos Orb", "only a single digit before n counts as a quantity");
 
     CheckEqual(name("Runic Alloy"), "Runic Alloy", "a line with no quantity keeps the name");
     CheckEqual(qty("Runic Alloy"), 1, "a line with no quantity defaults to one");

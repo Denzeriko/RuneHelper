@@ -1,6 +1,7 @@
 #include "ui/OverlayRenderer.h"
 
 #include <algorithm>
+#include <cmath>
 #include <string>
 
 #include <opencv2/imgproc.hpp>
@@ -32,9 +33,14 @@ cv::Scalar ToScalar(OverlayColor color, int alpha)
     return cv::Scalar(b, g, r, alpha);
 }
 
+int Scaled(int pixels, const OverlayState& state)
+{
+    return std::max(1, static_cast<int>(std::lround(pixels * state.scale)));
+}
+
 int PixelHeight(const OverlayState& state)
 {
-    return std::max(8, state.fontSize);
+    return std::max(8, Scaled(state.fontSize, state));
 }
 
 TextLayout Measure(const OverlayText& text, const OverlayState& state)
@@ -61,9 +67,9 @@ TextLayout Measure(const OverlayText& text, const OverlayState& state)
     return layout;
 }
 
-cv::Rect BackdropBox(const OverlayText& text, const TextLayout& layout, bool outline)
+cv::Rect BackdropBox(const OverlayText& text, const TextLayout& layout, const OverlayState& state)
 {
-    const int pad = kTextPadding + (outline ? kOutlineExtraThickness : 0);
+    const int pad = Scaled(kTextPadding + (state.outline ? kOutlineExtraThickness : 0), state);
     const int baselineY = text.y + layout.size.height / 2;
 
     return cv::Rect(
@@ -98,7 +104,7 @@ cv::Rect OverlayRenderer::ContentBounds(const OverlayState& state)
     cv::Rect bounds;
 
     for (const OverlayText& text : state.texts)
-        Merge(bounds, BackdropBox(text, Measure(text, state), state.outline));
+        Merge(bounds, BackdropBox(text, Measure(text, state), state));
 
     for (const OverlayMark& mark : state.marks)
         Merge(bounds, cv::Rect(mark.x, mark.y, mark.width, mark.height));
@@ -123,7 +129,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
 
         if (state.background)
         {
-            const cv::Rect backdrop = (BackdropBox(text, layout, state.outline) - origin) & canvasBounds;
+            const cv::Rect backdrop = (BackdropBox(text, layout, state) - origin) & canvasBounds;
 
             if (!backdrop.empty())
                 canvas(backdrop).setTo(cv::Scalar(0, 0, 0, kBackdropAlpha));
@@ -145,7 +151,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
                 cv::FONT_HERSHEY_SIMPLEX,
                 layout.fontScale,
                 cv::Scalar(0, 0, 0, 255),
-                layout.thickness + kOutlineExtraThickness,
+                layout.thickness + Scaled(kOutlineExtraThickness, state),
                 cv::LINE_AA
             );
         }
@@ -169,7 +175,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
         if ((box & canvasBounds).empty())
             continue;
 
-        cv::rectangle(canvas, box, ToScalar(mark.color, 255), kMarkThickness, cv::LINE_AA);
+        cv::rectangle(canvas, box, ToScalar(mark.color, 255), Scaled(kMarkThickness, state), cv::LINE_AA);
     }
 
     if (!state.previewEnabled)
@@ -185,5 +191,5 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
     if ((box & canvasBounds).empty())
         return;
 
-    cv::rectangle(canvas, box, ToScalar(OverlayRgb(0, 255, 0), 255), kMarkThickness, cv::LINE_AA);
+    cv::rectangle(canvas, box, ToScalar(OverlayRgb(0, 255, 0), 255), Scaled(kMarkThickness, state), cv::LINE_AA);
 }

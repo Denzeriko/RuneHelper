@@ -16,13 +16,24 @@ const wl_output_listener WaylandSession::kOutputListener = {
     &WaylandSession::HandleOutputScale,    &WaylandSession::HandleOutputName, &WaylandSession::HandleOutputDescription
 };
 
+const zxdg_output_v1_listener WaylandSession::kXdgOutputListener = {
+    &WaylandSession::HandleXdgOutputPosition, &WaylandSession::HandleXdgOutputSize,        &WaylandSession::HandleXdgOutputDone,
+    &WaylandSession::HandleXdgOutputName,     &WaylandSession::HandleXdgOutputDescription,
+};
+
 int WaylandOutput::LogicalWidth() const
 {
+    if (logicalWidth > 0)
+        return logicalWidth;
+
     return scale > 0 ? width / scale : width;
 }
 
 int WaylandOutput::LogicalHeight() const
 {
+    if (logicalHeight > 0)
+        return logicalHeight;
+
     return scale > 0 ? height / scale : height;
 }
 
@@ -65,6 +76,15 @@ void WaylandSession::HandleGlobal(void* data, wl_registry* registry, std::uint32
             wl_registry_bind(registry, name, &zwlr_screencopy_manager_v1_interface, std::min(version, 3u))
         );
     }
+    else if (iface == zxdg_output_manager_v1_interface.name)
+    {
+        session->xdgOutputManager_ = static_cast<zxdg_output_manager_v1*>(
+            wl_registry_bind(registry, name, &zxdg_output_manager_v1_interface, std::min(version, 3u))
+        );
+
+        for (WaylandOutput& output : session->outputs_)
+            session->WatchLogicalGeometry(output);
+    }
     else if (iface == wl_output_interface.name)
     {
         WaylandOutput entry;
@@ -73,7 +93,19 @@ void WaylandSession::HandleGlobal(void* data, wl_registry* registry, std::uint32
 
         session->outputs_.push_back(entry);
         wl_output_add_listener(session->outputs_.back().output, &kOutputListener, session);
+        session->WatchLogicalGeometry(session->outputs_.back());
     }
+}
+
+void WaylandSession::WatchLogicalGeometry(WaylandOutput& output)
+{
+    if (!xdgOutputManager_ || !output.output || output.xdgOutput)
+        return;
+
+    output.xdgOutput = zxdg_output_manager_v1_get_xdg_output(xdgOutputManager_, output.output);
+
+    if (output.xdgOutput)
+        zxdg_output_v1_add_listener(output.xdgOutput, &kXdgOutputListener, this);
 }
 
 void WaylandSession::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t name)
@@ -89,6 +121,9 @@ void WaylandSession::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t 
     if (it == session->outputs_.end())
         return;
 
+    if (it->xdgOutput)
+        zxdg_output_v1_destroy(it->xdgOutput);
+
     if (it->output)
         wl_output_destroy(it->output);
 
@@ -98,6 +133,17 @@ void WaylandSession::HandleGlobalRemove(void* data, wl_registry*, std::uint32_t 
 WaylandOutput* WaylandSession::FindOutput(wl_output* output)
 {
     auto it = std::find_if(outputs_.begin(), outputs_.end(), [output](const WaylandOutput& entry) { return entry.output == output; });
+
+    return it == outputs_.end() ? nullptr : &(*it);
+}
+
+WaylandOutput* WaylandSession::FindOutput(zxdg_output_v1* xdgOutput)
+{
+    auto it = std::find_if(
+        outputs_.begin(),
+        outputs_.end(),
+        [xdgOutput](const WaylandOutput& entry) { return entry.xdgOutput == xdgOutput; }
+    );
 
     return it == outputs_.end() ? nullptr : &(*it);
 }
@@ -115,7 +161,9 @@ void WaylandSession::HandleOutputGeometry(
     std::int32_t
 )
 {
-    if (WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(output))
+    WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(output);
+
+    if (entry && !entry->hasLogicalPosition)
     {
         entry->x = x;
         entry->y = y;
@@ -153,6 +201,31 @@ void WaylandSession::HandleOutputName(void*, wl_output*, const char*) {}
 
 void WaylandSession::HandleOutputDescription(void*, wl_output*, const char*) {}
 
+void WaylandSession::HandleXdgOutputPosition(void* data, zxdg_output_v1* xdgOutput, std::int32_t x, std::int32_t y)
+{
+    if (WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(xdgOutput))
+    {
+        entry->x = x;
+        entry->y = y;
+        entry->hasLogicalPosition = true;
+    }
+}
+
+void WaylandSession::HandleXdgOutputSize(void* data, zxdg_output_v1* xdgOutput, std::int32_t width, std::int32_t height)
+{
+    if (WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(xdgOutput))
+    {
+        entry->logicalWidth = width;
+        entry->logicalHeight = height;
+    }
+}
+
+void WaylandSession::HandleXdgOutputDone(void*, zxdg_output_v1*) {}
+
+void WaylandSession::HandleXdgOutputName(void*, zxdg_output_v1*, const char*) {}
+
+void WaylandSession::HandleXdgOutputDescription(void*, zxdg_output_v1*, const char*) {}
+
 bool WaylandSession::Connect()
 {
     if (display_)
@@ -188,11 +261,20 @@ void WaylandSession::Disconnect()
 {
     for (WaylandOutput& output : outputs_)
     {
+        if (output.xdgOutput)
+            zxdg_output_v1_destroy(output.xdgOutput);
+
         if (output.output)
             wl_output_destroy(output.output);
     }
 
     outputs_.clear();
+
+    if (xdgOutputManager_)
+    {
+        zxdg_output_manager_v1_destroy(xdgOutputManager_);
+        xdgOutputManager_ = nullptr;
+    }
 
     if (screencopy_)
     {

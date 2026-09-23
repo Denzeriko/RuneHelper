@@ -34,6 +34,18 @@ bool IsMouseVk(int vk)
 }
 
 constexpr int kUnfocusedFrameIntervalMs = 100;
+constexpr float kDefaultDpi = 96.0f;
+constexpr int kWindowX = 100;
+constexpr int kWindowY = 100;
+constexpr int kWindowWidth = 420;
+constexpr int kWindowHeight = 476;
+constexpr int kTitleBarHeight = 34;
+constexpr int kTitleButtonsWidth = 80;
+
+int ScaledPixels(int pixels, float scale)
+{
+    return static_cast<int>(static_cast<float>(pixels) * scale + 0.5f);
+}
 
 std::string VkToString(int vk)
 {
@@ -66,7 +78,11 @@ struct UIBackend::Impl
     bool hotkeysRegistered = false;
     std::chrono::steady_clock::time_point lastFrame{};
 
+    float dpiScale = 1.0f;
+    float styledScale = 0.0f;
+
     bool IsInteractive() const;
+    void ApplyScale();
 
     bool CreateWindowUI();
     bool CreateDeviceD3D();
@@ -133,9 +149,7 @@ bool UIBackend::Init(UIManager* manager)
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
 
-    ImGui::StyleColorsDark();
-
-    ImGuiStyleSetup::ApplyRuneHelperStyle();
+    impl_->ApplyScale();
 
     if (!ImGui_ImplWin32_Init(impl_->hwnd))
     {
@@ -152,7 +166,7 @@ bool UIBackend::Init(UIManager* manager)
     }
 
     impl_->running = true;
-    LOG_INFO("Windows UI backend initialized");
+    LOG_INFO("Windows UI backend initialized, display scale " + std::to_string(ScaledPixels(100, impl_->dpiScale)) + "%");
     return true;
 }
 
@@ -213,6 +227,9 @@ bool UIBackend::BeginFrame()
         return false;
 
     impl_->lastFrame = now;
+
+    if (impl_->styledScale != impl_->dpiScale)
+        impl_->ApplyScale();
 
     ImGui_ImplDX11_NewFrame();
     ImGui_ImplWin32_NewFrame();
@@ -311,6 +328,26 @@ void UIBackend::UnregisterHotkeys()
     impl_->hotkeysRegistered = false;
 }
 
+void UIBackend::Impl::ApplyScale()
+{
+    ImGuiStyle& style = ImGui::GetStyle();
+    style = ImGuiStyle();
+
+    ImGui::StyleColorsDark();
+    ImGuiStyleSetup::ApplyRuneHelperStyle();
+
+    if (dpiScale != 1.0f)
+        style.ScaleAllSizes(dpiScale);
+
+#if IMGUI_VERSION_NUM >= 19200
+    style.FontScaleDpi = dpiScale;
+#else
+    ImGui::GetIO().FontGlobalScale = dpiScale;
+#endif
+
+    styledScale = dpiScale;
+}
+
 bool UIBackend::Impl::CreateWindowUI()
 {
     windowClass = { sizeof(WNDCLASSEXW), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
@@ -318,14 +355,16 @@ bool UIBackend::Impl::CreateWindowUI()
 
     RegisterClassExW(&windowClass);
 
+    dpiScale = ImGui_ImplWin32_GetDpiScaleForMonitor(MonitorFromPoint(POINT{ kWindowX, kWindowY }, MONITOR_DEFAULTTOPRIMARY));
+
     hwnd = CreateWindowW(
         windowClass.lpszClassName,
         L"RuneHelper",
         WS_POPUP,
-        100,
-        100,
-        420,
-        476,
+        kWindowX,
+        kWindowY,
+        ScaledPixels(kWindowWidth, dpiScale),
+        ScaledPixels(kWindowHeight, dpiScale),
         nullptr,
         nullptr,
         windowClass.hInstance,
@@ -481,6 +520,25 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         }
         return 0;
 
+    case WM_DPICHANGED:
+        if (self)
+        {
+            const RECT* suggested = reinterpret_cast<const RECT*>(lp);
+
+            self->dpiScale = static_cast<float>(LOWORD(wp)) / kDefaultDpi;
+
+            SetWindowPos(
+                hwnd,
+                nullptr,
+                suggested->left,
+                suggested->top,
+                suggested->right - suggested->left,
+                suggested->bottom - suggested->top,
+                SWP_NOZORDER | SWP_NOACTIVATE
+            );
+        }
+        return 0;
+
     case WM_DESTROY:
         if (self)
             self->running = false;
@@ -503,8 +561,8 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
 
         ScreenToClient(hwnd, &pt);
 
-        constexpr int titleBarHeight = 34;
-        constexpr int buttonsWidth = 80;
+        const int titleBarHeight = ScaledPixels(kTitleBarHeight, self->dpiScale);
+        const int buttonsWidth = ScaledPixels(kTitleButtonsWidth, self->dpiScale);
 
         RECT rc;
         GetClientRect(hwnd, &rc);

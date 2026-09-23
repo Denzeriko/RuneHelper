@@ -61,6 +61,7 @@ if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
 
     set(RUNEHELPER_WAYLAND_PROTOCOL_XMLS
         "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml"
+        "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
         "${RUNEHELPER_WLR_PROTOCOLS_DIR}/unstable/wlr-screencopy-unstable-v1.xml"
         "${RUNEHELPER_WLR_PROTOCOLS_DIR}/unstable/wlr-layer-shell-unstable-v1.xml"
     )

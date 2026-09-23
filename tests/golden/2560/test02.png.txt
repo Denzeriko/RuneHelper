@@ -1,7 +1,7 @@
 rows=6
-y=67 qty=1 name="Thaumaturgic Flux (Level 20)" match="Thaumaturgic Flux (Level 20)" mconf=100
-y=177 qty=1 name="Orb of Annulment" match="Orb of Annulment" mconf=100
-y=283 qty=2 name="Orb of Chance" match="Orb of Chance" mconf=100
-y=391 qty=1 name="Perfect Chaos Orb" match="Perfect Chaos Orb" mconf=100
-y=501 qty=3 name="Divine Orb" match="Divine Orb" mconf=100
-y=607 qty=1 name="Void Flux" match="Void Flux" mconf=100
+y=70 qty=1 name="Thaumaturgic Flux (Level 20)" match="Thaumaturgic Flux (Level 20)" mconf=100
+y=179 qty=1 name="Orb of Annulment" match="Orb of Annulment" mconf=100
+y=286 qty=2 name="Orb of Chance" match="Orb of Chance" mconf=100
+y=394 qty=1 name="Perfect Chaos Orb" match="Perfect Chaos Orb" mconf=100
+y=502 qty=3 name="Divine Orb" match="Divine Orb" mconf=100
+y=610 qty=1 name="Void Flux" match="Void Flux" mconf=100

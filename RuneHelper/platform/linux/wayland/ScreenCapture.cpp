@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <fstream>
@@ -288,6 +289,22 @@ int& PortalMismatchCount()
     return count;
 }
 
+cv::Rect ToFramePixels(const cv::Rect& logicalRect, const cv::Size& logical, const cv::Size& frame)
+{
+    if (logical == frame)
+        return logicalRect;
+
+    const double scaleX = static_cast<double>(frame.width) / logical.width;
+    const double scaleY = static_cast<double>(frame.height) / logical.height;
+
+    const int left = static_cast<int>(std::floor(logicalRect.x * scaleX));
+    const int top = static_cast<int>(std::floor(logicalRect.y * scaleY));
+    const int right = static_cast<int>(std::ceil((logicalRect.x + logicalRect.width) * scaleX));
+    const int bottom = static_cast<int>(std::ceil((logicalRect.y + logicalRect.height) * scaleY));
+
+    return cv::Rect(left, top, right - left, bottom - top) & cv::Rect(0, 0, frame.width, frame.height);
+}
+
 constexpr std::chrono::seconds kFirstPortalRetry{ 30 };
 constexpr std::chrono::seconds kMaxPortalRetry{ 600 };
 
@@ -357,15 +374,22 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
     }
 
     cv::Point origin = portal.FramePosition();
+    cv::Size logical = portal.FrameLogicalSize();
 
-    if (!portal.HasFramePosition())
+    if (const WaylandOutput* output = Session().OutputAt(region.x, region.y))
     {
-        if (const WaylandOutput* output = Session().OutputAt(region.x, region.y))
+        if (!portal.HasFramePosition())
             origin = cv::Point(output->x, output->y);
+
+        if (logical.empty() && output->width == frame.cols && output->height == frame.rows)
+            logical = cv::Size(output->LogicalWidth(), output->LogicalHeight());
     }
 
+    if (logical.empty())
+        logical = frame.size();
+
     const cv::Rect local(region.x - origin.x, region.y - origin.y, region.width, region.height);
-    const cv::Rect clipped = local & cv::Rect(0, 0, frame.cols, frame.rows);
+    const cv::Rect clipped = local & cv::Rect(0, 0, logical.width, logical.height);
 
     if (clipped.empty())
     {
@@ -376,7 +400,7 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
         {
             LOG_ERROR(
                 "Portal screencast: the shared output covers " + std::to_string(origin.x) + "," + std::to_string(origin.y) + " " +
-                std::to_string(frame.cols) + "x" + std::to_string(frame.rows) + " but the configured region is " +
+                std::to_string(logical.width) + "x" + std::to_string(logical.height) + " but the configured region is " +
                 std::to_string(region.x) + "," + std::to_string(region.y) + " " + std::to_string(region.width) + "x" +
                 std::to_string(region.height) + "; share the monitor that contains the region"
             );
@@ -395,7 +419,32 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
     }
 
     PortalMismatchCount() = 0;
-    return frame(clipped).clone();
+
+    const cv::Rect pixels = ToFramePixels(clipped, logical, frame.size());
+
+    if (pixels.empty())
+        return {};
+
+    static bool loggedScale = false;
+
+    if (logical != frame.size() && !loggedScale)
+    {
+        loggedScale = true;
+
+        LOG_INFO(
+            "Portal screencast: the stream is " + std::to_string(frame.cols) + "x" + std::to_string(frame.rows) + " pixels for " +
+            std::to_string(logical.width) + "x" + std::to_string(logical.height) +
+            " in compositor coordinates, regions are scaled to match"
+        );
+    }
+
+    if (pixels.size() == clipped.size())
+        return frame(pixels).clone();
+
+    cv::Mat result;
+    cv::resize(frame(pixels), result, clipped.size(), 0, 0, cv::INTER_AREA);
+
+    return result;
 }
 
 cv::Mat Capture(const cv::Rect& region)

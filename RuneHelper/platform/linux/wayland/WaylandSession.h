@@ -10,16 +10,21 @@
 #undef namespace
 
 #include "wlr-screencopy-unstable-v1-client-protocol.h"
+#include "xdg-output-unstable-v1-client-protocol.h"
 
 struct WaylandOutput
 {
     wl_output* output = nullptr;
+    zxdg_output_v1* xdgOutput = nullptr;
     std::uint32_t globalName = 0;
     int x = 0;
     int y = 0;
     int width = 0;
     int height = 0;
     int scale = 1;
+    int logicalWidth = 0;
+    int logicalHeight = 0;
+    bool hasLogicalPosition = false;
 
     int LogicalWidth() const;
     int LogicalHeight() const;
@@ -86,10 +91,19 @@ private:
     static void HandleOutputName(void* data, wl_output* output, const char* name);
     static void HandleOutputDescription(void* data, wl_output* output, const char* description);
 
+    static void HandleXdgOutputPosition(void* data, zxdg_output_v1* xdgOutput, std::int32_t x, std::int32_t y);
+    static void HandleXdgOutputSize(void* data, zxdg_output_v1* xdgOutput, std::int32_t width, std::int32_t height);
+    static void HandleXdgOutputDone(void* data, zxdg_output_v1* xdgOutput);
+    static void HandleXdgOutputName(void* data, zxdg_output_v1* xdgOutput, const char* name);
+    static void HandleXdgOutputDescription(void* data, zxdg_output_v1* xdgOutput, const char* description);
+
     WaylandOutput* FindOutput(wl_output* output);
+    WaylandOutput* FindOutput(zxdg_output_v1* xdgOutput);
+    void WatchLogicalGeometry(WaylandOutput& output);
 
     static const wl_registry_listener kRegistryListener;
     static const wl_output_listener kOutputListener;
+    static const zxdg_output_v1_listener kXdgOutputListener;
 
     wl_display* display_ = nullptr;
     wl_registry* registry_ = nullptr;
@@ -98,6 +112,7 @@ private:
     wl_seat* seat_ = nullptr;
     zwlr_layer_shell_v1* layerShell_ = nullptr;
     zwlr_screencopy_manager_v1* screencopy_ = nullptr;
+    zxdg_output_manager_v1* xdgOutputManager_ = nullptr;
     std::vector<WaylandOutput> outputs_;
 };
 

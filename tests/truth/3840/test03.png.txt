@@ -1,0 +1,11 @@
+rows=10
+qty=1 name="The Runefather's Alloy"
+qty=1 name="Sovereign Alloy"
+qty=1 name="Mystic Alloy"
+qty=1 name="Prismatic Alloy"
+qty=1 name="Swift Alloy"
+qty=1 name="Cyclonic Alloy"
+qty=1 name="Expansive Alloy"
+qty=1 name="Protective Alloy"
+qty=1 name="Adaptive Alloy"
+qty=2 name="Runic Alloy"

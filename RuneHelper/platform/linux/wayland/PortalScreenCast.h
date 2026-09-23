@@ -24,6 +24,7 @@ public:
     cv::Mat LatestFrame();
     cv::Point FramePosition() const;
     bool HasFramePosition() const;
+    cv::Size FrameLogicalSize() const;
 
 private:
     struct Impl;

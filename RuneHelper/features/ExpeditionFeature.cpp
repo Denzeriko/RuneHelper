@@ -14,6 +14,7 @@
 #include "ocr/LootParser.h"
 #include "ui/UIDraw.h"
 #include "ui/UIManager.h"
+#include "ui/UiScale.h"
 
 namespace
 {
@@ -412,7 +413,8 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
     }
 
     const float available = ImGui::GetContentRegionAvail().y;
-    const ImVec2 tableSize(0.0f, available > kMinTableHeight ? available : kMinTableHeight);
+    const float minimumHeight = UiScaled(kMinTableHeight);
+    const ImVec2 tableSize(0.0f, available > minimumHeight ? available : minimumHeight);
 
     if (!ImGui::BeginTable(
             "on_screen_table",
@@ -428,8 +430,8 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
     ImGui::TableSetupScrollFreeze(0, 1);
 
     ImGui::TableSetupColumn("Combo");
-    ImGui::TableSetupColumn("Waves", ImGuiTableColumnFlags_WidthFixed, 45.0f);
-    ImGui::TableSetupColumn("Per wave", ImGuiTableColumnFlags_WidthFixed, 70.0f);
+    ImGui::TableSetupColumn("Waves", ImGuiTableColumnFlags_WidthFixed, UiScaled(45.0f));
+    ImGui::TableSetupColumn("Per wave", ImGuiTableColumnFlags_WidthFixed, UiScaled(70.0f));
     ImGui::TableSetupColumn("Adds");
 
     ImGui::TableHeadersRow();

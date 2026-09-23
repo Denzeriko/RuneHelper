@@ -1,0 +1,12 @@
+rows=11
+qty=3 name="Regal Orb"
+qty=1 name="Chaos Orb"
+qty=2 name="Exalted Orb"
+qty=3 name="Artificer's Orb"
+qty=4 name="Blacksmith's Whetstone"
+qty=4 name="Arcanist's Etcher"
+qty=4 name="Armourer's Scrap"
+qty=2 name="Regal Orb"
+qty=1 name="Gemcutter's Prism"
+qty=1 name="Glassblower's Bauble"
+qty=2 name="Orb of Transmutation"

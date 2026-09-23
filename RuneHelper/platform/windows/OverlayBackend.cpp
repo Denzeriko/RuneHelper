@@ -7,6 +7,8 @@
 
 #include <opencv2/core.hpp>
 
+#include <imgui_impl_win32.h>
+
 #include "core/Logger.h"
 #include "ui/OverlayRenderer.h"
 #include "ui/OverlayState.h"
@@ -16,6 +18,17 @@ namespace
 #ifndef WDA_EXCLUDEFROMCAPTURE
 constexpr DWORD WDA_EXCLUDEFROMCAPTURE = 0x00000011;
 #endif
+
+POINT ContentAnchor(const OverlayState& state)
+{
+    if (!state.texts.empty())
+        return POINT{ state.texts.front().x, state.texts.front().y };
+
+    if (!state.marks.empty())
+        return POINT{ state.marks.front().x, state.marks.front().y };
+
+    return POINT{ state.previewRect.left, state.previewRect.top };
+}
 
 class WindowsOverlayBackend final : public OverlayBackend
 {
@@ -204,6 +217,7 @@ void WindowsOverlayBackend::Render(const OverlayState& state)
         return;
 
     state_ = state;
+    state_.scale = ImGui_ImplWin32_GetDpiScaleForMonitor(MonitorFromPoint(ContentAnchor(state_), MONITOR_DEFAULTTONEAREST));
 
     const cv::Rect content = OverlayRenderer::ContentBounds(state_);
 

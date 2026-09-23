@@ -13,6 +13,7 @@
 #include "core/Feature.h"
 #include "price/ResolvedPrice.h"
 #include "ui/UIManager.h"
+#include "ui/UiScale.h"
 
 namespace
 {
@@ -32,7 +33,8 @@ void UIDraw::CellText(const char* text)
 
 void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
 {
-    const float titleBarHeight = 16;
+    const float titleBarHeight = UiScaled(16.0f);
+    const ImVec2 titleButton(UiScaled(16.0f), UiScaled(16.0f));
 
     ImGui::BeginChild("TitleBar", ImVec2(0, titleBarHeight), false);
 
@@ -40,9 +42,9 @@ void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
     ImGui::SameLine();
     ImGui::TextDisabled("v%s", RUNEHELPER_VERSION_LABEL);
 
-    ImGui::SameLine(ImGui::GetWindowWidth() - 40.0f);
+    ImGui::SameLine(ImGui::GetWindowWidth() - UiScaled(40.0f));
 
-    if (ImGui::Button("_", ImVec2(16, 16)))
+    if (ImGui::Button("_", titleButton))
         manager.RequestMinimize();
 
     ImGui::SameLine();
@@ -51,7 +53,7 @@ void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
     ImGui::PushStyleColor(ImGuiCol_ButtonHovered, ImVec4(0.70f, 0.20f, 0.20f, 1.0f));
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.80f, 0.20f, 0.20f, 1.0f));
 
-    if (ImGui::Button("X", ImVec2(16, 16)))
+    if (ImGui::Button("X", titleButton))
         manager.RequestExit();
 
     ImGui::PopStyleColor(3);
@@ -69,7 +71,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         return;
     }
 
-    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, 95.0f);
+    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, UiScaled(95.0f));
     ImGui::TableSetupColumn("Value");
 
     auto row = [](const char* name)
@@ -384,7 +386,8 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
     }
 
     const float available = ImGui::GetContentRegionAvail().y;
-    const ImVec2 tableSize(0.0f, available > kMinDebugTableHeight ? available : kMinDebugTableHeight);
+    const float minimumHeight = UiScaled(kMinDebugTableHeight);
+    const ImVec2 tableSize(0.0f, available > minimumHeight ? available : minimumHeight);
 
     if (ImGui::BeginTable(
             "ocr_debug_table",
@@ -529,12 +532,12 @@ void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* la
     ImGui::PushID(label);
 
     ImGui::TextUnformatted(label);
-    ImGui::SameLine(220.0f);
+    ImGui::SameLine(UiScaled(220.0f));
 
     const bool capturing = state.waitingForHotkey == &key;
     const std::string text = capturing ? "Press any key..." : manager.HotkeyToString(key);
 
-    if (ImGui::Button(text.c_str(), ImVec2(180.0f, 0.0f)))
+    if (ImGui::Button(text.c_str(), ImVec2(UiScaled(180.0f), 0.0f)))
     {
         state.waitingForHotkey = &key;
         state.hotkeyCaptureSkipFrame = true;

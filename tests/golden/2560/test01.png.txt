@@ -1,12 +1,12 @@
 rows=11
-y=19 qty=3 name="Chaos Orb" match="Chaos Orb" mconf=100
+y=20 qty=3 name="Chaos Orb" match="Chaos Orb" mconf=100
 y=80 qty=1 name="Perfect Jeweller's Orb" match="Perfect Jeweller's Orb" mconf=100
-y=143 qty=1 name="Orb of Chance" match="Orb of Chance" mconf=100
-y=206 qty=3 name="Greater Orb of Transmutation" match="Greater Orb of Transmutation" mconf=100
+y=145 qty=1 name="Orb of Chance" match="Orb of Chance" mconf=100
+y=208 qty=3 name="Greater Orb of Transmutation" match="Greater Orb of Transmutation" mconf=100
 y=271 qty=3 name="Greater Orb of Augmentation" match="Greater Orb of Augmentation" mconf=100
 y=334 qty=5 name="Random Currency" match="5x Random Currency" mconf=84
 y=397 qty=1 name="Divine Orb" match="Divine Orb" mconf=100
 y=460 qty=1 name="Greater Chaos Orb" match="Greater Chaos Orb" mconf=100
 y=523 qty=1 name="Greater Exalted Orb" match="Greater Exalted Orb" mconf=100
-y=584 qty=1 name="Greater Regal Orb" match="Greater Regal Orb" mconf=100
-y=647 qty=1 name="Greater Jeweller's Orb" match="Greater Jeweller's Orb" mconf=100
+y=586 qty=1 name="Greater Regal Orb" match="Greater Regal Orb" mconf=100
+y=649 qty=1 name="Greater Jeweller's Orb" match="Greater Jeweller's Orb" mconf=100

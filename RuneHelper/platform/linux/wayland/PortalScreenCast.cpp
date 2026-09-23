@@ -111,6 +111,7 @@ struct PortalResponse
     bool hasNode = false;
     cv::Point position{ 0, 0 };
     bool hasPosition = false;
+    cv::Size size;
 };
 
 void ParseStreamProperties(DBusMessageIter* props, PortalResponse& response)
@@ -127,7 +128,10 @@ void ParseStreamProperties(DBusMessageIter* props, PortalResponse& response)
         dbus_message_iter_get_basic(&entry, &key);
         dbus_message_iter_next(&entry);
 
-        if (!key || std::strcmp(key, "position") != 0)
+        const bool isPosition = key && std::strcmp(key, "position") == 0;
+        const bool isSize = key && std::strcmp(key, "size") == 0;
+
+        if (!isPosition && !isSize)
             continue;
 
         DBusMessageIter value;
@@ -136,18 +140,25 @@ void ParseStreamProperties(DBusMessageIter* props, PortalResponse& response)
         if (dbus_message_iter_get_arg_type(&value) != DBUS_TYPE_STRUCT)
             continue;
 
-        DBusMessageIter point;
-        dbus_message_iter_recurse(&value, &point);
+        DBusMessageIter pair;
+        dbus_message_iter_recurse(&value, &pair);
 
-        dbus_int32_t x = 0;
-        dbus_int32_t y = 0;
+        dbus_int32_t first = 0;
+        dbus_int32_t second = 0;
 
-        dbus_message_iter_get_basic(&point, &x);
-        dbus_message_iter_next(&point);
-        dbus_message_iter_get_basic(&point, &y);
+        dbus_message_iter_get_basic(&pair, &first);
+        dbus_message_iter_next(&pair);
+        dbus_message_iter_get_basic(&pair, &second);
 
-        response.position = cv::Point(static_cast<int>(x), static_cast<int>(y));
-        response.hasPosition = true;
+        if (isPosition)
+        {
+            response.position = cv::Point(static_cast<int>(first), static_cast<int>(second));
+            response.hasPosition = true;
+        }
+        else
+        {
+            response.size = cv::Size(static_cast<int>(first), static_cast<int>(second));
+        }
     }
 }
 
@@ -289,6 +300,7 @@ struct PortalScreenCast::Impl
     cv::Mat frame;
     cv::Point position{ 0, 0 };
     bool hasPosition = false;
+    cv::Size logicalSize;
     spa_video_info format{};
 
     void OnParamChanged(std::uint32_t id, const spa_pod* param);
@@ -453,6 +465,11 @@ cv::Point PortalScreenCast::FramePosition() const
 bool PortalScreenCast::HasFramePosition() const
 {
     return impl_ && impl_->hasPosition;
+}
+
+cv::Size PortalScreenCast::FrameLogicalSize() const
+{
+    return impl_ ? impl_->logicalSize : cv::Size();
 }
 
 namespace
@@ -641,6 +658,8 @@ bool PortalScreenCast::Start(std::string& restoreToken)
             impl_->hasPosition = true;
         }
 
+        impl_->logicalSize = response.size;
+
         if (!response.restoreToken.empty())
             restoreToken = response.restoreToken;
     }
@@ -784,7 +803,10 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     LOG_INFO(
         "Portal screencast: capture stream started on node " + std::to_string(nodeId) +
         (impl_->hasPosition ? " at " + std::to_string(impl_->position.x) + "," + std::to_string(impl_->position.y)
-                            : " without a reported position")
+                            : " without a reported position") +
+        (impl_->logicalSize.empty()
+             ? ", no logical size"
+             : ", logical size " + std::to_string(impl_->logicalSize.width) + "x" + std::to_string(impl_->logicalSize.height))
     );
     return true;
 }

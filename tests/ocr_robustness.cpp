@@ -144,18 +144,18 @@ int main(int argc, char** argv)
     }
 
     const std::vector<Case> cases = {
-        { .label = "as captured", .minimumPriced = 192 },
-        { .label = "dim, 0.7x", .gain = 0.7, .minimumPriced = 188 },
-        { .label = "washed out, 45 + 0.65x", .gain = 0.65, .offset = 45.0, .minimumPriced = 188 },
-        { .label = "overexposed, 1.3x", .gain = 1.3, .minimumPriced = 188 },
-        { .label = "darker by 35", .offset = -35.0, .minimumPriced = 188 },
-        { .label = "gamma 1.25", .gamma = 1.25, .minimumPriced = 188 },
-        { .label = "gamma 0.8", .gamma = 0.8, .minimumPriced = 188 },
-        { .label = "3200 wide screen", .screenWidth = 3200.0, .minimumPriced = 188 },
-        { .label = "4K screen", .screenWidth = 3840.0, .minimumPriced = 188 },
-        { .label = "4K screen, dim 0.7x", .gain = 0.7, .screenWidth = 3840.0, .minimumPriced = 188 },
-        { .label = "loose crop over the game", .looseCrop = true, .minimumPriced = 170 },
-        { .label = "loose crop, dim 0.7x", .gain = 0.7, .looseCrop = true, .minimumPriced = 180 },
+        { .label = "as captured", .minimumPriced = 230 },
+        { .label = "dim, 0.7x", .gain = 0.7, .minimumPriced = 225 },
+        { .label = "washed out, 45 + 0.65x", .gain = 0.65, .offset = 45.0, .minimumPriced = 225 },
+        { .label = "overexposed, 1.3x", .gain = 1.3, .minimumPriced = 225 },
+        { .label = "darker by 35", .offset = -35.0, .minimumPriced = 225 },
+        { .label = "gamma 1.25", .gamma = 1.25, .minimumPriced = 225 },
+        { .label = "gamma 0.8", .gamma = 0.8, .minimumPriced = 225 },
+        { .label = "3200 wide screen", .screenWidth = 3200.0, .minimumPriced = 225 },
+        { .label = "4K screen", .screenWidth = 3840.0, .minimumPriced = 225 },
+        { .label = "4K screen, dim 0.7x", .gain = 0.7, .screenWidth = 3840.0, .minimumPriced = 225 },
+        { .label = "loose crop over the game", .looseCrop = true, .minimumPriced = 204 },
+        { .label = "loose crop, dim 0.7x", .gain = 0.7, .looseCrop = true, .minimumPriced = 218 },
     };
 
     const AppConfig config;

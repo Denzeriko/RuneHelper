@@ -4,6 +4,8 @@
 
 #include <dxgi1_2.h>
 
+#include <cmath>
+
 #include <opencv2/imgproc.hpp>
 
 #include "core/Logger.h"
@@ -29,6 +31,25 @@ bool IsRecoverableDxgiError(HRESULT hr)
 {
     return hr == DXGI_ERROR_DEVICE_REMOVED || hr == DXGI_ERROR_DEVICE_RESET || hr == DXGI_ERROR_ACCESS_LOST ||
            hr == DXGI_ERROR_INVALID_CALL;
+}
+
+cv::Rect ToTexturePixels(const cv::Rect& local, int outputWidth, int outputHeight, const D3D11_TEXTURE2D_DESC& texture)
+{
+    const int textureWidth = static_cast<int>(texture.Width);
+    const int textureHeight = static_cast<int>(texture.Height);
+
+    if (textureWidth == outputWidth && textureHeight == outputHeight)
+        return local;
+
+    const double scaleX = static_cast<double>(textureWidth) / outputWidth;
+    const double scaleY = static_cast<double>(textureHeight) / outputHeight;
+
+    const int left = static_cast<int>(std::floor(local.x * scaleX));
+    const int top = static_cast<int>(std::floor(local.y * scaleY));
+    const int right = static_cast<int>(std::ceil((local.x + local.width) * scaleX));
+    const int bottom = static_cast<int>(std::ceil((local.y + local.height) * scaleY));
+
+    return cv::Rect(left, top, right - left, bottom - top) & cv::Rect(0, 0, textureWidth, textureHeight);
 }
 }
 
@@ -273,9 +294,29 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
         return {};
     }
 
+    const cv::Rect source =
+        ToTexturePixels(cv::Rect(localX, localY, region.width, region.height), outputWidth, outputHeight, desktopDesc);
+
+    if (source.empty())
+    {
+        duplication_->ReleaseFrame();
+        return {};
+    }
+
+    if (source.size() != region.size() && !loggedScaledDesktop_)
+    {
+        loggedScaledDesktop_ = true;
+
+        LOG_INFO(
+            "Desktop Duplication: the output image is " + std::to_string(desktopDesc.Width) + "x" +
+            std::to_string(desktopDesc.Height) + " but Windows reports the output as " + std::to_string(outputWidth) + "x" +
+            std::to_string(outputHeight) + ", so the region is mapped to the image pixels"
+        );
+    }
+
     D3D11_TEXTURE2D_DESC stagingDesc{};
-    stagingDesc.Width = static_cast<UINT>(region.width);
-    stagingDesc.Height = static_cast<UINT>(region.height);
+    stagingDesc.Width = static_cast<UINT>(source.width);
+    stagingDesc.Height = static_cast<UINT>(source.height);
     stagingDesc.MipLevels = 1;
     stagingDesc.ArraySize = 1;
     stagingDesc.Format = desktopDesc.Format;
@@ -331,10 +372,10 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     }
 
     D3D11_BOX srcBox{};
-    srcBox.left = static_cast<UINT>(localX);
-    srcBox.top = static_cast<UINT>(localY);
-    srcBox.right = static_cast<UINT>(localX + region.width);
-    srcBox.bottom = static_cast<UINT>(localY + region.height);
+    srcBox.left = static_cast<UINT>(source.x);
+    srcBox.top = static_cast<UINT>(source.y);
+    srcBox.right = static_cast<UINT>(source.x + source.width);
+    srcBox.bottom = static_cast<UINT>(source.y + source.height);
     srcBox.front = 0;
     srcBox.back = 1;
 
@@ -358,13 +399,16 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
         return {};
     }
 
-    cv::Mat bgra(region.height, region.width, CV_8UC4, mapped.pData, mapped.RowPitch);
+    cv::Mat bgra(source.height, source.width, CV_8UC4, mapped.pData, mapped.RowPitch);
 
     cv::Mat result;
     cv::cvtColor(bgra, result, cv::COLOR_BGRA2GRAY);
 
     context_->Unmap(stagingTexture_.Get(), 0);
     duplication_->ReleaseFrame();
+
+    if (result.size() != region.size())
+        cv::resize(result, result, region.size(), 0, 0, cv::INTER_AREA);
 
     lastFrame_ = result;
     lastFrameRegion_ = region;
