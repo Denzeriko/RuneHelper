@@ -1,19 +1,3 @@
-set(RUNEHELPER_TESSDATA_DIR "${CMAKE_CURRENT_BINARY_DIR}/tessdata")
-
-add_custom_command(
-    OUTPUT "${RUNEHELPER_TESSDATA_DIR}/eng.traineddata"
-    COMMAND "${CMAKE_COMMAND}" -E make_directory "${RUNEHELPER_TESSDATA_DIR}"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/RuneHelper/resources/eng.traineddata_fast"
-            "${RUNEHELPER_TESSDATA_DIR}/eng.traineddata"
-    DEPENDS "${CMAKE_SOURCE_DIR}/RuneHelper/resources/eng.traineddata_fast"
-    VERBATIM
-)
-
-add_custom_target(ocr_golden_tessdata
-    DEPENDS "${RUNEHELPER_TESSDATA_DIR}/eng.traineddata"
-)
-
 list(TRANSFORM RUNEHELPER_CORE_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/" OUTPUT_VARIABLE RUNEHELPER_TEST_CORE)
 list(TRANSFORM RUNEHELPER_CORE_PLATFORM_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/" OUTPUT_VARIABLE RUNEHELPER_TEST_PLATFORM)
 
@@ -37,7 +21,7 @@ endforeach()
 function(runehelper_add_test name)
     add_executable(${name} ${name}.cpp ${RUNEHELPER_TEST_SOURCES})
 
-    add_dependencies(${name} ocr_golden_tessdata runehelper_embedded_resources)
+    add_dependencies(${name} runehelper_embedded_resources)
 
     target_include_directories(${name} PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
     target_compile_options(${name} PRIVATE ${RUNEHELPER_WARNINGS})
@@ -63,14 +47,12 @@ add_test(
 add_test(
     NAME ocr_row_cache
     COMMAND ocr_row_cache
-        "${RUNEHELPER_TESSDATA_DIR}"
         "${CMAKE_CURRENT_SOURCE_DIR}/panels"
 )
 
 add_test(
     NAME ocr_golden
     COMMAND ocr_golden
-        "${RUNEHELPER_TESSDATA_DIR}"
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"
@@ -83,7 +65,6 @@ add_custom_target(runehelper_tests
 
 add_custom_target(bless_ocr_golden
     COMMAND ocr_golden
-        "${RUNEHELPER_TESSDATA_DIR}"
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"

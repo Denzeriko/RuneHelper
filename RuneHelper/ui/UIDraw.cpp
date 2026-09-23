@@ -11,6 +11,7 @@
 #include "core/Logger.h"
 #include "platform/PlatformShell.h"
 #include "core/Feature.h"
+#include "price/ResolvedPrice.h"
 #include "ui/UIManager.h"
 
 namespace
@@ -19,7 +20,6 @@ constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
 constexpr double kConfigSaveDelaySeconds = 0.5;
-constexpr int kTrustedMatchConfidence = 85;
 constexpr float kMinDebugTableHeight = 120.0f;
 }
 

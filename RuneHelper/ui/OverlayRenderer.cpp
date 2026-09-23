@@ -32,16 +32,16 @@ cv::Scalar ToScalar(OverlayColor color, int alpha)
     return cv::Scalar(b, g, r, alpha);
 }
 
-int PixelHeight(const OverlayText& text, const OverlayState& state)
+int PixelHeight(const OverlayState& state)
 {
-    return std::max(8, text.fontSize > 0 ? text.fontSize : state.fontSize);
+    return std::max(8, state.fontSize);
 }
 
 TextLayout Measure(const OverlayText& text, const OverlayState& state)
 {
     TextLayout layout;
 
-    const int pixelHeight = PixelHeight(text, state);
+    const int pixelHeight = PixelHeight(state);
     TextRaster& raster = TextRaster::Instance();
 
     layout.trueType = raster.Ready();
@@ -131,8 +131,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
 
         if (layout.trueType)
         {
-            TextRaster::Instance()
-                .Draw(canvas, text.text, baseline, PixelHeight(text, state), ToScalar(text.color, 255), state.outline);
+            TextRaster::Instance().Draw(canvas, text.text, baseline, PixelHeight(state), ToScalar(text.color, 255), state.outline);
 
             continue;
         }

@@ -1,6 +1,9 @@
 #include <cstdio>
 #include <cstdlib>
+#include <exception>
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <string>
 #include <vector>
 
@@ -9,9 +12,12 @@
 
 #include "core/Config.h"
 #include "core/ConfigManager.h"
+#include "core/Logger.h"
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OcrFrameDiffer.h"
+#include "platform/PlatformPaths.h"
+#include "price/PoeNinjaPriceProvider.h"
 #include "price/PriceCache.h"
 #include "recipes/RecipeDatabase.h"
 
@@ -254,6 +260,222 @@ void TestPriceCacheDump()
     Check(cache.Version() != version, "switching leagues bumps the version");
     CheckEqual(static_cast<int>(cache.GetPriceCount()), 0, "switching leagues clears the prices");
 }
+
+void WriteText(const std::filesystem::path& path, const std::string& text)
+{
+    std::ofstream out(path, std::ios::binary | std::ios::trunc);
+    out << text;
+}
+
+std::string ReadText(const std::filesystem::path& path)
+{
+    std::ifstream in(path, std::ios::binary);
+    return std::string((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+}
+
+void TestConfigLoadMalformed()
+{
+    Section("ConfigManager::Load, malformed files");
+
+    const std::filesystem::path config = GetUserDataDir() / "config.json";
+    std::filesystem::path aside = config;
+    aside += ".bad";
+
+    WriteText(config, R"({"regionX": "100", "regionY": 7, "ocrEnabled": "yes", "priceLeague": null, "overlayFontSize": 30})");
+
+    {
+        ConfigManager manager;
+        bool loaded = false;
+
+        try
+        {
+            loaded = manager.Load();
+        }
+        catch (const std::exception&)
+        {
+            Check(false, "a config with wrong-typed fields throws");
+        }
+
+        Check(loaded, "a config with wrong-typed fields still loads");
+
+        const AppConfig values = manager.Snapshot();
+        CheckEqual(values.regionX, 0, "a string region keeps the default");
+        CheckEqual(values.regionY, 7, "a well-typed field next to it is read");
+        Check(values.ocrEnabled, "a string boolean keeps the default");
+        CheckEqual(values.priceLeague, "Forbidden Rites", "a null league keeps the default");
+        CheckEqual(values.overlayFontSize, 30, "the font size is read");
+    }
+
+    for (const char* text : { "null", "[1, 2]", "{broken" })
+    {
+        std::error_code ec;
+        std::filesystem::remove(aside, ec);
+        WriteText(config, text);
+
+        ConfigManager manager;
+        bool loaded = true;
+
+        try
+        {
+            loaded = manager.Load();
+        }
+        catch (const std::exception&)
+        {
+            Check(false, std::string("an unreadable config throws: ") + text);
+        }
+
+        Check(!loaded, std::string("an unreadable config is rejected: ") + text);
+        Check(std::filesystem::exists(aside), std::string("an unreadable config is kept as config.json.bad: ") + text);
+        Check(!std::filesystem::exists(config), std::string("an unreadable config is moved, not copied: ") + text);
+    }
+
+    std::error_code ec;
+    std::filesystem::remove(aside, ec);
+}
+
+void TestRecipeDatabaseMalformedDownload()
+{
+    Section("RecipeDatabase, malformed downloaded update");
+
+    RecipeDatabase shipped;
+    Check(shipped.Load(), "the shipped database loads");
+
+    const std::filesystem::path downloaded = DownloadedRecipeDatabasePath();
+
+    const char* broken[] = {
+        R"({"generated": "2099-01-01", "combinations": [1, {"output": 5}, {"output": "X", "count": "2", "runes": ["A"]}]})",
+        R"({"generated": 20990101, "combinations": [{"output": "X", "count": 1, "runes": ["A"]}]})",
+        R"({"generated": "2099-01-01", "combinations": {"output": "X"}})",
+        R"(["not", "an", "object"])",
+    };
+
+    for (const char* text : broken)
+    {
+        WriteText(downloaded, text);
+
+        RecipeDatabase database;
+        bool loaded = false;
+
+        try
+        {
+            loaded = database.Load();
+        }
+        catch (const std::exception&)
+        {
+            Check(false, std::string("a malformed download throws: ") + text);
+        }
+
+        Check(loaded, std::string("a malformed download falls back to the shipped database: ") + text);
+        CheckEqual(
+            static_cast<int>(database.Recipes().size()),
+            static_cast<int>(shipped.Recipes().size()),
+            std::string("the fallback has every shipped recipe: ") + text
+        );
+        Check(!std::filesystem::exists(downloaded), std::string("the malformed download is removed: ") + text);
+    }
+
+    Check(!RecipeDatabase::Accepts(nlohmann::json::parse(broken[0])), "an update with no valid entry is not accepted");
+    Check(
+        RecipeDatabase::Accepts(
+            nlohmann::json::parse(R"({"generated": "2099-01-01", "combinations": [{"output": "X", "count": 2, "runes": ["A"]}]})")
+        ),
+        "a minimal valid update is accepted"
+    );
+}
+
+void TestPriceCacheMalformedDump()
+{
+    Section("PriceCache, malformed dump");
+
+    const std::filesystem::path dump = GetUserDataDir() / "prices_dump_Malformed_League.json";
+    WriteText(
+        dump,
+        R"({"items": {"Runic Alloy": 1.5, "Broken": "x", "Null": null}, "divine_to_ex": "bad", "dump_updated_at": "bad"})"
+    );
+
+    PriceCache cache;
+
+    try
+    {
+        cache.SetLeague("Malformed League");
+    }
+    catch (const std::exception&)
+    {
+        Check(false, "a malformed dump throws");
+    }
+
+    CheckEqual(static_cast<int>(cache.GetPriceCount()), 1, "only the numeric price is loaded");
+    Check(cache.GetPrice("Runic Alloy") == 1.5, "the numeric price is kept");
+    Check(cache.DivineRate() == 0.0, "a string divine rate is ignored");
+
+    std::error_code ec;
+    std::filesystem::remove(dump, ec);
+}
+
+void TestPoeNinjaParsing()
+{
+    Section("PoeNinjaPriceProvider::ParseCategoryDump");
+
+    const auto parse = [](const char* text) { return PoeNinjaPriceProvider::ParseCategoryDump(nlohmann::json::parse(text)); };
+
+    const PriceTable good = parse(
+        R"({"core": {"rates": {"exalted": 400}}, "items": [{"id": "a", "name": "Runic Alloy"}, {"id": "b", "name": "Mystic Alloy"}],)"
+        R"( "lines": [{"id": "a", "primaryValue": 0.5}, {"id": "b", "primaryValue": null}]})"
+    );
+
+    Check(good.complete, "a well formed category is complete");
+    CheckEqual(static_cast<int>(good.items.size()), 1, "a null primaryValue is skipped");
+    Check(good.items.count("Runic Alloy") == 1 && good.items.at("Runic Alloy").ex == 200.0, "the price is converted to exalted");
+
+    struct Case
+    {
+        const char* text;
+        bool complete;
+    };
+
+    const Case cases[] = {
+        { R"([1, 2, 3])", false },
+        { R"({"core": {"rates": []}, "items": [], "lines": []})", false },
+        { R"({"core": {"rates": {"exalted": "400"}}, "items": [], "lines": []})", false },
+        { R"({"core": {"rates": {"exalted": 400}}, "items": [1, "x", null], "lines": [7, {"id": 5}]})", true },
+    };
+
+    for (const Case& c : cases)
+    {
+        try
+        {
+            const PriceTable table = parse(c.text);
+            Check(table.complete == c.complete && table.items.empty(), std::string("malformed poe.ninja JSON is handled: ") + c.text);
+        }
+        catch (const std::exception&)
+        {
+            Check(false, std::string("malformed poe.ninja JSON throws: ") + c.text);
+        }
+    }
+}
+
+void TestLoggerRepeats()
+{
+    Section("Logger, repeated messages");
+
+    Logger::Instance().Init();
+
+    for (int i = 0; i < 10; ++i)
+        LOG_ERROR("unit test repeated message");
+
+    LOG_INFO("unit test distinct message");
+
+    const std::string log = ReadText(GetUserDataDir() / "runehelper.log");
+    const std::string repeated = "unit test repeated message";
+
+    int written = 0;
+
+    for (std::size_t at = log.find(repeated); at != std::string::npos; at = log.find(repeated, at + 1))
+        ++written;
+
+    CheckEqual(written, 3, "a repeated message is written three times, then held back");
+    Check(log.find("unit test distinct message") != std::string::npos, "a different message is still written");
+}
 }
 
 int main()
@@ -274,6 +496,11 @@ int main()
     TestFrameSimilarity();
     TestRecipeDatabase();
     TestPriceCacheDump();
+    TestConfigLoadMalformed();
+    TestRecipeDatabaseMalformedDownload();
+    TestPriceCacheMalformedDump();
+    TestPoeNinjaParsing();
+    TestLoggerRepeats();
 
     std::filesystem::remove_all(sandbox, ec);
 

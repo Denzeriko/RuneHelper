@@ -9,6 +9,7 @@
 #include <imgui.h>
 
 #include "core/ConfigManager.h"
+#include "core/JsonRead.h"
 #include "core/Logger.h"
 #include "ocr/LootParser.h"
 #include "ui/UIDraw.h"
@@ -64,9 +65,9 @@ bool ExpeditionFeature::Init(ConfigManager& configManager)
 
     const nlohmann::json settings = configManager.FeatureSettings(Name());
 
-    settings_.enabled = settings.value("enabled", settings_.enabled.load());
-    settings_.showRunes = settings.value("showRunes", settings_.showRunes.load());
-    settings_.highlightRare = settings.value("highlightRare", settings_.highlightRare.load());
+    settings_.enabled = JsonValue(settings, "enabled", settings_.enabled.load());
+    settings_.showRunes = JsonValue(settings, "showRunes", settings_.showRunes.load());
+    settings_.highlightRare = JsonValue(settings, "highlightRare", settings_.highlightRare.load());
 
     const bool loaded = database_.Load();
 

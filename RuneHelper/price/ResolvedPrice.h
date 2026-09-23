@@ -3,6 +3,8 @@
 #include <optional>
 #include <string>
 
+constexpr int kTrustedMatchConfidence = 85;
+
 struct ResolvedPrice
 {
     std::string name;

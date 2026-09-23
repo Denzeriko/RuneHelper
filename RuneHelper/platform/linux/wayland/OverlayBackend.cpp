@@ -360,7 +360,10 @@ void WaylandOverlayBackend::Draw()
     const int slot = AcquireBuffer(surfaceRect_.width, surfaceRect_.height);
 
     if (slot < 0)
+    {
+        needsRedraw_ = true;
         return;
+    }
 
     WaylandShmBuffer& buffer = buffers_[slot];
     const bool fullDamage = needsRedraw_;

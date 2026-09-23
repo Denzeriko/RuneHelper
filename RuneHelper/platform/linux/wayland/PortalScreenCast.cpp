@@ -2,7 +2,9 @@
 
 #include <atomic>
 #include <chrono>
+#include <cstdint>
 #include <cstring>
+#include <memory>
 #include <mutex>
 #include <random>
 #include <string>
@@ -228,12 +230,18 @@ DBusHandlerResult HandleResponseSignal(DBusConnection*, DBusMessage* message, vo
     return DBUS_HANDLER_RESULT_HANDLED;
 }
 
-bool WaitForResponse(DBusConnection* connection, PortalResponse& response, int timeoutMs)
+bool WaitForResponse(DBusConnection* connection, PortalResponse& response, int timeoutMs, const std::atomic<bool>& cancelled)
 {
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeoutMs);
 
     while (!response.received)
     {
+        if (cancelled.load())
+        {
+            LOG_INFO("Portal screencast: stopped waiting for the portal because RuneHelper is shutting down");
+            return false;
+        }
+
         if (!dbus_connection_read_write_dispatch(connection, 100))
             return false;
 
@@ -245,6 +253,19 @@ bool WaitForResponse(DBusConnection* connection, PortalResponse& response, int t
     }
 
     return response.code == 0;
+}
+
+bool HoldsFrame(const spa_data& data, int width, int height, int stride)
+{
+    if (!data.data || !data.chunk || data.chunk->size == 0 || (data.chunk->flags & SPA_CHUNK_FLAG_CORRUPTED) != 0)
+        return false;
+
+    if (stride < width * 4)
+        return false;
+
+    const std::uint64_t end = static_cast<std::uint64_t>(data.chunk->offset) + static_cast<std::uint64_t>(stride) * height;
+
+    return end <= data.maxsize;
 }
 }
 
@@ -261,6 +282,7 @@ struct PortalScreenCast::Impl
 
     int pipewireFd = -1;
     std::atomic<bool> running{ false };
+    std::atomic<bool> cancelled{ false };
 
     std::mutex frameMutex;
     std::atomic<long long> frameWantedAtMs{ 0 };
@@ -348,16 +370,17 @@ void PortalScreenCast::Impl::OnProcess()
 
     const bool wanted = NowMs() - frameWantedAtMs.load() <= kFrameWantedWindowMs;
 
-    if (wanted && spaBuffer->n_datas > 0 && spaBuffer->datas[0].data)
+    if (wanted && spaBuffer->n_datas > 0)
     {
         const spa_data& data = spaBuffer->datas[0];
         const int width = static_cast<int>(format.info.raw.size.width);
         const int height = static_cast<int>(format.info.raw.size.height);
-        const int stride = data.chunk->stride > 0 ? data.chunk->stride : width * 4;
+        const int stride = data.chunk && data.chunk->stride > 0 ? data.chunk->stride : width * 4;
 
-        if (width > 0 && height > 0)
+        if (width > 0 && height > 0 && HoldsFrame(data, width, height, stride))
         {
-            cv::Mat wrapped(height, width, CV_8UC4, data.data, static_cast<std::size_t>(stride));
+            unsigned char* pixels = static_cast<unsigned char*>(data.data) + data.chunk->offset;
+            cv::Mat wrapped(height, width, CV_8UC4, pixels, static_cast<std::size_t>(stride));
             cv::Mat converted;
 
             switch (format.info.raw.format)
@@ -380,18 +403,27 @@ void PortalScreenCast::Impl::OnProcess()
     pw_stream_queue_buffer(stream, buffer);
 }
 
-PortalScreenCast::PortalScreenCast() : impl_(new Impl()) {}
+PortalScreenCast::PortalScreenCast() : impl_(std::make_unique<Impl>()) {}
 
 PortalScreenCast::~PortalScreenCast()
 {
     Stop();
-    delete impl_;
-    impl_ = nullptr;
 }
 
 bool PortalScreenCast::IsRunning() const
 {
     return impl_ && impl_->running.load();
+}
+
+void PortalScreenCast::Cancel()
+{
+    if (impl_)
+        impl_->cancelled = true;
+}
+
+bool PortalScreenCast::Cancelled() const
+{
+    return impl_ && impl_->cancelled.load();
 }
 
 cv::Mat PortalScreenCast::LatestFrame()
@@ -430,7 +462,8 @@ bool CallAndWait(
     DBusMessage* message,
     const std::string& requestPath,
     PortalResponse& response,
-    int timeoutMs
+    int timeoutMs,
+    const std::atomic<bool>& cancelled
 )
 {
     const std::string match = "type='signal',interface='" + std::string(kRequestInterface) + "',path='" + requestPath + "'";
@@ -464,7 +497,7 @@ bool CallAndWait(
     else
     {
         dbus_message_unref(reply);
-        ok = WaitForResponse(connection, response, timeoutMs);
+        ok = WaitForResponse(connection, response, timeoutMs, cancelled);
     }
 
     dbus_connection_remove_filter(connection, HandleResponseSignal, &response);
@@ -482,6 +515,9 @@ bool PortalScreenCast::Start(std::string& restoreToken)
 {
     if (impl_->running.load())
         return true;
+
+    if (impl_->cancelled.load())
+        return false;
 
     DBusError error;
     dbus_error_init(&error);
@@ -516,7 +552,7 @@ bool PortalScreenCast::Start(std::string& restoreToken)
 
         PortalResponse response;
 
-        if (!CallAndWait(impl_->connection, message, requestPath, response, 30000))
+        if (!CallAndWait(impl_->connection, message, requestPath, response, 30000, impl_->cancelled))
         {
             LOG_ERROR("Portal screencast: CreateSession failed");
             return false;
@@ -556,7 +592,7 @@ bool PortalScreenCast::Start(std::string& restoreToken)
 
         PortalResponse response;
 
-        if (!CallAndWait(impl_->connection, message, requestPath, response, 120000))
+        if (!CallAndWait(impl_->connection, message, requestPath, response, 120000, impl_->cancelled))
         {
             LOG_ERROR("Portal screencast: SelectSources failed");
             return false;
@@ -585,7 +621,7 @@ bool PortalScreenCast::Start(std::string& restoreToken)
 
         PortalResponse response;
 
-        if (!CallAndWait(impl_->connection, message, requestPath, response, 300000))
+        if (!CallAndWait(impl_->connection, message, requestPath, response, 300000, impl_->cancelled))
         {
             LOG_ERROR("Portal screencast: Start failed or was denied");
             return false;
@@ -653,7 +689,12 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     pw_thread_loop_lock(impl_->loop);
 
     impl_->context = pw_context_new(pw_thread_loop_get_loop(impl_->loop), nullptr, 0);
-    impl_->core = impl_->context ? pw_context_connect_fd(impl_->context, impl_->pipewireFd, nullptr, 0) : nullptr;
+
+    if (impl_->context)
+    {
+        impl_->core = pw_context_connect_fd(impl_->context, impl_->pipewireFd, nullptr, 0);
+        impl_->pipewireFd = -1;
+    }
 
     if (!impl_->core)
     {
@@ -677,7 +718,7 @@ bool PortalScreenCast::Start(std::string& restoreToken)
         return false;
     }
 
-    pw_stream_add_listener(impl_->stream, &impl_->streamListener, &Impl::kEvents, impl_);
+    pw_stream_add_listener(impl_->stream, &impl_->streamListener, &Impl::kEvents, impl_.get());
 
     std::uint8_t podBuffer[1024];
     spa_pod_builder builder = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));

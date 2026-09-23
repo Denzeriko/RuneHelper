@@ -7,6 +7,7 @@
 
 #include "nlohmann/json.hpp"
 
+#include "core/JsonRead.h"
 #include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 
@@ -146,10 +147,15 @@ json ParseJson(std::string_view text)
 
 std::string GeneratedAt(const json& parsed)
 {
-    if (!parsed.is_object())
-        return {};
+    return JsonValue(parsed, "generated", std::string());
+}
 
-    return parsed.value("generated", std::string());
+void DiscardDownloaded(const std::filesystem::path& path)
+{
+    std::error_code ec;
+    std::filesystem::remove(path, ec);
+
+    LOG_ERROR("RecipeDatabase: the downloaded database is unusable, removed it and fell back to the shipped one");
 }
 }
 
@@ -170,12 +176,16 @@ bool RecipeDatabase::Load()
         const json downloadedJson = ReadJson(downloaded);
         const std::string downloadedDate = GeneratedAt(downloadedJson);
 
-        if (!downloadedDate.empty() && downloadedDate >= GeneratedAt(shippedJson))
+        if (downloadedDate.empty())
         {
-            if (LoadFromJson(downloadedJson, downloaded.string()))
+            DiscardDownloaded(downloaded);
+        }
+        else if (downloadedDate >= GeneratedAt(shippedJson))
+        {
+            if (LoadFromJson(downloadedJson, PathToUtf8(downloaded)))
                 return true;
 
-            LOG_ERROR("RecipeDatabase: downloaded database is unusable, falling back to the shipped one");
+            DiscardDownloaded(downloaded);
         }
     }
 
@@ -186,6 +196,12 @@ bool RecipeDatabase::Load()
     }
 
     return LoadFromJson(shippedJson, "the database embedded in the binary");
+}
+
+bool RecipeDatabase::Accepts(const json& j)
+{
+    RecipeDatabase probe;
+    return probe.LoadFromJson(j, "the downloaded update");
 }
 
 bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
@@ -202,12 +218,12 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
     for (const auto& entry : j["combinations"])
     {
         Recipe recipe;
-        recipe.output = entry.value("output", std::string());
-        recipe.count = entry.value("count", 1);
-        recipe.level = entry.value("level", 0);
-        recipe.category = entry.value("category", std::string("unknown"));
+        recipe.output = JsonValue(entry, "output", std::string());
+        recipe.count = entry.contains("count") ? JsonValue(entry, "count", 0) : 1;
+        recipe.level = JsonValue(entry, "level", 0);
+        recipe.category = JsonValue(entry, "category", std::string("unknown"));
 
-        if (recipe.output.empty() || !entry.contains("runes") || !entry["runes"].is_array())
+        if (recipe.output.empty() || recipe.count < 1 || !entry.contains("runes") || !entry["runes"].is_array())
             continue;
 
         for (const auto& runeJson : entry["runes"])
@@ -258,7 +274,7 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
                 rareRunes_.insert(NormalizeRune(entry.get<std::string>()));
         }
     }
-    complete_ = j.value("complete", false);
+    complete_ = JsonValue(j, "complete", false);
     loadedFrom_ = std::string(source);
     loaded_ = true;
 

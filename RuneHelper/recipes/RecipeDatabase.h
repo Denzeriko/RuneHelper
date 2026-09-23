@@ -43,6 +43,8 @@ public:
     const Recipe* FindRecipe(std::string_view output, int count) const;
     bool IsRareRune(const std::string& rune) const;
 
+    static bool Accepts(const nlohmann::json& j);
+
 private:
     static std::string NormalizeRune(std::string_view name);
     static std::string StripOcrNoise(std::string_view name);

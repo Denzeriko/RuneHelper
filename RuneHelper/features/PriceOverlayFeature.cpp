@@ -6,17 +6,15 @@
 
 namespace
 {
-constexpr int kTrustedMatchConfidence = 85;
-
 OverlayColor ColorForPrice(double priceEx, const AppConfig& config)
 {
-    if (priceEx > config.priceColorVeryHigh)
+    if (priceEx >= config.priceColorVeryHigh)
         return OverlayRgb(255, 60, 60);
 
-    if (priceEx > config.priceColorHigh)
+    if (priceEx >= config.priceColorHigh)
         return OverlayRgb(255, 220, 80);
 
-    if (priceEx > config.priceColorMedium)
+    if (priceEx >= config.priceColorMedium)
         return OverlayRgb(80, 255, 80);
 
     return OverlayRgb(160, 160, 160);

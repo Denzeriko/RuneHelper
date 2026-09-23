@@ -25,7 +25,6 @@ struct OverlayText
     std::string text;
     int x = 0;
     int y = 0;
-    int fontSize = 0;
     OverlayColor color = OverlayRgb(255, 255, 255);
 };
 
@@ -40,7 +39,7 @@ struct OverlayMark
 
 inline bool ApproxEqual(const OverlayText& a, const OverlayText& b, int yTolerance = 0)
 {
-    return a.x == b.x && std::abs(a.y - b.y) <= yTolerance && a.fontSize == b.fontSize && a.color == b.color && a.text == b.text;
+    return a.x == b.x && std::abs(a.y - b.y) <= yTolerance && a.color == b.color && a.text == b.text;
 }
 
 inline bool ApproxEqual(const OverlayMark& a, const OverlayMark& b, int yTolerance = 0)

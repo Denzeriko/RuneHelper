@@ -1,6 +1,7 @@
 #include "core/Feature.h"
 
 #include "core/Logger.h"
+#include "core/ThreadGuard.h"
 
 void FeatureRegistry::Add(std::unique_ptr<Feature> feature)
 {
@@ -14,7 +15,12 @@ bool FeatureRegistry::InitAll(ConfigManager& configManager)
 
     for (const auto& feature : features_)
     {
-        if (feature->Init(configManager))
+        const std::string context = "Feature " + feature->Name() + " init";
+        bool initialised = false;
+
+        RunLoggingExceptions(context.c_str(), [&] { initialised = feature->Init(configManager); });
+
+        if (initialised)
             continue;
 
         LOG_ERROR("Feature failed to initialise: " + feature->Name());

@@ -1,6 +1,7 @@
 #include "UpdateChecker.h"
 
 #include "Logger.h"
+#include "core/JsonRead.h"
 #include "core/ThreadGuard.h"
 
 #include <cpr/cpr.h>
@@ -8,9 +9,12 @@
 
 #include <cstdint>
 #include <sstream>
+#include <string_view>
 #include <vector>
 
 using json = nlohmann::json;
+
+constexpr std::string_view kReleasesUrl = "https://github.com/Denzeriko/RuneHelper/releases/";
 
 static std::string NormalizeVersion(std::string v)
 {
@@ -143,8 +147,11 @@ void UpdateChecker::Check(const std::stop_token& stop)
         return;
     }
 
-    std::string latestVersion = j.value("tag_name", "");
-    std::string downloadUrl = j.value("html_url", "");
+    std::string latestVersion = JsonValue(j, "tag_name", "");
+    std::string downloadUrl = JsonValue(j, "html_url", "");
+
+    if (!downloadUrl.starts_with(kReleasesUrl))
+        downloadUrl = std::string(kReleasesUrl) + "latest";
 
     LOG_INFO("Current version: " + std::string(RUNEHELPER_VERSION));
 

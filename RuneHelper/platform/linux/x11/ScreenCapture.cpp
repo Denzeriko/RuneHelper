@@ -428,3 +428,5 @@ cv::Mat CaptureRegion(const cv::Rect& region)
 
     return result;
 }
+
+void CancelCapture() {}

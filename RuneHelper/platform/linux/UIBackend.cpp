@@ -142,6 +142,10 @@ bool UIBackend::Init(UIManager* manager)
 {
     impl_->manager = manager;
 
+#ifdef GLFW_WAYLAND_LIBDECOR
+    glfwInitHint(GLFW_WAYLAND_LIBDECOR, GLFW_WAYLAND_DISABLE_LIBDECOR);
+#endif
+
     if (!glfwInit())
     {
         LOG_ERROR("Linux UI: glfwInit failed");
@@ -170,6 +174,9 @@ bool UIBackend::Init(UIManager* manager)
 
     glfwMakeContextCurrent(impl_->window);
     glfwSwapInterval(0);
+
+    if (const GLubyte* renderer = glGetString(GL_RENDERER))
+        LOG_INFO("Linux UI: GL renderer " + std::string(reinterpret_cast<const char*>(renderer)));
 
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();

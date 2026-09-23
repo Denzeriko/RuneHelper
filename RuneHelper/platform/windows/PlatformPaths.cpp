@@ -31,7 +31,7 @@ const std::filesystem::path& GetUserDataDir()
         if (ec)
             LOG_ERROR("GetUserDataDir() -> create_directories failed: " + ec.message());
 
-        LOG_INFO("GetUserDataDir() -> " + result.string());
+        LOG_INFO("GetUserDataDir() -> " + PathToUtf8(result));
 
         return result;
     }();

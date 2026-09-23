@@ -1,8 +1,7 @@
 #pragma once
 
-#include <filesystem>
 #include <string>
+#include <string_view>
 
-bool ExtractResourceToFile(int resId, const wchar_t* resType, const std::filesystem::path& outPath);
-std::string PrepareTessdata();
+std::string_view EmbeddedTraineddata();
 std::string LoadEmbeddedRecipeDatabase();

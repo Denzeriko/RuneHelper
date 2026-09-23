@@ -3,9 +3,11 @@
 #include <opencv2/core.hpp>
 #include <tesseract/baseapi.h>
 
+#include <filesystem>
 #include <memory>
 #include <mutex>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "core/Config.h"
@@ -31,7 +33,7 @@ public:
     OCR(const OCR&) = delete;
     OCR& operator=(const OCR&) = delete;
 
-    bool Init(const std::string& tessdataPath);
+    bool Init(std::string_view traineddata);
     void SetupTesseractApi(tesseract::TessBaseAPI& api);
 
     std::vector<LootLine> RecognizeLoot(const cv::Mat& gray, const AppConfig& config, OcrRowCache* rowCache = nullptr);
@@ -39,13 +41,12 @@ public:
     std::vector<LootLine> RecognizeTextOnly(
         tesseract::TessBaseAPI& api,
         const cv::Mat& textGray,
-        const std::string& debugBinPath = {}
+        const std::filesystem::path& debugBinPath = {}
     );
 
 private:
     bool initialized_ = false;
 
-    std::string tessdataPath_;
     std::vector<std::unique_ptr<tesseract::TessBaseAPI>> apis_;
     std::mutex apiMutex_;
 

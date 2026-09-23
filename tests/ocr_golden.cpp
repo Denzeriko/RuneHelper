@@ -22,6 +22,7 @@
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OCR.h"
+#include "platform/linux/ResourceHelper.h"
 
 namespace fs = std::filesystem;
 
@@ -396,27 +397,26 @@ void PrintDiff(const std::string& name, const std::string& expected, const std::
 
 int main(int argc, char** argv)
 {
-    if (argc < 6)
+    if (argc < 5)
     {
-        std::printf("usage: ocr_golden <tessdata> <combinations.json> <panels> <golden> <truth> [--bless]\n");
+        std::printf("usage: ocr_golden <combinations.json> <panels> <golden> <truth> [--bless]\n");
         return 2;
     }
 
-    const fs::path tessdata = argv[1];
-    const fs::path combinations = argv[2];
-    const fs::path panels = argv[3];
-    const fs::path golden = argv[4];
-    const fs::path truth = argv[5];
-    const bool bless = argc > 6 && std::string(argv[6]) == "--bless";
+    const fs::path combinations = argv[1];
+    const fs::path panels = argv[2];
+    const fs::path golden = argv[3];
+    const fs::path truth = argv[4];
+    const bool bless = argc > 5 && std::string(argv[5]) == "--bless";
 
     cv::setNumThreads(1);
     setMsgSeverity(L_SEVERITY_NONE);
 
     OCR ocr;
 
-    if (!ocr.Init(tessdata.string()))
+    if (!ocr.Init(EmbeddedTraineddata()))
     {
-        std::printf("ocr_golden: OCR::Init failed for %s\n", tessdata.string().c_str());
+        std::printf("ocr_golden: OCR::Init failed on the embedded traineddata\n");
         return 2;
     }
 

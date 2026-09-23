@@ -228,11 +228,28 @@ void LinuxOverlayBackend::SetVisible(bool visible)
 
 void LinuxOverlayBackend::SetClickThrough(bool enabled)
 {
-    if (enabled && !clickThroughLogged_)
+    if (!display_ || !window_)
+        return;
+
+    int major = 0;
+    int minor = 0;
+    const bool inputShape = XShapeQueryVersion(display_, &major, &minor) && (major > 1 || (major == 1 && minor >= 1));
+
+    if (!inputShape)
     {
-        LOG_INFO("Linux overlay: click-through is not implemented for the X11 backend yet");
+        if (!clickThroughLogged_)
+            LOG_ERROR("Linux overlay: click-through needs the X Shape extension 1.1, the overlay will catch clicks");
+
         clickThroughLogged_ = true;
+        return;
     }
+
+    if (enabled)
+        XShapeCombineRectangles(display_, window_, ShapeInput, 0, 0, nullptr, 0, ShapeSet, Unsorted);
+    else
+        XShapeCombineMask(display_, window_, ShapeInput, 0, 0, None, ShapeSet);
+
+    XFlush(display_);
 }
 
 void LinuxOverlayBackend::SetAlwaysOnTop(bool enabled)

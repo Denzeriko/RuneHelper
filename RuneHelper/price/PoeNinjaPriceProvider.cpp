@@ -11,6 +11,7 @@
 
 #include <cpr/cpr.h>
 
+#include "core/JsonRead.h"
 #include "core/Logger.h"
 
 using json = nlohmann::json;
@@ -208,7 +209,7 @@ PriceTable PoeNinjaPriceProvider::DownloadCategory(
 {
     const std::string query = "?league=" + encodedLeague + "&type=" + type;
 
-    auto parse = [this](const std::string& text) -> PriceTable
+    auto parse = [](const std::string& text) -> PriceTable
     {
         json j = json::parse(text, nullptr, false);
 
@@ -252,15 +253,19 @@ PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
 {
     PriceTable result;
 
-    if (!j.contains("core") || !j["core"].contains("rates") || !j.contains("items") || !j["items"].is_array() ||
-        !j.contains("lines") || !j["lines"].is_array())
+    const auto core = j.find("core");
+    const auto items = j.find("items");
+    const auto lines = j.find("lines");
+
+    if (core == j.end() || !core->is_object() || items == j.end() || !items->is_array() || lines == j.end() || !lines->is_array())
     {
         LOG_ERROR("PoeNinjaPriceProvider::ParseCategoryDump() invalid JSON structure");
         result.complete = false;
         return result;
     }
 
-    double divineToEx = j["core"]["rates"].value("exalted", 0.0);
+    const auto rates = core->find("rates");
+    const double divineToEx = rates == core->end() ? 0.0 : JsonValue(*rates, "exalted", 0.0);
 
     if (divineToEx <= 0.0)
     {
@@ -272,21 +277,21 @@ PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
     result.divineToEx = divineToEx;
 
     std::unordered_map<std::string, std::string> idToName;
-    idToName.reserve(j["items"].size());
+    idToName.reserve(items->size());
 
-    for (const auto& item : j["items"])
+    for (const auto& item : *items)
     {
-        std::string id = item.value("id", "");
-        std::string name = item.value("name", "");
+        std::string id = JsonValue(item, "id", "");
+        std::string name = JsonValue(item, "name", "");
 
         if (!id.empty() && !name.empty())
             idToName.emplace(std::move(id), std::move(name));
     }
 
-    result.items.reserve(j["lines"].size());
-    for (const auto& line : j["lines"])
+    result.items.reserve(lines->size());
+    for (const auto& line : *lines)
     {
-        std::string id = line.value("id", "");
+        const std::string id = JsonValue(line, "id", "");
 
         if (id.empty())
             continue;
@@ -296,7 +301,7 @@ PriceTable PoeNinjaPriceProvider::ParseCategoryDump(const json& j)
         if (it == idToName.end())
             continue;
 
-        double primaryValue = line.value("primaryValue", 0.0);
+        const double primaryValue = JsonValue(line, "primaryValue", 0.0);
 
         if (primaryValue <= 0.0)
             continue;

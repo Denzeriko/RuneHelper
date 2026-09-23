@@ -288,23 +288,61 @@ int& PortalMismatchCount()
     return count;
 }
 
+constexpr std::chrono::seconds kFirstPortalRetry{ 30 };
+constexpr std::chrono::seconds kMaxPortalRetry{ 600 };
+
+struct PortalRetry
+{
+    std::chrono::steady_clock::time_point notBefore{};
+    std::chrono::seconds delay{ 0 };
+};
+
+PortalRetry& Retry()
+{
+    static PortalRetry retry;
+    return retry;
+}
+
+bool StartPortal(PortalScreenCast& portal)
+{
+    PortalRetry& retry = Retry();
+
+    if (std::chrono::steady_clock::now() < retry.notBefore)
+        return false;
+
+    std::string token = LoadRestoreToken();
+
+    if (portal.Start(token))
+    {
+        retry.delay = {};
+        SaveRestoreToken(token);
+        return true;
+    }
+
+    portal.Stop();
+
+    if (portal.Cancelled())
+        return false;
+
+    retry.delay = std::clamp(retry.delay * 2, kFirstPortalRetry, kMaxPortalRetry);
+    retry.notBefore = std::chrono::steady_clock::now() + retry.delay;
+
+    LOG_ERROR(
+        "Portal screencast: capture is paused, the next attempt to start it is in " + std::to_string(retry.delay.count()) + " s"
+    );
+    return false;
+}
+
 cv::Mat CaptureViaPortal(const cv::Rect& region)
 {
     PortalScreenCast& portal = Portal();
 
-    if (!portal.IsRunning())
-    {
-        std::string token = LoadRestoreToken();
-
-        if (!portal.Start(token))
-            return {};
-
-        SaveRestoreToken(token);
-    }
+    if (!portal.IsRunning() && !StartPortal(portal))
+        return {};
 
     cv::Mat frame;
 
-    for (int attempt = 0; attempt < 100 && frame.empty(); ++attempt)
+    for (int attempt = 0; attempt < 100 && frame.empty() && !portal.Cancelled(); ++attempt)
     {
         frame = portal.LatestFrame();
 
@@ -430,4 +468,9 @@ cv::Mat Capture(const cv::Rect& region)
 cv::Mat CaptureRegion(const cv::Rect& region)
 {
     return Capture(region);
+}
+
+void CancelCapture()
+{
+    Portal().Cancel();
 }

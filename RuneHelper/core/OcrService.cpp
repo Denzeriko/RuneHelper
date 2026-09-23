@@ -86,6 +86,8 @@ void OcrService::Stop()
     if (!running_.exchange(false) && !initThread_.joinable() && !workerThread_.joinable())
         return;
 
+    screenCapture_.Cancel();
+
     if (initThread_.joinable())
         initThread_.join();
 
@@ -140,9 +142,7 @@ void OcrService::InitOcr()
 
     LOG_INFO("Initializing OCR");
 
-    std::string tessdata = PrepareTessdata();
-
-    if (!ocr_.Init(tessdata))
+    if (!ocr_.Init(EmbeddedTraineddata()))
     {
         LOG_ERROR("Tesseract init failed");
 

@@ -4,9 +4,7 @@
 #include <string>
 #include <string_view>
 
-#include "core/AtomicFile.h"
 #include "core/Logger.h"
-#include "platform/PlatformPaths.h"
 #include "platform/linux/EmbeddedResources.h"
 
 namespace
@@ -22,50 +20,23 @@ const EmbeddedResource* FindEmbedded(std::string_view name)
     return nullptr;
 }
 
-bool WriteEmbedded(const EmbeddedResource& resource, const std::filesystem::path& destination)
+std::string_view Bytes(const EmbeddedResource& resource)
 {
-    std::filesystem::create_directories(destination.parent_path());
-
-    return WriteFileAtomic(
-        destination,
-        std::string_view(reinterpret_cast<const char*>(resource.begin), static_cast<std::size_t>(resource.end - resource.begin))
-    );
+    return std::string_view(reinterpret_cast<const char*>(resource.begin), static_cast<std::size_t>(resource.end - resource.begin));
 }
 }
 
-bool ExtractResourceToFile(int, const wchar_t*, const std::filesystem::path& outPath)
+std::string_view EmbeddedTraineddata()
 {
     const EmbeddedResource* resource = FindEmbedded("eng.traineddata_fast");
 
     if (!resource)
     {
-        LOG_ERROR("Linux resource extraction failed: eng.traineddata_fast is not embedded in the binary");
-        return false;
+        LOG_ERROR("Linux tessdata is not embedded in the binary");
+        return {};
     }
 
-    if (!WriteEmbedded(*resource, outPath))
-    {
-        LOG_ERROR("Linux resource extraction failed: could not write " + outPath.string());
-        return false;
-    }
-
-    LOG_INFO("Linux tessdata written from the embedded resource: " + outPath.string());
-    return true;
-}
-
-std::string PrepareTessdata()
-{
-    LOG_INFO("Linux PrepareTessdata() -> call");
-
-    const auto dir = GetUserDataDir() / "tessdata";
-    auto eng = dir / "eng.traineddata";
-
-    if (!std::filesystem::exists(eng))
-        ExtractResourceToFile(0, nullptr, eng);
-
-    LOG_INFO("Linux PrepareTessdata() -> return " + dir.string());
-
-    return dir.string();
+    return Bytes(*resource);
 }
 
 std::string LoadEmbeddedRecipeDatabase()
@@ -78,5 +49,5 @@ std::string LoadEmbeddedRecipeDatabase()
         return {};
     }
 
-    return std::string(reinterpret_cast<const char*>(resource->begin), static_cast<std::size_t>(resource->end - resource->begin));
+    return std::string(Bytes(*resource));
 }

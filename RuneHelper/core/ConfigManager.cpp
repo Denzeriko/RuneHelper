@@ -7,6 +7,8 @@
 
 #include "nlohmann/json.hpp"
 #include "core/AtomicFile.h"
+#include "core/JsonRead.h"
+#include "core/Logger.h"
 #include "platform/PlatformPaths.h"
 
 using json = nlohmann::json;
@@ -15,6 +17,21 @@ namespace
 {
 constexpr std::string_view kDefaultPriceLeague = "Forbidden Rites";
 constexpr std::size_t kMaxPriceLeagueLength = 64;
+
+void SetAsideUnreadableConfig(const std::filesystem::path& path)
+{
+    std::filesystem::path aside = path;
+    aside += ".bad";
+
+    std::error_code ec;
+    std::filesystem::remove(aside, ec);
+    std::filesystem::rename(path, aside, ec);
+
+    if (ec)
+        LOG_ERROR("config.json is not a readable JSON object and could not be moved aside, defaults are used: " + ec.message());
+    else
+        LOG_ERROR("config.json is not a readable JSON object, it was kept as config.json.bad and defaults are used");
+}
 
 std::string SanitizePriceLeague(std::string_view league)
 {
@@ -117,47 +134,52 @@ bool ConfigManager::Load()
 {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    std::ifstream file(GetConfigPath());
+    const std::filesystem::path path = GetConfigPath();
+    std::ifstream file(path);
 
     if (!file)
         return false;
 
     json j = json::parse(file, nullptr, false);
+    file.close();
 
-    if (j.is_discarded())
+    if (j.is_discarded() || !j.is_object())
+    {
+        SetAsideUnreadableConfig(path);
         return false;
+    }
 
-    if (j.contains("features") && j["features"].is_object())
-        features_ = j["features"];
+    if (const auto features = j.find("features"); features != j.end() && features->is_object())
+        features_ = *features;
 
-    config_.regionX = j.value("regionX", config_.regionX);
-    config_.regionY = j.value("regionY", config_.regionY);
-    config_.regionW = j.value("regionW", config_.regionW);
-    config_.regionH = j.value("regionH", config_.regionH);
+    config_.regionX = JsonValue(j, "regionX", config_.regionX);
+    config_.regionY = JsonValue(j, "regionY", config_.regionY);
+    config_.regionW = JsonValue(j, "regionW", config_.regionW);
+    config_.regionH = JsonValue(j, "regionH", config_.regionH);
 
-    config_.ocrEnabled = j.value("ocrEnabled", config_.ocrEnabled);
-    config_.overlayBackground = j.value("overlayBackground", config_.overlayBackground);
-    config_.overlayOutline = j.value("overlayOutline", config_.overlayOutline);
-    config_.priceSearchEnabled = j.value("priceSearchEnabled", config_.priceSearchEnabled);
+    config_.ocrEnabled = JsonValue(j, "ocrEnabled", config_.ocrEnabled);
+    config_.overlayBackground = JsonValue(j, "overlayBackground", config_.overlayBackground);
+    config_.overlayOutline = JsonValue(j, "overlayOutline", config_.overlayOutline);
+    config_.priceSearchEnabled = JsonValue(j, "priceSearchEnabled", config_.priceSearchEnabled);
 
-    config_.hotkeyToggleOCR = j.value("hotkeyToggleOCR", config_.hotkeyToggleOCR);
-    config_.hotkeySingleSnapshot = j.value("hotkeySingleSnapshot", config_.hotkeySingleSnapshot);
-    config_.hotkeySelectRegion = j.value("hotkeySelectRegion", config_.hotkeySelectRegion);
+    config_.hotkeyToggleOCR = JsonValue(j, "hotkeyToggleOCR", config_.hotkeyToggleOCR);
+    config_.hotkeySingleSnapshot = JsonValue(j, "hotkeySingleSnapshot", config_.hotkeySingleSnapshot);
+    config_.hotkeySelectRegion = JsonValue(j, "hotkeySelectRegion", config_.hotkeySelectRegion);
 
-    config_.overlayOffsetX = j.value("overlayOffsetX", config_.overlayOffsetX);
-    config_.overlayOffsetY = j.value("overlayOffsetY", config_.overlayOffsetY);
-    config_.overlayFontSize = j.value("overlayFontSize", config_.overlayFontSize);
+    config_.overlayOffsetX = JsonValue(j, "overlayOffsetX", config_.overlayOffsetX);
+    config_.overlayOffsetY = JsonValue(j, "overlayOffsetY", config_.overlayOffsetY);
+    config_.overlayFontSize = JsonValue(j, "overlayFontSize", config_.overlayFontSize);
 
-    config_.priceUnit = PriceUnitFromInt(j.value("priceUnit", static_cast<int>(config_.priceUnit)));
+    config_.priceUnit = PriceUnitFromInt(JsonValue(j, "priceUnit", static_cast<int>(config_.priceUnit)));
 
-    config_.priceColorMedium = j.value("priceColorMedium", config_.priceColorMedium);
-    config_.priceColorHigh = j.value("priceColorHigh", config_.priceColorHigh);
-    config_.priceColorVeryHigh = j.value("priceColorVeryHigh", config_.priceColorVeryHigh);
+    config_.priceColorMedium = JsonValue(j, "priceColorMedium", config_.priceColorMedium);
+    config_.priceColorHigh = JsonValue(j, "priceColorHigh", config_.priceColorHigh);
+    config_.priceColorVeryHigh = JsonValue(j, "priceColorVeryHigh", config_.priceColorVeryHigh);
 
-    config_.priceRefreshMinutes = j.value("priceRefreshMinutes", config_.priceRefreshMinutes);
-    config_.priceLeague = j.value("priceLeague", config_.priceLeague);
+    config_.priceRefreshMinutes = JsonValue(j, "priceRefreshMinutes", config_.priceRefreshMinutes);
+    config_.priceLeague = JsonValue(j, "priceLeague", config_.priceLeague);
 
-    config_.debugOCR = j.value("debugOCR", config_.debugOCR);
+    config_.debugOCR = JsonValue(j, "debugOCR", config_.debugOCR);
 
     Normalize(config_);
 

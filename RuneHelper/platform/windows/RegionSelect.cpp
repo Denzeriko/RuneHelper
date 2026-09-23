@@ -7,6 +7,11 @@
 
 #include <algorithm>
 
+namespace
+{
+constexpr int kCancelHotkeyId = 0x5253;
+}
+
 RegionSelector::~RegionSelector()
 {
     DestroyOverlayWindow();
@@ -95,6 +100,9 @@ bool RegionSelector::CreateOverlayWindow()
     ShowWindow(hwnd_, SW_SHOW);
     UpdateWindow(hwnd_);
 
+    if (!RegisterHotKey(hwnd_, kCancelHotkeyId, MOD_NOREPEAT, VK_ESCAPE))
+        LOG_INFO("RegionSelector::CreateOverlayWindow() -> Escape is taken by another program, a click without dragging cancels");
+
     LOG_INFO("RegionSelector::CreateOverlayWindow() -> return");
 
     return true;
@@ -104,6 +112,7 @@ void RegionSelector::DestroyOverlayWindow()
 {
     if (hwnd_)
     {
+        UnregisterHotKey(hwnd_, kCancelHotkeyId);
         DestroyWindow(hwnd_);
         hwnd_ = nullptr;
     }
@@ -157,7 +166,6 @@ void RegionSelector::OnLeftButtonUp(LPARAM lp)
     result_.bottom = current_.y;
 
     done_ = true;
-    DestroyWindow(hwnd_);
 }
 
 void RegionSelector::OnKeyDown(WPARAM wp)
@@ -167,7 +175,6 @@ void RegionSelector::OnKeyDown(WPARAM wp)
 
     cancelled_ = true;
     done_ = true;
-    DestroyWindow(hwnd_);
 }
 
 void RegionSelector::OnPaint()
@@ -233,6 +240,12 @@ LRESULT CALLBACK RegionSelector::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM 
     case WM_LBUTTONUP: self->OnLeftButtonUp(lp); return 0;
 
     case WM_KEYDOWN: self->OnKeyDown(wp); return 0;
+
+    case WM_HOTKEY:
+        if (wp == static_cast<WPARAM>(kCancelHotkeyId))
+            self->OnKeyDown(VK_ESCAPE);
+
+        return 0;
 
     case WM_PAINT: self->OnPaint(); return 0;
 

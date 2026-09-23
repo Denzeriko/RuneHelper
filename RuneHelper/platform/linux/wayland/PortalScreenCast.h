@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 #include <opencv2/core.hpp>
@@ -17,11 +18,14 @@ public:
     void Stop();
     bool IsRunning() const;
 
+    void Cancel();
+    bool Cancelled() const;
+
     cv::Mat LatestFrame();
     cv::Point FramePosition() const;
     bool HasFramePosition() const;
 
 private:
     struct Impl;
-    Impl* impl_ = nullptr;
+    std::unique_ptr<Impl> impl_;
 };

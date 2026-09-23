@@ -15,6 +15,9 @@ namespace
 {
 constexpr uintmax_t kMaxLogSize = 16ULL * 1024 * 1024;
 constexpr std::size_t kMaxPendingLines = 64;
+constexpr int kRepeatBurst = 3;
+constexpr std::chrono::seconds kRepeatWindow{ 60 };
+constexpr std::size_t kMaxTrackedMessages = 1024;
 }
 
 Logger& Logger::Instance()
@@ -79,9 +82,34 @@ void Logger::Error(const std::string& msg)
 
 void Logger::Write(const char* level, const std::string& msg)
 {
-    const std::string line = TimeNow() + " [" + level + "] " + msg + "\n";
+    const auto now = std::chrono::steady_clock::now();
 
     std::lock_guard<std::mutex> lock(mutex_);
+
+    if (repeats_.size() > kMaxTrackedMessages)
+        repeats_.clear();
+
+    Repeat& repeat = repeats_[msg];
+    std::string text = msg;
+
+    if (repeat.written >= kRepeatBurst)
+    {
+        if (now - repeat.lastWritten < kRepeatWindow)
+        {
+            ++repeat.suppressed;
+            return;
+        }
+
+        if (repeat.suppressed > 0)
+            text += " (" + std::to_string(repeat.suppressed) + " repeats suppressed)";
+
+        repeat.suppressed = 0;
+    }
+
+    ++repeat.written;
+    repeat.lastWritten = now;
+
+    const std::string line = TimeNow() + " [" + level + "] " + text + "\n";
 
 #ifdef _DEBUG
     OutputDebugStringA(line.c_str());

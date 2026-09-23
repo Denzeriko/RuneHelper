@@ -1,8 +1,7 @@
 #pragma once
-#include <string>
-#include <filesystem>
-#include <windows.h>
 
-bool ExtractResourceToFile(int resId, LPCWSTR resType, const std::filesystem::path& outPath);
-std::string PrepareTessdata();
+#include <string>
+#include <string_view>
+
+std::string_view EmbeddedTraineddata();
 std::string LoadEmbeddedRecipeDatabase();

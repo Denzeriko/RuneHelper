@@ -14,16 +14,6 @@
 
 class FeatureRegistry;
 class UIBackend;
-class UIManager;
-
-namespace UIDraw
-{
-void Draw(UIManager& manager);
-void DrawTitleBar(UIManager& manager, UIState& state);
-void DrawMainTab(UIManager& manager, UIState& state);
-void DrawDebugTab(UIManager& manager, UIState& state);
-void DrawExpeditionTab(UIManager& manager, UIState& state);
-}
 
 class UIManager
 {

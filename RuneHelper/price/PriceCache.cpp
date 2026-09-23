@@ -1,6 +1,7 @@
 #include "PriceCache.h"
 
 #include "core/AtomicFile.h"
+#include "core/JsonRead.h"
 #include "core/Logger.h"
 #include "core/ThreadGuard.h"
 #include "platform/PlatformPaths.h"
@@ -8,6 +9,7 @@
 
 #include <chrono>
 #include <algorithm>
+#include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <utility>
@@ -204,7 +206,8 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
         league = league_;
     }
 
-    auto fresh = provider_->DownloadPrices(league, stop);
+    PriceTable fresh;
+    RunLoggingExceptions("PriceCache download", [&] { fresh = provider_->DownloadPrices(league, stop); });
 
     if (stop.stop_requested())
     {
@@ -356,8 +359,8 @@ void PriceCache::LoadDump()
             return;
 
         prices_ = std::move(loaded);
-        divineToEx_ = j.value("divine_to_ex", 0.0);
-        dump_updated_at_ = j.value("dump_updated_at", 0LL);
+        divineToEx_ = JsonValue(j, "divine_to_ex", 0.0);
+        dump_updated_at_ = JsonValue<std::int64_t>(j, "dump_updated_at", 0);
         ++version_;
     }
 

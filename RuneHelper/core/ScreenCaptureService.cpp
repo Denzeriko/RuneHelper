@@ -18,6 +18,13 @@ cv::Mat ScreenCaptureService::CaptureRegion(const cv::Rect& region)
     return ::CaptureRegion(region);
 }
 
+void ScreenCaptureService::Cancel()
+{
+#ifndef _WIN32
+    CancelCapture();
+#endif
+}
+
 void ScreenCaptureService::Shutdown()
 {
 #ifdef _WIN32

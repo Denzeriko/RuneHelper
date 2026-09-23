@@ -10,6 +10,7 @@ class ScreenCaptureService
 {
 public:
     cv::Mat CaptureRegion(const cv::Rect& region);
+    void Cancel();
     void Shutdown();
 
 private:

@@ -10,6 +10,7 @@
 #include "nlohmann/json.hpp"
 
 #include "core/AtomicFile.h"
+#include "core/JsonRead.h"
 #include "core/Logger.h"
 #include "core/ThreadGuard.h"
 #include "platform/PlatformPaths.h"
@@ -78,10 +79,10 @@ void RecipeUpdater::Fetch(const std::stop_token& stop)
         return;
     }
 
-    json parsed = json::parse(response.text, nullptr, false);
+    const json parsed = json::parse(response.text, nullptr, false);
+    const std::string generated = JsonValue(parsed, "generated", std::string());
 
-    if (parsed.is_discarded() || !parsed.contains("combinations") || !parsed["combinations"].is_array() ||
-        parsed["combinations"].empty())
+    if (parsed.is_discarded() || generated.empty() || !RecipeDatabase::Accepts(parsed))
     {
         LOG_ERROR("RecipeUpdater: downloaded combinations.json is not usable");
         return;
@@ -91,12 +92,9 @@ void RecipeUpdater::Fetch(const std::stop_token& stop)
 
     if (!WriteFileAtomic(path, response.text))
     {
-        LOG_ERROR("RecipeUpdater: could not write " + path.string());
+        LOG_ERROR("RecipeUpdater: could not write " + PathToUtf8(path));
         return;
     }
 
-    LOG_INFO(
-        "RecipeUpdater: stored " + std::to_string(parsed["combinations"].size()) + " combinations generated " +
-        parsed.value("generated", std::string("?")) + ", it will be used on the next start"
-    );
+    LOG_INFO("RecipeUpdater: stored the database generated " + generated + ", it will be used on the next start");
 }

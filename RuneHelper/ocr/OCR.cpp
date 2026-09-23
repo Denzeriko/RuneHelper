@@ -41,18 +41,15 @@ std::size_t OcrWorkerCount()
 }
 }
 
-bool OCR::Init(const std::string& tessdataPath)
+bool OCR::Init(std::string_view traineddata)
 {
-    LOG_INFO("OCR::Init tessdataPath = " + tessdataPath);
+    LOG_INFO("OCR::Init traineddata = " + std::to_string(traineddata.size()) + " bytes");
 
     setMsgSeverity(L_SEVERITY_NONE);
 
-    tessdataPath_ = tessdataPath;
-    std::filesystem::path engPath = std::filesystem::path(tessdataPath) / "eng.traineddata";
-
-    if (!std::filesystem::exists(engPath))
+    if (traineddata.empty())
     {
-        LOG_ERROR("eng.traineddata not found: " + engPath.string());
+        LOG_ERROR("OCR::Init: no traineddata to load");
         return false;
     }
 
@@ -61,7 +58,18 @@ bool OCR::Init(const std::string& tessdataPath)
     for (std::size_t i = 0; i < OcrWorkerCount(); ++i)
     {
         auto api = std::make_unique<tesseract::TessBaseAPI>();
-        const int rc = api->Init(tessdataPath_.c_str(), "eng", tesseract::OEM_LSTM_ONLY);
+        const int rc = api->Init(
+            traineddata.data(),
+            static_cast<int>(traineddata.size()),
+            "eng",
+            tesseract::OEM_LSTM_ONLY,
+            nullptr,
+            0,
+            nullptr,
+            nullptr,
+            false,
+            nullptr
+        );
 
         if (rc != 0)
         {
@@ -123,7 +131,7 @@ static std::filesystem::path PrepareOcrDebugDir()
         return {};
     }
 
-    LOG_INFO("OCR debug screenshots: " + dir.string());
+    LOG_INFO("OCR debug screenshots: " + PathToUtf8(dir));
     return dir;
 }
 
@@ -132,19 +140,27 @@ static bool SaveOcrDebugImage(const std::filesystem::path& path, const cv::Mat& 
     if (path.empty() || img.empty())
         return false;
 
+    std::vector<unsigned char> png;
+
     try
     {
-        return cv::imwrite(path.string(), img);
+        if (!cv::imencode(".png", img, png))
+            return false;
     }
     catch (const cv::Exception& ex)
     {
-        LOG_ERROR("OCR debug imwrite failed: " + path.string() + " - " + ex.what());
+        LOG_ERROR("OCR debug imencode failed: " + PathToUtf8(path) + " - " + ex.what());
         return false;
     }
+
+    std::ofstream file(path, std::ios::binary | std::ios::trunc);
+    file.write(reinterpret_cast<const char*>(png.data()), static_cast<std::streamsize>(png.size()));
+
+    return static_cast<bool>(file);
 }
 
 static void SaveOcrDebugText(
-    const std::string& debugBinPath,
+    const std::filesystem::path& debugBinPath,
     const std::string& rawText,
     const std::string& trimmedText,
     int confidence,
@@ -154,7 +170,7 @@ static void SaveOcrDebugText(
     if (debugBinPath.empty())
         return;
 
-    std::filesystem::path path(debugBinPath);
+    std::filesystem::path path = debugBinPath;
     path.replace_extension(".txt");
 
     std::ofstream file(path);
@@ -446,7 +462,11 @@ static cv::Mat TrimTrailingBlock(const cv::Mat& bin)
     return bin(cv::Rect(0, 0, start, bin.rows));
 }
 
-std::vector<LootLine> OCR::RecognizeTextOnly(tesseract::TessBaseAPI& api, const cv::Mat& textGray, const std::string& debugBinPath)
+std::vector<LootLine> OCR::RecognizeTextOnly(
+    tesseract::TessBaseAPI& api,
+    const cv::Mat& textGray,
+    const std::filesystem::path& debugBinPath
+)
 {
     std::vector<LootLine> result;
 
@@ -550,7 +570,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& gray, const AppConfig& c
     {
         cv::Mat textGray;
         cv::Mat anchor;
-        std::string debugBinPath;
+        std::filesystem::path debugBinPath;
         int offsetX = 0;
         int offsetY = 0;
         bool reused = false;
@@ -587,7 +607,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& gray, const AppConfig& c
 
         SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), gray(rowRect));
         SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), gray(rowRect)(textRect));
-        job.debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin").string();
+        job.debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin");
 
         cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);
         cv::line(

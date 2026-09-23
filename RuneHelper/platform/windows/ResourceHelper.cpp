@@ -5,93 +5,41 @@
 #include <string>
 #include <string_view>
 
-#include "core/AtomicFile.h"
 #include "core/Logger.h"
-#include "platform/PlatformPaths.h"
 #include "resources/resource.h"
 
-bool ExtractResourceToFile(int resId, LPCWSTR resType, const std::filesystem::path& outPath)
+namespace
 {
-    HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(resId), resType);
-    if (!hRes)
+std::string_view ResourceBytes(int id, const char* label)
+{
+    HRSRC resource = FindResourceW(nullptr, MAKEINTRESOURCEW(id), MAKEINTRESOURCEW(10));
+
+    if (!resource)
     {
-        LOG_ERROR("FindResourceW failed: " + std::to_string(GetLastError()));
-        return false;
+        LOG_ERROR(std::string(label) + " resource not found: " + std::to_string(GetLastError()));
+        return {};
     }
 
-    HGLOBAL hData = LoadResource(nullptr, hRes);
-    if (!hData)
-    {
-        LOG_ERROR("LoadResource failed");
-        return false;
-    }
-
-    DWORD size = SizeofResource(nullptr, hRes);
-    void* data = LockResource(hData);
+    HGLOBAL handle = LoadResource(nullptr, resource);
+    const DWORD size = SizeofResource(nullptr, resource);
+    const void* data = handle ? LockResource(handle) : nullptr;
 
     if (!data || size == 0)
     {
-        LOG_ERROR("LockResource/SizeofResource failed");
-        return false;
+        LOG_ERROR(std::string(label) + " resource could not be locked");
+        return {};
     }
 
-    std::filesystem::create_directories(outPath.parent_path());
-
-    if (!WriteFileAtomic(outPath, std::string_view(static_cast<const char*>(data), size)))
-    {
-        LOG_ERROR("Failed to write output file: " + outPath.string());
-        return false;
-    }
-
-    return true;
+    return std::string_view(static_cast<const char*>(data), size);
+}
 }
 
-std::string PrepareTessdata()
+std::string_view EmbeddedTraineddata()
 {
-    LOG_INFO("PrepareTessdata() -> call");
-
-    auto dir = GetUserDataDir() / "tessdata";
-    auto eng = dir / "eng.traineddata";
-
-    LOG_INFO("PrepareTessdata() -> path: " + dir.string());
-
-    if (!std::filesystem::exists(eng))
-    {
-        LOG_INFO("PrepareTessdata() -> extracting eng.traineddata");
-
-        if (!ExtractResourceToFile(IDR_ENG_TRAINEDDATA, MAKEINTRESOURCEW(10), eng))
-        {
-            LOG_ERROR("PrepareTessdata() -> failed to extract eng.traineddata");
-            return {};
-        }
-    }
-    else
-    {
-        LOG_INFO("PrepareTessdata() -> eng.traineddata already exists");
-    }
-
-    return dir.string();
+    return ResourceBytes(IDR_ENG_TRAINEDDATA, "Tessdata");
 }
 
 std::string LoadEmbeddedRecipeDatabase()
 {
-    HRSRC hRes = FindResourceW(nullptr, MAKEINTRESOURCEW(IDR_COMBINATIONS), MAKEINTRESOURCEW(10));
-
-    if (!hRes)
-    {
-        LOG_ERROR("Recipe database resource not found: " + std::to_string(GetLastError()));
-        return {};
-    }
-
-    HGLOBAL hData = LoadResource(nullptr, hRes);
-    const DWORD size = SizeofResource(nullptr, hRes);
-    const void* data = hData ? LockResource(hData) : nullptr;
-
-    if (!data || size == 0)
-    {
-        LOG_ERROR("Recipe database resource could not be locked");
-        return {};
-    }
-
-    return std::string(static_cast<const char*>(data), size);
+    return std::string(ResourceBytes(IDR_COMBINATIONS, "Recipe database"));
 }

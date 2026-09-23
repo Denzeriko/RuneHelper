@@ -14,6 +14,7 @@
 #include "core/Config.h"
 #include "ocr/OCR.h"
 #include "ocr/OcrRowCache.h"
+#include "platform/linux/ResourceHelper.h"
 
 namespace fs = std::filesystem;
 
@@ -115,14 +116,13 @@ std::string DescribeRows(const std::vector<cv::Rect>& rows)
 
 int main(int argc, char** argv)
 {
-    if (argc < 3)
+    if (argc < 2)
     {
-        std::printf("usage: ocr_row_cache <tessdata> <panels>\n");
+        std::printf("usage: ocr_row_cache <panels>\n");
         return 2;
     }
 
-    const fs::path tessdata = argv[1];
-    const fs::path panels = argv[2];
+    const fs::path panels = argv[1];
 
     cv::setNumThreads(1);
     cv::theRNG().state = 20260921;
@@ -130,9 +130,9 @@ int main(int argc, char** argv)
 
     OCR ocr;
 
-    if (!ocr.Init(tessdata.string()))
+    if (!ocr.Init(EmbeddedTraineddata()))
     {
-        std::printf("ocr_row_cache: OCR::Init failed for %s\n", tessdata.string().c_str());
+        std::printf("ocr_row_cache: OCR::Init failed on the embedded traineddata\n");
         return 2;
     }
 
