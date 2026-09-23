@@ -12,6 +12,7 @@
 #include "platform/PlatformPaths.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <cctype>
 #include <cmath>
@@ -19,6 +20,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
+#include <optional>
 #include <sstream>
 #include <thread>
 
@@ -29,6 +31,118 @@ constexpr std::size_t kMaxOcrWorkers = 8;
 constexpr double kTargetRowHeight = 48.0;
 constexpr double kMinRowScale = 2.0;
 constexpr double kMaxRowScale = 5.0;
+
+constexpr int kMaxNativeWidth = 750;
+constexpr int kReducedWidth = 680;
+
+constexpr double kReferenceTextP25 = 144.0;
+constexpr double kReferenceTextP50 = 165.0;
+constexpr double kReferenceTextP95 = 190.0;
+constexpr double kTextLevelTolerance = 12.0;
+constexpr double kHeldLevelTolerance = 6.0;
+
+struct PreparedGray
+{
+    cv::Mat gray;
+    double scale = 1.0;
+    bool scaled = false;
+    bool normalized = false;
+    TextLevels levels;
+};
+
+TextLevels MeasureTextLevels(const cv::Mat& gray)
+{
+    const int left = gray.cols / 2;
+    const int right = gray.cols * 85 / 100;
+    const int top = gray.rows / 10;
+    const int bottom = gray.rows * 9 / 10;
+
+    std::array<int, 256> histogram{};
+
+    for (int y = top; y < bottom; ++y)
+    {
+        const unsigned char* row = gray.ptr<unsigned char>(y);
+
+        for (int x = left; x < right; ++x)
+            ++histogram[row[x]];
+    }
+
+    const double total = static_cast<double>(right - left) * (bottom - top);
+
+    auto percentile = [&histogram, total](double share)
+    {
+        double seen = 0.0;
+
+        for (int level = 0; level < 256; ++level)
+        {
+            seen += histogram[level];
+
+            if (seen >= share * total)
+                return static_cast<double>(level);
+        }
+
+        return 255.0;
+    };
+
+    return { percentile(0.25), percentile(0.50), percentile(0.95) };
+}
+
+bool CloseLevels(const TextLevels& a, const TextLevels& b)
+{
+    return std::abs(a.p25 - b.p25) <= kHeldLevelTolerance && std::abs(a.p50 - b.p50) <= kHeldLevelTolerance &&
+           std::abs(a.p95 - b.p95) <= kHeldLevelTolerance;
+}
+
+PreparedGray PrepareGray(const cv::Mat& source, const std::optional<TextLevels>& held)
+{
+    PreparedGray prepared;
+    prepared.gray = source;
+
+    if (source.cols > kMaxNativeWidth)
+    {
+        cv::Mat reduced;
+        prepared.scale = static_cast<double>(kReducedWidth) / source.cols;
+        cv::resize(source, reduced, cv::Size(), prepared.scale, prepared.scale, cv::INTER_AREA);
+
+        prepared.gray = reduced;
+        prepared.scaled = true;
+    }
+
+    prepared.levels = MeasureTextLevels(prepared.gray);
+
+    if (held && CloseLevels(prepared.levels, *held))
+    {
+        prepared.levels = *held;
+    }
+    else
+    {
+        const bool drifted = std::abs(prepared.levels.p50 - kReferenceTextP50) > kTextLevelTolerance ||
+                             std::abs(prepared.levels.p95 - kReferenceTextP95) > kTextLevelTolerance;
+
+        if (!drifted || prepared.levels.p95 <= prepared.levels.p25)
+            return prepared;
+    }
+
+    const double gain = (kReferenceTextP95 - kReferenceTextP25) / (prepared.levels.p95 - prepared.levels.p25);
+
+    cv::Mat lut(1, 256, CV_8U);
+
+    for (int level = 0; level < 256; ++level)
+        lut.at<unsigned char>(level) = cv::saturate_cast<unsigned char>(kReferenceTextP25 + (level - prepared.levels.p25) * gain);
+
+    cv::Mat normalized;
+    cv::LUT(prepared.gray, lut, normalized);
+
+    prepared.gray = normalized;
+    prepared.normalized = true;
+
+    return prepared;
+}
+
+int ToSource(int value, double scale)
+{
+    return static_cast<int>(std::lround(value / scale));
+}
 
 std::size_t OcrWorkerCount()
 {
@@ -529,18 +643,62 @@ std::vector<LootLine> OCR::RecognizeTextOnly(
     return result;
 }
 
-std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& gray, const AppConfig& config, OcrRowCache* rowCache)
+void OCR::ReportPreparation(bool scaled, bool normalized, int sourceWidth, int readWidth, double p50, double p95)
+{
+    if (scaled != readScaled_)
+    {
+        readScaled_ = scaled;
+
+        if (scaled)
+        {
+            LOG_INFO(
+                "OCR: the region is " + std::to_string(sourceWidth) + " px wide, text is read at " + std::to_string(readWidth) + " px"
+            );
+        }
+        else
+        {
+            LOG_INFO("OCR: the region is read at its own size");
+        }
+    }
+
+    if (normalized != readNormalized_)
+    {
+        readNormalized_ = normalized;
+
+        if (normalized)
+        {
+            LOG_INFO(
+                "OCR: text brightness is off (median " + std::to_string(static_cast<int>(p50)) + ", highlights " +
+                std::to_string(static_cast<int>(p95)) + "), it is normalised before reading"
+            );
+        }
+        else
+        {
+            LOG_INFO("OCR: text brightness is back in the expected range");
+        }
+    }
+}
+
+std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig& config, OcrRowCache* rowCache)
 {
     setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
 
     std::vector<LootLine> result;
 
-    if (!initialized_ || gray.empty())
+    if (!initialized_ || source.empty())
         return result;
 
     std::unique_lock lock(apiMutex_);
     if (apis_.empty())
         return result;
+
+    const PreparedGray prepared = PrepareGray(source, rowCache ? rowCache->Levels() : std::nullopt);
+    const cv::Mat& gray = prepared.gray;
+
+    if (rowCache)
+        rowCache->SetLevels(prepared.normalized ? std::optional<TextLevels>(prepared.levels) : std::nullopt);
+
+    ReportPreparation(prepared.scaled, prepared.normalized, source.cols, gray.cols, prepared.levels.p50, prepared.levels.p95);
 
     bool debugOCR = config.debugOCR;
     std::filesystem::path debugDir;
@@ -555,7 +713,11 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& gray, const AppConfig& c
         }
         else
         {
-            SaveOcrDebugImage(debugDir / "source.png", gray);
+            SaveOcrDebugImage(debugDir / "source.png", source);
+
+            if (prepared.scaled || prepared.normalized)
+                SaveOcrDebugImage(debugDir / "prepared.png", gray);
+
             cv::cvtColor(gray, debugRows, cv::COLOR_GRAY2BGR);
         }
     }
@@ -694,10 +856,10 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& gray, const AppConfig& c
     {
         for (LootLine& line : job.lines)
         {
-            line.x1 += job.offsetX;
-            line.x2 += job.offsetX;
-            line.y1 += job.offsetY;
-            line.y2 += job.offsetY;
+            line.x1 = ToSource(line.x1 + job.offsetX, prepared.scale);
+            line.x2 = ToSource(line.x2 + job.offsetX, prepared.scale);
+            line.y1 = ToSource(line.y1 + job.offsetY, prepared.scale);
+            line.y2 = ToSource(line.y2 + job.offsetY, prepared.scale);
 
             result.push_back(std::move(line));
         }

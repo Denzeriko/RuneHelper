@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <filesystem>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -112,6 +113,203 @@ std::string DescribeRows(const std::vector<cv::Rect>& rows)
 
     return out.str();
 }
+
+struct Totals
+{
+    std::size_t rows = 0;
+    std::size_t repeatHits = 0;
+    std::size_t noiseHits = 0;
+    std::size_t noiseRows = 0;
+    std::size_t editedHits = 0;
+    std::size_t editedMisses = 0;
+    std::size_t editedPanels = 0;
+    std::size_t noiseStable = 0;
+    std::size_t driftPanels = 0;
+    std::size_t driftSteps = 0;
+};
+
+std::string ReadThroughColdCache(OCR& ocr, const cv::Mat& gray, const AppConfig& config, const std::optional<TextLevels>& levels)
+{
+    OcrRowCache cold;
+    cold.SetLevels(levels);
+
+    return Serialize(ocr.RecognizeLoot(gray, config, &cold));
+}
+
+void Exercise(
+    OCR& ocr,
+    const std::string& name,
+    const cv::Mat& gray,
+    const std::vector<cv::Rect>& rows,
+    const AppConfig& config,
+    Totals& totals,
+    std::vector<Failure>& failures
+)
+{
+    const std::string plain = Serialize(ocr.RecognizeLoot(gray, config));
+
+    OcrRowCache cache;
+
+    if (Serialize(ocr.RecognizeLoot(gray, config, &cache)) != plain)
+    {
+        failures.push_back({ name, "a cold cache changed the result" });
+        return;
+    }
+
+    if (cache.Hits() != 0)
+    {
+        failures.push_back({ name, "a cold cache reported hits" });
+        return;
+    }
+
+    const std::size_t rowCount = cache.Misses();
+    totals.rows += rowCount;
+
+    cache.ResetCounters();
+
+    if (Serialize(ocr.RecognizeLoot(gray, config, &cache)) != plain)
+        failures.push_back({ name, "the same frame through a warm cache changed the result" });
+
+    if (cache.Misses() != 0)
+    {
+        failures.push_back(
+            { name, "the same frame re-read " + std::to_string(cache.Misses()) + " of " + std::to_string(rowCount) + " rows" }
+        );
+    }
+
+    totals.repeatHits += cache.Hits();
+
+    cv::Mat edited;
+
+    if (WithOneRowEdited(gray, rows, edited))
+    {
+        ++totals.editedPanels;
+
+        OcrRowCache editedCache;
+        ocr.RecognizeLoot(gray, config, &editedCache);
+        editedCache.ResetCounters();
+
+        const std::optional<TextLevels> held = editedCache.Levels();
+        const std::string cached = Serialize(ocr.RecognizeLoot(edited, config, &editedCache));
+        const std::string uncached = ReadThroughColdCache(ocr, edited, config, held);
+
+        if (cached != uncached)
+        {
+            failures.push_back({ name,
+                                 "an edited frame through a warm cache did not match a plain run\n"
+                                 "      original rows: " +
+                                     DescribeRows(rows) +
+                                     "\n"
+                                     "      edited rows:   " +
+                                     DescribeRows(ocr.FindLootRows(edited)) });
+        }
+
+        if (editedCache.Hits() == 0)
+        {
+            failures.push_back({ name,
+                                 "a one-row edit reused nothing, so the cache saved no work\n"
+                                 "      original rows: " +
+                                     DescribeRows(rows) +
+                                     "\n"
+                                     "      edited rows:   " +
+                                     DescribeRows(ocr.FindLootRows(edited)) });
+        }
+
+        totals.editedHits += editedCache.Hits();
+        totals.editedMisses += editedCache.Misses();
+    }
+
+    {
+        OcrRowCache driftCache;
+        ocr.RecognizeLoot(gray, config, &driftCache);
+
+        int reReadAt = 0;
+        cv::Mat drifted;
+
+        for (int step = 1; step <= 10 && reReadAt == 0; ++step)
+        {
+            if (!WithRowBrightened(gray, rows, 2 * step, drifted))
+                break;
+
+            driftCache.ResetCounters();
+            ocr.RecognizeLoot(drifted, config, &driftCache);
+
+            if (driftCache.Misses() > 0)
+                reReadAt = step;
+        }
+
+        if (!drifted.empty())
+        {
+            ++totals.driftPanels;
+
+            if (reReadAt == 0)
+            {
+                failures.push_back({ name,
+                                     "a row brightened by 20 levels in 2-level steps was never re-read, "
+                                     "so the cache drifts away from the image that produced its text" });
+            }
+            else
+            {
+                totals.driftSteps += static_cast<std::size_t>(reReadAt);
+            }
+        }
+    }
+
+    OcrRowCache noiseCache;
+    ocr.RecognizeLoot(gray, config, &noiseCache);
+    noiseCache.ResetCounters();
+
+    const cv::Mat noisy = WithNoise(gray, 0.8);
+
+    if (Serialize(ocr.RecognizeLoot(noisy, config, &noiseCache)) == plain)
+        ++totals.noiseStable;
+
+    totals.noiseHits += noiseCache.Hits();
+    totals.noiseRows += noiseCache.Hits() + noiseCache.Misses();
+}
+
+void Report(const char* title, const Totals& totals, std::size_t panels)
+{
+    std::printf("%s\n", title);
+    std::printf("panels                          %zu\n", panels);
+    std::printf("rows recognised on a cold cache %zu\n", totals.rows);
+    std::printf("rows reused, identical frame    %zu / %zu\n", totals.repeatHits, totals.rows);
+    std::printf(
+        "rows reused, one row edited     %zu reused, %zu re-read, over %zu panels\n",
+        totals.editedHits,
+        totals.editedMisses,
+        totals.editedPanels
+    );
+    std::printf("rows reused, sigma 0.8 noise    %zu / %zu\n", totals.noiseHits, totals.noiseRows);
+    std::printf("panels whose text held steady   %zu / %zu under noise\n", totals.noiseStable, panels);
+
+    if (totals.driftPanels > 0)
+    {
+        std::printf(
+            "gradual drift caught after       %.1f steps of 2 levels, over %zu panels\n",
+            static_cast<double>(totals.driftSteps) / static_cast<double>(totals.driftPanels),
+            totals.driftPanels
+        );
+    }
+
+    if (totals.rows > 0)
+    {
+        std::printf(
+            "identical frame avoids %.0f%% of the Tesseract calls\n",
+            100.0 * static_cast<double>(totals.repeatHits) / static_cast<double>(totals.rows)
+        );
+    }
+
+    if (totals.editedHits + totals.editedMisses > 0)
+    {
+        std::printf(
+            "one edited row avoids %.0f%% of the Tesseract calls\n",
+            100.0 * static_cast<double>(totals.editedHits) / static_cast<double>(totals.editedHits + totals.editedMisses)
+        );
+    }
+
+    std::printf("\n");
+}
 }
 
 int main(int argc, char** argv)
@@ -155,190 +353,52 @@ int main(int argc, char** argv)
     const AppConfig config;
 
     std::vector<Failure> failures;
-
-    std::size_t totalRows = 0;
-    std::size_t repeatHits = 0;
-    std::size_t noiseHits = 0;
-    std::size_t noiseRows = 0;
-    std::size_t editedHits = 0;
-    std::size_t editedMisses = 0;
-    std::size_t editedPanels = 0;
-    std::size_t noiseStable = 0;
-    std::size_t driftPanels = 0;
-    std::size_t driftSteps = 0;
+    std::vector<cv::Mat> grays;
+    std::vector<std::vector<cv::Rect>> rows;
 
     for (const fs::path& image : images)
     {
-        const std::string name = fs::relative(image, panels).generic_string();
-        const cv::Mat gray = LoadGray(image);
+        grays.push_back(LoadGray(image));
+        rows.push_back(grays.back().empty() ? std::vector<cv::Rect>{} : ocr.FindLootRows(grays.back()));
+    }
 
-        if (gray.empty())
+    Totals captured;
+    Totals dimmed;
+
+    for (std::size_t i = 0; i < images.size(); ++i)
+    {
+        const std::string name = fs::relative(images[i], panels).generic_string();
+
+        if (grays[i].empty())
         {
             failures.push_back({ name, "could not read the panel" });
             continue;
         }
 
-        const std::vector<cv::Rect> rows = ocr.FindLootRows(gray);
-        const std::string plain = Serialize(ocr.RecognizeLoot(gray, config));
+        Exercise(ocr, name, grays[i], rows[i], config, captured, failures);
+    }
 
-        OcrRowCache cache;
-
-        if (Serialize(ocr.RecognizeLoot(gray, config, &cache)) != plain)
-        {
-            failures.push_back({ name, "a cold cache changed the result" });
+    for (std::size_t i = 0; i < images.size(); ++i)
+    {
+        if (grays[i].empty())
             continue;
-        }
 
-        if (cache.Hits() != 0)
-        {
-            failures.push_back({ name, "a cold cache reported hits" });
-            continue;
-        }
+        cv::Mat dim;
+        grays[i].convertTo(dim, -1, 0.7, 0.0);
 
-        const std::size_t rowCount = cache.Misses();
-        totalRows += rowCount;
-
-        cache.ResetCounters();
-
-        if (Serialize(ocr.RecognizeLoot(gray, config, &cache)) != plain)
-            failures.push_back({ name, "the same frame through a warm cache changed the result" });
-
-        if (cache.Misses() != 0)
-        {
-            failures.push_back(
-                { name, "the same frame re-read " + std::to_string(cache.Misses()) + " of " + std::to_string(rowCount) + " rows" }
-            );
-        }
-
-        repeatHits += cache.Hits();
-
-        cv::Mat edited;
-
-        if (WithOneRowEdited(gray, rows, edited))
-        {
-            ++editedPanels;
-
-            OcrRowCache editedCache;
-            ocr.RecognizeLoot(gray, config, &editedCache);
-            editedCache.ResetCounters();
-
-            const std::string cached = Serialize(ocr.RecognizeLoot(edited, config, &editedCache));
-            const std::string uncached = Serialize(ocr.RecognizeLoot(edited, config));
-
-            if (cached != uncached)
-            {
-                failures.push_back({ name,
-                                     "an edited frame through a warm cache did not match a plain run\n"
-                                     "      original rows: " +
-                                         DescribeRows(rows) +
-                                         "\n"
-                                         "      edited rows:   " +
-                                         DescribeRows(ocr.FindLootRows(edited)) });
-            }
-
-            if (editedCache.Hits() == 0)
-            {
-                failures.push_back({ name,
-                                     "a one-row edit reused nothing, so the cache saved no work\n"
-                                     "      original rows: " +
-                                         DescribeRows(rows) +
-                                         "\n"
-                                         "      edited rows:   " +
-                                         DescribeRows(ocr.FindLootRows(edited)) });
-            }
-
-            editedHits += editedCache.Hits();
-            editedMisses += editedCache.Misses();
-        }
-
-        {
-            OcrRowCache driftCache;
-            ocr.RecognizeLoot(gray, config, &driftCache);
-
-            int reReadAt = 0;
-            cv::Mat drifted;
-
-            for (int step = 1; step <= 10 && reReadAt == 0; ++step)
-            {
-                if (!WithRowBrightened(gray, rows, 2 * step, drifted))
-                    break;
-
-                driftCache.ResetCounters();
-                ocr.RecognizeLoot(drifted, config, &driftCache);
-
-                if (driftCache.Misses() > 0)
-                    reReadAt = step;
-            }
-
-            if (!drifted.empty())
-            {
-                ++driftPanels;
-
-                if (reReadAt == 0)
-                {
-                    failures.push_back({ name,
-                                         "a row brightened by 20 levels in 2-level steps was never re-read, "
-                                         "so the cache drifts away from the image that produced its text" });
-                }
-                else
-                {
-                    driftSteps += static_cast<std::size_t>(reReadAt);
-                }
-            }
-        }
-
-        OcrRowCache noiseCache;
-        ocr.RecognizeLoot(gray, config, &noiseCache);
-        noiseCache.ResetCounters();
-
-        const cv::Mat noisy = WithNoise(gray, 0.8);
-
-        if (Serialize(ocr.RecognizeLoot(noisy, config, &noiseCache)) == plain)
-            ++noiseStable;
-
-        noiseHits += noiseCache.Hits();
-        noiseRows += noiseCache.Hits() + noiseCache.Misses();
+        Exercise(ocr, fs::relative(images[i], panels).generic_string() + " dimmed", dim, rows[i], config, dimmed, failures);
     }
 
-    std::printf("panels                          %zu\n", images.size());
-    std::printf("rows recognised on a cold cache %zu\n", totalRows);
-    std::printf("rows reused, identical frame    %zu / %zu\n", repeatHits, totalRows);
-    std::printf("rows reused, one row edited     %zu reused, %zu re-read, over %zu panels\n", editedHits, editedMisses, editedPanels);
-    std::printf("rows reused, sigma 0.8 noise    %zu / %zu\n", noiseHits, noiseRows);
-    std::printf("panels whose text held steady   %zu / %zu under noise\n", noiseStable, images.size());
-
-    if (driftPanels > 0)
-    {
-        std::printf(
-            "gradual drift caught after       %.1f steps of 2 levels, over %zu panels\n",
-            static_cast<double>(driftSteps) / static_cast<double>(driftPanels),
-            driftPanels
-        );
-    }
-
-    if (totalRows > 0)
-    {
-        std::printf(
-            "\nidentical frame avoids %.0f%% of the Tesseract calls\n",
-            100.0 * static_cast<double>(repeatHits) / static_cast<double>(totalRows)
-        );
-    }
-
-    if (editedHits + editedMisses > 0)
-    {
-        std::printf(
-            "one edited row avoids %.0f%% of the Tesseract calls\n",
-            100.0 * static_cast<double>(editedHits) / static_cast<double>(editedHits + editedMisses)
-        );
-    }
+    Report("as captured", captured, images.size());
+    Report("dimmed to 70%, brightness normalised on every frame", dimmed, images.size());
 
     if (failures.empty())
     {
-        std::printf("\nok, %zu panels\n", images.size());
+        std::printf("ok, %zu panels\n", images.size());
         return 0;
     }
 
-    std::printf("\n%zu failures\n", failures.size());
+    std::printf("%zu failures\n", failures.size());
 
     for (const Failure& failure : failures)
         std::printf("  %s: %s\n", failure.panel.c_str(), failure.reason.c_str());

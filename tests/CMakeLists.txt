@@ -36,6 +36,7 @@ function(runehelper_add_test name)
 endfunction()
 
 runehelper_add_test(ocr_golden)
+runehelper_add_test(ocr_robustness)
 runehelper_add_test(ocr_row_cache)
 runehelper_add_test(unit_tests)
 
@@ -59,8 +60,16 @@ add_test(
         "${CMAKE_CURRENT_SOURCE_DIR}/truth"
 )
 
+add_test(
+    NAME ocr_robustness
+    COMMAND ocr_robustness
+        "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
+        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
+        "${CMAKE_CURRENT_SOURCE_DIR}/truth"
+)
+
 add_custom_target(runehelper_tests
-    DEPENDS ocr_golden ocr_row_cache unit_tests
+    DEPENDS ocr_golden ocr_robustness ocr_row_cache unit_tests
 )
 
 add_custom_target(bless_ocr_golden

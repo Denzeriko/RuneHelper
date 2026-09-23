@@ -31,7 +31,8 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 
 * Select any loot area on the screen.
 * Real-time OCR using Tesseract.
-* Row-by-row OCR across up to four worker threads, tuned for the Runeshape loot menu.
+* Row-by-row OCR across up to eight worker threads, tuned for the Runeshape loot menu.
+* Reads HDR, dimmed and 4K captures: brightness is normalised and large regions are scaled down when needed.
 * Fuzzy matching for OCR mistakes.
 * Overlay displaying item prices next to detected items.
 * Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
@@ -57,11 +58,12 @@ Click **Select Region**, then drag a rectangle around the Runeshape loot list. T
 
 1. Select the loot area on your screen.
 2. RuneHelper periodically captures the selected region.
-3. The OCR pipeline finds text rows in the right side of the Runeshape loot menu.
-4. Each detected row is cropped, binarized, and passed to Tesseract.
-5. OCR mistakes are corrected using fuzzy matching.
-6. Prices are loaded from cache or downloaded from the API.
-7. An overlay is rendered next to the detected items.
+3. A region wider than 750 px, as on 4K screens, is scaled down to 680 px before reading. When the text column is much darker, brighter or flatter than usual, as happens with HDR or a dimmed display, its brightness is normalised first. Correctly exposed regions of normal size are read untouched.
+4. The OCR pipeline finds text rows in the right side of the Runeshape loot menu.
+5. Each detected row is cropped, binarized, and passed to Tesseract.
+6. OCR mistakes are corrected using fuzzy matching.
+7. Prices are loaded from cache or downloaded from the API.
+8. An overlay is rendered next to the detected items.
 
 ## OCR Debug
 
@@ -75,7 +77,8 @@ Linux:   ~/.config/RuneHelper/ocr_debug/latest
 The folder is overwritten on each OCR run and may contain:
 
 * `source.png` - captured source region.
-* `rows_detected.png` - detected text rows and crop start markers.
+* `prepared.png` - the region as OCR reads it, written only when it was scaled down or its brightness was normalised.
+* `rows_detected.png` - detected text rows and crop start markers, drawn on the image OCR reads.
 * `row_XX_row.png` - detected row crop.
 * `row_XX_text.png` - text crop sent to OCR preprocessing.
 * `row_XX_bin.png` - binarized image passed to Tesseract.

@@ -36,6 +36,7 @@ void OcrRowCache::Store(std::vector<Row> rows)
 void OcrRowCache::Reset()
 {
     rows_.clear();
+    levels_.reset();
     ResetCounters();
 }
 

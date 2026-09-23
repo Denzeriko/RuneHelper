@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <optional>
 #include <vector>
 
 #include <opencv2/core.hpp>
@@ -20,6 +21,10 @@ public:
     void Store(std::vector<Row> rows);
     void Reset();
 
+    const std::optional<TextLevels>& Levels() const { return levels_; }
+
+    void SetLevels(const std::optional<TextLevels>& levels) { levels_ = levels; }
+
     std::size_t Hits() const { return hits_; }
 
     std::size_t Misses() const { return misses_; }
@@ -28,6 +33,7 @@ public:
 
 private:
     std::vector<Row> rows_;
+    std::optional<TextLevels> levels_;
     std::size_t hits_ = 0;
     std::size_t misses_ = 0;
 };

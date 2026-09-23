@@ -22,6 +22,13 @@ struct LootLine
     float conf = 0.0f;
 };
 
+struct TextLevels
+{
+    double p25 = 0.0;
+    double p50 = 0.0;
+    double p95 = 0.0;
+};
+
 class OcrRowCache;
 
 class OCR
@@ -36,7 +43,7 @@ public:
     bool Init(std::string_view traineddata);
     void SetupTesseractApi(tesseract::TessBaseAPI& api);
 
-    std::vector<LootLine> RecognizeLoot(const cv::Mat& gray, const AppConfig& config, OcrRowCache* rowCache = nullptr);
+    std::vector<LootLine> RecognizeLoot(const cv::Mat& source, const AppConfig& config, OcrRowCache* rowCache = nullptr);
     std::vector<cv::Rect> FindLootRows(const cv::Mat& gray) const;
     std::vector<LootLine> RecognizeTextOnly(
         tesseract::TessBaseAPI& api,
@@ -45,7 +52,11 @@ public:
     );
 
 private:
+    void ReportPreparation(bool scaled, bool normalized, int sourceWidth, int readWidth, double p50, double p95);
+
     bool initialized_ = false;
+    bool readScaled_ = false;
+    bool readNormalized_ = false;
 
     std::vector<std::unique_ptr<tesseract::TessBaseAPI>> apis_;
     std::mutex apiMutex_;
