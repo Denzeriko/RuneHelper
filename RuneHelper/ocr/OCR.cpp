@@ -1,7 +1,5 @@
 #include "OCR.h"
 
-#include <leptonica/allheaders.h>
-
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
@@ -28,9 +26,7 @@ namespace
 {
 constexpr std::size_t kMaxOcrWorkers = 8;
 
-constexpr double kTargetRowHeight = 48.0;
-constexpr double kMinRowScale = 2.0;
-constexpr double kMaxRowScale = 5.0;
+constexpr float kMinReadConfidence = 80.0f;
 
 constexpr int kMaxNativeWidth = 750;
 constexpr int kReducedWidth = 680;
@@ -322,77 +318,23 @@ cv::Mat NormalizeTextLevels(const cv::Mat& gray, const TextLevels& levels)
     return normalized;
 }
 
-bool OCR::Init(std::string_view traineddata)
+bool OCR::Init(std::string_view model)
 {
-    LOG_INFO("OCR::Init traineddata = " + std::to_string(traineddata.size()) + " bytes");
+    LOG_INFO("OCR::Init model = " + std::to_string(model.size()) + " bytes");
 
-    setMsgSeverity(L_SEVERITY_NONE);
+    std::lock_guard lock(mutex_);
 
-    if (traineddata.empty())
+    if (!reader_.Load(model))
     {
-        LOG_ERROR("OCR::Init: no traineddata to load");
+        LOG_ERROR("OCR::Init: the text model could not be loaded");
         return false;
     }
 
-    std::vector<std::unique_ptr<tesseract::TessBaseAPI>> apis;
-
-    for (std::size_t i = 0; i < OcrWorkerCount(); ++i)
-    {
-        auto api = std::make_unique<tesseract::TessBaseAPI>();
-        const int rc = api->Init(
-            traineddata.data(),
-            static_cast<int>(traineddata.size()),
-            "eng",
-            tesseract::OEM_LSTM_ONLY,
-            nullptr,
-            0,
-            nullptr,
-            nullptr,
-            false,
-            nullptr
-        );
-
-        if (rc != 0)
-        {
-            if (apis.empty())
-            {
-                LOG_ERROR("Tesseract api.Init failed, rc=" + std::to_string(rc));
-                return false;
-            }
-
-            LOG_ERROR("Tesseract worker api.Init failed, rc=" + std::to_string(rc));
-            break;
-        }
-
-        SetupTesseractApi(*api);
-        apis.push_back(std::move(api));
-    }
-
-    {
-        std::lock_guard lock(apiMutex_);
-        apis_ = std::move(apis);
-    }
-
+    workers_ = OcrWorkerCount();
     initialized_ = true;
-    LOG_INFO("OCR initialized, workers: " + std::to_string(apis_.size()));
+    LOG_INFO("OCR initialized, workers: " + std::to_string(workers_));
 
     return true;
-}
-
-void OCR::SetupTesseractApi(tesseract::TessBaseAPI& api)
-{
-    // api.SetPageSegMode(tesseract::PSM_SINGLE_BLOCK);
-    api.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
-
-    api.SetVariable(
-        "tessedit_char_whitelist",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-        "abcdefghijklmnopqrstuvwxyz"
-        "0123456789"
-        " '-()"
-    );
-
-    api.SetVariable("preserve_interword_spaces", "1");
 }
 
 static std::filesystem::path PrepareOcrDebugDir()
@@ -441,17 +383,17 @@ static bool SaveOcrDebugImage(const std::filesystem::path& path, const cv::Mat& 
 }
 
 static void SaveOcrDebugText(
-    const std::filesystem::path& debugBinPath,
+    const std::filesystem::path& debugPath,
     const std::string& rawText,
     const std::string& trimmedText,
-    int confidence,
+    float confidence,
     const char* status
 )
 {
-    if (debugBinPath.empty())
+    if (debugPath.empty())
         return;
 
-    std::filesystem::path path = debugBinPath;
+    std::filesystem::path path = debugPath;
     path.replace_extension(".txt");
 
     std::ofstream file(path);
@@ -737,133 +679,40 @@ std::vector<cv::Rect> OCR::FindLootRows(const cv::Mat& gray) const
     return rows;
 }
 
-static cv::Mat TrimTrailingBlock(const cv::Mat& bin)
-{
-    constexpr double kBlockInkShare = 0.45;
-    constexpr int kMinGapDivisor = 8;
-    constexpr int kMinGapColumns = 6;
-
-    if (bin.empty() || bin.cols < 16)
-        return bin;
-
-    cv::Mat dark;
-    cv::threshold(bin, dark, 127, 1, cv::THRESH_BINARY_INV);
-
-    cv::Mat inkPerColumn;
-    cv::reduce(dark, inkPerColumn, 0, cv::REDUCE_SUM, CV_32S);
-
-    const int* ink = inkPerColumn.ptr<int>(0);
-
-    int end = bin.cols - 1;
-
-    while (end >= 0 && ink[end] == 0)
-        --end;
-
-    if (end < 0)
-        return bin;
-
-    const int gap = std::max(kMinGapColumns, bin.rows / kMinGapDivisor);
-
-    int x = end;
-    int blank = 0;
-
-    while (x >= 0)
-    {
-        if (ink[x] == 0)
-        {
-            if (++blank >= gap)
-                break;
-        }
-        else
-        {
-            blank = 0;
-        }
-
-        --x;
-    }
-
-    if (x < 0)
-        return bin;
-
-    const int start = x + blank + 1;
-
-    if (start > end)
-        return bin;
-
-    double total = 0.0;
-
-    for (int i = start; i <= end; ++i)
-        total += static_cast<double>(ink[i]) / bin.rows;
-
-    if (total / (end - start + 1) <= kBlockInkShare)
-        return bin;
-
-    return bin(cv::Rect(0, 0, start, bin.rows));
-}
-
-std::vector<LootLine> OCR::RecognizeTextOnly(
-    tesseract::TessBaseAPI& api,
-    const cv::Mat& textGray,
-    const std::filesystem::path& debugBinPath
-)
+std::vector<LootLine> OCR::RecognizeTextOnly(const cv::Mat& textGray, const std::filesystem::path& debugPath) const
 {
     std::vector<LootLine> result;
 
     if (textGray.empty())
         return result;
 
-    const double scale = std::clamp(std::round(kTargetRowHeight / static_cast<double>(textGray.rows)), kMinRowScale, kMaxRowScale);
-
-    cv::Mat scaled;
-    cv::resize(textGray, scaled, cv::Size(), scale, scale, cv::INTER_CUBIC);
-
-    cv::Mat bin;
-    cv::threshold(scaled, bin, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-
-    bin = TrimTrailingBlock(bin);
-
-    if (!debugBinPath.empty())
-        SaveOcrDebugImage(debugBinPath, bin);
-
-    api.SetPageSegMode(tesseract::PSM_SINGLE_LINE);
-
-    api.SetImage(bin.data, bin.cols, bin.rows, 1, static_cast<int>(bin.step));
-
-    api.Recognize(nullptr);
-
-    char* text = api.GetUTF8Text();
-    int conf = api.MeanTextConf();
-
-    if (!text)
+    if (!debugPath.empty())
     {
-        SaveOcrDebugText(debugBinPath, "", "", conf, "rejected_no_text");
-        return result;
+        cv::Mat input;
+        LineReader::Prepare(textGray).convertTo(input, CV_8U, 255.0);
+        SaveOcrDebugImage(debugPath, input);
     }
 
-    std::string rawText(text);
-    std::string line(rawText);
-    delete[] text;
-
-    line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
-    line.erase(std::remove(line.begin(), line.end(), '\n'), line.end());
+    const LineReader::Result read = reader_.Read(textGray);
+    std::string line = read.text;
 
     Trim(line);
 
     if (line.empty())
     {
-        SaveOcrDebugText(debugBinPath, rawText, line, conf, "rejected_empty");
+        SaveOcrDebugText(debugPath, read.text, line, read.confidence, "rejected_empty");
         return result;
     }
 
-    if (conf < 15)
+    if (read.confidence < kMinReadConfidence)
     {
-        SaveOcrDebugText(debugBinPath, rawText, line, conf, "rejected_low_confidence");
+        SaveOcrDebugText(debugPath, read.text, line, read.confidence, "rejected_low_confidence");
         return result;
     }
 
-    SaveOcrDebugText(debugBinPath, rawText, line, conf, "accepted");
+    SaveOcrDebugText(debugPath, read.text, line, read.confidence, "accepted");
 
-    result.push_back({ line, 0, 0, textGray.cols, textGray.rows, static_cast<float>(conf) });
+    result.push_back({ line, 0, 0, textGray.cols, textGray.rows, read.confidence });
 
     return result;
 }
@@ -929,16 +778,12 @@ void OCR::ReportPanel(const cv::Rect& panel, const cv::Size& source)
 
 std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig& config, OcrRowCache* rowCache)
 {
-    setMsgSeverity(config.debugOCR ? L_SEVERITY_INFO : L_SEVERITY_NONE);
-
     std::vector<LootLine> result;
 
     if (!initialized_ || source.empty())
         return result;
 
-    std::unique_lock lock(apiMutex_);
-    if (apis_.empty())
-        return result;
+    std::lock_guard lock(mutex_);
 
     const cv::Rect whole(0, 0, source.cols, source.rows);
     cv::Rect panel = FindPanel(source);
@@ -994,7 +839,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
     {
         cv::Mat textGray;
         cv::Mat anchor;
-        std::filesystem::path debugBinPath;
+        std::filesystem::path debugPath;
         int offsetX = 0;
         int offsetY = 0;
         bool reused = false;
@@ -1031,7 +876,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
 
         SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "row"), gray(rowRect));
         SaveOcrDebugImage(OcrDebugRowPath(debugDir, rowIndex, "text"), gray(rowRect)(textRect));
-        job.debugBinPath = OcrDebugRowPath(debugDir, rowIndex, "bin");
+        job.debugPath = OcrDebugRowPath(debugDir, rowIndex, "read");
 
         cv::rectangle(debugRows, rowRect, cv::Scalar(0, 255, 0), 2);
         cv::line(
@@ -1052,15 +897,15 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
             pending.push_back(i);
     }
 
-    const size_t workers = (std::min)(apis_.size(), pending.size());
+    const size_t workers = (std::min)(workers_, pending.size());
 
     std::atomic<bool> rowErrorLogged{ false };
 
-    auto runRow = [this, &rowErrorLogged](RowJob& job, tesseract::TessBaseAPI& api)
+    auto runRow = [this, &rowErrorLogged](RowJob& job)
     {
         try
         {
-            job.lines = RecognizeTextOnly(api, job.textGray, job.debugBinPath);
+            job.lines = RecognizeTextOnly(job.textGray, job.debugPath);
         }
         catch (const std::exception& error)
         {
@@ -1077,7 +922,7 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
     if (workers <= 1)
     {
         for (size_t i : pending)
-            runRow(jobs[i], *apis_[0]);
+            runRow(jobs[i]);
     }
     else
     {
@@ -1088,14 +933,14 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, const AppConfig&
         for (size_t worker = 0; worker < workers; ++worker)
         {
             pool.emplace_back(
-                [this, worker, &next, &jobs, &pending, &runRow]
+                [&next, &jobs, &pending, &runRow]
                 {
                     RunLoggingExceptions(
                         "OCR worker",
                         [&]
                         {
                             for (size_t i = next++; i < pending.size(); i = next++)
-                                runRow(jobs[pending[i]], *apis_[worker]);
+                                runRow(jobs[pending[i]]);
                         }
                     );
                 }

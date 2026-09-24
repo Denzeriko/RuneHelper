@@ -1,10 +1,12 @@
-rows=9
-y=12 qty=1 name="Support Healing Runes" match="-" mconf=0
-y=43 qty=1 name="Skill Skvfall" match="-" mconf=0
-y=75 qty=1 name="Skill Triskelion Cascade" match="-" mconf=0
-y=138 qty=1 name="Skill Runic Reprieve" match="-" mconf=0
-y=201 qty=1 name="Skill Animus Exchange" match="-" mconf=0
+rows=11
+y=12 qty=1 name="Support: Healing Runes" match="-" mconf=0
+y=43 qty=1 name="Skill: Skyfall" match="-" mconf=0
+y=75 qty=1 name="Skill: Triskelion Cascade" match="-" mconf=0
+y=107 qty=1 name="Skill: Refutation" match="-" mconf=0
+y=138 qty=1 name="Skill: Runic Reprieve" match="-" mconf=0
+y=170 qty=1 name="Skill: Leylines" match="-" mconf=0
+y=201 qty=1 name="Skill: Animus Exchange" match="-" mconf=0
 y=234 qty=2 name="Gemcutter's Prism" match="Gemcutter's Prism" mconf=100
-y=264 qty=1 name="Skill Rain of Blades" match="-" mconf=0
-y=298 qty=1 name="Support Runic Infusion" match="-" mconf=0
-y=327 qty=1 name="Support Runic Extraction" match="-" mconf=0
+y=264 qty=1 name="Skill: Rain of Blades" match="-" mconf=0
+y=298 qty=1 name="Support: Runic Infusion" match="-" mconf=0
+y=327 qty=1 name="Support: Runic Extraction" match="-" mconf=0

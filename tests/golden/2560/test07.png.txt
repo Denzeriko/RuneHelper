@@ -5,7 +5,7 @@ y=143 qty=1 name="Unique Belt" match="Unique Belt" mconf=100
 y=209 qty=1 name="Unique Amulet" match="Unique Amulet" mconf=100
 y=269 qty=1 name="Unique Jewellery" match="Unique Jewellery" mconf=100
 y=332 qty=1 name="Unique Wand" match="Unique Wand" mconf=100
-y=395 qty=1 name="Unigue Two Hand Mace" match="Unique Two Hand Mace" mconf=95
+y=395 qty=1 name="Unique Two Hand Mace" match="Unique Two Hand Mace" mconf=100
 y=458 qty=1 name="Unique Talisman" match="Unique Talisman" mconf=100
 y=521 qty=1 name="Unique Staff" match="Unique Staff" mconf=100
 y=588 qty=1 name="Unique Spear" match="Unique Spear" mconf=100

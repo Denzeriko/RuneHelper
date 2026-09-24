@@ -1,6 +1,6 @@
 # RuneHelper
 
-A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)** to detect item names on the screen and display their current market prices.
+A lightweight overlay tool for **Path of Exile 2** that uses **OCR** to detect item names on the screen and display their current market prices.
 
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)
 ![Language](https://img.shields.io/badge/language-C%2B%2B20-orange)
@@ -13,7 +13,7 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR (Tesseract)**
 
 [![Download](https://img.shields.io/badge/download-latest%20release-blue?logo=github)](https://github.com/Denzeriko/RuneHelper/releases/latest)
 
-Every build is published on the [Releases](https://github.com/Denzeriko/RuneHelper/releases/latest) page. OpenCV, Tesseract, Leptonica, GLFW and cpr are linked in, so nothing has to be installed first. Pick the file that matches the system:
+Every build is published on the [Releases](https://github.com/Denzeriko/RuneHelper/releases/latest) page. OpenCV, GLFW and cpr are linked in, so nothing has to be installed first. Pick the file that matches the system:
 
 * `RuneHelper-windows-x86_64.exe` - Windows 10 and newer.
 * `RuneHelper-linux-x86_64-wayland` - Hyprland, Sway, river, labwc, KDE Plasma on Wayland.
@@ -30,7 +30,7 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 ## Features
 
 * Select any loot area on the screen.
-* Real-time OCR using Tesseract.
+* Real-time OCR with a small built-in text recognizer trained on the game font.
 * Row-by-row OCR across up to eight worker threads, tuned for the Runeshape loot menu.
 * Reads HDR, dimmed and 4K captures: brightness is normalised and large regions are scaled down when needed.
 * Fuzzy matching for OCR mistakes.
@@ -60,7 +60,7 @@ Click **Select Region**, then drag a rectangle around the Runeshape loot list. I
 2. RuneHelper periodically captures the selected region.
 3. When the region takes in part of the game around the loot panel, the panel is found by the edge where its parchment bars meet the dark frame, and only the panel is read. A panel wider than 750 px, as on 4K screens, is scaled down to 680 px before reading. When the text column is much darker, brighter or flatter than usual, as happens with HDR or a dimmed display, its brightness is normalised first. Correctly exposed regions of normal size are read untouched.
 4. The OCR pipeline finds text rows in the right side of the Runeshape loot menu. The panel frame on the right is cut off first, and only rows that reach the right edge where item names end are read, so rune icons of long recipes that spill into that side are skipped.
-5. Each detected row is cropped, binarized, and passed to Tesseract.
+5. Each detected row is cropped and read by a small convolutional network trained on the game font (see `tools/text-model`). Rows it reads with low confidence are dropped, which keeps rune icons and background out of the results.
 6. OCR mistakes are corrected using fuzzy matching.
 7. Prices are loaded from cache or downloaded from the API.
 8. An overlay is rendered next to the detected items.
@@ -80,15 +80,14 @@ The folder is overwritten on each OCR run and may contain:
 * `prepared.png` - the panel as OCR reads it, written only when it was cut out of a larger region, scaled down or had its brightness normalised.
 * `rows_detected.png` - detected text rows and crop start markers, drawn on the image OCR reads.
 * `row_XX_row.png` - detected row crop.
-* `row_XX_text.png` - text crop sent to OCR preprocessing.
-* `row_XX_bin.png` - binarized image passed to Tesseract.
-* `row_XX_bin.txt` - raw OCR text, trimmed text, confidence, and accept/reject status.
+* `row_XX_text.png` - text crop passed to the recognizer.
+* `row_XX_read.png` - the crop as the recognizer sees it, scaled to 24 px high with its contrast stretched.
+* `row_XX_read.txt` - raw text, trimmed text, confidence, and accept/reject status.
 
 ## Dependencies
 
 * C++20
 * OpenCV
-* Tesseract OCR
 * cpr
 * nlohmann/json
 * ImGui
@@ -119,7 +118,6 @@ Installed via vcpkg:
 
 ```powershell
 vcpkg install opencv:x64-windows
-vcpkg install tesseract:x64-windows
 vcpkg install cpr:x64-windows
 vcpkg install nlohmann-json:x64-windows
 vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
@@ -150,8 +148,6 @@ sudo apt install \
     git \
     pkg-config \
     libopencv-dev \
-    libtesseract-dev \
-    libleptonica-dev \
     libcurl4-openssl-dev \
     libssl-dev \
     libglfw3-dev \
@@ -171,8 +167,6 @@ sudo apt install \
     libpipewire-0.3-dev
 ```
 
-> **Note:** `libtesseract-dev` provides the C++ API, while `libleptonica-dev` is required by Tesseract.
-
 ### Configure and build
 
 ```bash
@@ -189,7 +183,7 @@ cmake --build build -j$(nproc)
 
 ## Building with Docker
 
-The Dockerfile produces the same self-contained binary the releases ship: OpenCV, Leptonica, Tesseract, GLFW, cpr and libstdc++ are linked statically, leaving only glibc, libcurl, the display server client libraries and libGL dynamic. It builds on Ubuntu 22.04 so the result keeps a glibc 2.35 floor and runs on newer distributions.
+The Dockerfile produces the same self-contained binary the releases ship: OpenCV, GLFW, cpr and libstdc++ are linked statically, leaving only glibc, libcurl, the display server client libraries and libGL dynamic. It builds on Ubuntu 22.04 so the result keeps a glibc 2.35 floor and runs on newer distributions.
 
 The last stage is an export stage, not a runnable image. `--output` writes the binary onto the host and there is nothing to `docker run`:
 
@@ -205,7 +199,7 @@ docker build --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
 
 Add `--network host` if the container cannot reach the package mirrors on your setup.
 
-The Linux build embeds `eng.traineddata_fast` and `combinations.json` into the executable the same way the Windows resource script does, so the binary runs from any working directory:
+The Linux build embeds `text_model.bin` and `combinations.json` into the executable the same way the Windows resource script does, so the binary runs from any working directory:
 
 ```bash
 ./out/RuneHelper

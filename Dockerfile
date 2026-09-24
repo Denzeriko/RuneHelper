@@ -3,11 +3,8 @@
 FROM ubuntu:22.04 AS deps
 
 ARG OPENCV_VERSION=4.14.0
-ARG LEPTONICA_VERSION=1.87.0
-ARG TESSERACT_VERSION=5.5.3
 
 ENV DEBIAN_FRONTEND=noninteractive
-ENV PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
 ENV CC=gcc-12
 ENV CXX=g++-12
 
@@ -76,43 +73,6 @@ RUN git clone --depth 1 --branch "${OPENCV_VERSION}" https://github.com/opencv/o
     cmake --build /tmp/opencv/build --parallel && \
     cmake --install /tmp/opencv/build && \
     rm -rf /tmp/opencv
-
-RUN git clone --depth 1 --branch "${LEPTONICA_VERSION}" https://github.com/DanBloomberg/leptonica.git /tmp/leptonica && \
-    cmake -S /tmp/leptonica -B /tmp/leptonica/build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DBUILD_PROG=OFF \
-        -DSW_BUILD=OFF \
-        -DENABLE_ZLIB=OFF \
-        -DENABLE_PNG=OFF \
-        -DENABLE_JPEG=OFF \
-        -DENABLE_TIFF=OFF \
-        -DENABLE_GIF=OFF \
-        -DENABLE_WEBP=OFF \
-        -DENABLE_OPENJPEG=OFF && \
-    cmake --build /tmp/leptonica/build --parallel && \
-    cmake --install /tmp/leptonica/build && \
-    rm -rf /tmp/leptonica
-
-RUN git clone --depth 1 --branch "${TESSERACT_VERSION}" https://github.com/tesseract-ocr/tesseract.git /tmp/tesseract && \
-    cmake -S /tmp/tesseract -B /tmp/tesseract/build -G Ninja \
-        -DCMAKE_BUILD_TYPE=Release \
-        -DCMAKE_INSTALL_PREFIX=/usr/local \
-        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
-        -DBUILD_SHARED_LIBS=OFF \
-        -DBUILD_TRAINING_TOOLS=OFF \
-        -DBUILD_TESTS=OFF \
-        -DDISABLED_LEGACY_ENGINE=ON \
-        -DDISABLE_ARCHIVE=ON \
-        -DDISABLE_CURL=ON \
-        -DDISABLE_TIFF=ON \
-        -DOPENMP_BUILD=OFF \
-        -DSW_BUILD=OFF && \
-    cmake --build /tmp/tesseract/build --parallel && \
-    cmake --install /tmp/tesseract/build && \
-    rm -rf /tmp/tesseract
 
 FROM deps AS builder
 

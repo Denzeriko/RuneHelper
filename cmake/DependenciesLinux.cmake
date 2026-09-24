@@ -7,13 +7,6 @@ set(RUNEHELPER_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/external")
 set(RUNEHELPER_SUBMODULE_HINT "run: git submodule update --init --recursive")
 
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
-find_package(Tesseract QUIET)
-
-if(NOT Tesseract_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(Tesseract REQUIRED IMPORTED_TARGET tesseract lept)
-    add_library(Tesseract::libtesseract ALIAS PkgConfig::Tesseract)
-endif()
 
 find_package(CURL REQUIRED)
 find_package(OpenGL REQUIRED)
@@ -196,7 +189,6 @@ target_link_libraries(imgui PUBLIC
 
 set(RUNEHELPER_LIBRARIES
     ${OpenCV_LIBS}
-    Tesseract::libtesseract
     cpr::cpr
     imgui
     glfw

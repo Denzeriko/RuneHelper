@@ -9,7 +9,6 @@ set(RUNEHELPER_TEST_SOURCES
 
 set(RUNEHELPER_TEST_LIBRARIES
     ${OpenCV_LIBS}
-    Tesseract::libtesseract
     cpr::cpr
     nlohmann_json::nlohmann_json
 )
@@ -18,12 +17,12 @@ foreach(object IN LISTS RUNEHELPER_EMBEDDED_OBJECTS)
     set_source_files_properties("${object}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
 endforeach()
 
-function(runehelper_add_test name)
-    add_executable(${name} ${name}.cpp ${RUNEHELPER_TEST_SOURCES})
+function(runehelper_add_program name source)
+    add_executable(${name} ${source} ${RUNEHELPER_TEST_SOURCES})
 
     add_dependencies(${name} runehelper_embedded_resources)
 
-    target_include_directories(${name} PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper")
+    target_include_directories(${name} PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper" "${CMAKE_CURRENT_SOURCE_DIR}")
     target_compile_options(${name} PRIVATE ${RUNEHELPER_WARNINGS})
 
     target_compile_definitions(${name} PRIVATE
@@ -35,11 +34,17 @@ function(runehelper_add_test name)
     target_link_libraries(${name} PRIVATE ${RUNEHELPER_TEST_LIBRARIES})
 endfunction()
 
+function(runehelper_add_test name)
+    runehelper_add_program(${name} ${name}.cpp)
+endfunction()
+
 runehelper_add_test(ocr_golden)
 runehelper_add_test(ocr_robustness)
 runehelper_add_test(ocr_row_cache)
 runehelper_add_test(ocr_rune_tiles)
 runehelper_add_test(unit_tests)
+
+runehelper_add_program(text_model_crops "${CMAKE_SOURCE_DIR}/tools/text-model/crops.cpp")
 
 add_test(
     NAME unit_tests

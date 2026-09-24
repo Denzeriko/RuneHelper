@@ -4,7 +4,7 @@ y=117 qty=3 name="Greater Orb of Transmutation" match="Greater Orb of Transmutat
 y=210 qty=3 name="Greater Orb of Augmentation" match="Greater Orb of Augmentation" mconf=100
 y=303 qty=5 name="Random Currency" match="5x Random Currency" mconf=84
 y=396 qty=1 name="Divine Orb" match="Divine Orb" mconf=100
-y=490 qty=1 name="Greater Chaos Orb)" match="Greater Chaos Orb" mconf=100
+y=490 qty=1 name="Greater Chaos Orb" match="Greater Chaos Orb" mconf=100
 y=581 qty=1 name="Greater Exalted Orb" match="Greater Exalted Orb" mconf=100
 y=675 qty=1 name="Greater Regal Orb" match="Greater Regal Orb" mconf=100
 y=765 qty=1 name="Greater Jeweller's Orb" match="Greater Jeweller's Orb" mconf=100

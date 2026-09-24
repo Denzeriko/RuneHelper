@@ -34,9 +34,9 @@ std::string_view ResourceBytes(int id, const char* label)
 }
 }
 
-std::string_view EmbeddedTraineddata()
+std::string_view EmbeddedTextModel()
 {
-    return ResourceBytes(IDR_ENG_TRAINEDDATA, "Tessdata");
+    return ResourceBytes(IDR_TEXT_MODEL, "Text model");
 }
 
 std::string LoadEmbeddedRecipeDatabase()

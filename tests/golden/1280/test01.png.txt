@@ -1,12 +1,12 @@
 rows=11
-y=13 qty=1 name="Greater Orb of AUgMCNLAvON" match="Greater Orb of Augmentation" mconf=86
+y=13 qty=1 name="Greater Orb of Augmentation" match="Greater Orb of Augmentation" mconf=100
 y=43 qty=6 name="Blacksmith's Whetstone" match="Blacksmith's Whetstone" mconf=100
-y=76 qty=1 name="Arcanists Etcher" match="Arcanist's Etcher" mconf=100
-y=108 qty=1 name="ArMourer s Scrap" match="Armourer's Scrap" mconf=94
-y=139 qty=1 name="Lesser Jeweller s Orb" match="Lesser Jeweller's Orb" mconf=96
-y=171 qty=3 name="Kegal Orb" match="Regal Orb" mconf=89
+y=76 qty=6 name="Arcanist's Etcher" match="Arcanist's Etcher" mconf=100
+y=108 qty=6 name="Armourer's Scrap" match="Armourer's Scrap" mconf=100
+y=139 qty=1 name="Lesser Jeweller's Orb" match="Lesser Jeweller's Orb" mconf=100
+y=171 qty=3 name="Regal Orb" match="Regal Orb" mconf=100
 y=202 qty=1 name="Chaos Orb" match="Chaos Orb" mconf=100
-y=234 qty=2 name="Exalted Orb)" match="Exalted Orb" mconf=100
+y=234 qty=2 name="Exalted Orb" match="Exalted Orb" mconf=100
 y=264 qty=3 name="Artificer's Orb" match="Artificer's Orb" mconf=100
 y=295 qty=4 name="Blacksmith's Whetstone" match="Blacksmith's Whetstone" mconf=100
-y=328 qty=4 name="Arcanists Etcher" match="Arcanist's Etcher" mconf=100
+y=328 qty=4 name="Arcanist's Etcher" match="Arcanist's Etcher" mconf=100

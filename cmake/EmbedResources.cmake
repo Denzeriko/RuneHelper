@@ -1,7 +1,7 @@
 set(RUNEHELPER_RESOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/RuneHelper/resources")
 
 set(RUNEHELPER_EMBEDDED_FILES
-    "${RUNEHELPER_RESOURCE_DIR}/eng.traineddata_fast"
+    "${RUNEHELPER_RESOURCE_DIR}/text_model.bin"
     "${RUNEHELPER_RESOURCE_DIR}/combinations.json"
 )
 

@@ -2,8 +2,6 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <leptonica/allheaders.h>
-
 #include <algorithm>
 #include <cstdio>
 #include <cstdlib>
@@ -165,13 +163,12 @@ int main(int argc, char** argv)
     }
 
     cv::setNumThreads(1);
-    setMsgSeverity(L_SEVERITY_NONE);
 
     OCR ocr;
 
-    if (!ocr.Init(EmbeddedTraineddata()))
+    if (!ocr.Init(EmbeddedTextModel()))
     {
-        std::printf("ocr_rune_tiles: OCR::Init failed on the embedded traineddata\n");
+        std::printf("ocr_rune_tiles: OCR::Init failed on the embedded text model\n");
         return 2;
     }
 

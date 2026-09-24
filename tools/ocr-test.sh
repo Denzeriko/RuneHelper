@@ -15,8 +15,8 @@ usage: $(basename "$0") [--bless] [--tsan]
   --tsan      run the comparison under ThreadSanitizer
 
 The pinned dependency image is built from the Dockerfile deps stage on first
-use, which compiles OpenCV, Leptonica and Tesseract and takes a while. Every
-run after that takes a few seconds.
+use, which compiles OpenCV and takes a while. Every run after that takes a
+few seconds.
 EOF
     exit 1
 }

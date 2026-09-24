@@ -142,9 +142,9 @@ void OcrService::InitOcr()
 
     LOG_INFO("Initializing OCR");
 
-    if (!ocr_.Init(EmbeddedTraineddata()))
+    if (!ocr_.Init(EmbeddedTextModel()))
     {
-        LOG_ERROR("Tesseract init failed");
+        LOG_ERROR("OCR init failed");
 
         ocrFailed_ = true;
         ocrInitializing_ = false;

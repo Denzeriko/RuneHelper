@@ -13,7 +13,6 @@
         "thread"
       ]
     },
-    "tesseract",
     "cpr",
     "nlohmann-json",
     {

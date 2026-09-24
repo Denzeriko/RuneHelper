@@ -2,6 +2,7 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/core/AtomicFile.cpp
     RuneHelper/core/ConfigManager.cpp
     RuneHelper/core/Logger.cpp
+    RuneHelper/ocr/LineReader.cpp
     RuneHelper/ocr/LootParser.cpp
     RuneHelper/ocr/LootRows.cpp
     RuneHelper/ocr/NameNormalizer.cpp

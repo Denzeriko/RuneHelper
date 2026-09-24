@@ -61,7 +61,7 @@ docker run --rm \
         if [ -n "$FORMAT_TARGETS" ]; then
             echo "$FORMAT_TARGETS" > /tmp/files.txt
         else
-            find RuneHelper tests -name "*.cpp" -o -name "*.h" | sort > /tmp/files.txt
+            find RuneHelper tests tools -name "*.cpp" -o -name "*.h" | sort > /tmp/files.txt
         fi
 
         if [ "$FORMAT_FIX" = "1" ]; then

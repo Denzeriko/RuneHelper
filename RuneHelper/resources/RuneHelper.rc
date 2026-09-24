@@ -1,5 +1,5 @@
 #include "resource.h"
 
-IDR_ENG_TRAINEDDATA RCDATA "eng.traineddata_fast"
+IDR_TEXT_MODEL RCDATA "text_model.bin"
 IDR_COMBINATIONS RCDATA "combinations.json"
 IDI_APP_ICON ICON "runehelper.ico"

@@ -26,13 +26,13 @@ std::string_view Bytes(const EmbeddedResource& resource)
 }
 }
 
-std::string_view EmbeddedTraineddata()
+std::string_view EmbeddedTextModel()
 {
-    const EmbeddedResource* resource = FindEmbedded("eng.traineddata_fast");
+    const EmbeddedResource* resource = FindEmbedded("text_model.bin");
 
     if (!resource)
     {
-        LOG_ERROR("Linux tessdata is not embedded in the binary");
+        LOG_ERROR("Linux text model is not embedded in the binary");
         return {};
     }
 

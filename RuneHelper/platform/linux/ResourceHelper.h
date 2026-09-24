@@ -3,5 +3,5 @@
 #include <string>
 #include <string_view>
 
-std::string_view EmbeddedTraineddata();
+std::string_view EmbeddedTextModel();
 std::string LoadEmbeddedRecipeDatabase();

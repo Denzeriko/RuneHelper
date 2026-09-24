@@ -32,8 +32,6 @@ jobs:
             git \
             pkg-config \
             libopencv-dev \
-            libtesseract-dev \
-            libleptonica-dev \
             libcurl4-openssl-dev \
             libssl-dev \
             libglfw3-dev \
