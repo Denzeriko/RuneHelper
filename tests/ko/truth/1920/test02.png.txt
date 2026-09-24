@@ -1,0 +1,12 @@
+rows=11
+text="1x 집착의 수호하는 룬" qty=1 name="집착의 수호하는 룬"
+text="1x 골조의 수호하는 룬" qty=1 name="골조의 수호하는 룬"
+text="1x 마술의 고대 룬" qty=1 name="마술의 고대 룬"
+text="1x 부패의 고대 룬" qty=1 name="부패의 고대 룬"
+text="1x 발견의 고대 룬" qty=1 name="발견의 고대 룬"
+text="1x 통제의 고대 룬" qty=1 name="통제의 고대 룬"
+text="1x 기량의 고대 룬" qty=1 name="기량의 고대 룬"
+text="1x 산산조각의 고대 룬" qty=1 name="산산조각의 고대 룬"
+text="1x 거신의 고대 룬" qty=1 name="거신의 고대 룬"
+text="1x 대적의 룬" qty=1 name="대적의 룬"
+text="1x 활력 불길의 룬" qty=1 name="활력 불길의 룬"

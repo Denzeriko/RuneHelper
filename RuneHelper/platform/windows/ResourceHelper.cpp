@@ -10,6 +10,24 @@
 
 namespace
 {
+struct TextModelResource
+{
+    std::string_view language;
+    int id = 0;
+};
+
+constexpr TextModelResource kTextModels[] = {
+    { "en", IDR_TEXT_MODEL },
+    { "ru", IDR_TEXT_MODEL_RU },
+    { "de", IDR_TEXT_MODEL_DE },
+    { "fr", IDR_TEXT_MODEL_FR },
+    { "es", IDR_TEXT_MODEL_ES },
+    { "pt", IDR_TEXT_MODEL_PT },
+    { "ko", IDR_TEXT_MODEL_KO },
+    { "ja", IDR_TEXT_MODEL_JA },
+    { "th", IDR_TEXT_MODEL_TH },
+};
+
 std::string_view ResourceBytes(int id, const char* label)
 {
     HRSRC resource = FindResourceW(nullptr, MAKEINTRESOURCEW(id), MAKEINTRESOURCEW(10));
@@ -34,9 +52,15 @@ std::string_view ResourceBytes(int id, const char* label)
 }
 }
 
-std::string_view EmbeddedTextModel()
+std::string_view EmbeddedTextModel(std::string_view language)
 {
-    return ResourceBytes(IDR_TEXT_MODEL, "Text model");
+    for (const TextModelResource& model : kTextModels)
+    {
+        if (model.language == language)
+            return ResourceBytes(model.id, "Text model");
+    }
+
+    return {};
 }
 
 std::string LoadEmbeddedRecipeDatabase()

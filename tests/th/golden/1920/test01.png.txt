@@ -1,0 +1,10 @@
+rows=9
+y=53 qty=3 name="Regal Orb ชั้นสูง" match="Regal Orb ชั้นสูง" mconf=100
+y=134 qty=3 name="Chaos Orb ชั้นสูง" match="Chaos Orb ชั้นสูง" mconf=100
+y=215 qty=3 name="Exalted Orb ชั้นสูง" match="Exalted Orb ชั้นสูง" mconf=100
+y=255 qty=1 name="มนต์มณีไหลเวียน (เลเวล 19)" match="มนต์มณีไหลเวียน (เลเวล 19)" mconf=100
+y=307 qty=2 name="Divine Orb" match="Divine Orb" mconf=100
+y=354 qty=3 name="Chaos Orb" match="Chaos Orb" mconf=100
+y=397 qty=1 name="Jeweller's Orb ไร้ที่ติ" match="Jeweller's Orb ไร้ที่ติ" mconf=100
+y=448 qty=1 name="Orb of Chance" match="Orb of Chance" mconf=100
+y=495 qty=3 name="Orb of Transmutation ชั้นสูง" match="Orb of Transmutation ชั้นสูง" mconf=100

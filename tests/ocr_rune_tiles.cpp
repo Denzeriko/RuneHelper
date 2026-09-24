@@ -15,7 +15,6 @@
 #include <nlohmann/json.hpp>
 
 #include "TestScenes.h"
-#include "core/Config.h"
 #include "ocr/LootParser.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OCR.h"
@@ -83,7 +82,7 @@ public:
     std::vector<RecipeRow> Read(const cv::Mat& gray)
     {
         OcrRowCache cache;
-        const std::vector<LootLine> loot = ocr_.RecognizeLoot(gray, config_, &cache);
+        const std::vector<LootLine> loot = ocr_.RecognizeLoot(gray, &cache);
 
         RuneTileLocator locator;
         locator.Analyze(gray, cache.Panel().value_or(cv::Rect(0, 0, gray.cols, gray.rows)), cache.Levels());
@@ -117,7 +116,6 @@ public:
 
 private:
     OCR& ocr_;
-    AppConfig config_;
     std::map<std::pair<std::string, int>, int> runeCounts_;
     CachedItemNames names_;
 };
@@ -166,7 +164,7 @@ int main(int argc, char** argv)
 
     OCR ocr;
 
-    if (!ocr.Init(EmbeddedTextModel()))
+    if (!ocr.Init(EmbeddedTextModel("en")))
     {
         std::printf("ocr_rune_tiles: OCR::Init failed on the embedded text model\n");
         return 2;

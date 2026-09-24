@@ -1,0 +1,97 @@
+import difflib
+import json
+import re
+
+from common import LANGUAGE, REAL, REPO, SETTINGS, TRUTH, UNPREFIXED, displayed, load_vocabulary, panel_of, squash
+
+MIN_SCORE = 0.75
+LEVEL = re.compile(r'^\s*([0-9Oo]{1,2})(?=\s|$)')
+
+QUANTITY = {
+    'prefix': re.compile(r'^\s*(\d{1,3})\s*[xXх]\s+(.*)$'),
+    'suffix': re.compile(r'^(.*?)\s*\((\d{1,3})\)\s*$'),
+    'suffix_x': re.compile(r'^(.*?)\s+[xX](\d{1,3})\s*$'),
+    'bare': re.compile(r'^\s*(\d{1,3})\s+(.*)$'),
+}
+
+
+def reading(path):
+    for line in path.read_text(encoding='utf-8').splitlines():
+        if line.startswith('trimmed: '):
+            return line[len('trimmed: '):]
+    return ''
+
+
+def split_quantity(text):
+    match = QUANTITY[SETTINGS['quantity']].match(text)
+    if not match:
+        return 1, text.strip()
+    groups = match.groups()
+    if SETTINGS['quantity'] in ('prefix', 'bare'):
+        return int(groups[0]), groups[1].strip()
+    return int(groups[1]), groups[0].strip()
+
+
+def closest(text, names):
+    target = squash(text)
+    scored = [(difflib.SequenceMatcher(None, target, squash(n)).ratio(), n) for n in names]
+    return max(scored) if scored else (0.0, text)
+
+
+def random_currency():
+    with open(REPO / 'RuneHelper' / 'resources' / 'combinations.json', encoding='utf-8') as handle:
+        for entry in json.load(handle)['combinations']:
+            if entry['output'] == '5x Random Currency':
+                return entry.get('names', {}).get(LANGUAGE, '')
+    return ''
+
+
+def draft(text, names, currency):
+    for prefix in UNPREFIXED:
+        start = text.find(prefix)
+        if 0 <= start <= 6:
+            if ':' in text[start:]:
+                head, tail = text[start:].split(':', 1)
+            else:
+                head, tail = prefix, text[start + len(prefix):]
+                level = LEVEL.match(tail)
+                if level:
+                    head = f'{prefix} {level.group(1).replace("O", "0").replace("o", "0")}'
+                    tail = tail[level.end():]
+            score, name = closest(tail, names)
+            separator = ' : ' if head.endswith(' ') or LANGUAGE == 'fr' else ': '
+            return score, 1, f'{head.strip()}{separator}{name}', None
+    if currency and closest(text, [currency])[0] >= 0.8:
+        return 1.0, 5, re.sub(r'\s*\d+\s*\S*\s*$|^\s*\d+\s*\S*\s+', '', currency).strip(), currency
+    quantity, name = split_quantity(text)
+    score, snapped = closest(name, names)
+    return score, quantity, snapped, None
+
+
+def main():
+    names = load_vocabulary()
+    currency = random_currency()
+    panels = {}
+    for crop in sorted((REAL / 'clean').glob('*.png')):
+        panels.setdefault(panel_of(crop.name), []).append(crop)
+    for panel, crops in sorted(panels.items()):
+        resolution, test = panel.split('_', 1)
+        lines = []
+        print(f'== {resolution}/{test}')
+        for crop in crops:
+            text = reading(crop.with_suffix('.read.txt'))
+            if not text.strip():
+                continue
+            score, quantity, name, shown = draft(text, names, currency)
+            if score < MIN_SCORE:
+                continue
+            shown = shown or displayed(quantity, name)
+            lines.append(f'text="{shown}" qty={quantity} name="{name}"')
+            print(f'  {score:4.2f}  {text!r:50} -> {shown}')
+        target = TRUTH / resolution / f'{test}.png.txt'
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text('\n'.join([f'rows={len(lines)}'] + lines) + '\n', encoding='utf-8')
+
+
+if __name__ == '__main__':
+    main()

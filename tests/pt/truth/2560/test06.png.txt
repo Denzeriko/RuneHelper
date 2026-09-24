@@ -1,0 +1,12 @@
+rows=11
+text="Item Único Raro" qty=1 name="Item Único Raro"
+text="Anel Único" qty=1 name="Anel Único"
+text="Cinto Único" qty=1 name="Cinto Único"
+text="Amuleto Único" qty=1 name="Amuleto Único"
+text="Pedraria Única" qty=1 name="Pedraria Única"
+text="Varinha Única" qty=1 name="Varinha Única"
+text="Maça de Duas Mãos Única" qty=1 name="Maça de Duas Mãos Única"
+text="Talismã Único" qty=1 name="Talismã Único"
+text="Cajado Único" qty=1 name="Cajado Único"
+text="Lança Única" qty=1 name="Lança Única"
+text="Escudo Único" qty=1 name="Escudo Único"

@@ -1,0 +1,12 @@
+rows=11
+y=28 qty=1 name="Divine Orb" match="Divine Orb" mconf=100
+y=90 qty=1 name="Chaos Orb ชั้นสูง" match="Chaos Orb ชั้นสูง" mconf=100
+y=153 qty=1 name="Exalted Orb ชั้นสูง" match="Exalted Orb ชั้นสูง" mconf=100
+y=216 qty=1 name="Regal Orb ชั้นสูง" match="Regal Orb ชั้นสูง" mconf=100
+y=279 qty=1 name="Jeweller's Orb ชั้นสูง" match="Jeweller's Orb ชั้นสูง" mconf=100
+y=343 qty=2 name="Chaos Orb" match="Chaos Orb" mconf=100
+y=405 qty=3 name="Orb of Alchemy" match="Orb of Alchemy" mconf=100
+y=469 qty=3 name="Gemcutter's Prism" match="Gemcutter's Prism" mconf=100
+y=531 qty=3 name="Glassblower's Bauble" match="Glassblower's Bauble" mconf=100
+y=595 qty=3 name="Exalted Orb" match="Exalted Orb" mconf=100
+y=653 qty=1 name="มนต์มณีไหลเวียน (เลเวล 18)" match="มนต์มณีไหลเวียน (เลเวล 18)" mconf=100

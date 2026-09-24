@@ -136,6 +136,9 @@ void RuneHelperApp::HandleUIActions()
     if (ui_.WantsSingleSnapshot())
         ocrService_.RequestSingleSnapshot();
 
+    if (ui_.WantsOcrDebug())
+        ocrService_.RequestDebugDump();
+
     if (ui_.WantsRefreshPrices())
         prices_.ForceRefresh();
 

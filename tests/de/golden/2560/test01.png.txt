@@ -1,0 +1,12 @@
+rows=11
+y=24 qty=1 name="Seltener einzigartiger Gegenstand" match="Seltener einzigartiger Gegenstand" mconf=100
+y=83 qty=1 name="Einzigartiger Ring" match="Einzigartiger Ring" mconf=100
+y=145 qty=1 name="Einzigartiger Gürtel" match="Einzigartiger Gürtel" mconf=100
+y=206 qty=1 name="Einzigartiges Amulet" match="Einzigartiges Amulet" mconf=100
+y=268 qty=1 name="Einzigartiger Schmuck" match="Einzigartiger Schmuck" mconf=100
+y=329 qty=1 name="Einzigartiger Zauberstab" match="Einzigartiger Zauberstab" mconf=100
+y=394 qty=1 name="Einzigartiger Zweihandstreitkolben" match="Einzigartiger Zweihandstreitkolben" mconf=100
+y=452 qty=1 name="Einzigartiger Talisman" match="Einzigartiger Talisman" mconf=100
+y=514 qty=1 name="Einzigartiger Stab" match="Einzigartiger Stab" mconf=100
+y=576 qty=1 name="Einzigartiger Speer" match="Einzigartiger Speer" mconf=100
+y=636 qty=1 name="Einzigartiger Schild" match="Einzigartiger Schild" mconf=100

@@ -1,0 +1,11 @@
+rows=10
+y=68 qty=3 name="Orbe Exaltado Maior" match="Orbe Exaltado Maior" mconf=100
+y=127 qty=1 name="Fluxo Taumatúrgico (Nível 19)" match="Fluxo Taumatúrgico (Nível 19)" mconf=100
+y=190 qty=2 name="Orbe Divino" match="Orbe Divino" mconf=100
+y=253 qty=3 name="Orbe do Caos" match="Orbe do Caos" mconf=100
+y=314 qty=1 name="Orbe do Joalheiro Perfeito" match="Orbe do Joalheiro Perfeito" mconf=100
+y=379 qty=1 name="Orbe da Chance" match="Orbe da Chance" mconf=100
+y=442 qty=3 name="Orbe da Transmutação Maior" match="Orbe da Transmutação Maior" mconf=100
+y=505 qty=3 name="Orbe da Ampliação Maior" match="Orbe da Ampliação Maior" mconf=100
+y=568 qty=5 name="Moedas Aleatórias" match="5 Moedas Aleatórias" mconf=90
+y=631 qty=1 name="Orbe Divino" match="Orbe Divino" mconf=100

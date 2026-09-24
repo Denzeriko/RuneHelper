@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="Fertigkeit: Animusaustausch"
+qty=2 name="Prisma des Gemmenschneiders"
+qty=1 name="Fertigkeit: Klingenregen"
+qty=1 name="Unterstützung: Runeninfusion"
+qty=1 name="Unterstützung: Runische Extraktion"
+qty=1 name="Unterstützung: Faust von Kalguur"
+qty=1 name="Fertigkeit: Schutzgebundene Kreaturen"
+qty=1 name="Fertigkeit: Voltaische Barriere"
+qty=1 name="Fertigkeit: Leere Schale"
+qty=1 name="Fertigkeit: Explosive Umwandlung"
+qty=1 name="Fertigkeit: Animus-Splitter"

@@ -1,0 +1,12 @@
+rows=11
+y=24 qty=3 name="Orbe de aumento superior" match="Orbe de aumento superior" mconf=100
+y=87 qty=5 name="objetos monetarios aleatorios" match="5 objetos monetarios aleatorios" mconf=94
+y=145 qty=1 name="Orbe divino" match="Orbe divino" mconf=100
+y=210 qty=1 name="Orbe de caos superior" match="Orbe de caos superior" mconf=100
+y=268 qty=1 name="Orbe exaltado superior" match="Orbe exaltado superior" mconf=100
+y=334 qty=1 name="Orbe regio superior" match="Orbe regio superior" mconf=100
+y=391 qty=1 name="Orbe de joyero superior" match="Orbe de joyero superior" mconf=100
+y=455 qty=2 name="Orbe de caos" match="Orbe de caos" mconf=100
+y=514 qty=3 name="Orbe de alquimia" match="Orbe de alquimia" mconf=100
+y=574 qty=3 name="Prisma del tallador de gemas" match="Prisma del tallador de gemas" mconf=100
+y=637 qty=3 name="Baratija de vidrio" match="Baratija de vidrio" mconf=100

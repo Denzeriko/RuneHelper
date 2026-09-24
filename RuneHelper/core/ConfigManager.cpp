@@ -110,6 +110,15 @@ void ConfigManager::Normalize(AppConfig& config)
     if (config.priceLeague.empty())
         config.priceLeague = std::string(kDefaultPriceLeague);
     ClampPriceThresholds(config);
+
+    const bool knownLanguage = std::any_of(
+        kGameLanguages.begin(),
+        kGameLanguages.end(),
+        [&config](const GameLanguage& language) { return language.code == config.gameLanguage; }
+    );
+
+    if (!knownLanguage)
+        config.gameLanguage = std::string(kGameLanguages.front().code);
 }
 
 nlohmann::json ConfigManager::FeatureSettings(const std::string& feature) const
@@ -178,8 +187,7 @@ bool ConfigManager::Load()
 
     config_.priceRefreshMinutes = JsonValue(j, "priceRefreshMinutes", config_.priceRefreshMinutes);
     config_.priceLeague = JsonValue(j, "priceLeague", config_.priceLeague);
-
-    config_.debugOCR = JsonValue(j, "debugOCR", config_.debugOCR);
+    config_.gameLanguage = JsonValue(j, "gameLanguage", config_.gameLanguage);
 
     Normalize(config_);
 
@@ -227,8 +235,7 @@ bool ConfigManager::Save() const
 
     j["priceRefreshMinutes"] = config.priceRefreshMinutes;
     j["priceLeague"] = config.priceLeague;
-
-    j["debugOCR"] = config.debugOCR;
+    j["gameLanguage"] = config.gameLanguage;
 
     return WriteFileAtomic(GetConfigPath(), j.dump(4));
 }

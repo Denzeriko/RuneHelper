@@ -84,6 +84,24 @@ void TestConfigLeagues()
     CheckEqual(static_cast<int>(league(std::string(200, 'x')).size()), 64, "a long league is capped");
 }
 
+void TestConfigLanguage()
+{
+    Section("ConfigManager::Normalize, game language");
+
+    auto language = [](const std::string& in)
+    {
+        AppConfig config;
+        config.gameLanguage = in;
+        return Normalized(config).gameLanguage;
+    };
+
+    CheckEqual(language("en"), "en", "English survives");
+    CheckEqual(language("ko"), "ko", "a known language survives");
+    CheckEqual(language("zh-TW"), "en", "a language the game client lacks falls back to English");
+    CheckEqual(language("xx"), "en", "an unknown language falls back to English");
+    CheckEqual(language(""), "en", "an empty language falls back to English");
+}
+
 void TestConfigClamps()
 {
     Section("ConfigManager::Normalize, clamps");
@@ -222,6 +240,119 @@ void TestNameMatching()
     CheckEqual(NormalizeName("  The Runefather's ALLOY "), "the runefathers alloy", "normalisation folds case and punctuation");
 }
 
+void TestLocalizedNames()
+{
+    Section("Localized item names");
+
+    CheckEqual(NormalizeName("Сфера ХАОСА"), "сфера хаоса", "Cyrillic folds to lower case");
+    CheckEqual(NormalizeName("Очернённые"), "очерненные", "yo folds to ye");
+    CheckEqual(NormalizeName("Chaossphäre"), "chaossphare", "German umlauts fold to the base letter");
+    CheckEqual(NormalizeName("Orbe d'altération"), "orbe dalteration", "French accents fold and apostrophes drop");
+    CheckEqual(NormalizeName("카오스 오브"), "카오스 오브", "Hangul is kept");
+    CheckEqual(NormalizeName("混沌石（Ｌｖ２０）"), "混沌石lv20", "full width letters fold and brackets drop");
+
+    const CachedItemNames translations = CachedItemNames::Build(std::vector<NameAlias>{
+        { "Chaos Orb", "Сфера хаоса" },
+        { "Chaos Orb", "카오스 오브" },
+        { "Mirror of Kalandra", "Зеркало Каландры" },
+    });
+
+    const auto russian = translations.FindBest("Сфера хаоса");
+    Check(russian && russian->name == "Chaos Orb", "a Russian name resolves to the English one");
+
+    const auto misread = translations.FindBest("Сфера хаоcа");
+    Check(misread && misread->name == "Chaos Orb", "a Latin c in place of a Cyrillic one is a single misread");
+
+    const auto korean = translations.FindBest("카오스 오브");
+    Check(korean && korean->name == "Chaos Orb", "a Korean name resolves to the English one");
+
+    Check(!translations.FindBest("Сфера").has_value(), "a fragment of a name does not resolve");
+
+    const auto parsed = LootParser::ParseLootLine("3х Сфера хаоса");
+    CheckEqual(parsed.quantity, 3, "a Cyrillic x marks the quantity");
+    CheckEqual(parsed.itemName, "Сфера хаоса", "the name follows a Cyrillic x");
+    CheckEqual(
+        LootParser::ParseLootLine("1x Сфера хаоса ъ").itemName,
+        "Сфера хаоса",
+        "a trailing one letter Cyrillic token is stripped"
+    );
+    CheckEqual(
+        LootParser::ParseLootLine("1x 마술의 고대 룬").itemName,
+        "마술의 고대 룬",
+        "a one syllable Korean word at the end is kept"
+    );
+    CheckEqual(LootParser::ParseLootLine("고유 창").itemName, "고유 창", "a one syllable Korean noun is kept");
+    CheckEqual(LootParser::ParseLootLine("ユニーク 盾").itemName, "ユニーク 盾", "a one kanji word is kept");
+    CheckEqual(LootParser::ParseLootLine("1x Exalted Orb l").itemName, "Exalted Orb", "a trailing stray Latin letter is stripped");
+
+    auto suffix = [](const std::string& line)
+    {
+        const auto result = LootParser::ParseLootLine(line);
+        return std::to_string(result.quantity) + " " + result.itemName;
+    };
+
+    CheckEqual(suffix("Рунный сплав (2)"), "2 Рунный сплав", "a quantity in brackets after the name is read");
+    CheckEqual(
+        suffix("Чародейский расплав (Уровень 18) (1)"),
+        "1 Чародейский расплав (Уровень 18)",
+        "only the last bracket is the quantity"
+    );
+    CheckEqual(
+        suffix("Чародейский расплав (Уровень 18)"),
+        "1 Чародейский расплав (Уровень 18)",
+        "a level in brackets is not a quantity"
+    );
+    CheckEqual(suffix("Thaumaturgic Flux (Level 20)"), "1 Thaumaturgic Flux (Level 20)", "an English level is not a quantity");
+    CheckEqual(suffix("Рунный сплав (2"), "2 Рунный сплав", "a lost closing bracket still reads");
+    CheckEqual(suffix("Рунный сплав 2)"), "2 Рунный сплав", "a lost opening bracket still reads");
+    CheckEqual(suffix("Сфера хаоса(3)"), "3 Сфера хаоса", "a bracket glued to the name still reads");
+    CheckEqual(suffix("Old Relic (I)"), "1 Old Relic (I)", "a roman numeral is not a quantity");
+    CheckEqual(suffix("Orbe divino x1"), "1 Orbe divino", "a Spanish x quantity after the name is read");
+    CheckEqual(suffix("Orbe de caos superior x12"), "12 Orbe de caos superior", "a two digit Spanish quantity is read");
+    CheckEqual(suffix("Orbe de caos xl"), "1 Orbe de caos", "a misread one after x still reads");
+    CheckEqual(suffix("3 Orbe Exaltado Maior"), "3 Orbe Exaltado Maior", "a Portuguese bare number in front is the quantity");
+    CheckEqual(
+        suffix("1 Fluxo Taumatúrgico (Nível 19)"),
+        "1 Fluxo Taumatúrgico (Nível 19)",
+        "a bare number keeps the level in the name"
+    );
+    CheckEqual(
+        suffix("5 objetos monetarios aleatorios"),
+        "5 objetos monetarios aleatorios",
+        "a number opening the name reads as the quantity"
+    );
+    CheckEqual(suffix("Orbe divino"), "1 Orbe divino", "a name ending in o is not a quantity");
+    CheckEqual(suffix("Ix Runic Alloy"), "1 Runic Alloy", "a letter one before x still uses the x rule");
+
+    const std::vector<LootLine> loot = { { "2x Сфера хаоса", 0, 10, 100, 30, 99.0f } };
+    const AppConfig config;
+    const cv::Rect region(0, 0, 400, 300);
+
+    const std::vector<FrameRow> translated = ParseLootRows(loot, region, config, &translations);
+    CheckEqual(translated.front().name, "Chaos Orb", "a row is translated before pricing");
+    CheckEqual(translated.front().quantity, 2, "translation keeps the quantity");
+    CheckEqual(ParseLootRows(loot, region, config).front().name, "Сфера хаоса", "without translations the row keeps its text");
+
+    RecipeDatabase database;
+
+    if (!database.Load())
+    {
+        Check(false, "the embedded database loads for the translation checks");
+        return;
+    }
+
+    const Recipe* legacy = database.FindRecipe("Наследие Альдура", 1);
+    Check(legacy && legacy->output == "Aldur's Legacy", "a recipe is found by its Russian name");
+
+    const CachedItemNames koreanNames = database.Translations("ko");
+    Check(!koreanNames.Empty(), "Korean names load from the embedded database");
+
+    const auto orb = koreanNames.FindBest("카오스 오브");
+    Check(orb && orb->name == "Chaos Orb", "the embedded Korean name of Chaos Orb resolves");
+
+    Check(database.Translations("xx").Empty(), "an unknown language has no translations");
+}
+
 void TestFrameSimilarity()
 {
     Section("SimilarImages");
@@ -358,6 +489,24 @@ void TestConfigLoadMalformed()
 
     std::error_code ec;
     std::filesystem::remove(aside, ec);
+}
+
+void TestRecipeDatabaseDownloadWithoutNames()
+{
+    Section("RecipeDatabase, downloaded update without localized names");
+
+    const std::filesystem::path downloaded = DownloadedRecipeDatabasePath();
+    WriteText(downloaded, R"({"generated": "2099-01-01", "combinations": [{"output": "Chaos Orb", "count": 1, "runes": ["Fire"]}]})");
+
+    RecipeDatabase database;
+    Check(database.Load(), "a newer download without names loads");
+    CheckEqual(database.LoadedFrom(), PathToUtf8(downloaded), "the newer download is the one used");
+
+    const Recipe* recipe = database.FindRecipe("Сфера хаоса", 1);
+    Check(recipe && recipe->output == "Chaos Orb", "names missing from the download come from the built-in copy");
+
+    std::error_code ec;
+    std::filesystem::remove(downloaded, ec);
 }
 
 void TestRecipeDatabaseMalformedDownload()
@@ -517,15 +666,18 @@ int main()
 
     TestConfigLeagues();
     TestConfigClamps();
+    TestConfigLanguage();
     TestLootParser();
     TestOverlayAnchor();
     TestFormatting();
     TestNameMatching();
+    TestLocalizedNames();
     TestFrameSimilarity();
     TestRecipeDatabase();
     TestPriceCacheDump();
     TestConfigLoadMalformed();
     TestRecipeDatabaseMalformedDownload();
+    TestRecipeDatabaseDownloadWithoutNames();
     TestPriceCacheMalformedDump();
     TestPoeNinjaParsing();
     TestLoggerRepeats();

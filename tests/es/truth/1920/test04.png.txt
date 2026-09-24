@@ -1,0 +1,12 @@
+rows=11
+text="Gema de habilidad sin tallar (nivel 19) x1" qty=1 name="Gema de habilidad sin tallar (nivel 19)"
+text="Gema de espíritu sin tallar (nivel 19) x1" qty=1 name="Gema de espíritu sin tallar (nivel 19)"
+text="Asistencia: Runas curativas" qty=1 name="Asistencia: Runas curativas"
+text="Habilidad: Caída del cielo" qty=1 name="Habilidad: Caída del cielo"
+text="Habilidad: Cascada trisqueliana" qty=1 name="Habilidad: Cascada trisqueliana"
+text="Habilidad: Refutación" qty=1 name="Habilidad: Refutación"
+text="Habilidad: Alivio rúnico" qty=1 name="Habilidad: Alivio rúnico"
+text="Habilidad: Líneas ley" qty=1 name="Habilidad: Líneas ley"
+text="Habilidad: Intercambio de ánima" qty=1 name="Habilidad: Intercambio de ánima"
+text="Prisma del tallador de gemas x2" qty=2 name="Prisma del tallador de gemas"
+text="Habilidad: Lluvia de filos" qty=1 name="Habilidad: Lluvia de filos"

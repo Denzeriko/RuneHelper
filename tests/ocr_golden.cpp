@@ -13,7 +13,6 @@
 #include <vector>
 
 #include "OcrScoring.h"
-#include "core/Config.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OCR.h"
 #include "platform/linux/ResourceHelper.h"
@@ -32,8 +31,7 @@ std::vector<Row> Recognize(OCR& ocr, const CachedItemNames& vocabulary, const fs
     cv::Mat gray;
     cv::cvtColor(bgr, gray, cv::COLOR_BGR2GRAY);
 
-    const AppConfig config;
-    return ToRows(ocr.RecognizeLoot(gray, config), vocabulary);
+    return ToRows(ocr.RecognizeLoot(gray), vocabulary);
 }
 
 std::string Serialize(const std::vector<Row>& rows)
@@ -126,7 +124,7 @@ int main(int argc, char** argv)
 {
     if (argc < 5)
     {
-        std::printf("usage: ocr_golden <combinations.json> <panels> <golden> <truth> [--bless]\n");
+        std::printf("usage: ocr_golden <combinations.json> <panels> <golden> <truth> [--bless] [--language <code>]\n");
         return 2;
     }
 
@@ -134,19 +132,30 @@ int main(int argc, char** argv)
     const fs::path panels = argv[2];
     const fs::path golden = argv[3];
     const fs::path truth = argv[4];
-    const bool bless = argc > 5 && std::string(argv[5]) == "--bless";
+    bool bless = false;
+    std::string language = "en";
+
+    for (int i = 5; i < argc; ++i)
+    {
+        const std::string flag = argv[i];
+
+        if (flag == "--bless")
+            bless = true;
+        else if (flag == "--language" && i + 1 < argc)
+            language = argv[++i];
+    }
 
     cv::setNumThreads(1);
 
     OCR ocr;
 
-    if (!ocr.Init(EmbeddedTextModel()))
+    if (!ocr.Init(EmbeddedTextModel(language)))
     {
-        std::printf("ocr_golden: OCR::Init failed on the embedded text model\n");
+        std::printf("ocr_golden: OCR::Init failed on the embedded text model for '%s'\n", language.c_str());
         return 2;
     }
 
-    const std::vector<std::string> vocabularyNames = LoadVocabulary(combinations);
+    const std::vector<std::string> vocabularyNames = LoadVocabulary(combinations, language);
     const std::set<std::string> knownNames(vocabularyNames.begin(), vocabularyNames.end());
     const CachedItemNames vocabulary = CachedItemNames::Build(vocabularyNames);
 

@@ -1,0 +1,11 @@
+rows=10
+text="1x 룬 아버지의 합금" qty=1 name="룬 아버지의 합금"
+text="1x 군왕의 합금" qty=1 name="군왕의 합금"
+text="1x 신비한 합금" qty=1 name="신비한 합금"
+text="1x 분광 합금" qty=1 name="분광 합금"
+text="1x 재빠른 합금" qty=1 name="재빠른 합금"
+text="1x 회오리바람 합금" qty=1 name="회오리바람 합금"
+text="1x 팽창하는 합금" qty=1 name="팽창하는 합금"
+text="1x 보호의 합금" qty=1 name="보호의 합금"
+text="1x 적응형 합금" qty=1 name="적응형 합금"
+text="2x 룬 합금" qty=2 name="룬 합금"

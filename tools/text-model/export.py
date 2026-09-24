@@ -4,10 +4,10 @@ from pathlib import Path
 
 import torch
 
-from common import CHARSET, MODEL
+from common import MODEL
 from train import load
 
-MAGIC = b'RHOCR1\0\0'
+MAGIC = b'RHOCR2\0\0'
 
 
 def folded(conv, norm):
@@ -34,9 +34,11 @@ def main():
     model.eval()
     with open(target, 'wb') as handle:
         handle.write(MAGIC)
-        encoded = CHARSET.encode('ascii')
-        handle.write(struct.pack('<I', len(encoded)))
-        handle.write(encoded)
+        handle.write(struct.pack('<I', len(model.charset)))
+        for symbol in model.charset:
+            encoded = symbol.encode('utf-8')
+            handle.write(struct.pack('<B', len(encoded)))
+            handle.write(encoded)
         tensors = layers(model)
         handle.write(struct.pack('<I', len(tensors)))
         for weight, bias in tensors:

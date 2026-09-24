@@ -4,7 +4,12 @@
 
 #include "ocr/LootParser.h"
 
-std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config)
+std::vector<FrameRow> ParseLootRows(
+    const std::vector<LootLine>& loot,
+    const cv::Rect& region,
+    const AppConfig& config,
+    const CachedItemNames* translations
+)
 {
     std::vector<FrameRow> rows;
     rows.reserve(loot.size());
@@ -16,6 +21,13 @@ std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv:
         FrameRow row;
         row.name = parsed.itemName;
         row.quantity = parsed.quantity;
+
+        if (translations)
+        {
+            if (const auto english = translations->FindBest(row.name))
+                row.name = english->name;
+        }
+
         row.textTop = item.y1;
         row.overlayY = region.y + (item.y1 + item.y2) / 2 + config.overlayOffsetY;
 

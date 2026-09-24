@@ -1,0 +1,7 @@
+rows=6
+y=69 qty=1 name="Sidereus d'Uthred" match="Sidereus d'Uthred" mconf=100
+y=170 qty=1 name="Sollicitude de Medved" match="Sollicitude de Medved" mconf=100
+y=274 qty=1 name="Traque de Kolr" match="Traque de Kolr" mconf=100
+y=376 qty=1 name="Puissance de Thurd" match="Puissance de Thurd" mconf=100
+y=477 qty=1 name="Morosité de Katla" match="Morosité de Katla" mconf=100
+y=579 qty=1 name="Carnage de Vorana" match="Carnage de Vorana" mconf=100

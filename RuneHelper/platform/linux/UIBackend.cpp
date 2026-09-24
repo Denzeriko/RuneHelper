@@ -187,6 +187,7 @@ bool UIBackend::Init(UIManager* manager)
     ImGui::StyleColorsDark();
 
     ImGuiStyleSetup::ApplyRuneHelperStyle();
+    ImGuiStyleSetup::AddFonts();
 
     if (!ImGui_ImplGlfw_InitForOpenGL(impl_->window, true))
     {

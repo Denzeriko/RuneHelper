@@ -7,6 +7,7 @@
 #include <opencv2/core.hpp>
 
 #include "core/Config.h"
+#include "ocr/NameNormalizer.h"
 #include "ocr/OCR.h"
 #include "price/ResolvedPrice.h"
 
@@ -19,5 +20,10 @@ struct FrameRow
     ResolvedPrice price;
 };
 
-std::vector<FrameRow> ParseLootRows(const std::vector<LootLine>& loot, const cv::Rect& region, const AppConfig& config);
+std::vector<FrameRow> ParseLootRows(
+    const std::vector<LootLine>& loot,
+    const cv::Rect& region,
+    const AppConfig& config,
+    const CachedItemNames* translations = nullptr
+);
 int OverlayTextX(const cv::Rect& region, const std::optional<cv::Rect>& panel, const AppConfig& config);

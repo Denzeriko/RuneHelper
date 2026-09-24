@@ -1,0 +1,7 @@
+rows=6
+y=64 qty=1 name="Sidereu de Uhtred" match="Sidereu de Uhtred" mconf=100
+y=172 qty=1 name="Cuidados de Medved" match="Cuidados de Medved" mconf=100
+y=281 qty=1 name="Caçada de Kolr" match="Caçada de Kolr" mconf=100
+y=389 qty=1 name="Poder de Thrud" match="Poder de Thrud" mconf=100
+y=497 qty=1 name="Trevas de Katla" match="Trevas de Katla" mconf=100
+y=605 qty=1 name="Carnificina de Vorana" match="Carnificina de Vorana" mconf=100

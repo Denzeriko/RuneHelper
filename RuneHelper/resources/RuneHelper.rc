@@ -1,5 +1,13 @@
 #include "resource.h"
 
 IDR_TEXT_MODEL RCDATA "text_model.bin"
+IDR_TEXT_MODEL_RU RCDATA "text_model_ru.bin"
+IDR_TEXT_MODEL_DE RCDATA "text_model_de.bin"
+IDR_TEXT_MODEL_FR RCDATA "text_model_fr.bin"
+IDR_TEXT_MODEL_ES RCDATA "text_model_es.bin"
+IDR_TEXT_MODEL_PT RCDATA "text_model_pt.bin"
+IDR_TEXT_MODEL_KO RCDATA "text_model_ko.bin"
+IDR_TEXT_MODEL_JA RCDATA "text_model_ja.bin"
+IDR_TEXT_MODEL_TH RCDATA "text_model_th.bin"
 IDR_COMBINATIONS RCDATA "combinations.json"
 IDI_APP_ICON ICON "runehelper.ico"

@@ -1,0 +1,9 @@
+rows=8
+y=53 qty=3 name="Orbe exalté parfait" match="Orbe exalté parfait" mconf=100
+y=134 qty=3 name="Orbe d'annulation" match="Orbe d'annulation" mconf=100
+y=200 qty=1 name="â" match="-" mconf=0
+y=217 qty=3 name="Orbe royal parfait" match="Orbe royal parfait" mconf=100
+y=281 qty=1 name="â" match="-" mconf=0
+y=298 qty=3 name="Orbe de transmutation parfait" match="Orbe de transmutation parfait" mconf=100
+y=377 qty=3 name="Orbe d'augmentation parfait" match="Orbe d'augmentation parfait" mconf=100
+y=458 qty=2 name="Orbe d'annulation" match="Orbe d'annulation" mconf=100

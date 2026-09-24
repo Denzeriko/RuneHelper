@@ -1,0 +1,12 @@
+rows=11
+text="Orbe exaltado superior x3" qty=3 name="Orbe exaltado superior"
+text="Flujo taumatúrgico (nivel 19) x1" qty=1 name="Flujo taumatúrgico (nivel 19)"
+text="Orbe divino x2" qty=2 name="Orbe divino"
+text="Orbe de caos x3" qty=3 name="Orbe de caos"
+text="Orbe de joyero perfecto x1" qty=1 name="Orbe de joyero perfecto"
+text="Orbe de azar x1" qty=1 name="Orbe de azar"
+text="Orbe de transmutación superior x3" qty=3 name="Orbe de transmutación superior"
+text="Orbe de aumento superior x3" qty=3 name="Orbe de aumento superior"
+text="5 objetos monetarios aleatorios" qty=5 name="monetarios aleatorios"
+text="Orbe divino x1" qty=1 name="Orbe divino"
+text="Orbe de caos superior x1" qty=1 name="Orbe de caos superior"

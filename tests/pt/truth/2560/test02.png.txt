@@ -1,0 +1,12 @@
+rows=11
+text="1 Runa de Salvaguarda da Obsessão" qty=1 name="Runa de Salvaguarda da Obsessão"
+text="1 Runa de Salvaguarda da Armação" qty=1 name="Runa de Salvaguarda da Armação"
+text="1 Runa da Bruxaria Antiga" qty=1 name="Runa da Bruxaria Antiga"
+text="1 Runa da Decadência Antiga" qty=1 name="Runa da Decadência Antiga"
+text="1 Runa da Descoberta Antiga" qty=1 name="Runa da Descoberta Antiga"
+text="1 Runa do Controle Antiga" qty=1 name="Runa do Controle Antiga"
+text="1 Runa da Proeza Antiga" qty=1 name="Runa da Proeza Antiga"
+text="1 Runa do Estilhaçamento Antiga" qty=1 name="Runa do Estilhaçamento Antiga"
+text="1 Runa do Titã Antiga" qty=1 name="Runa do Titã Antiga"
+text="1 Runa do Confrontamento" qty=1 name="Runa do Confrontamento"
+text="1 Runa da Chama Vital" qty=1 name="Runa da Chama Vital"

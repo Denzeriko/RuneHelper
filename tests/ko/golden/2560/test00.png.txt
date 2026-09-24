@@ -1,0 +1,7 @@
+rows=6
+y=59 qty=3 name="완벽한 엑잘티드 오브" match="완벽한 엑잘티드 오브" mconf=100
+y=165 qty=3 name="소멸의 오브" match="소멸의 오브" mconf=100
+y=269 qty=3 name="완벽한 제왕의 오브" match="완벽한 제왕의 오브" mconf=100
+y=375 qty=3 name="완벽한 진화의 오브" match="완벽한 진화의 오브" mconf=100
+y=480 qty=3 name="완벽한 확장의 오브" match="완벽한 확장의 오브" mconf=100
+y=587 qty=2 name="소멸의 오브" match="소멸의 오브" mconf=100

@@ -1,0 +1,12 @@
+rows=11
+y=17 qty=1 name="Unterstützung: Heilende Runen" match="-" mconf=0
+y=64 qty=1 name="Fertigkeit: Himmelssturz" match="-" mconf=0
+y=111 qty=1 name="Fertigkeit: Triskelion-Kaskade" match="-" mconf=0
+y=158 qty=1 name="Fertigkeit: Widerlegung" match="-" mconf=0
+y=206 qty=1 name="Fertigkeit: Runen-Barriere" match="-" mconf=0
+y=253 qty=1 name="Fertigkeit: Ley-Linien" match="-" mconf=0
+y=300 qty=1 name="Fertigkeit: Animusaustausch" match="-" mconf=0
+y=347 qty=2 name="Prisma des Gemmenschneiders" match="Prisma des Gemmenschneiders" mconf=100
+y=395 qty=1 name="Fertigkeit: Klingenregen" match="-" mconf=0
+y=442 qty=1 name="Unterstützung: Runeninfusion" match="-" mconf=0
+y=489 qty=1 name="Unterstützung: Runische Extraktion" match="-" mconf=0

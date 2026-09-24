@@ -1,0 +1,12 @@
+rows=11
+y=51 qty=3 name="Orbe exaltado superior" match="Orbe exaltado superior" mconf=100
+y=95 qty=1 name="Flujo taumatúrgico (nivel 19)" match="Flujo taumatúrgico (nivel 19)" mconf=100
+y=143 qty=2 name="Orbe divino" match="Orbe divino" mconf=100
+y=191 qty=3 name="Orbe de caos" match="Orbe de caos" mconf=100
+y=237 qty=1 name="Orbe de joyero perfecto" match="Orbe de joyero perfecto" mconf=100
+y=285 qty=1 name="Orbe de azar" match="Orbe de azar" mconf=100
+y=331 qty=3 name="Orbe de transmutación superior" match="Orbe de transmutación superior" mconf=100
+y=380 qty=3 name="Orbe de aumento superior" match="Orbe de aumento superior" mconf=100
+y=426 qty=5 name="objetos monetarios aleatorios" match="5 objetos monetarios aleatorios" mconf=94
+y=471 qty=1 name="Orbe divino" match="Orbe divino" mconf=100
+y=521 qty=1 name="Orbe de caos superior" match="Orbe de caos superior" mconf=100

@@ -1,0 +1,7 @@
+rows=6
+qty=3 name="Perfekte Erhabene Sphäre"
+qty=3 name="Sphäre der Annullierung"
+qty=3 name="Perfekte Hoheitliche Sphäre"
+qty=3 name="Perfekte Umwandlungssphäre"
+qty=3 name="Perfekte Aufwertungssphäre"
+qty=2 name="Sphäre der Annullierung"

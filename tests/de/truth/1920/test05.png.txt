@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="Unterstützung: Heilende Runen"
+qty=1 name="Fertigkeit: Himmelssturz"
+qty=1 name="Fertigkeit: Triskelion-Kaskade"
+qty=1 name="Fertigkeit: Widerlegung"
+qty=1 name="Fertigkeit: Runen-Barriere"
+qty=1 name="Fertigkeit: Ley-Linien"
+qty=1 name="Fertigkeit: Animusaustausch"
+qty=2 name="Prisma des Gemmenschneiders"
+qty=1 name="Fertigkeit: Klingenregen"
+qty=1 name="Unterstützung: Runeninfusion"
+qty=1 name="Unterstützung: Runische Extraktion"

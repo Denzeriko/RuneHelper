@@ -1,0 +1,12 @@
+rows=11
+text="Objet Unique rare" qty=1 name="Objet Unique rare"
+text="Bague Unique" qty=1 name="Bague Unique"
+text="Ceinture Unique" qty=1 name="Ceinture Unique"
+text="Amulette Unique" qty=1 name="Amulette Unique"
+text="Accessoire Unique" qty=1 name="Accessoire Unique"
+text="Baguette Unique" qty=1 name="Baguette Unique"
+text="Masse à deux mains Unique" qty=1 name="Masse à deux mains Unique"
+text="Talisman Unique" qty=1 name="Talisman Unique"
+text="Bâton Unique" qty=1 name="Bâton Unique"
+text="Lance Unique" qty=1 name="Lance Unique"
+text="Bouclier Unique" qty=1 name="Bouclier Unique"

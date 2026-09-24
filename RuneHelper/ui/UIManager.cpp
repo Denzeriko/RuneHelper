@@ -160,6 +160,11 @@ bool UIManager::WantsSingleSnapshot()
     return std::exchange(state_.wantsSingleSnapshot, false);
 }
 
+bool UIManager::WantsOcrDebug()
+{
+    return std::exchange(state_.wantsOcrDebug, false);
+}
+
 bool UIManager::WantsRegisterHotkeys()
 {
     return std::exchange(state_.wantsRegisterHotkeys, false);
@@ -244,6 +249,11 @@ void UIManager::RequestToggleOCR()
 void UIManager::RequestSingleSnapshot()
 {
     state_.wantsSingleSnapshot = true;
+}
+
+void UIManager::RequestOcrDebug()
+{
+    state_.wantsOcrDebug = true;
 }
 
 void UIManager::RequestSelectRegion()

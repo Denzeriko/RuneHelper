@@ -1,6 +1,8 @@
 import math
+import os
 import sys
 import time
+from functools import partial
 
 import numpy as np
 import torch
@@ -8,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 
-from common import CHARSET, INPUT_HEIGHT, SCENES, STRIDE, Matcher, checkpoint, encode, expected_name, load_real, prepare
+from common import CHARSET, INPUT_HEIGHT, SCENES, STRIDE, Matcher, checkpoint, encode, has_real, load_real, prepare
 from synth import Synth
 
 
@@ -49,13 +51,30 @@ class Net(nn.Module):
 
 def load(tag, device):
     saved = torch.load(checkpoint(tag), map_location=device)
-    model = Net(len(CHARSET) + 1, saved['width']).to(device)
+    charset = saved.get('charset', CHARSET)
+    model = Net(len(charset) + 1, saved['width']).to(device)
     model.load_state_dict(saved['state'])
+    model.charset = charset
     return model, saved['width']
 
 
+def transfer(model, tag, device):
+    saved = torch.load(checkpoint(tag), map_location=device)
+    state = model.state_dict()
+    for key, value in saved['state'].items():
+        if not key.startswith('classifier.') and state[key].shape == value.shape:
+            state[key] = value
+    source = {symbol: index + 1 for index, symbol in enumerate(saved['charset'])}
+    for key in ('classifier.weight', 'classifier.bias'):
+        state[key][0] = saved['state'][key][0]
+        for index, symbol in enumerate(model.charset, 1):
+            if symbol in source:
+                state[key][index] = saved['state'][key][source[symbol]]
+    model.load_state_dict(state)
+
+
 def save(model, width, tag):
-    torch.save({'state': model.state_dict(), 'width': width, 'charset': CHARSET}, checkpoint(tag))
+    torch.save({'state': model.state_dict(), 'width': width, 'charset': model.charset}, checkpoint(tag))
 
 
 class SynthStream(IterableDataset):
@@ -70,7 +89,7 @@ class SynthStream(IterableDataset):
             yield prepare(gray), label
 
 
-def collate(batch):
+def collate(batch, charset):
     width = max(image.shape[1] for image, _ in batch)
     width = int(math.ceil(width / STRIDE) * STRIDE)
     images = np.ones((len(batch), 1, INPUT_HEIGHT, width), np.float32)
@@ -78,7 +97,7 @@ def collate(batch):
     for i, (image, label) in enumerate(batch):
         images[i, 0, :, : image.shape[1]] = image
         lengths.append(image.shape[1] // STRIDE)
-        encoded = encode(label)
+        encoded = encode(label, charset)
         targets.extend(encoded)
         target_lengths.append(len(encoded))
     return torch.from_numpy(images), torch.tensor(lengths), torch.tensor(targets), torch.tensor(target_lengths)
@@ -95,7 +114,7 @@ def read(model, device, gray):
     text, total, previous = [], 0.0, 0
     for index, value in zip(best.indices.tolist(), best.values.tolist()):
         if index != 0 and index != previous:
-            text.append(CHARSET[index - 1])
+            text.append(model.charset[index - 1])
             total += value
         previous = index
     return ''.join(text), 100.0 * total / len(text) if text else 0.0
@@ -108,8 +127,9 @@ def evaluate(model, device, sets, matcher):
         exact = named = 0
         for _, gray, label in samples:
             text, _ = read(model, device, gray)
+            target = matcher.best(label)
             exact += text == label
-            named += matcher.best(text) == expected_name(label)
+            named += target is not None and matcher.best(text) == target
         report[scene] = (exact, named, len(samples))
     model.train()
     return report
@@ -120,14 +140,18 @@ def main():
     width = float(sys.argv[2]) if len(sys.argv) > 2 else 1.0
     tag = sys.argv[3] if len(sys.argv) > 3 else 'synthetic'
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    torch.manual_seed(0)
+    seed = int(os.environ.get('RUNEHELPER_SEED', '0'))
+    torch.manual_seed(seed)
     model = Net(len(CHARSET) + 1, width).to(device)
+    model.charset = CHARSET
+    if os.environ.get('RUNEHELPER_INIT'):
+        transfer(model, os.environ['RUNEHELPER_INIT'], device)
     print(f'{tag}: {sum(p.numel() for p in model.parameters())} parameters, {steps} steps on {device}', flush=True)
-    loader = DataLoader(SynthStream(1), batch_size=128, num_workers=12, collate_fn=collate, prefetch_factor=4, persistent_workers=True)
+    loader = DataLoader(SynthStream(1 + seed), batch_size=128, num_workers=int(os.environ.get('RUNEHELPER_WORKERS', '12')), collate_fn=partial(collate, charset=model.charset), prefetch_factor=4, persistent_workers=True)
     optimizer = torch.optim.AdamW(model.parameters(), lr=3e-3, weight_decay=1e-4)
     schedule = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=3e-3, total_steps=steps, pct_start=0.1)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
-    sets = {scene: load_real(scene) for scene in SCENES}
+    sets = {scene: load_real(scene) for scene in SCENES} if has_real() else {}
     matcher = Matcher()
     best = -1.0
     started = time.time()
@@ -141,7 +165,10 @@ def main():
         optimizer.step()
         schedule.step()
         running = 0.98 * running + 0.02 * loss.item() if step > 1 else loss.item()
-        if step % 1000 == 0 or step == steps:
+        if (step % 1000 == 0 or step == steps) and not sets:
+            print(f'step {step} loss {running:.3f} {time.time() - started:.0f}s | no labelled real crops yet, keeping the latest', flush=True)
+            save(model, width, tag)
+        elif step % 1000 == 0 or step == steps:
             report = evaluate(model, device, sets, matcher)
             line = ' '.join(f'{s} named {r[1]}/{r[2]} exact {r[0]}' for s, r in report.items())
             print(f'step {step} loss {running:.3f} {time.time() - started:.0f}s | {line}', flush=True)

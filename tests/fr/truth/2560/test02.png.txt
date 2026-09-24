@@ -1,0 +1,12 @@
+rows=11
+text="1x Rune antique de la Prouesse" qty=1 name="Rune antique de la Prouesse"
+text="1x Rune antique du Fracassement" qty=1 name="Rune antique du Fracassement"
+text="1x Rune antique du Titan" qty=1 name="Rune antique du Titan"
+text="1x Rune de Portée" qty=1 name="Rune de Portée"
+text="1x Rune de la Flamme vitale" qty=1 name="Rune de la Flamme vitale"
+text="1x Rune antique du Duel" qty=1 name="Rune antique du Duel"
+text="1x Rune antique de la Riposte" qty=1 name="Rune antique de la Riposte"
+text="1x Rune antique de la Détonation" qty=1 name="Rune antique de la Détonation"
+text="1x Rune antique de l'Animosité" qty=1 name="Rune antique de l'Animosité"
+text="1x Rune antique de la Horde" qty=1 name="Rune antique de la Horde"
+text="1x Rune antique des Éclats" qty=1 name="Rune antique des Éclats"

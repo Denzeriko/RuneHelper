@@ -1,0 +1,12 @@
+rows=11
+y=23 qty=1 name="執着のワードルーン" match="執着のワードルーン" mconf=100
+y=71 qty=1 name="骨組みのワードルーン" match="骨組みのワードルーン" mconf=100
+y=118 qty=1 name="妖術の古代ルーン" match="妖術の古代ルーン" mconf=100
+y=165 qty=1 name="腐敗の古代ルーン" match="腐敗の古代ルーン" mconf=100
+y=212 qty=1 name="発見の古代ルーン" match="発見の古代ルーン" mconf=100
+y=260 qty=1 name="制御の古代ルーン" match="制御の古代ルーン" mconf=100
+y=307 qty=1 name="武勇の古代ルーン" match="武勇の古代ルーン" mconf=100
+y=354 qty=1 name="破砕の古代ルーン" match="破砕の古代ルーン" mconf=100
+y=401 qty=1 name="タイタンの古代ルーン" match="タイタンの古代ルーン" mconf=100
+y=449 qty=1 name="対峙のルーン" match="対峙のルーン" mconf=100
+y=496 qty=1 name="生命の炎のルーン" match="生命の炎のルーン" mconf=100

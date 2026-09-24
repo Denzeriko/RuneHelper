@@ -1,0 +1,12 @@
+rows=11
+y=25 qty=2 name="Göttliche Sphäre" match="Göttliche Sphäre" mconf=100
+y=76 qty=3 name="Chaossphäre" match="Chaossphäre" mconf=100
+y=119 qty=1 name="Perfekte Sphäre des Goldschmieds" match="Perfekte Sphäre des Goldschmieds" mconf=100
+y=167 qty=1 name="Sphäre der Möglichkeiten" match="Sphäre der Möglichkeiten" mconf=100
+y=214 qty=3 name="Größere Umwandlungssphäre" match="Größere Umwandlungssphäre" mconf=100
+y=262 qty=3 name="Größere Aufwertungssphäre" match="Größere Aufwertungssphäre" mconf=100
+y=309 qty=5 name="zufällige Währung" match="5x zufällige Währung" mconf=85
+y=356 qty=1 name="Göttliche Sphäre" match="Göttliche Sphäre" mconf=100
+y=403 qty=1 name="Größere Chaossphäre" match="Größere Chaossphäre" mconf=100
+y=450 qty=1 name="Größere Erhabene Sphäre" match="Größere Erhabene Sphäre" mconf=100
+y=497 qty=1 name="Größere Hoheitliche Sphäre" match="Größere Hoheitliche Sphäre" mconf=100

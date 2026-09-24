@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="Uralte Rune der Hexerei"
+qty=1 name="Uralte Rune des Verfalls"
+qty=1 name="Uralte Rune der Entdeckung"
+qty=1 name="Uralte Rune der Kontrolle"
+qty=1 name="Uralte Rune der Tapferkeit"
+qty=1 name="Uralte Rune der Zerschmetterung"
+qty=1 name="Uralte Rune des Titanen"
+qty=1 name="Rune der Konfrontation"
+qty=1 name="Rune der Lebensflamme"
+qty=1 name="Uralte Rune des Duells"
+qty=1 name="Uralte Rune der Vergeltung"

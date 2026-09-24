@@ -1,0 +1,7 @@
+rows=6
+text="1x 우트레드의 성좌" qty=1 name="우트레드의 성좌"
+text="1x 메드베드의 보살핌" qty=1 name="메드베드의 보살핌"
+text="1x 콜르의 사냥" qty=1 name="콜르의 사냥"
+text="1x 스루드의 완력" qty=1 name="스루드의 완력"
+text="1x 카틀라의 순흑" qty=1 name="카틀라의 순흑"
+text="1x 보라나의 학살" qty=1 name="보라나의 학살"

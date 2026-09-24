@@ -1,0 +1,12 @@
+rows=11
+text="貴重なユニークアイテム" qty=1 name="貴重な ユニーク アイテム"
+text="ユニーク指輪" qty=1 name="ユニーク 指輪"
+text="ユニークベルト" qty=1 name="ユニーク ベルト"
+text="ユニークアミュレット" qty=1 name="ユニーク アミュレット"
+text="ユニーク宝飾品" qty=1 name="ユニーク 宝飾品"
+text="ユニークワンド" qty=1 name="ユニーク ワンド"
+text="ユニーク両手メイス" qty=1 name="ユニーク 両手メイス"
+text="ユニークタリスマン" qty=1 name="ユニーク タリスマン"
+text="ユニークスタッフ" qty=1 name="ユニーク スタッフ"
+text="ユニークスピア" qty=1 name="ユニーク スピア"
+text="ユニーク盾" qty=1 name="ユニーク 盾"

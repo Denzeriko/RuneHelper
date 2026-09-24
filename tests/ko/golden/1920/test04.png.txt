@@ -1,0 +1,7 @@
+rows=6
+y=50 qty=1 name="미가공 스킬 젬 (20레벨)" match="미가공 스킬 젬 (20레벨)" mconf=100
+y=131 qty=1 name="미가공 정신력 젬 (20레벨)" match="미가공 정신력 젬 (20레벨)" mconf=100
+y=212 qty=1 name="스킬 레벨 20: 칼날의 비" match="-" mconf=0
+y=293 qty=1 name="스킬 레벨 20: 수호결속 소환수" match="-" mconf=0
+y=374 qty=1 name="스킬 레벨 20: 전도성 방어막" match="-" mconf=0
+y=455 qty=1 name="스킬 레벨 20: 공허의 껍데기" match="-" mconf=0

@@ -12,7 +12,6 @@
 
 #include "OcrScoring.h"
 #include "TestScenes.h"
-#include "core/Config.h"
 #include "ocr/NameNormalizer.h"
 #include "ocr/OCR.h"
 #include "platform/linux/ResourceHelper.h"
@@ -86,7 +85,7 @@ int main(int argc, char** argv)
 
     OCR ocr;
 
-    if (!ocr.Init(EmbeddedTextModel()))
+    if (!ocr.Init(EmbeddedTextModel("en")))
     {
         std::printf("ocr_robustness: OCR::Init failed on the embedded text model\n");
         return 2;
@@ -143,7 +142,6 @@ int main(int argc, char** argv)
         { .label = "narrow margin, busy game", .surroundings = Surroundings::Busy, .margin = 0.3, .minimumPriced = 225 },
     };
 
-    const AppConfig config;
     int failed = 0;
 
     std::printf("%-28s %9s %9s %8s %7s %8s\n", "input", "priced", "exact", "phantom", "missed", "floor");
@@ -155,7 +153,7 @@ int main(int argc, char** argv)
 
         for (const Panel& panel : panels)
         {
-            const std::vector<Row> rows = ToRows(ocr.RecognizeLoot(Render(panel, shift), config), vocabulary);
+            const std::vector<Row> rows = ToRows(ocr.RecognizeLoot(Render(panel, shift)), vocabulary);
             total.Add(ScorePanel(panel.truth, rows, knownNames, issues));
         }
 

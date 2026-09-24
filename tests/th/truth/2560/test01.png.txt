@@ -1,0 +1,12 @@
+rows=11
+text="1x Divine Orb" qty=1 name="Divine Orb"
+text="1x Chaos Orb ชั้นสูง" qty=1 name="Chaos Orb ชั้นสูง"
+text="1x Exalted Orb ชั้นสูง" qty=1 name="Exalted Orb ชั้นสูง"
+text="1x Regal Orb ชั้นสูง" qty=1 name="Regal Orb ชั้นสูง"
+text="1x Jeweller's Orb ชั้นสูง" qty=1 name="Jeweller's Orb ชั้นสูง"
+text="2x Chaos Orb" qty=2 name="Chaos Orb"
+text="3x Orb of Alchemy" qty=3 name="Orb of Alchemy"
+text="3x Gemcutter's Prism" qty=3 name="Gemcutter's Prism"
+text="3x Glassblower's Bauble" qty=3 name="Glassblower's Bauble"
+text="3x Exalted Orb" qty=3 name="Exalted Orb"
+text="1x มนต์มณีไหลเวียน (เลเวล 18)" qty=1 name="มนต์มณีไหลเวียน (เลเวล 18)"

@@ -1,0 +1,12 @@
+rows=11
+qty=1 name="Seltener einzigartiger Gegenstand"
+qty=1 name="Einzigartiger Ring"
+qty=1 name="Einzigartiger Gürtel"
+qty=1 name="Einzigartiges Amulet"
+qty=1 name="Einzigartiger Schmuck"
+qty=1 name="Einzigartiger Zauberstab"
+qty=1 name="Einzigartiger Zweihandstreitkolben"
+qty=1 name="Einzigartiger Talisman"
+qty=1 name="Einzigartiger Stab"
+qty=1 name="Einzigartiger Speer"
+qty=1 name="Einzigartiger Schild"

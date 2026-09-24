@@ -1,0 +1,11 @@
+rows=10
+y=73 qty=1 name="โลหะอักขรบิดา" match="โลหะอักขรบิดา" mconf=100
+y=185 qty=1 name="โลหะประมุข" match="โลหะประมุข" mconf=100
+y=238 qty=1 name="โลหะลี้ลับ" match="โลหะลี้ลับ" mconf=100
+y=303 qty=1 name="โลหะหลากสี" match="โลหะหลากสี" mconf=100
+y=363 qty=1 name="โลหะว่องไว" match="โลหะว่องไว" mconf=100
+y=433 qty=1 name="โลหะพายุหมุน" match="โลหะพายุหมุน" mconf=100
+y=492 qty=1 name="โลหะขยายตัว" match="โลหะขยายตัว" mconf=100
+y=559 qty=1 name="โลหะคุ้มครอง" match="โลหะคุ้มครอง" mconf=100
+y=616 qty=1 name="โลหะปรับตัว" match="โลหะปรับตัว" mconf=100
+y=679 qty=2 name="โลหะเจืออักขระ" match="โลหะเจืออักขระ" mconf=100

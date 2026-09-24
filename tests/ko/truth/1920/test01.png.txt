@@ -1,0 +1,12 @@
+rows=11
+text="2x 신성한 오브" qty=2 name="신성한 오브"
+text="3x 카오스 오브" qty=3 name="카오스 오브"
+text="1x 완벽한 쥬얼러 오브" qty=1 name="완벽한 쥬얼러 오브"
+text="1x 기회의 오브" qty=1 name="기회의 오브"
+text="3x 상위 진화의 오브" qty=3 name="상위 진화의 오브"
+text="3x 상위 확장의 오브" qty=3 name="상위 확장의 오브"
+text="무작위 화폐 5개" qty=5 name="무작위 화폐"
+text="1x 신성한 오브" qty=1 name="신성한 오브"
+text="1x 상위 카오스 오브" qty=1 name="상위 카오스 오브"
+text="1x 상위 엑잘티드 오브" qty=1 name="상위 엑잘티드 오브"
+text="1x 상위 제왕의 오브" qty=1 name="상위 제왕의 오브"

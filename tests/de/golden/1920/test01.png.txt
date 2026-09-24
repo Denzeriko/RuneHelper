@@ -1,0 +1,7 @@
+rows=6
+y=54 qty=3 name="Perfekte Erhabene Sphäre" match="Perfekte Erhabene Sphäre" mconf=100
+y=135 qty=3 name="Sphäre der Annullierung" match="Sphäre der Annullierung" mconf=100
+y=215 qty=3 name="Perfekte Hoheitliche Sphäre" match="Perfekte Hoheitliche Sphäre" mconf=100
+y=297 qty=3 name="Perfekte Umwandlungssphäre" match="Perfekte Umwandlungssphäre" mconf=100
+y=378 qty=3 name="Perfekte Aufwertungssphäre" match="Perfekte Aufwertungssphäre" mconf=100
+y=459 qty=2 name="Sphäre der Annullierung" match="Sphäre der Annullierung" mconf=100

@@ -1,0 +1,7 @@
+rows=6
+text="3x 완벽한 엑잘티드 오브" qty=3 name="완벽한 엑잘티드 오브"
+text="3x 소멸의 오브" qty=3 name="소멸의 오브"
+text="3x 완벽한 제왕의 오브" qty=3 name="완벽한 제왕의 오브"
+text="3x 완벽한 진화의 오브" qty=3 name="완벽한 진화의 오브"
+text="3x 완벽한 확장의 오브" qty=3 name="완벽한 확장의 오브"
+text="2x 소멸의 오브" qty=2 name="소멸의 오브"

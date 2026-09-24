@@ -15,6 +15,7 @@
 #include "ui/UIDraw.h"
 #include "ui/UIManager.h"
 #include "ui/UiScale.h"
+#include "ui/UiTooltip.h"
 
 namespace
 {
@@ -500,5 +501,5 @@ void ExpeditionFeature::DrawMainControls(UIManager& manager)
         SaveSettings();
 
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Frames the rare rune tiles in the remnant panel. Works without the Pick Advisor.");
+        UiTooltip("Frames the rare rune tiles in the remnant panel. Works without the Pick Advisor.");
 }

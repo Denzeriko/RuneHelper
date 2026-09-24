@@ -1,0 +1,12 @@
+rows=11
+y=15 qty=1 name="Gema de Habilidade Bruta (Nível 19)" match="Gema de Habilidade Bruta (Nível 19)" mconf=100
+y=63 qty=1 name="Gema Espiritual Bruta (Nível 19)" match="Gema Espiritual Bruta (Nível 19)" mconf=100
+y=110 qty=1 name="Reforço: Runas Curativas" match="-" mconf=0
+y=157 qty=1 name="Habilidade: Céu em Queda" match="-" mconf=0
+y=205 qty=1 name="Habilidade: Cascata Triskelion" match="-" mconf=0
+y=252 qty=1 name="Habilidade: Refutação" match="-" mconf=0
+y=299 qty=1 name="Habilidade: Alívio Rúnico" match="-" mconf=0
+y=346 qty=1 name="Habilidade: Fluxos Energéticos" match="-" mconf=0
+y=394 qty=1 name="Habilidade: Troca de Ânimo" match="-" mconf=0
+y=441 qty=2 name="Prisma do Lapidário" match="Prisma do Lapidário" mconf=100
+y=487 qty=1 name="Habilidade: Chuva de Lâminas" match="-" mconf=0

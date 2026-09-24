@@ -1,0 +1,7 @@
+rows=6
+y=53 qty=3 name="Orbe exaltado perfecto" match="Orbe exaltado perfecto" mconf=100
+y=132 qty=3 name="Orbe de anulación" match="Orbe de anulación" mconf=100
+y=215 qty=3 name="Orbe regio perfecto" match="Orbe regio perfecto" mconf=100
+y=296 qty=3 name="Orbe de transmutación perfecto" match="Orbe de transmutación perfecto" mconf=100
+y=377 qty=3 name="Orbe de aumento perfecto" match="Orbe de aumento perfecto" mconf=100
+y=456 qty=2 name="Orbe de anulación" match="Orbe de anulación" mconf=100

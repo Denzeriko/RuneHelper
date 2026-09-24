@@ -1,0 +1,12 @@
+rows=11
+y=58 qty=1 name="룬 아버지의 합금" match="룬 아버지의 합금" mconf=100
+y=163 qty=1 name="군왕의 합금" match="군왕의 합금" mconf=100
+y=220 qty=1 name="신비한 합금" match="신비한 합금" mconf=100
+y=282 qty=1 name="분광 합금" match="분광 합금" mconf=100
+y=317 qty=1 name="력" match="-" mconf=0
+y=343 qty=1 name="재빠른 합금" match="재빠른 합금" mconf=100
+y=405 qty=1 name="회오리바람 합금" match="회오리바람 합금" mconf=100
+y=466 qty=1 name="팽창하는 합금" match="팽창하는 합금" mconf=100
+y=528 qty=1 name="보호의 합금" match="보호의 합금" mconf=100
+y=589 qty=1 name="적응형 합금" match="적응형 합금" mconf=100
+y=651 qty=2 name="룬 합금" match="룬 합금" mconf=100

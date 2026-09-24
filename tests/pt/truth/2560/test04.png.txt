@@ -1,0 +1,12 @@
+rows=11
+text="1 Gema Espiritual Bruta (Nível 19)" qty=1 name="Gema Espiritual Bruta (Nível 19)"
+text="Reforço: Runas Curativas" qty=1 name="Reforço: Runas Curativas"
+text="Habilidade: Céu em Queda" qty=1 name="Habilidade: Céu em Queda"
+text="Habilidade: Cascata Triskelion" qty=1 name="Habilidade: Cascata Triskelion"
+text="Habilidade: Refutação" qty=1 name="Habilidade: Refutação"
+text="Habilidade: Alívio Rúnico" qty=1 name="Habilidade: Alívio Rúnico"
+text="Habilidade: Fluxos Energéticos" qty=1 name="Habilidade: Fluxos Energéticos"
+text="Habilidade: Troca de Ânimo" qty=1 name="Habilidade: Troca de Ânimo"
+text="2 Prisma do Lapidário" qty=2 name="Prisma do Lapidário"
+text="Habilidade: Chuva de Lâminas" qty=1 name="Habilidade: Chuva de Lâminas"
+text="Reforço: Infusão Rúnica" qty=1 name="Reforço: Infusão Rúnica"

@@ -1,0 +1,12 @@
+rows=11
+text="Runa protectora de obsesión x1" qty=1 name="Runa protectora de obsesión"
+text="Runa protectora de armazón x1" qty=1 name="Runa protectora de armazón"
+text="Runa antigua de brujería x1" qty=1 name="Runa antigua de brujería"
+text="Runa antigua de decaimiento x1" qty=1 name="Runa antigua de decaimiento"
+text="Runa antigua de descubrimiento x1" qty=1 name="Runa antigua de descubrimiento"
+text="Runa antigua de control x1" qty=1 name="Runa antigua de control"
+text="Runa antigua de bravura x1" qty=1 name="Runa antigua de bravura"
+text="Runa antigua de fragmentación x1" qty=1 name="Runa antigua de fragmentación"
+text="Runa antigua del titán x1" qty=1 name="Runa antigua del titán"
+text="Runa de confrontación x1" qty=1 name="Runa de confrontación"
+text="Runa de llama vital x1" qty=1 name="Runa de llama vital"

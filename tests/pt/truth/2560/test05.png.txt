@@ -1,0 +1,11 @@
+rows=10
+text="1 A Liga do Pai das Runas" qty=1 name="A Liga do Pai das Runas"
+text="1 Liga Soberana" qty=1 name="Liga Soberana"
+text="1 Liga Mística" qty=1 name="Liga Mística"
+text="1 Liga Prismática" qty=1 name="Liga Prismática"
+text="1 Liga Veloz" qty=1 name="Liga Veloz"
+text="1 Liga Ciclônica" qty=1 name="Liga Ciclônica"
+text="1 Liga Expansiva" qty=1 name="Liga Expansiva"
+text="1 Liga Protetora" qty=1 name="Liga Protetora"
+text="1 Liga Adaptativa" qty=1 name="Liga Adaptativa"
+text="2 Liga Rúnica" qty=2 name="Liga Rúnica"

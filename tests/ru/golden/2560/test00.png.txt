@@ -1,0 +1,11 @@
+rows=10
+y=41 qty=1 name="Умение: Дождь клинков" match="-" mconf=0
+y=108 qty=1 name="Поддержка: Рунное насыщение" match="-" mconf=0
+y=171 qty=1 name="Поддержка: Рунное извлечение" match="-" mconf=0
+y=230 qty=1 name="Поддержка: Кулак Калгуура" match="-" mconf=0
+y=297 qty=1 name="Умение: Барьерные приспешники" match="-" mconf=0
+y=356 qty=1 name="Умение: Электрический барьер" match="-" mconf=0
+y=419 qty=1 name="Умение: Пустая оболочка" match="-" mconf=0
+y=482 qty=1 name="Умение: Взрывное преображение" match="-" mconf=0
+y=546 qty=1 name="Умение: Осколки анимы" match="-" mconf=0
+y=612 qty=1 name="Поддержка: Очищающее пламя" match="-" mconf=0

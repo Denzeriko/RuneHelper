@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <cctype>
 #include <fstream>
+#include <map>
 #include <set>
+#include <unordered_map>
 
 #include "nlohmann/json.hpp"
 
@@ -37,6 +39,52 @@ std::string Trim(std::string_view s)
     while (end > begin && std::isspace(static_cast<unsigned char>(s[end - 1])))
         --end;
     return std::string(s.substr(begin, end - begin));
+}
+
+CachedItemNames BuildNames(const std::set<std::pair<std::string, std::string>>& aliases)
+{
+    std::vector<NameAlias> names;
+    names.reserve(aliases.size());
+
+    for (const auto& [name, alias] : aliases)
+        names.push_back({ name, alias });
+
+    return CachedItemNames::Build(names);
+}
+
+std::map<std::string, std::string> ReadNames(const json& entry)
+{
+    std::map<std::string, std::string> names;
+
+    if (!entry.is_object() || !entry.contains("names") || !entry["names"].is_object())
+        return names;
+
+    for (const auto& [language, name] : entry["names"].items())
+    {
+        if (name.is_string() && !name.get<std::string>().empty())
+            names.emplace(language, name.get<std::string>());
+    }
+
+    return names;
+}
+
+std::unordered_map<std::string, std::map<std::string, std::string>> NamesByOutput(const json* j)
+{
+    std::unordered_map<std::string, std::map<std::string, std::string>> names;
+
+    if (!j || !j->is_object() || !j->contains("combinations") || !(*j)["combinations"].is_array())
+        return names;
+
+    for (const auto& entry : (*j)["combinations"])
+    {
+        std::map<std::string, std::string> localized = ReadNames(entry);
+        const std::string output = JsonValue(entry, "output", std::string());
+
+        if (!output.empty() && !localized.empty())
+            names.emplace(output, std::move(localized));
+    }
+
+    return names;
 }
 }
 
@@ -89,6 +137,21 @@ std::string RecipeDatabase::StripOcrNoise(std::string_view name)
     }
 
     return text;
+}
+
+CachedItemNames RecipeDatabase::Translations(std::string_view language) const
+{
+    std::set<std::pair<std::string, std::string>> aliases;
+
+    for (const Recipe& recipe : recipes_)
+    {
+        const auto it = recipe.names.find(std::string(language));
+
+        if (it != recipe.names.end())
+            aliases.emplace(recipe.output, it->second);
+    }
+
+    return BuildNames(aliases);
 }
 
 const Recipe* RecipeDatabase::FindRecipe(std::string_view output, int count) const
@@ -182,7 +245,7 @@ bool RecipeDatabase::Load()
         }
         else if (downloadedDate >= GeneratedAt(shippedJson))
         {
-            if (LoadFromJson(downloadedJson, PathToUtf8(downloaded)))
+            if (LoadFromJson(downloadedJson, PathToUtf8(downloaded), &shippedJson))
                 return true;
 
             DiscardDownloaded(downloaded);
@@ -204,7 +267,7 @@ bool RecipeDatabase::Accepts(const json& j)
     return probe.LoadFromJson(j, "the downloaded update");
 }
 
-bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
+bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source, const json* namesFallback)
 {
     if (!j.is_object() || !j.contains("combinations") || !j["combinations"].is_array())
     {
@@ -214,11 +277,21 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
 
     std::vector<Recipe> recipes;
     std::unordered_set<std::string> runeNames;
+    const auto fallbackNames = NamesByOutput(namesFallback);
 
     for (const auto& entry : j["combinations"])
     {
         Recipe recipe;
         recipe.output = JsonValue(entry, "output", std::string());
+        recipe.names = ReadNames(entry);
+
+        if (recipe.names.empty())
+        {
+            const auto fallback = fallbackNames.find(recipe.output);
+
+            if (fallback != fallbackNames.end())
+                recipe.names = fallback->second;
+        }
         recipe.count = entry.contains("count") ? JsonValue(entry, "count", 0) : 1;
         recipe.level = JsonValue(entry, "level", 0);
         recipe.category = JsonValue(entry, "category", std::string("unknown"));
@@ -254,15 +327,18 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source)
 
     byOutput_.clear();
 
-    std::set<std::string> outputs;
+    std::set<std::pair<std::string, std::string>> aliases;
 
     for (size_t i = 0; i < recipes_.size(); ++i)
     {
         byOutput_.emplace(std::pair{ ToLower(recipes_[i].output), recipes_[i].count }, i);
-        outputs.insert(recipes_[i].output);
+        aliases.emplace(recipes_[i].output, recipes_[i].output);
+
+        for (const auto& localized : recipes_[i].names)
+            aliases.emplace(recipes_[i].output, localized.second);
     }
 
-    outputNames_ = CachedItemNames::Build(std::vector<std::string>(outputs.begin(), outputs.end()));
+    outputNames_ = BuildNames(aliases);
 
     rareRunes_.clear();
 

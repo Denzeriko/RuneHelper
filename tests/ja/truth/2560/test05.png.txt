@@ -1,0 +1,11 @@
+rows=10
+text="1x ルーンファーザーの合金" qty=1 name="ルーンファーザーの合金"
+text="1x 王権の合金" qty=1 name="王権の合金"
+text="1x 神秘の合金" qty=1 name="神秘の合金"
+text="1x プリズム合金" qty=1 name="プリズム合金"
+text="1x 迅速の合金" qty=1 name="迅速の合金"
+text="1x 旋風の合金" qty=1 name="旋風の合金"
+text="1x 拡張の合金" qty=1 name="拡張の合金"
+text="1x 保護の合金" qty=1 name="保護の合金"
+text="1x 適応の合金" qty=1 name="適応の合金"
+text="2x ルーンの合金" qty=2 name="ルーンの合金"

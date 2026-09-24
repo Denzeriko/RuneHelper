@@ -1,0 +1,7 @@
+rows=6
+text="3x Exalted Orb ไร้ที่ติ" qty=3 name="Exalted Orb ไร้ที่ติ"
+text="3x Orb of Annulment" qty=3 name="Orb of Annulment"
+text="3x Regal Orb ไร้ที่ติ" qty=3 name="Regal Orb ไร้ที่ติ"
+text="3x Orb of Transmutation ไร้ที่ติ" qty=3 name="Orb of Transmutation ไร้ที่ติ"
+text="3x Orb of Augmentation ไร้ที่ติ" qty=3 name="Orb of Augmentation ไร้ที่ติ"
+text="2x Orb of Annulment" qty=2 name="Orb of Annulment"

@@ -1,0 +1,12 @@
+rows=11
+text="1 Runa de Salvaguarda da Aniquilação" qty=1 name="Runa de Salvaguarda da Aniquilação"
+text="1 Runa de Salvaguarda do Coração" qty=1 name="Runa de Salvaguarda do Coração"
+text="1 Runa de Salvaguarda do Resvalamento" qty=1 name="Runa de Salvaguarda do Resvalamento"
+text="1 Runa de Salvaguarda da Estabilidade" qty=1 name="Runa de Salvaguarda da Estabilidade"
+text="1 Runa de Salvaguarda do Sustento" qty=1 name="Runa de Salvaguarda do Sustento"
+text="1 Runa de Salvaguarda da Coragem" qty=1 name="Runa de Salvaguarda da Coragem"
+text="1 Runa de Salvaguarda do Desespero" qty=1 name="Runa de Salvaguarda do Desespero"
+text="1 Runa de Salvaguarda da Desintegração" qty=1 name="Runa de Salvaguarda da Desintegração"
+text="1 Runa de Salvaguarda da Proteção" qty=1 name="Runa de Salvaguarda da Proteção"
+text="1 Runa de Salvaguarda do Reforço" qty=1 name="Runa de Salvaguarda do Reforço"
+text="1 Runa de Carregamento Maior" qty=1 name="Runa de Carregamento Maior"

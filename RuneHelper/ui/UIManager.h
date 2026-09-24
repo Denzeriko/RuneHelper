@@ -51,6 +51,7 @@ public:
     bool WantsRefreshPrices();
     bool WantsToggleOCR();
     bool WantsSingleSnapshot();
+    bool WantsOcrDebug();
     bool WantsRegisterHotkeys();
 
     bool IsRegionHovered() const;
@@ -70,6 +71,7 @@ public:
 
     void RequestToggleOCR();
     void RequestSingleSnapshot();
+    void RequestOcrDebug();
     void RequestSelectRegion();
     void RequestRegisterHotkeys();
     void RequestMinimize();

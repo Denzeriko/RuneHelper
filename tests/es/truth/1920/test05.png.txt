@@ -1,0 +1,11 @@
+rows=10
+text="Aleación del Padre de las runas x1" qty=1 name="Aleación del Padre de las runas"
+text="Aleación soberana x1" qty=1 name="Aleación soberana"
+text="Aleación mística x1" qty=1 name="Aleación mística"
+text="Aleación prismática x1" qty=1 name="Aleación prismática"
+text="Aleación veloz x1" qty=1 name="Aleación veloz"
+text="Aleación ciclónica x1" qty=1 name="Aleación ciclónica"
+text="Aleación extensa x1" qty=1 name="Aleación extensa"
+text="Aleación protectora x1" qty=1 name="Aleación protectora"
+text="Aleación adaptativa x1" qty=1 name="Aleación adaptativa"
+text="Aleación rúnica x2" qty=2 name="Aleación rúnica"

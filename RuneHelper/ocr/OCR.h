@@ -9,8 +9,8 @@
 #include <string_view>
 #include <vector>
 
-#include "core/Config.h"
 #include "ocr/LineReader.h"
+#include "ocr/PanelPreparation.h"
 
 struct LootLine
 {
@@ -21,16 +21,6 @@ struct LootLine
     int y2 = 0;
     float conf = 0.0f;
 };
-
-struct TextLevels
-{
-    double p25 = 0.0;
-    double p50 = 0.0;
-    double p95 = 0.0;
-};
-
-double ReadingScale(int width);
-cv::Mat NormalizeTextLevels(const cv::Mat& gray, const TextLevels& levels);
 
 class OcrRowCache;
 
@@ -45,8 +35,7 @@ public:
 
     bool Init(std::string_view model);
 
-    std::vector<LootLine> RecognizeLoot(const cv::Mat& source, const AppConfig& config, OcrRowCache* rowCache = nullptr);
-    std::vector<cv::Rect> FindLootRows(const cv::Mat& gray) const;
+    std::vector<LootLine> RecognizeLoot(const cv::Mat& source, OcrRowCache* rowCache = nullptr, bool saveDebug = false);
     std::vector<LootLine> RecognizeTextOnly(const cv::Mat& textGray, const std::filesystem::path& debugPath = {}) const;
 
 private:

@@ -14,6 +14,7 @@
 #include "core/ThreadGuard.h"
 #include "ocr/LootRows.h"
 #include "price/PriceService.h"
+#include "recipes/RecipeDatabase.h"
 
 #ifdef _WIN32
 #include "platform/windows/ResourceHelper.h"
@@ -110,6 +111,16 @@ void OcrService::RequestSingleSnapshot()
     singleSnapshotRequested_ = true;
 }
 
+void OcrService::RequestDebugDump()
+{
+    if (!running_.load())
+        return;
+
+    debugDumpRequested_ = true;
+    forceOcr_ = true;
+    singleSnapshotRequested_ = true;
+}
+
 OcrServiceStatus OcrService::GetStatus() const
 {
     return { ocrInitializing_.load(), ocrReady_.load(), ocrFailed_.load(), captureFailing_.load() };
@@ -142,7 +153,7 @@ void OcrService::InitOcr()
 
     LOG_INFO("Initializing OCR");
 
-    if (!ocr_.Init(EmbeddedTextModel()))
+    if (!configManager_ || !LoadLanguage(configManager_->Snapshot().gameLanguage))
     {
         LOG_ERROR("OCR init failed");
 
@@ -156,6 +167,35 @@ void OcrService::InitOcr()
     ocrInitializing_ = false;
 
     LOG_INFO("OCR ready");
+}
+
+bool OcrService::LoadLanguage(const std::string& language)
+{
+    language_ = language;
+    translations_ = CachedItemNames();
+
+    std::string_view model = EmbeddedTextModel(language);
+
+    if (model.empty())
+    {
+        LOG_ERROR("OCR: this build has no text model for game language '" + language + "', English text is read instead");
+        model = EmbeddedTextModel("en");
+    }
+
+    if (!ocr_.Init(model))
+        return false;
+
+    if (language == "en")
+        return true;
+
+    RecipeDatabase recipes;
+
+    if (recipes.Load())
+        translations_ = recipes.Translations(language);
+
+    LOG_INFO("OCR: game language '" + language + "', " + std::to_string(translations_.Size()) + " item names to translate");
+
+    return true;
 }
 
 void OcrService::ResetFrameState()
@@ -192,7 +232,7 @@ void OcrService::PublishFrameResult(
     const AppConfig& config
 )
 {
-    std::vector<FrameRow> rows = ParseLootRows(loot, region, config);
+    std::vector<FrameRow> rows = ParseLootRows(loot, region, config, translations_.Empty() ? nullptr : &translations_);
 
     if (prices_ && config.priceSearchEnabled)
     {
@@ -284,7 +324,7 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 
     if (NeedsOcr(gray))
     {
-        lastLoot_ = ocr_.RecognizeLoot(gray, config, &rowCache_);
+        lastLoot_ = ocr_.RecognizeLoot(gray, &rowCache_, debugDumpRequested_.exchange(false));
         frameDiffer_.StoreOcrFrame(gray);
         lastOcrAt_ = std::chrono::steady_clock::now();
     }
@@ -350,6 +390,12 @@ void OcrService::WorkerLoop()
             continue;
         }
 
+        if (config.gameLanguage != language_)
+        {
+            LoadLanguage(config.gameLanguage);
+            ResetFrameState();
+        }
+
         const cv::Rect region(config.regionX, config.regionY, config.regionW, config.regionH);
 
         try
@@ -387,6 +433,7 @@ void OcrService::ResetState(bool initializing)
     ocrFailed_ = false;
     ocrInitializing_ = initializing;
     singleSnapshotRequested_ = false;
+    debugDumpRequested_ = false;
     singleSnapshotUntil_ = {};
     overlayDirty_ = false;
     debugDirty_ = false;

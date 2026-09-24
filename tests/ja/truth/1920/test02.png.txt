@@ -1,0 +1,12 @@
+rows=11
+text="1x 執着のワードルーン" qty=1 name="執着のワードルーン"
+text="1x 骨組みのワードルーン" qty=1 name="骨組みのワードルーン"
+text="1x 妖術の古代ルーン" qty=1 name="妖術の古代ルーン"
+text="1x 腐敗の古代ルーン" qty=1 name="腐敗の古代ルーン"
+text="1x 発見の古代ルーン" qty=1 name="発見の古代ルーン"
+text="1x 制御の古代ルーン" qty=1 name="制御の古代ルーン"
+text="1x 武勇の古代ルーン" qty=1 name="武勇の古代ルーン"
+text="1x 破砕の古代ルーン" qty=1 name="破砕の古代ルーン"
+text="1x タイタンの古代ルーン" qty=1 name="タイタンの古代ルーン"
+text="1x 対峙のルーン" qty=1 name="対峙のルーン"
+text="1x 生命の炎のルーン" qty=1 name="生命の炎のルーン"

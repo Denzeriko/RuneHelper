@@ -1,0 +1,12 @@
+rows=11
+y=15 qty=1 name="Objet Unique rare" match="Objet Unique rare" mconf=100
+y=66 qty=1 name="Bague Unique" match="Bague Unique" mconf=100
+y=110 qty=1 name="Ceinture Unique" match="Ceinture Unique" mconf=100
+y=159 qty=1 name="Amulette Unique" match="Amulette Unique" mconf=100
+y=207 qty=1 name="Accessoire Unique" match="Accessoire Unique" mconf=100
+y=253 qty=1 name="Baguette Unique" match="Baguette Unique" mconf=100
+y=299 qty=1 name="Masse à deux mains Unique" match="Masse à deux mains Unique" mconf=100
+y=346 qty=1 name="Talisman Unique" match="Talisman Unique" mconf=100
+y=393 qty=1 name="Bâton Unique" match="Bâton Unique" mconf=100
+y=444 qty=1 name="Lance Unique" match="Lance Unique" mconf=100
+y=488 qty=1 name="Bouclier Unique" match="Bouclier Unique" mconf=100

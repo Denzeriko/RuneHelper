@@ -1,0 +1,12 @@
+rows=11
+y=20 qty=1 name="공동화의 수호하는 룬" match="공동화의 수호하는 룬" mconf=100
+y=82 qty=1 name="호위병의 수호하는 룬" match="호위병의 수호하는 룬" mconf=100
+y=143 qty=1 name="지점의 수호하는 룬" match="지점의 수호하는 룬" mconf=100
+y=205 qty=1 name="집착의 수호하는 룬" match="집착의 수호하는 룬" mconf=100
+y=266 qty=1 name="골조의 수호하는 룬" match="골조의 수호하는 룬" mconf=100
+y=328 qty=1 name="마술의 고대 룬" match="마술의 고대 룬" mconf=100
+y=389 qty=1 name="부패의 고대 룬" match="부패의 고대 룬" mconf=100
+y=451 qty=1 name="발견의 고대 룬" match="발견의 고대 룬" mconf=100
+y=512 qty=1 name="통제의 고대 룬" match="통제의 고대 룬" mconf=100
+y=574 qty=1 name="기량의 고대 룬" match="기량의 고대 룬" mconf=100
+y=635 qty=1 name="산산조각의 고대 룬" match="산산조각의 고대 룬" mconf=100

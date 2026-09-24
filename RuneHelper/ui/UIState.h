@@ -17,6 +17,7 @@ struct UIState
     bool wantsRefreshPrices = false;
     bool wantsToggleOCR = false;
     bool wantsSingleSnapshot = false;
+    bool wantsOcrDebug = false;
     bool wantsRegisterHotkeys = false;
 
     bool regionHovered = false;

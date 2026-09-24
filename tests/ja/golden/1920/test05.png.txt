@@ -1,0 +1,11 @@
+rows=10
+y=52 qty=1 name="ルーンファーザーの合金" match="ルーンファーザーの合金" mconf=100
+y=132 qty=1 name="王権の合金" match="王権の合金" mconf=100
+y=176 qty=1 name="神秘の合金" match="神秘の合金" mconf=100
+y=224 qty=1 name="プリズム合金" match="プリズム合金" mconf=100
+y=271 qty=1 name="迅速の合金" match="迅速の合金" mconf=100
+y=318 qty=1 name="旋風の合金" match="旋風の合金" mconf=100
+y=365 qty=1 name="拡張の合金" match="拡張の合金" mconf=100
+y=413 qty=1 name="保護の合金" match="保護の合金" mconf=100
+y=460 qty=1 name="適応の合金" match="適応の合金" mconf=100
+y=507 qty=2 name="ルーンの合金" match="ルーンの合金" mconf=100

@@ -1,0 +1,7 @@
+rows=6
+text="Orbe exaltado perfecto x3" qty=3 name="Orbe exaltado perfecto"
+text="Orbe de anulación x3" qty=3 name="Orbe de anulación"
+text="Orbe regio perfecto x3" qty=3 name="Orbe regio perfecto"
+text="Orbe de transmutación perfecto x3" qty=3 name="Orbe de transmutación perfecto"
+text="Orbe de aumento perfecto x3" qty=3 name="Orbe de aumento perfecto"
+text="Orbe de anulación x2" qty=2 name="Orbe de anulación"

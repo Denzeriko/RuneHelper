@@ -1,0 +1,12 @@
+rows=11
+y=15 qty=1 name="Item Único Raro" match="Item Único Raro" mconf=100
+y=66 qty=1 name="Anel Único" match="Anel Único" mconf=100
+y=110 qty=1 name="Cinto Único" match="Cinto Único" mconf=100
+y=160 qty=1 name="Amuleto Único" match="Amuleto Único" mconf=100
+y=204 qty=1 name="Pedraria Única" match="Pedraria Única" mconf=100
+y=252 qty=1 name="Varinha Única" match="Varinha Única" mconf=100
+y=299 qty=1 name="Maça de Duas Mãos Única" match="Maça de Duas Mãos Única" mconf=100
+y=346 qty=1 name="Talismã Único" match="Talismã Único" mconf=100
+y=393 qty=1 name="Cajado Único" match="Cajado Único" mconf=100
+y=444 qty=1 name="Lança Única" match="Lança Única" mconf=100
+y=488 qty=1 name="Escudo Único" match="Escudo Único" mconf=100

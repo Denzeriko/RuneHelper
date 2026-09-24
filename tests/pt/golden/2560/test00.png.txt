@@ -1,0 +1,7 @@
+rows=6
+y=64 qty=3 name="Orbe Exaltado Perfeito" match="Orbe Exaltado Perfeito" mconf=100
+y=173 qty=3 name="Orbe da Anulação" match="Orbe da Anulação" mconf=100
+y=281 qty=3 name="Orbe Real Perfeito" match="Orbe Real Perfeito" mconf=100
+y=389 qty=3 name="Orbe da Transmutação Perfeito" match="Orbe da Transmutação Perfeito" mconf=100
+y=496 qty=3 name="Orbe da Ampliação Perfeito" match="Orbe da Ampliação Perfeito" mconf=100
+y=605 qty=2 name="Orbe da Anulação" match="Orbe da Anulação" mconf=100

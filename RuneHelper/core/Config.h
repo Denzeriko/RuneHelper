@@ -1,6 +1,26 @@
 #pragma once
 
+#include <array>
 #include <string>
+#include <string_view>
+
+struct GameLanguage
+{
+    std::string_view code;
+    std::string_view name;
+};
+
+inline constexpr std::array<GameLanguage, 9> kGameLanguages = { {
+    { "en", "English" },
+    { "ru", "Russian" },
+    { "ko", "Korean" },
+    { "ja", "Japanese" },
+    { "de", "German" },
+    { "fr", "French" },
+    { "es", "Spanish" },
+    { "pt", "Portuguese" },
+    { "th", "Thai" },
+} };
 
 enum class PriceUnit
 {
@@ -39,5 +59,5 @@ struct AppConfig
 
     std::string priceLeague = "Forbidden Rites";
 
-    bool debugOCR = false;
+    std::string gameLanguage = "en";
 };

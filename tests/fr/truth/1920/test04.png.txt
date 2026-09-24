@@ -1,0 +1,12 @@
+rows=11
+text="Gemme de soutien : Runes réparatrices" qty=1 name="Gemme de soutien : Runes réparatrices"
+text="Aptitude : Chute céleste" qty=1 name="Aptitude : Chute céleste"
+text="Aptitude : Cascade triskélienne" qty=1 name="Aptitude : Cascade triskélienne"
+text="Aptitude : Réfutation" qty=1 name="Aptitude : Réfutation"
+text="Aptitude : Sursis runique" qty=1 name="Aptitude : Sursis runique"
+text="Aptitude : Lignes telluriques" qty=1 name="Aptitude : Lignes telluriques"
+text="Aptitude : Échange d'animus" qty=1 name="Aptitude : Échange d'animus"
+text="2x Prisme de lapidaire" qty=2 name="Prisme de lapidaire"
+text="Aptitude : Pluie de lames" qty=1 name="Aptitude : Pluie de lames"
+text="Gemme de soutien : Infusion runique" qty=1 name="Gemme de soutien : Infusion runique"
+text="Gemme de soutien : Extraction runique" qty=1 name="Gemme de soutien : Extraction runique"

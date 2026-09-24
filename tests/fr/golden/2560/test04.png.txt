@@ -1,0 +1,12 @@
+rows=11
+y=36 qty=1 name="Gemme de soutien : Runes réparatrices" match="-" mconf=0
+y=95 qty=1 name="Aptitude : Chute céleste" match="-" mconf=0
+y=152 qty=1 name="Aptitude : Cascade triskélienne" match="-" mconf=0
+y=212 qty=1 name="Aptitude : Réfutation" match="-" mconf=0
+y=273 qty=1 name="Aptitude : Sursis runique" match="-" mconf=0
+y=331 qty=1 name="Aptitude : Lignes telluriques" match="-" mconf=0
+y=390 qty=1 name="Aptitude : Échange d'animus" match="-" mconf=0
+y=449 qty=2 name="Prisme de lapidaire" match="Prisme de lapidaire" mconf=100
+y=508 qty=1 name="Aptitude : Pluie de lames" match="-" mconf=0
+y=568 qty=1 name="Gemme de soutien : Infusion runique" match="-" mconf=0
+y=629 qty=1 name="Gemme de soutien : Extraction runique" match="-" mconf=0

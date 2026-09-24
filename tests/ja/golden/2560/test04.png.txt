@@ -1,0 +1,7 @@
+rows=6
+y=72 qty=1 name="スキルジェムの原石 (レベル20)" match="スキルジェムの原石 (レベル20)" mconf=100
+y=178 qty=1 name="スピリットジェムの原石 (レベル20)" match="スピリットジェムの原石 (レベル20)" mconf=100
+y=283 qty=1 name="スキルレベル 20: レインオブブレード" match="-" mconf=0
+y=389 qty=1 name="スキルレベル 20: ワードバウンドミニオン" match="-" mconf=0
+y=494 qty=1 name="スキルレベル 20: ボルタイックバリア" match="-" mconf=0
+y=601 qty=1 name="スキルレベル 20: ホロウシェル" match="-" mconf=0

@@ -1,0 +1,12 @@
+rows=11
+text="Orbe de aumento superior x3" qty=3 name="Orbe de aumento superior"
+text="5 objetos monetarios aleatorios" qty=5 name="monetarios aleatorios"
+text="Orbe divino x1" qty=1 name="Orbe divino"
+text="Orbe de caos superior x1" qty=1 name="Orbe de caos superior"
+text="Orbe exaltado superior x1" qty=1 name="Orbe exaltado superior"
+text="Orbe regio superior x1" qty=1 name="Orbe regio superior"
+text="Orbe de joyero superior x1" qty=1 name="Orbe de joyero superior"
+text="Orbe de caos x2" qty=2 name="Orbe de caos"
+text="Orbe de alquimia x3" qty=3 name="Orbe de alquimia"
+text="Prisma del tallador de gemas x3" qty=3 name="Prisma del tallador de gemas"
+text="Baratija de vidrio x3" qty=3 name="Baratija de vidrio"

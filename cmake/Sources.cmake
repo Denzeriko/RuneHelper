@@ -7,9 +7,13 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/ocr/LootRows.cpp
     RuneHelper/ocr/NameNormalizer.cpp
     RuneHelper/ocr/OCR.cpp
+    RuneHelper/ocr/OcrDebug.cpp
     RuneHelper/ocr/OcrFrameDiffer.cpp
     RuneHelper/ocr/OcrRowCache.cpp
+    RuneHelper/ocr/PanelPreparation.cpp
+    RuneHelper/ocr/RowFinder.cpp
     RuneHelper/ocr/RuneTileLocator.cpp
+    RuneHelper/ocr/TextStart.cpp
     RuneHelper/price/PoeNinjaPriceProvider.cpp
     RuneHelper/price/PriceCache.cpp
     RuneHelper/price/PriceService.cpp

@@ -1,0 +1,12 @@
+rows=11
+text="희귀한 고유 아이템" qty=1 name="희귀한 고유 아이템"
+text="고유 반지" qty=1 name="고유 반지"
+text="고유 허리띠" qty=1 name="고유 허리띠"
+text="고유 목걸이" qty=1 name="고유 목걸이"
+text="고유 장신구" qty=1 name="고유 장신구"
+text="고유 마법봉" qty=1 name="고유 마법봉"
+text="고유 양손 철퇴" qty=1 name="고유 양손 철퇴"
+text="고유 부적" qty=1 name="고유 부적"
+text="고유 지팡이" qty=1 name="고유 지팡이"
+text="고유 창" qty=1 name="고유 창"
+text="고유 방패" qty=1 name="고유 방패"

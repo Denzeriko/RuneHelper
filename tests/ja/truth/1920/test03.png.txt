@@ -1,0 +1,7 @@
+rows=6
+text="1x ウートレドの星読み" qty=1 name="ウートレドの星読み"
+text="1x メドヴェッドの世話" qty=1 name="メドヴェッドの世話"
+text="1x コルの狩り" qty=1 name="コルの狩り"
+text="1x スルードの力" qty=1 name="スルードの力"
+text="1x カトラの陰鬱" qty=1 name="カトラの陰鬱"
+text="1x ヴォラナの虐殺" qty=1 name="ヴォラナの虐殺"

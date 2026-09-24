@@ -1,0 +1,11 @@
+rows=10
+qty=1 name="Legierung des Runenvaters"
+qty=1 name="Fürstliche Legierung"
+qty=1 name="Mystische Legierung"
+qty=1 name="Prismatische Legierung"
+qty=1 name="Flinke Legierung"
+qty=1 name="Wirbelnde Legierung"
+qty=1 name="Umfassende Legierung"
+qty=1 name="Verstärkte Legierung"
+qty=1 name="Adaptive Legierung"
+qty=2 name="Runenlegierung"

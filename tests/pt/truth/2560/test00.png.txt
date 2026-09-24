@@ -1,0 +1,7 @@
+rows=6
+text="3 Orbe Exaltado Perfeito" qty=3 name="Orbe Exaltado Perfeito"
+text="3 Orbe da Anulação" qty=3 name="Orbe da Anulação"
+text="3 Orbe Real Perfeito" qty=3 name="Orbe Real Perfeito"
+text="3 Orbe da Transmutação Perfeito" qty=3 name="Orbe da Transmutação Perfeito"
+text="3 Orbe da Ampliação Perfeito" qty=3 name="Orbe da Ampliação Perfeito"
+text="2 Orbe da Anulação" qty=2 name="Orbe da Anulação"

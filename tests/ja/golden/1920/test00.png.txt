@@ -1,0 +1,7 @@
+rows=6
+y=51 qty=3 name="高貴なオーブ (完全)" match="高貴なオーブ (完全)" mconf=100
+y=133 qty=3 name="消去のオーブ" match="消去のオーブ" mconf=100
+y=213 qty=3 name="王者のオーブ (完全)" match="王者のオーブ (完全)" mconf=100
+y=293 qty=3 name="変成のオーブ (完全)" match="変成のオーブ (完全)" mconf=100
+y=374 qty=3 name="増強のオーブ (完全)" match="増強のオーブ (完全)" mconf=100
+y=456 qty=2 name="消去のオーブ" match="消去のオーブ" mconf=100

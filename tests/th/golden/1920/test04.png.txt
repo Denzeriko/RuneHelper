@@ -1,0 +1,12 @@
+rows=11
+y=15 qty=1 name="หินสกิลหยาบ (เลเวล 19)" match="หินสกิลหยาบ (เลเวล 19)" mconf=100
+y=65 qty=1 name="หินพลังวิญญาณหยาบ (เลเวล 19)" match="หินพลังวิญญาณหยาบ (เลเวล 19)" mconf=100
+y=112 qty=1 name="เสริม: Healing Runes" match="-" mconf=0
+y=161 qty=1 name="สกิล: เวหาร่วง" match="-" mconf=0
+y=208 qty=1 name="สกิล: ทริสเกียลเรียงหลั่น" match="-" mconf=0
+y=255 qty=1 name="สกิล: อักขระโต้แย้ง" match="-" mconf=0
+y=302 qty=1 name="สกิล: อักขระคลายทุกข์" match="-" mconf=0
+y=350 qty=1 name="สกิล: เส้นพลัง" match="-" mconf=0
+y=397 qty=1 name="สกิล: ย้ายเจตจำนง" match="-" mconf=0
+y=443 qty=2 name="Gemcutter's Prism" match="Gemcutter's Prism" mconf=100
+y=491 qty=1 name="สกิล: ฝนมีด" match="-" mconf=0

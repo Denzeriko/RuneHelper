@@ -1,0 +1,7 @@
+rows=6
+text="Estrella de Uhtred x1" qty=1 name="Estrella de Uhtred"
+text="Cuidado de Medved x1" qty=1 name="Cuidado de Medved"
+text="Cacería de Kolr x1" qty=1 name="Cacería de Kolr"
+text="Poder de Thrud x1" qty=1 name="Poder de Thrud"
+text="Melancolía de Katla x1" qty=1 name="Melancolía de Katla"
+text="Matanza de Vorana x1" qty=1 name="Matanza de Vorana"

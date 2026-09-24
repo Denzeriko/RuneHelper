@@ -1,6 +1,6 @@
 {
   "source": "https://poe2db.tw/Runeshape_Combinations",
-  "generated": "2026-09-14",
+  "generated": "2026-09-24",
   "complete": true,
   "rareRunes": [
     "Bait",
@@ -25,7 +25,17 @@
         "Earth",
         "Rebirth",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Адаптивный сплав",
+        "ko": "적응형 합금",
+        "ja": "適応の合金",
+        "de": "Adaptive Legierung",
+        "fr": "Alliage adaptatif",
+        "es": "Aleación adaptativa",
+        "pt": "Liga Adaptativa",
+        "th": "โลหะปรับตัว"
+      }
     },
     {
       "output": "Celestial Alloy",
@@ -40,7 +50,17 @@
         "Power",
         "Soul",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Небесный сплав",
+        "ko": "천공의 합금",
+        "ja": "天体の合金",
+        "de": "Himmlische Legierung",
+        "fr": "Alliage céleste",
+        "es": "Aleación celestial",
+        "pt": "Liga Celestial",
+        "th": "โลหะดวงดาว"
+      }
     },
     {
       "output": "Cyclonic Alloy",
@@ -52,7 +72,17 @@
         "Rebirth",
         "Tidal",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Вихревой сплав",
+        "ko": "회오리바람 합금",
+        "ja": "旋風の合金",
+        "de": "Wirbelnde Legierung",
+        "fr": "Alliage cyclonique",
+        "es": "Aleación ciclónica",
+        "pt": "Liga Ciclônica",
+        "th": "โลหะพายุหมุน"
+      }
     },
     {
       "output": "Expansive Alloy",
@@ -63,7 +93,17 @@
         "Volcanic",
         "Rebirth",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Экспансивный сплав",
+        "ko": "팽창하는 합금",
+        "ja": "拡張の合金",
+        "de": "Umfassende Legierung",
+        "fr": "Alliage expansif",
+        "es": "Aleación extensa",
+        "pt": "Liga Expansiva",
+        "th": "โลหะขยายตัว"
+      }
     },
     {
       "output": "Mystic Alloy",
@@ -76,7 +116,17 @@
         "Time",
         "Arcane",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Мистический сплав",
+        "ko": "신비한 합금",
+        "ja": "神秘の合金",
+        "de": "Mystische Legierung",
+        "fr": "Alliage mystique",
+        "es": "Aleación mística",
+        "pt": "Liga Mística",
+        "th": "โลหะลี้ลับ"
+      }
     },
     {
       "output": "Prismatic Alloy",
@@ -89,7 +139,17 @@
         "Adaptive",
         "Opulent",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Радужный сплав",
+        "ko": "분광 합금",
+        "ja": "プリズム合金",
+        "de": "Prismatische Legierung",
+        "fr": "Alliage prismatique",
+        "es": "Aleación prismática",
+        "pt": "Liga Prismática",
+        "th": "โลหะหลากสี"
+      }
     },
     {
       "output": "Protective Alloy",
@@ -100,7 +160,17 @@
         "Sky",
         "Rebirth",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Защитный сплав",
+        "ko": "보호의 합금",
+        "ja": "保護の合金",
+        "de": "Verstärkte Legierung",
+        "fr": "Alliage protecteur",
+        "es": "Aleación protectora",
+        "pt": "Liga Protetora",
+        "th": "โลหะคุ้มครอง"
+      }
     },
     {
       "output": "Runic Alloy",
@@ -111,7 +181,17 @@
         "Vision",
         "Rebirth",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Рунный сплав",
+        "ko": "룬 합금",
+        "ja": "ルーンの合金",
+        "de": "Runenlegierung",
+        "fr": "Alliage runique",
+        "es": "Aleación rúnica",
+        "pt": "Liga Rúnica",
+        "th": "โลหะเจืออักขระ"
+      }
     },
     {
       "output": "Runic Alloy",
@@ -121,7 +201,17 @@
       "runes": [
         "Adaptive",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Рунный сплав",
+        "ko": "룬 합금",
+        "ja": "ルーンの合金",
+        "de": "Runenlegierung",
+        "fr": "Alliage runique",
+        "es": "Aleación rúnica",
+        "pt": "Liga Rúnica",
+        "th": "โลหะเจืออักขระ"
+      }
     },
     {
       "output": "Sovereign Alloy",
@@ -135,7 +225,17 @@
         "Toxic",
         "Power",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Державный сплав",
+        "ko": "군왕의 합금",
+        "ja": "王権の合金",
+        "de": "Fürstliche Legierung",
+        "fr": "Alliage souverain",
+        "es": "Aleación soberana",
+        "pt": "Liga Soberana",
+        "th": "โลหะประมุข"
+      }
     },
     {
       "output": "Swift Alloy",
@@ -147,7 +247,17 @@
         "Rebirth",
         "Soul",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Лёгкий сплав",
+        "ko": "재빠른 합금",
+        "ja": "迅速の合金",
+        "de": "Flinke Legierung",
+        "fr": "Alliage véloce",
+        "es": "Aleación veloz",
+        "pt": "Liga Veloz",
+        "th": "โลหะว่องไว"
+      }
     },
     {
       "output": "The Runebinder's Alloy",
@@ -163,7 +273,17 @@
         "Lightning",
         "Bloodletting",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Сплав Повелителя рун",
+        "ko": "룬 결속사의 합금",
+        "ja": "ルーンバインダーの合金",
+        "de": "Legierung des Runenbinders",
+        "fr": "Alliage du Lieur de runes",
+        "es": "Aleación del vinculador de runas",
+        "pt": "A Liga do Fundidor de Runas",
+        "th": "โลหะผู้ผนึกอักขระ"
+      }
     },
     {
       "output": "The Runefather's Alloy",
@@ -179,7 +299,17 @@
         "Prismatic",
         "Moon",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Сплав Рунного отца",
+        "ko": "룬 아버지의 합금",
+        "ja": "ルーンファーザーの合金",
+        "de": "Legierung des Runenvaters",
+        "fr": "Alliage du Père des runes",
+        "es": "Aleación del Padre de las runas",
+        "pt": "A Liga do Pai das Runas",
+        "th": "โลหะอักขรบิดา"
+      }
     },
     {
       "output": "Transcendent Alloy",
@@ -194,7 +324,17 @@
         "Power",
         "Electrocuting",
         "Death"
-      ]
+      ],
+      "names": {
+        "ru": "Возвышенный сплав",
+        "ko": "초월의 합금",
+        "ja": "超越の合金",
+        "de": "Transzendente Legierung",
+        "fr": "Alliage transcendant",
+        "es": "Aleación sobresaliente",
+        "pt": "Liga Transcendental",
+        "th": "โลหะเหนือธรรมชาติ"
+      }
     },
     {
       "output": "5x Random Currency",
@@ -207,7 +347,16 @@
         "Death",
         "Tempest",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "5 шт. случайной валюты",
+        "ko": "무작위 화폐 5개",
+        "ja": "ランダムなカレンシー 5個",
+        "de": "5x zufällige Währung",
+        "es": "5 objetos monetarios aleatorios",
+        "pt": "5 Moedas Aleatórias",
+        "th": "5x เงินตราแบบสุ่ม"
+      }
     },
     {
       "output": "Aldur's Saga",
@@ -222,7 +371,17 @@
         "Power",
         "Arcane",
         "Time"
-      ]
+      ],
+      "names": {
+        "ru": "Сага Альдура",
+        "ko": "알두르의 영웅담",
+        "ja": "アルダーの叙事詩",
+        "de": "Aldurs Saga",
+        "fr": "Saga d'Aldur",
+        "es": "Saga de Aldur",
+        "pt": "Saga de Aldur",
+        "th": "มหากาพย์ของอัลเดอร์"
+      }
     },
     {
       "output": "Arcanist's Etcher",
@@ -233,7 +392,17 @@
         "Tidal",
         "Adaptive",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Резец чародея",
+        "ko": "신비학자의 식각기",
+        "ja": "秘術師の彫刻針",
+        "de": "Arkanisten-Ätzer",
+        "fr": "Gravelet de l'arcaniste",
+        "es": "Buril del arcanista",
+        "pt": "Gravador do Arcanista",
+        "th": "Arcanist's Etcher"
+      }
     },
     {
       "output": "Arcanist's Etcher",
@@ -243,7 +412,17 @@
       "runes": [
         "Tidal",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Резец чародея",
+        "ko": "신비학자의 식각기",
+        "ja": "秘術師の彫刻針",
+        "de": "Arkanisten-Ätzer",
+        "fr": "Gravelet de l'arcaniste",
+        "es": "Buril del arcanista",
+        "pt": "Gravador do Arcanista",
+        "th": "Arcanist's Etcher"
+      }
     },
     {
       "output": "Arcanist's Etcher",
@@ -253,7 +432,17 @@
       "runes": [
         "Lightning",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Резец чародея",
+        "ko": "신비학자의 식각기",
+        "ja": "秘術師の彫刻針",
+        "de": "Arkanisten-Ätzer",
+        "fr": "Gravelet de l'arcaniste",
+        "es": "Buril del arcanista",
+        "pt": "Gravador do Arcanista",
+        "th": "Arcanist's Etcher"
+      }
     },
     {
       "output": "Armourer's Scrap",
@@ -264,7 +453,17 @@
         "Moon",
         "Adaptive",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Деталь доспеха",
+        "ko": "방어구 장인의 고철",
+        "ja": "鎧鍛冶の端材",
+        "de": "Plattnerstück",
+        "fr": "Ferraille d'armurier",
+        "es": "Restos de armaduras",
+        "pt": "Sucata do Armeiro",
+        "th": "Armourer's Scrap"
+      }
     },
     {
       "output": "Armourer's Scrap",
@@ -274,7 +473,17 @@
       "runes": [
         "Moon",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Деталь доспеха",
+        "ko": "방어구 장인의 고철",
+        "ja": "鎧鍛冶の端材",
+        "de": "Plattnerstück",
+        "fr": "Ferraille d'armurier",
+        "es": "Restos de armaduras",
+        "pt": "Sucata do Armeiro",
+        "th": "Armourer's Scrap"
+      }
     },
     {
       "output": "Armourer's Scrap",
@@ -284,7 +493,17 @@
       "runes": [
         "Cold",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Деталь доспеха",
+        "ko": "방어구 장인의 고철",
+        "ja": "鎧鍛冶の端材",
+        "de": "Plattnerstück",
+        "fr": "Ferraille d'armurier",
+        "es": "Restos de armaduras",
+        "pt": "Sucata do Armeiro",
+        "th": "Armourer's Scrap"
+      }
     },
     {
       "output": "Artificer's Orb",
@@ -295,7 +514,17 @@
         "Stone",
         "Vision",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера астромантии",
+        "ko": "숙련공의 오브",
+        "ja": "熟練工のオーブ",
+        "de": "Sphäre des Kunsthandwerkers",
+        "fr": "Orbe d'artificier",
+        "es": "Orbe del artesano",
+        "pt": "Orbe do Artífice",
+        "th": "Artificer's Orb"
+      }
     },
     {
       "output": "Artificer's Orb",
@@ -305,7 +534,17 @@
       "runes": [
         "Volcanic",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера астромантии",
+        "ko": "숙련공의 오브",
+        "ja": "熟練工のオーブ",
+        "de": "Sphäre des Kunsthandwerkers",
+        "fr": "Orbe d'artificier",
+        "es": "Orbe del artesano",
+        "pt": "Orbe do Artífice",
+        "th": "Artificer's Orb"
+      }
     },
     {
       "output": "Artificer's Orb",
@@ -315,7 +554,17 @@
       "runes": [
         "Arcane",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера астромантии",
+        "ko": "숙련공의 오브",
+        "ja": "熟練工のオーブ",
+        "de": "Sphäre des Kunsthandwerkers",
+        "fr": "Orbe d'artificier",
+        "es": "Orbe del artesano",
+        "pt": "Orbe do Artífice",
+        "th": "Artificer's Orb"
+      }
     },
     {
       "output": "Blacksmith's Whetstone",
@@ -326,7 +575,17 @@
         "Rage",
         "Adaptive",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Точильный камень",
+        "ko": "대장장이의 숫돌",
+        "ja": "鍛冶屋の砥石",
+        "de": "Schleifstein",
+        "fr": "Pierre à aiguiser de forgeron",
+        "es": "Piedra de afilar",
+        "pt": "Lima do Ferreiro",
+        "th": "Blacksmith's Whetstone"
+      }
     },
     {
       "output": "Blacksmith's Whetstone",
@@ -336,7 +595,17 @@
       "runes": [
         "Rage",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Точильный камень",
+        "ko": "대장장이의 숫돌",
+        "ja": "鍛冶屋の砥石",
+        "de": "Schleifstein",
+        "fr": "Pierre à aiguiser de forgeron",
+        "es": "Piedra de afilar",
+        "pt": "Lima do Ferreiro",
+        "th": "Blacksmith's Whetstone"
+      }
     },
     {
       "output": "Blazing Flux",
@@ -350,7 +619,17 @@
         "Soul",
         "Rage",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Жгучий расплав",
+        "ko": "맹렬한 유동체",
+        "ja": "火炎フラックス",
+        "de": "Loderndes Flussmittel",
+        "fr": "Flux flamboyant",
+        "es": "Flujo ardiente",
+        "pt": "Fluxo Fulgente",
+        "th": "เปลวไหลเวียน"
+      }
     },
     {
       "output": "Chaos Orb",
@@ -365,7 +644,17 @@
         "Power",
         "Arcane",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера хаоса",
+        "ko": "카오스 오브",
+        "ja": "カオスオーブ",
+        "de": "Chaossphäre",
+        "fr": "Orbe du chaos",
+        "es": "Orbe de caos",
+        "pt": "Orbe do Caos",
+        "th": "Chaos Orb"
+      }
     },
     {
       "output": "Chaos Orb",
@@ -378,7 +667,17 @@
         "Death",
         "Rebirth",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера хаоса",
+        "ko": "카오스 오브",
+        "ja": "カオスオーブ",
+        "de": "Chaossphäre",
+        "fr": "Orbe du chaos",
+        "es": "Orbe de caos",
+        "pt": "Orbe do Caos",
+        "th": "Chaos Orb"
+      }
     },
     {
       "output": "Chaos Orb",
@@ -390,7 +689,17 @@
         "Oath",
         "Fire",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера хаоса",
+        "ko": "카오스 오브",
+        "ja": "カオスオーブ",
+        "de": "Chaossphäre",
+        "fr": "Orbe du chaos",
+        "es": "Orbe de caos",
+        "pt": "Orbe do Caos",
+        "th": "Chaos Orb"
+      }
     },
     {
       "output": "Chaos Orb",
@@ -401,7 +710,17 @@
         "Adaptive",
         "Tidal",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера хаоса",
+        "ko": "카오스 오브",
+        "ja": "カオスオーブ",
+        "de": "Chaossphäre",
+        "fr": "Orbe du chaos",
+        "es": "Orbe de caos",
+        "pt": "Orbe do Caos",
+        "th": "Chaos Orb"
+      }
     },
     {
       "output": "Chilling Flux",
@@ -415,7 +734,17 @@
         "Death",
         "Tidal",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Студёный расплав",
+        "ko": "오싹한 유동체",
+        "ja": "冷却フラックス",
+        "de": "Unterkühlendes Flussmittel",
+        "fr": "Flux glaçant",
+        "es": "Flujo escarchante",
+        "pt": "Fluxo Arrefecedor",
+        "th": "ไอเย็นไหลเวียน"
+      }
     },
     {
       "output": "Crackling Flux",
@@ -429,7 +758,17 @@
         "Electrocuting",
         "Oath",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Искрящий расплав",
+        "ko": "치직대는 유동체",
+        "ja": "雷撃フラックス",
+        "de": "Knisterndes Flussmittel",
+        "fr": "Flux crépitant",
+        "es": "Flujo electrizante",
+        "pt": "Fluxo Crepitante",
+        "th": "ประจุไหลเวียน"
+      }
     },
     {
       "output": "Divine Orb",
@@ -446,7 +785,17 @@
         "Toxic",
         "Prismatic",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Божественная сфера",
+        "ko": "신성한 오브",
+        "ja": "神のオーブ",
+        "de": "Göttliche Sphäre",
+        "fr": "Orbe divin",
+        "es": "Orbe divino",
+        "pt": "Orbe Divino",
+        "th": "Divine Orb"
+      }
     },
     {
       "output": "Divine Orb",
@@ -460,7 +809,17 @@
         "Life",
         "Vision",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Божественная сфера",
+        "ko": "신성한 오브",
+        "ja": "神のオーブ",
+        "de": "Göttliche Sphäre",
+        "fr": "Orbe divin",
+        "es": "Orbe divino",
+        "pt": "Orbe Divino",
+        "th": "Divine Orb"
+      }
     },
     {
       "output": "Divine Orb",
@@ -473,7 +832,17 @@
         "Power",
         "Life",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Божественная сфера",
+        "ko": "신성한 오브",
+        "ja": "神のオーブ",
+        "de": "Göttliche Sphäre",
+        "fr": "Orbe divin",
+        "es": "Orbe divino",
+        "pt": "Orbe Divino",
+        "th": "Divine Orb"
+      }
     },
     {
       "output": "Divine Orb",
@@ -485,7 +854,17 @@
         "Soul",
         "Power",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Божественная сфера",
+        "ko": "신성한 오브",
+        "ja": "神のオーブ",
+        "de": "Göttliche Sphäre",
+        "fr": "Orbe divin",
+        "es": "Orbe divino",
+        "pt": "Orbe Divino",
+        "th": "Divine Orb"
+      }
     },
     {
       "output": "Exalted Orb",
@@ -497,7 +876,17 @@
         "Moon",
         "Soul",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера возвышения",
+        "ko": "엑잘티드 오브",
+        "ja": "高貴なオーブ",
+        "de": "Erhabene Sphäre",
+        "fr": "Orbe exalté",
+        "es": "Orbe exaltado",
+        "pt": "Orbe Exaltado",
+        "th": "Exalted Orb"
+      }
     },
     {
       "output": "Exalted Orb",
@@ -508,7 +897,17 @@
         "Adaptive",
         "Arcane",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера возвышения",
+        "ko": "엑잘티드 오브",
+        "ja": "高貴なオーブ",
+        "de": "Erhabene Sphäre",
+        "fr": "Orbe exalté",
+        "es": "Orbe exaltado",
+        "pt": "Orbe Exaltado",
+        "th": "Exalted Orb"
+      }
     },
     {
       "output": "Exalted Orb",
@@ -518,7 +917,17 @@
       "runes": [
         "Adaptive",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера возвышения",
+        "ko": "엑잘티드 오브",
+        "ja": "高貴なオーブ",
+        "de": "Erhabene Sphäre",
+        "fr": "Orbe exalté",
+        "es": "Orbe exaltado",
+        "pt": "Orbe Exaltado",
+        "th": "Exalted Orb"
+      }
     },
     {
       "output": "Gemcutter's Prism",
@@ -530,7 +939,17 @@
         "Soul",
         "Vision",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Призма камнереза",
+        "ko": "세공사의 프리즘",
+        "ja": "宝石細工師のプリズム",
+        "de": "Prisma des Gemmenschneiders",
+        "fr": "Prisme de lapidaire",
+        "es": "Prisma del tallador de gemas",
+        "pt": "Prisma do Lapidário",
+        "th": "Gemcutter's Prism"
+      }
     },
     {
       "output": "Gemcutter's Prism",
@@ -540,7 +959,17 @@
       "runes": [
         "Sky",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Призма камнереза",
+        "ko": "세공사의 프리즘",
+        "ja": "宝石細工師のプリズム",
+        "de": "Prisma des Gemmenschneiders",
+        "fr": "Prisme de lapidaire",
+        "es": "Prisma del tallador de gemas",
+        "pt": "Prisma do Lapidário",
+        "th": "Gemcutter's Prism"
+      }
     },
     {
       "output": "Glassblower's Bauble",
@@ -552,7 +981,17 @@
         "Toxic",
         "Tidal",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Стекольная масса",
+        "ko": "유리직공의 방울",
+        "ja": "ガラス吹きの飾り玉",
+        "de": "Kugel des Glasbläsers",
+        "fr": "Bulle de souffleur de verre",
+        "es": "Baratija de vidrio",
+        "pt": "Bugiganga do Vidreiro",
+        "th": "Glassblower's Bauble"
+      }
     },
     {
       "output": "Glassblower's Bauble",
@@ -563,7 +1002,17 @@
         "Prismatic",
         "Toxic",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Стекольная масса",
+        "ko": "유리직공의 방울",
+        "ja": "ガラス吹きの飾り玉",
+        "de": "Kugel des Glasbläsers",
+        "fr": "Bulle de souffleur de verre",
+        "es": "Baratija de vidrio",
+        "pt": "Bugiganga do Vidreiro",
+        "th": "Glassblower's Bauble"
+      }
     },
     {
       "output": "Glassblower's Bauble",
@@ -573,7 +1022,17 @@
       "runes": [
         "Earth",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Стекольная масса",
+        "ko": "유리직공의 방울",
+        "ja": "ガラス吹きの飾り玉",
+        "de": "Kugel des Glasbläsers",
+        "fr": "Bulle de souffleur de verre",
+        "es": "Baratija de vidrio",
+        "pt": "Bugiganga do Vidreiro",
+        "th": "Glassblower's Bauble"
+      }
     },
     {
       "output": "Greater Chaos Orb",
@@ -587,7 +1046,17 @@
         "Volcanic",
         "Opulent",
         "Time"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера хаоса",
+        "ko": "상위 카오스 오브",
+        "ja": "カオスオーブ (上級)",
+        "de": "Größere Chaossphäre",
+        "fr": "Orbe du chaos majeur",
+        "es": "Orbe de caos superior",
+        "pt": "Orbe do Caos Maior",
+        "th": "Chaos Orb ชั้นสูง"
+      }
     },
     {
       "output": "Greater Chaos Orb",
@@ -599,7 +1068,17 @@
         "Electrocuting",
         "Rage",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера хаоса",
+        "ko": "상위 카오스 오브",
+        "ja": "カオスオーブ (上級)",
+        "de": "Größere Chaossphäre",
+        "fr": "Orbe du chaos majeur",
+        "es": "Orbe de caos superior",
+        "pt": "Orbe do Caos Maior",
+        "th": "Chaos Orb ชั้นสูง"
+      }
     },
     {
       "output": "Greater Exalted Orb",
@@ -613,7 +1092,17 @@
         "Electrocuting",
         "Opulent",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера возвышения",
+        "ko": "상위 엑잘티드 오브",
+        "ja": "高貴なオーブ (上級)",
+        "de": "Größere Erhabene Sphäre",
+        "fr": "Orbe exalté majeur",
+        "es": "Orbe exaltado superior",
+        "pt": "Orbe Exaltado Maior",
+        "th": "Exalted Orb ชั้นสูง"
+      }
     },
     {
       "output": "Greater Exalted Orb",
@@ -625,7 +1114,17 @@
         "Arcane",
         "Bond",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера возвышения",
+        "ko": "상위 엑잘티드 오브",
+        "ja": "高貴なオーブ (上級)",
+        "de": "Größere Erhabene Sphäre",
+        "fr": "Orbe exalté majeur",
+        "es": "Orbe exaltado superior",
+        "pt": "Orbe Exaltado Maior",
+        "th": "Exalted Orb ชั้นสูง"
+      }
     },
     {
       "output": "Greater Jeweller's Orb",
@@ -637,7 +1136,17 @@
         "Oath",
         "Adaptive",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера златокузнеца",
+        "ko": "상위 쥬얼러 오브",
+        "ja": "宝飾職人のオーブ (上級)",
+        "de": "Große Sphäre des Goldschmieds",
+        "fr": "Orbe de joaillier majeur",
+        "es": "Orbe de joyero superior",
+        "pt": "Orbe do Joalheiro Maior",
+        "th": "Jeweller's Orb ชั้นสูง"
+      }
     },
     {
       "output": "Greater Orb of Augmentation",
@@ -650,7 +1159,17 @@
         "Electrocuting",
         "Adaptive",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера усиления",
+        "ko": "상위 확장의 오브",
+        "ja": "増強のオーブ (上級)",
+        "de": "Größere Aufwertungssphäre",
+        "fr": "Orbe d'augmentation majeur",
+        "es": "Orbe de aumento superior",
+        "pt": "Orbe da Ampliação Maior",
+        "th": "Orb of Augmentation ชั้นสูง"
+      }
     },
     {
       "output": "Greater Orb of Augmentation",
@@ -661,7 +1180,17 @@
         "Momentum",
         "Life",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера усиления",
+        "ko": "상위 확장의 오브",
+        "ja": "増強のオーブ (上級)",
+        "de": "Größere Aufwertungssphäre",
+        "fr": "Orbe d'augmentation majeur",
+        "es": "Orbe de aumento superior",
+        "pt": "Orbe da Ampliação Maior",
+        "th": "Orb of Augmentation ชั้นสูง"
+      }
     },
     {
       "output": "Greater Orb of Transmutation",
@@ -674,7 +1203,17 @@
         "Cold",
         "Adaptive",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера превращения",
+        "ko": "상위 진화의 오브",
+        "ja": "変成のオーブ (上級)",
+        "de": "Größere Umwandlungssphäre",
+        "fr": "Orbe de transmutation majeur",
+        "es": "Orbe de transmutación superior",
+        "pt": "Orbe da Transmutação Maior",
+        "th": "Orb of Transmutation ชั้นสูง"
+      }
     },
     {
       "output": "Greater Orb of Transmutation",
@@ -685,7 +1224,17 @@
         "Momentum",
         "Life",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера превращения",
+        "ko": "상위 진화의 오브",
+        "ja": "変成のオーブ (上級)",
+        "de": "Größere Umwandlungssphäre",
+        "fr": "Orbe de transmutation majeur",
+        "es": "Orbe de transmutación superior",
+        "pt": "Orbe da Transmutação Maior",
+        "th": "Orb of Transmutation ชั้นสูง"
+      }
     },
     {
       "output": "Greater Regal Orb",
@@ -699,7 +1248,17 @@
         "Moon",
         "Opulent",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера царей",
+        "ko": "상위 제왕의 오브",
+        "ja": "王者のオーブ (上級)",
+        "de": "Größere Hoheitliche Sphäre",
+        "fr": "Orbe royal majeur",
+        "es": "Orbe regio superior",
+        "pt": "Orbe Real Maior",
+        "th": "Regal Orb ชั้นสูง"
+      }
     },
     {
       "output": "Greater Regal Orb",
@@ -711,7 +1270,17 @@
         "Cyclonic",
         "Life",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Большая сфера царей",
+        "ko": "상위 제왕의 오브",
+        "ja": "王者のオーブ (上級)",
+        "de": "Größere Hoheitliche Sphäre",
+        "fr": "Orbe royal majeur",
+        "es": "Orbe regio superior",
+        "pt": "Orbe Real Maior",
+        "th": "Regal Orb ชั้นสูง"
+      }
     },
     {
       "output": "Hinekora's Lock",
@@ -728,7 +1297,17 @@
         "Time",
         "Death",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Прядь Хинекоры",
+        "ko": "히네코라의 머리카락",
+        "ja": "ヒネコラの髪束",
+        "de": "Hinekoras Locke",
+        "fr": "Mèche de cheveux d'Hinekora",
+        "es": "Mechón de Hinekora",
+        "pt": "Trança de Hinekora",
+        "th": "ปอยผมของฮิเนโครา"
+      }
     },
     {
       "output": "Krillson's Bay Key",
@@ -746,7 +1325,17 @@
         "Bait",
         "Bait",
         "Bait"
-      ]
+      ],
+      "names": {
+        "ru": "Ключ к Бухте Криллсона",
+        "ko": "크릴슨의 만 열쇠",
+        "ja": "クリルソン湾の鍵",
+        "de": "Schlüssel zu Krillsons Bucht",
+        "fr": "Clé de la Baie de Krillson",
+        "es": "Llave de la Bahía de Krillson",
+        "pt": "Chave da Baía de Krillson",
+        "th": "กุญแจอ่าวคริลล์สัน"
+      }
     },
     {
       "output": "Lesser Jeweller's Orb",
@@ -757,7 +1346,17 @@
         "Prismatic",
         "Arcane",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Малая сфера златокузнеца",
+        "ko": "하위 쥬얼러 오브",
+        "ja": "宝飾職人のオーブ (見習い)",
+        "de": "Kleine Sphäre des Goldschmieds",
+        "fr": "Orbe de joaillier mineur",
+        "es": "Orbe de joyero menor",
+        "pt": "Orbe do Joalheiro Menor",
+        "th": "Jeweller's Orb ชั้นต่ำ"
+      }
     },
     {
       "output": "Medved's Saga",
@@ -771,7 +1370,17 @@
         "Moon",
         "Time",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Сага Медведя",
+        "ko": "메드베드의 영웅담",
+        "ja": "メドヴェッドの叙事詩",
+        "de": "Medveds Saga",
+        "fr": "Saga de Medved",
+        "es": "Saga de Medved",
+        "pt": "Saga de Medved",
+        "th": "มหากาพย์ของเม็ดเว็ด"
+      }
     },
     {
       "output": "Mirror of Kalandra",
@@ -788,7 +1397,17 @@
         "Bond",
         "Earth",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Зеркало Каландры",
+        "ko": "칼란드라의 거울",
+        "ja": "カランドラの鏡",
+        "de": "Spiegel von Kalandra",
+        "fr": "Miroir de Kalandra",
+        "es": "Espejo de Kalandra",
+        "pt": "Espelho de Kalandra",
+        "th": "Mirror of Kalandra"
+      }
     },
     {
       "output": "Olroth's Saga",
@@ -802,7 +1421,17 @@
         "Celestial",
         "Wisdom",
         "Power"
-      ]
+      ],
+      "names": {
+        "ru": "Сага Олрота",
+        "ko": "올로스의 영웅담",
+        "ja": "オルロスの叙事詩",
+        "de": "Olroths Saga",
+        "fr": "Saga d'Olroth",
+        "es": "Saga de Olroth",
+        "pt": "Saga de Olroth",
+        "th": "มหากาพย์ของออลรอธ"
+      }
     },
     {
       "output": "Orb of Alchemy",
@@ -814,7 +1443,17 @@
         "Moon",
         "Tidal",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера алхимии",
+        "ko": "연금술의 오브",
+        "ja": "錬金術のオーブ",
+        "de": "Sphäre der Alchemie",
+        "fr": "Orbe d'alchimie",
+        "es": "Orbe de alquimia",
+        "pt": "Orbe da Alquimia",
+        "th": "Orb of Alchemy"
+      }
     },
     {
       "output": "Orb of Alchemy",
@@ -825,7 +1464,17 @@
         "Adaptive",
         "Rebirth",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера алхимии",
+        "ko": "연금술의 오브",
+        "ja": "錬金術のオーブ",
+        "de": "Sphäre der Alchemie",
+        "fr": "Orbe d'alchimie",
+        "es": "Orbe de alquimia",
+        "pt": "Orbe da Alquimia",
+        "th": "Orb of Alchemy"
+      }
     },
     {
       "output": "Orb of Annulment",
@@ -842,7 +1491,17 @@
         "Prismatic",
         "Electrocuting",
         "Power"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера отмены",
+        "ko": "소멸의 오브",
+        "ja": "消去のオーブ",
+        "de": "Sphäre der Annullierung",
+        "fr": "Orbe d'annulation",
+        "es": "Orbe de anulación",
+        "pt": "Orbe da Anulação",
+        "th": "Orb of Annulment"
+      }
     },
     {
       "output": "Orb of Annulment",
@@ -857,7 +1516,17 @@
         "Cyclonic",
         "Lightning",
         "Power"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера отмены",
+        "ko": "소멸의 오브",
+        "ja": "消去のオーブ",
+        "de": "Sphäre der Annullierung",
+        "fr": "Orbe d'annulation",
+        "es": "Orbe de anulación",
+        "pt": "Orbe da Anulação",
+        "th": "Orb of Annulment"
+      }
     },
     {
       "output": "Orb of Annulment",
@@ -871,7 +1540,17 @@
         "Time",
         "Moon",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера отмены",
+        "ko": "소멸의 오브",
+        "ja": "消去のオーブ",
+        "de": "Sphäre der Annullierung",
+        "fr": "Orbe d'annulation",
+        "es": "Orbe de anulación",
+        "pt": "Orbe da Anulação",
+        "th": "Orb of Annulment"
+      }
     },
     {
       "output": "Orb of Augmentation",
@@ -881,7 +1560,17 @@
       "runes": [
         "Prismatic",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера усиления",
+        "ko": "확장의 오브",
+        "ja": "増強のオーブ",
+        "de": "Aufwertungssphäre",
+        "fr": "Orbe d'augmentation",
+        "es": "Orbe de aumento",
+        "pt": "Orbe da Ampliação",
+        "th": "Orb of Augmentation"
+      }
     },
     {
       "output": "Orb of Augmentation",
@@ -891,7 +1580,17 @@
       "runes": [
         "Tempest",
         "Lightning"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера усиления",
+        "ko": "확장의 오브",
+        "ja": "増強のオーブ",
+        "de": "Aufwertungssphäre",
+        "fr": "Orbe d'augmentation",
+        "es": "Orbe de aumento",
+        "pt": "Orbe da Ampliação",
+        "th": "Orb of Augmentation"
+      }
     },
     {
       "output": "Orb of Chance",
@@ -908,7 +1607,17 @@
         "Prismatic",
         "Rebirth",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера удачи",
+        "ko": "기회의 오브",
+        "ja": "可能性のオーブ",
+        "de": "Sphäre der Möglichkeiten",
+        "fr": "Orbe de chance",
+        "es": "Orbe de azar",
+        "pt": "Orbe da Chance",
+        "th": "Orb of Chance"
+      }
     },
     {
       "output": "Orb of Chance",
@@ -922,7 +1631,17 @@
         "Rage",
         "Sky",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера удачи",
+        "ko": "기회의 오브",
+        "ja": "可能性のオーブ",
+        "de": "Sphäre der Möglichkeiten",
+        "fr": "Orbe de chance",
+        "es": "Orbe de azar",
+        "pt": "Orbe da Chance",
+        "th": "Orb of Chance"
+      }
     },
     {
       "output": "Orb of Chance",
@@ -935,7 +1654,17 @@
         "Rage",
         "Bloodletting",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера удачи",
+        "ko": "기회의 오브",
+        "ja": "可能性のオーブ",
+        "de": "Sphäre der Möglichkeiten",
+        "fr": "Orbe de chance",
+        "es": "Orbe de azar",
+        "pt": "Orbe da Chance",
+        "th": "Orb of Chance"
+      }
     },
     {
       "output": "Orb of Transmutation",
@@ -945,7 +1674,17 @@
       "runes": [
         "Prismatic",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера превращения",
+        "ko": "진화의 오브",
+        "ja": "変成のオーブ",
+        "de": "Umwandlungssphäre",
+        "fr": "Orbe de transmutation",
+        "es": "Orbe de transmutación",
+        "pt": "Orbe da Transmutação",
+        "th": "Orb of Transmutation"
+      }
     },
     {
       "output": "Orb of Transmutation",
@@ -955,7 +1694,17 @@
       "runes": [
         "Tempest",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера превращения",
+        "ko": "진화의 오브",
+        "ja": "変成のオーブ",
+        "de": "Umwandlungssphäre",
+        "fr": "Orbe de transmutation",
+        "es": "Orbe de transmutación",
+        "pt": "Orbe da Transmutação",
+        "th": "Orb of Transmutation"
+      }
     },
     {
       "output": "Perfect Chaos Orb",
@@ -972,7 +1721,17 @@
         "Tempest",
         "Life",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера хаоса",
+        "ko": "완벽한 카오스 오브",
+        "ja": "カオスオーブ (完全)",
+        "de": "Perfekte Chaossphäre",
+        "fr": "Orbe du chaos parfait",
+        "es": "Orbe de caos perfecto",
+        "pt": "Orbe do Caos Perfeito",
+        "th": "Chaos Orb ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Chaos Orb",
@@ -986,7 +1745,17 @@
         "Power",
         "Opulent",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера хаоса",
+        "ko": "완벽한 카오스 오브",
+        "ja": "カオスオーブ (完全)",
+        "de": "Perfekte Chaossphäre",
+        "fr": "Orbe du chaos parfait",
+        "es": "Orbe de caos perfecto",
+        "pt": "Orbe do Caos Perfeito",
+        "th": "Chaos Orb ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Exalted Orb",
@@ -1003,7 +1772,17 @@
         "Power",
         "Death",
         "Toxic"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера возвышения",
+        "ko": "완벽한 엑잘티드 오브",
+        "ja": "高貴なオーブ (完全)",
+        "de": "Perfekte Erhabene Sphäre",
+        "fr": "Orbe exalté parfait",
+        "es": "Orbe exaltado perfecto",
+        "pt": "Orbe Exaltado Perfeito",
+        "th": "Exalted Orb ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Exalted Orb",
@@ -1017,7 +1796,17 @@
         "Power",
         "Opulent",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера возвышения",
+        "ko": "완벽한 엑잘티드 오브",
+        "ja": "高貴なオーブ (完全)",
+        "de": "Perfekte Erhabene Sphäre",
+        "fr": "Orbe exalté parfait",
+        "es": "Orbe exaltado perfecto",
+        "pt": "Orbe Exaltado Perfeito",
+        "th": "Exalted Orb ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Flux",
@@ -1033,7 +1822,17 @@
         "Time",
         "Celestial",
         "Lightning"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенный расплав",
+        "ko": "완벽한 유동체",
+        "ja": "パーフェクトフラックス",
+        "de": "Perfektes Flussmittel",
+        "fr": "Flux parfait",
+        "es": "Flujo perfecto",
+        "pt": "Fluxo Perfeito",
+        "th": "ความสมบูรณ์แบบไหลเวียน"
+      }
     },
     {
       "output": "Perfect Jeweller's Orb",
@@ -1046,7 +1845,17 @@
         "Death",
         "Life",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера златокузнеца",
+        "ko": "완벽한 쥬얼러 오브",
+        "ja": "宝飾職人のオーブ (完全)",
+        "de": "Perfekte Sphäre des Goldschmieds",
+        "fr": "Orbe de joaillier parfait",
+        "es": "Orbe de joyero perfecto",
+        "pt": "Orbe do Joalheiro Perfeito",
+        "th": "Jeweller's Orb ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Orb of Augmentation",
@@ -1062,7 +1871,17 @@
         "Vision",
         "Bloodletting",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера усиления",
+        "ko": "완벽한 확장의 오브",
+        "ja": "増強のオーブ (完全)",
+        "de": "Perfekte Aufwertungssphäre",
+        "fr": "Orbe d'augmentation parfait",
+        "es": "Orbe de aumento perfecto",
+        "pt": "Orbe da Ampliação Perfeito",
+        "th": "Orb of Augmentation ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Orb of Transmutation",
@@ -1078,7 +1897,17 @@
         "Life",
         "Moon",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера превращения",
+        "ko": "완벽한 진화의 오브",
+        "ja": "変成のオーブ (完全)",
+        "de": "Perfekte Umwandlungssphäre",
+        "fr": "Orbe de transmutation parfait",
+        "es": "Orbe de transmutación perfecto",
+        "pt": "Orbe da Transmutação Perfeito",
+        "th": "Orb of Transmutation ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Regal Orb",
@@ -1094,7 +1923,17 @@
         "Rebirth",
         "Opulent",
         "Power"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера царей",
+        "ko": "완벽한 제왕의 오브",
+        "ja": "王者のオーブ (完全)",
+        "de": "Perfekte Hoheitliche Sphäre",
+        "fr": "Orbe royal parfait",
+        "es": "Orbe regio perfecto",
+        "pt": "Orbe Real Perfeito",
+        "th": "Regal Orb ไร้ที่ติ"
+      }
     },
     {
       "output": "Regal Orb",
@@ -1105,7 +1944,17 @@
         "Earth",
         "Arcane",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера царей",
+        "ko": "제왕의 오브",
+        "ja": "王者のオーブ",
+        "de": "Hoheitliche Sphäre",
+        "fr": "Orbe royal",
+        "es": "Orbe regio",
+        "pt": "Orbe Real",
+        "th": "Regal Orb"
+      }
     },
     {
       "output": "Regal Orb",
@@ -1115,7 +1964,17 @@
       "runes": [
         "Cyclonic",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера царей",
+        "ko": "제왕의 오브",
+        "ja": "王者のオーブ",
+        "de": "Hoheitliche Sphäre",
+        "fr": "Orbe royal",
+        "es": "Orbe regio",
+        "pt": "Orbe Real",
+        "th": "Regal Orb"
+      }
     },
     {
       "output": "Regal Orb",
@@ -1125,7 +1984,17 @@
       "runes": [
         "Adaptive",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Сфера царей",
+        "ko": "제왕의 오브",
+        "ja": "王者のオーブ",
+        "de": "Hoheitliche Sphäre",
+        "fr": "Orbe royal",
+        "es": "Orbe regio",
+        "pt": "Orbe Real",
+        "th": "Regal Orb"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 10)",
@@ -1136,7 +2005,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 10)",
+        "ko": "마석학 유동체 (10레벨)",
+        "ja": "ソーマタージ・フラックス (レベル10)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 10)",
+        "fr": "Flux thaumaturgique (Niveau 10)",
+        "es": "Flujo taumatúrgico (nivel 10)",
+        "pt": "Fluxo Taumatúrgico (Nível 10)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 10)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 11)",
@@ -1147,7 +2026,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 11)",
+        "ko": "마석학 유동체 (11레벨)",
+        "ja": "ソーマタージ・フラックス (レベル11)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 11)",
+        "fr": "Flux thaumaturgique (Niveau 11)",
+        "es": "Flujo taumatúrgico (nivel 11)",
+        "pt": "Fluxo Taumatúrgico (Nível 11)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 11)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 12)",
@@ -1158,7 +2047,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 12)",
+        "ko": "마석학 유동체 (12레벨)",
+        "ja": "ソーマタージ・フラックス (レベル12)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 12)",
+        "fr": "Flux thaumaturgique (Niveau 12)",
+        "es": "Flujo taumatúrgico (nivel 12)",
+        "pt": "Fluxo Taumatúrgico (Nível 12)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 12)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 13)",
@@ -1169,7 +2068,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 13)",
+        "ko": "마석학 유동체 (13레벨)",
+        "ja": "ソーマタージ・フラックス (レベル13)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 13)",
+        "fr": "Flux thaumaturgique (Niveau 13)",
+        "es": "Flujo taumatúrgico (nivel 13)",
+        "pt": "Fluxo Taumatúrgico (Nível 13)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 13)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 14)",
@@ -1180,7 +2089,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 14)",
+        "ko": "마석학 유동체 (14레벨)",
+        "ja": "ソーマタージ・フラックス (レベル14)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 14)",
+        "fr": "Flux thaumaturgique (Niveau 14)",
+        "es": "Flujo taumatúrgico (nivel 14)",
+        "pt": "Fluxo Taumatúrgico (Nível 14)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 14)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 15)",
@@ -1191,7 +2110,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 15)",
+        "ko": "마석학 유동체 (15레벨)",
+        "ja": "ソーマタージ・フラックス (レベル15)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 15)",
+        "fr": "Flux thaumaturgique (Niveau 15)",
+        "es": "Flujo taumatúrgico (nivel 15)",
+        "pt": "Fluxo Taumatúrgico (Nível 15)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 15)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 16)",
@@ -1202,7 +2131,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 16)",
+        "ko": "마석학 유동체 (16레벨)",
+        "ja": "ソーマタージ・フラックス (レベル16)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 16)",
+        "fr": "Flux thaumaturgique (Niveau 16)",
+        "es": "Flujo taumatúrgico (nivel 16)",
+        "pt": "Fluxo Taumatúrgico (Nível 16)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 16)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 17)",
@@ -1213,7 +2152,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 17)",
+        "ko": "마석학 유동체 (17레벨)",
+        "ja": "ソーマタージ・フラックス (レベル17)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 17)",
+        "fr": "Flux thaumaturgique (Niveau 17)",
+        "es": "Flujo taumatúrgico (nivel 17)",
+        "pt": "Fluxo Taumatúrgico (Nível 17)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 17)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 18)",
@@ -1224,7 +2173,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 18)",
+        "ko": "마석학 유동체 (18레벨)",
+        "ja": "ソーマタージ・フラックス (レベル18)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 18)",
+        "fr": "Flux thaumaturgique (Niveau 18)",
+        "es": "Flujo taumatúrgico (nivel 18)",
+        "pt": "Fluxo Taumatúrgico (Nível 18)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 18)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 19)",
@@ -1237,7 +2196,17 @@
         "Ward",
         "Bloodletting",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 19)",
+        "ko": "마석학 유동체 (19레벨)",
+        "ja": "ソーマタージ・フラックス (レベル19)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 19)",
+        "fr": "Flux thaumaturgique (Niveau 19)",
+        "es": "Flujo taumatúrgico (nivel 19)",
+        "pt": "Fluxo Taumatúrgico (Nível 19)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 19)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 20)",
@@ -1251,7 +2220,17 @@
         "Stone",
         "Arcane",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 20)",
+        "ko": "마석학 유동체 (20레벨)",
+        "ja": "ソーマタージ・フラックス (レベル20)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 20)",
+        "fr": "Flux thaumaturgique (Niveau 20)",
+        "es": "Flujo taumatúrgico (nivel 20)",
+        "pt": "Fluxo Taumatúrgico (Nível 20)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 20)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 5)",
@@ -1262,7 +2241,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 5)",
+        "ko": "마석학 유동체 (5레벨)",
+        "ja": "ソーマタージ・フラックス (レベル5)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 5)",
+        "fr": "Flux thaumaturgique (Niveau 5)",
+        "es": "Flujo taumatúrgico (nivel 5)",
+        "pt": "Fluxo Taumatúrgico (Nível 5)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 5)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 6)",
@@ -1273,7 +2262,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 6)",
+        "ko": "마석학 유동체 (6레벨)",
+        "ja": "ソーマタージ・フラックス (レベル6)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 6)",
+        "fr": "Flux thaumaturgique (Niveau 6)",
+        "es": "Flujo taumatúrgico (nivel 6)",
+        "pt": "Fluxo Taumatúrgico (Nível 6)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 6)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 7)",
@@ -1284,7 +2283,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 7)",
+        "ko": "마석학 유동체 (7레벨)",
+        "ja": "ソーマタージ・フラックス (レベル7)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 7)",
+        "fr": "Flux thaumaturgique (Niveau 7)",
+        "es": "Flujo taumatúrgico (nivel 7)",
+        "pt": "Fluxo Taumatúrgico (Nível 7)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 7)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 8)",
@@ -1295,7 +2304,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 8)",
+        "ko": "마석학 유동체 (8레벨)",
+        "ja": "ソーマタージ・フラックス (レベル8)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 8)",
+        "fr": "Flux thaumaturgique (Niveau 8)",
+        "es": "Flujo taumatúrgico (nivel 8)",
+        "pt": "Fluxo Taumatúrgico (Nível 8)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 8)"
+      }
     },
     {
       "output": "Thaumaturgic Flux (Level 9)",
@@ -1306,7 +2325,17 @@
         "Earth",
         "Ward",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Чародейский расплав (Уровень 9)",
+        "ko": "마석학 유동체 (9레벨)",
+        "ja": "ソーマタージ・フラックス (レベル9)",
+        "de": "Thaumaturgisches Flussmittel (Stufe 9)",
+        "fr": "Flux thaumaturgique (Niveau 9)",
+        "es": "Flujo taumatúrgico (nivel 9)",
+        "pt": "Fluxo Taumatúrgico (Nível 9)",
+        "th": "มนต์มณีไหลเวียน (เลเวล 9)"
+      }
     },
     {
       "output": "Uhtred's Saga",
@@ -1320,7 +2349,17 @@
         "Arcane",
         "Wisdom",
         "Time"
-      ]
+      ],
+      "names": {
+        "ru": "Сага Утреда",
+        "ko": "우트레드의 영웅담",
+        "ja": "ウートレッドの叙事詩",
+        "de": "Uhtreds Saga",
+        "fr": "Saga d'Uthred",
+        "es": "Saga de Uhtred",
+        "pt": "Saga de Uhtred",
+        "th": "มหากาพย์ของเออห์เทร็ด"
+      }
     },
     {
       "output": "Verisium Pile",
@@ -1331,7 +2370,17 @@
         "Cyclonic",
         "Sky",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Груда веризия",
+        "ko": "베리시움 더미",
+        "ja": "ヴェリシウムの塊",
+        "de": "Verisium-Stapel",
+        "fr": "Amas de Vérisium",
+        "es": "Pila de verisium",
+        "pt": "Pilha de Verísio",
+        "th": "กองเวรีเซียม"
+      }
     },
     {
       "output": "Void Flux",
@@ -1345,7 +2394,17 @@
         "Soul",
         "Power",
         "Death"
-      ]
+      ],
+      "names": {
+        "ru": "Пустотный расплав",
+        "ko": "공허 유동체",
+        "ja": "虚無フラックス",
+        "de": "Leeres Flussmittel",
+        "fr": "Flux du néant",
+        "es": "Flujo del vacío",
+        "pt": "Fluxo do Vazio",
+        "th": "ห้วงว่างไหลเวียน"
+      }
     },
     {
       "output": "Vorana's Saga",
@@ -1359,7 +2418,17 @@
         "Time",
         "Wisdom",
         "Toxic"
-      ]
+      ],
+      "names": {
+        "ru": "Сага Вораны",
+        "ko": "보라나의 영웅담",
+        "ja": "ヴォラナの叙事詩",
+        "de": "Voranas Saga",
+        "fr": "Saga de Vorana",
+        "es": "Saga de Vorana",
+        "pt": "Saga de Vorana",
+        "th": "มหากาพย์ของวอราน่า"
+      }
     },
     {
       "output": "Animus Exchange",
@@ -1373,7 +2442,17 @@
         "Ward",
         "Wisdom",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Обмен анимой",
+        "ko": "아니무스 교환",
+        "ja": "アニムスエクスチェンジ",
+        "de": "Animusaustausch",
+        "fr": "Animus Exchange",
+        "es": "Intercambio de ánima",
+        "pt": "Troca de Ânimo",
+        "th": "ย้ายเจตจำนง"
+      }
     },
     {
       "output": "Animus Exchange",
@@ -1385,7 +2464,17 @@
         "Prismatic",
         "Electrocuting",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Обмен анимой",
+        "ko": "아니무스 교환",
+        "ja": "アニムスエクスチェンジ",
+        "de": "Animusaustausch",
+        "fr": "Animus Exchange",
+        "es": "Intercambio de ánima",
+        "pt": "Troca de Ânimo",
+        "th": "ย้ายเจตจำนง"
+      }
     },
     {
       "output": "Animus Splinters",
@@ -1399,7 +2488,17 @@
         "Rage",
         "Soul",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Осколки анимы",
+        "ko": "아니무스 파편",
+        "ja": "アニムススプリンター",
+        "de": "Animus-Splitter",
+        "fr": "Animus Splinters",
+        "es": "Astillas de ánima",
+        "pt": "Fragmentos de Ânimo",
+        "th": "แยกเจตจำนง"
+      }
     },
     {
       "output": "Animus Splinters",
@@ -1410,7 +2509,17 @@
         "Cold",
         "Sky",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Осколки анимы",
+        "ko": "아니무스 파편",
+        "ja": "アニムススプリンター",
+        "de": "Animus-Splitter",
+        "fr": "Animus Splinters",
+        "es": "Astillas de ánima",
+        "pt": "Fragmentos de Ânimo",
+        "th": "แยกเจตจำนง"
+      }
     },
     {
       "output": "Bitter Dead",
@@ -1423,7 +2532,17 @@
         "Ward",
         "Toxic",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Стылые трупы",
+        "ko": "원통한 망자",
+        "ja": "ビターデッド",
+        "de": "Bitterer Tod",
+        "fr": "Bitter Dead",
+        "es": "Muertos implacables",
+        "pt": "Morto Mordaz",
+        "th": "ศพขมขื่น"
+      }
     },
     {
       "output": "Bitter Dead",
@@ -1434,7 +2553,17 @@
         "Rebirth",
         "Cold",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Стылые трупы",
+        "ko": "원통한 망자",
+        "ja": "ビターデッド",
+        "de": "Bitterer Tod",
+        "fr": "Bitter Dead",
+        "es": "Muertos implacables",
+        "pt": "Morto Mordaz",
+        "th": "ศพขมขื่น"
+      }
     },
     {
       "output": "Concussive Runes",
@@ -1445,7 +2574,17 @@
         "Cyclonic",
         "Prismatic",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Сотрясающие руны",
+        "ko": "뇌진탕 룬",
+        "ja": "コンカッシブルーン",
+        "de": "Erschütternde Runen",
+        "fr": "Runes ébranlantes",
+        "es": "Runas contusivas",
+        "pt": "Runas Concussivas",
+        "th": "Concussive Runes"
+      }
     },
     {
       "output": "Conductive Runes",
@@ -1458,7 +2597,17 @@
         "Vision",
         "Vision",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Проводящие руны",
+        "ko": "전도성 룬",
+        "ja": "コンダクティブルーン",
+        "de": "Leitfähige Runen",
+        "fr": "Conductive Runes",
+        "es": "Runas conductoras",
+        "pt": "Runas Condutoras",
+        "th": "อักขระนำกระแสไฟ"
+      }
     },
     {
       "output": "Conductive Runes",
@@ -1469,7 +2618,17 @@
         "Cyclonic",
         "Lightning",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Проводящие руны",
+        "ko": "전도성 룬",
+        "ja": "コンダクティブルーン",
+        "de": "Leitfähige Runen",
+        "fr": "Conductive Runes",
+        "es": "Runas conductoras",
+        "pt": "Runas Condutoras",
+        "th": "อักขระนำกระแสไฟ"
+      }
     },
     {
       "output": "Detonate Living",
@@ -1482,7 +2641,17 @@
         "Celestial",
         "Fire",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Взрывная агония",
+        "ko": "생체 폭발",
+        "ja": "デトネートリビング",
+        "de": "Lebendenexplosion",
+        "fr": "Detonate Living",
+        "es": "Detonar vivos",
+        "pt": "Detonar os Vivos",
+        "th": "ระเบิดปลิดชีพ"
+      }
     },
     {
       "output": "Detonate Living",
@@ -1493,7 +2662,17 @@
         "Cyclonic",
         "Cold",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Взрывная агония",
+        "ko": "생체 폭발",
+        "ja": "デトネートリビング",
+        "de": "Lebendenexplosion",
+        "fr": "Detonate Living",
+        "es": "Detonar vivos",
+        "pt": "Detonar os Vivos",
+        "th": "ระเบิดปลิดชีพ"
+      }
     },
     {
       "output": "Eternal March",
@@ -1506,7 +2685,17 @@
         "Protective",
         "Rebirth",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Вечный марш",
+        "ko": "영원한 행진",
+        "ja": "エターナルマーチ",
+        "de": "Ewiger Marsch",
+        "fr": "Eternal March",
+        "es": "Marcha eterna",
+        "pt": "Marcha Eterna",
+        "th": "เดินทัพชั่วนิรันดร์"
+      }
     },
     {
       "output": "Eternal March",
@@ -1517,7 +2706,17 @@
         "Cyclonic",
         "Cold",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Вечный марш",
+        "ko": "영원한 행진",
+        "ja": "エターナルマーチ",
+        "de": "Ewiger Marsch",
+        "fr": "Eternal March",
+        "es": "Marcha eterna",
+        "pt": "Marcha Eterna",
+        "th": "เดินทัพชั่วนิรันดร์"
+      }
     },
     {
       "output": "Explosive Transmutation",
@@ -1531,7 +2730,17 @@
         "Volcanic",
         "Bond",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Взрывное преображение",
+        "ko": "폭발성 변형",
+        "ja": "エクスプローシブトランスミューテーション",
+        "de": "Explosive Umwandlung",
+        "fr": "Explosive Transmutation",
+        "es": "Transmutación explosiva",
+        "pt": "Transmutação Explosiva",
+        "th": "แปรผันเป็นระเบิด"
+      }
     },
     {
       "output": "Explosive Transmutation",
@@ -1542,7 +2751,17 @@
         "Cold",
         "Sky",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Взрывное преображение",
+        "ko": "폭발성 변형",
+        "ja": "エクスプローシブトランスミューテーション",
+        "de": "Explosive Umwandlung",
+        "fr": "Explosive Transmutation",
+        "es": "Transmutación explosiva",
+        "pt": "Transmutação Explosiva",
+        "th": "แปรผันเป็นระเบิด"
+      }
     },
     {
       "output": "Fist Of Kalguur",
@@ -1553,7 +2772,17 @@
         "Bloodletting",
         "Sky",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Кулак Калгуура",
+        "ko": "칼구르의 주먹",
+        "ja": "フィストオブカルグール",
+        "de": "Faust von Kalguur",
+        "fr": "Fist Of Kalguur",
+        "es": "Puño de Kalguur",
+        "pt": "Punho de Kalguur",
+        "th": "Fist Of Kalguur"
+      }
     },
     {
       "output": "Fragments Of The Past",
@@ -1566,7 +2795,17 @@
         "Lightning",
         "Toxic",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Фрагменты прошлого",
+        "ko": "과거의 조각",
+        "ja": "フラグメントオブパスト",
+        "de": "Fragmente der Vergangenheit",
+        "fr": "Fragments Of The Past",
+        "es": "Fragmentos del pasado",
+        "pt": "Fragmentos do Passado",
+        "th": "ชิ้นส่วนของอดีต"
+      }
     },
     {
       "output": "Fragments Of The Past",
@@ -1577,7 +2816,17 @@
         "Cyclonic",
         "Tidal",
         "Lightning"
-      ]
+      ],
+      "names": {
+        "ru": "Фрагменты прошлого",
+        "ko": "과거의 조각",
+        "ja": "フラグメントオブパスト",
+        "de": "Fragmente der Vergangenheit",
+        "fr": "Fragments Of The Past",
+        "es": "Fragmentos del pasado",
+        "pt": "Fragmentos do Passado",
+        "th": "ชิ้นส่วนของอดีต"
+      }
     },
     {
       "output": "Frostflame Nova",
@@ -1590,7 +2839,17 @@
         "Fire",
         "Momentum",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Кольцо морозного пламени",
+        "ko": "서리불꽃 폭발",
+        "ja": "フロストフレイムノヴァ",
+        "de": "Frostflammen-Nova",
+        "fr": "Nova de givreflamme",
+        "es": "Nova de llamas heladas",
+        "pt": "Nova de Chamas Gélidas",
+        "th": "เพลิงเยือกแข็งกระจาย"
+      }
     },
     {
       "output": "Frostflame Nova",
@@ -1601,7 +2860,17 @@
         "Cyclonic",
         "Cold",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Кольцо морозного пламени",
+        "ko": "서리불꽃 폭발",
+        "ja": "フロストフレイムノヴァ",
+        "de": "Frostflammen-Nova",
+        "fr": "Nova de givreflamme",
+        "es": "Nova de llamas heladas",
+        "pt": "Nova de Chamas Gélidas",
+        "th": "เพลิงเยือกแข็งกระจาย"
+      }
     },
     {
       "output": "Gemcutter's Prism",
@@ -1612,7 +2881,17 @@
         "Prismatic",
         "Celestial",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Призма камнереза",
+        "ko": "세공사의 프리즘",
+        "ja": "宝石細工師のプリズム",
+        "de": "Prisma des Gemmenschneiders",
+        "fr": "Prisme de lapidaire",
+        "es": "Prisma del tallador de gemas",
+        "pt": "Prisma do Lapidário",
+        "th": "Gemcutter's Prism"
+      }
     },
     {
       "output": "Grim Pillars",
@@ -1625,7 +2904,17 @@
         "Ward",
         "Momentum",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Мрачные столпы",
+        "ko": "으스스한 기둥",
+        "ja": "グリムピラー",
+        "de": "Düstere Säulen",
+        "fr": "Grim Pillars",
+        "es": "Pilares sombríos",
+        "pt": "Pilares Funestos",
+        "th": "เสาอำมหิต"
+      }
     },
     {
       "output": "Grim Pillars",
@@ -1636,7 +2925,17 @@
         "Volcanic",
         "Cold",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Мрачные столпы",
+        "ko": "으스스한 기둥",
+        "ja": "グリムピラー",
+        "de": "Düstere Säulen",
+        "fr": "Grim Pillars",
+        "es": "Pilares sombríos",
+        "pt": "Pilares Funestos",
+        "th": "เสาอำมหิต"
+      }
     },
     {
       "output": "Healing Runes",
@@ -1648,7 +2947,17 @@
         "Prismatic",
         "Protective",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Исцеляющие руны",
+        "ko": "치유 룬",
+        "ja": "回復のルーン",
+        "de": "Heilende Runen",
+        "fr": "Runes réparatrices",
+        "es": "Runas curativas",
+        "pt": "Runas Curativas",
+        "th": "Healing Runes"
+      }
     },
     {
       "output": "Hollow Shell",
@@ -1662,7 +2971,17 @@
         "Prismatic",
         "Life",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Пустая оболочка",
+        "ko": "공허의 껍데기",
+        "ja": "ホロウシェル",
+        "de": "Leere Schale",
+        "fr": "Enveloppe creuse",
+        "es": "Coraza hueca",
+        "pt": "Concha Oca",
+        "th": "เปลือกขลัง"
+      }
     },
     {
       "output": "Hollow Shell",
@@ -1673,7 +2992,17 @@
         "Arcane",
         "Sky",
         "Earth"
-      ]
+      ],
+      "names": {
+        "ru": "Пустая оболочка",
+        "ko": "공허의 껍데기",
+        "ja": "ホロウシェル",
+        "de": "Leere Schale",
+        "fr": "Enveloppe creuse",
+        "es": "Coraza hueca",
+        "pt": "Concha Oca",
+        "th": "เปลือกขลัง"
+      }
     },
     {
       "output": "Leylines",
@@ -1687,7 +3016,17 @@
         "Ward",
         "Wisdom",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Силовые линии",
+        "ko": "지맥",
+        "ja": "レイライン",
+        "de": "Ley-Linien",
+        "fr": "Leylines",
+        "es": "Líneas ley",
+        "pt": "Fluxos Energéticos",
+        "th": "เส้นพลังงาน"
+      }
     },
     {
       "output": "Leylines",
@@ -1699,7 +3038,17 @@
         "Celestial",
         "Rebirth",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Силовые линии",
+        "ko": "지맥",
+        "ja": "レイライン",
+        "de": "Ley-Linien",
+        "fr": "Leylines",
+        "es": "Líneas ley",
+        "pt": "Fluxos Energéticos",
+        "th": "เส้นพลังงาน"
+      }
     },
     {
       "output": "Powered by Verisium",
@@ -1712,7 +3061,17 @@
         "Ward",
         "Vision",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Питание веризием",
+        "ko": "베리시움 동력 공급",
+        "ja": "パワードバイヴェリシウム",
+        "de": "Angetrieben von Verisium",
+        "fr": "Powered by Verisium",
+        "es": "Potenciación de verisium",
+        "pt": "Potencialização por Verísio",
+        "th": "ขุมพลังเวริเซียม"
+      }
     },
     {
       "output": "Powered by Verisium",
@@ -1723,7 +3082,17 @@
         "Arcane",
         "Earth",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Питание веризием",
+        "ko": "베리시움 동력 공급",
+        "ja": "パワードバイヴェリシウム",
+        "de": "Angetrieben von Verisium",
+        "fr": "Powered by Verisium",
+        "es": "Potenciación de verisium",
+        "pt": "Potencialização por Verísio",
+        "th": "ขุมพลังเวริเซียม"
+      }
     },
     {
       "output": "Rain of Blades",
@@ -1737,7 +3106,17 @@
         "Arcane",
         "Stone",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Дождь клинков",
+        "ko": "칼날의 비",
+        "ja": "レインオブブレード",
+        "de": "Klingenregen",
+        "fr": "Rain of Blades",
+        "es": "Lluvia de filos",
+        "pt": "Chuva de Lâminas",
+        "th": "ฝนมีด"
+      }
     },
     {
       "output": "Rain of Blades",
@@ -1748,7 +3127,17 @@
         "Arcane",
         "Sky",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Дождь клинков",
+        "ko": "칼날의 비",
+        "ja": "レインオブブレード",
+        "de": "Klingenregen",
+        "fr": "Rain of Blades",
+        "es": "Lluvia de filos",
+        "pt": "Chuva de Lâminas",
+        "th": "ฝนมีด"
+      }
     },
     {
       "output": "Refutation",
@@ -1762,7 +3151,17 @@
         "Ward",
         "Wisdom",
         "Death"
-      ]
+      ],
+      "names": {
+        "ru": "Отвержение",
+        "ko": "부인",
+        "ja": "リフュテーション",
+        "de": "Widerlegung",
+        "fr": "Refutation",
+        "es": "Refutación",
+        "pt": "Refutação",
+        "th": "อักขระโต้แย้ง"
+      }
     },
     {
       "output": "Refutation",
@@ -1774,7 +3173,17 @@
         "Prismatic",
         "Stone",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Отвержение",
+        "ko": "부인",
+        "ja": "リフュテーション",
+        "de": "Widerlegung",
+        "fr": "Refutation",
+        "es": "Refutación",
+        "pt": "Refutação",
+        "th": "อักขระโต้แย้ง"
+      }
     },
     {
       "output": "Remnants of Kalguur",
@@ -1787,7 +3196,17 @@
         "Ward",
         "Lightning",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Реликты Калгуура",
+        "ko": "칼구르의 잔류물",
+        "ja": "レムナントオブカルグール",
+        "de": "Relikte der Kalguur",
+        "fr": "Remnants of Kalguur",
+        "es": "Remanentes de Kalguur",
+        "pt": "Vestígios de Kalguur",
+        "th": "หยาดคาลเกอร์"
+      }
     },
     {
       "output": "Remnants of Kalguur",
@@ -1798,7 +3217,17 @@
         "Sky",
         "Tidal",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Реликты Калгуура",
+        "ko": "칼구르의 잔류물",
+        "ja": "レムナントオブカルグール",
+        "de": "Relikte der Kalguur",
+        "fr": "Remnants of Kalguur",
+        "es": "Remanentes de Kalguur",
+        "pt": "Vestígios de Kalguur",
+        "th": "หยาดคาลเกอร์"
+      }
     },
     {
       "output": "Repulsion",
@@ -1811,7 +3240,17 @@
         "Protective",
         "Lightning",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Отталкивание",
+        "ko": "반발",
+        "ja": "リパルジョン",
+        "de": "Abstoßung",
+        "fr": "Repulsion",
+        "es": "Repulsion",
+        "pt": "Repulsão",
+        "th": "ขับไล่"
+      }
     },
     {
       "output": "Repulsion",
@@ -1822,7 +3261,17 @@
         "Cyclonic",
         "Earth",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Отталкивание",
+        "ko": "반발",
+        "ja": "リパルジョン",
+        "de": "Abstoßung",
+        "fr": "Repulsion",
+        "es": "Repulsion",
+        "pt": "Repulsão",
+        "th": "ขับไล่"
+      }
     },
     {
       "output": "Runeforged Blades",
@@ -1833,7 +3282,17 @@
         "Volcanic",
         "Electrocuting",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Руннокованые клинки",
+        "ko": "룬벼림 칼날",
+        "ja": "ルーンフォージブレード",
+        "de": "Runengeschmiedete Klingen",
+        "fr": "Lames runeforgées",
+        "es": "Cuchillas runaforjadas",
+        "pt": "Lâminas Runiforjadas",
+        "th": "Runeforged Blades"
+      }
     },
     {
       "output": "Runic Extraction",
@@ -1844,7 +3303,17 @@
         "Rebirth",
         "Sky",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Рунное извлечение",
+        "ko": "룬의 추출",
+        "ja": "ルーンの抽出",
+        "de": "Runische Extraktion",
+        "fr": "Extraction runique",
+        "es": "Extracción rúnica",
+        "pt": "Extração Rúnica",
+        "th": "Runic Extraction"
+      }
     },
     {
       "output": "Runic Infusion",
@@ -1855,7 +3324,17 @@
         "Electrocuting",
         "Sky",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Рунное насыщение",
+        "ko": "룬 주입",
+        "ja": "ルーニックインフュージョン",
+        "de": "Runeninfusion",
+        "fr": "Infusion runique",
+        "es": "Infusión rúnica",
+        "pt": "Infusão Rúnica",
+        "th": "Runic Infusion"
+      }
     },
     {
       "output": "Runic Reprieve",
@@ -1869,7 +3348,17 @@
         "Ward",
         "Wisdom",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Рунное отведение",
+        "ko": "룬의 유예",
+        "ja": "ルーニックリプリーブ",
+        "de": "Runen-Barriere",
+        "fr": "Runic Reprieve",
+        "es": "Alivio rúnico",
+        "pt": "Alívio Rúnico",
+        "th": "อักขระคลายทุกข์"
+      }
     },
     {
       "output": "Runic Reprieve",
@@ -1881,7 +3370,17 @@
         "Prismatic",
         "Rebirth",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Рунное отведение",
+        "ko": "룬의 유예",
+        "ja": "ルーニックリプリーブ",
+        "de": "Runen-Barriere",
+        "fr": "Runic Reprieve",
+        "es": "Alivio rúnico",
+        "pt": "Alívio Rúnico",
+        "th": "อักขระคลายทุกข์"
+      }
     },
     {
       "output": "Scouring Flame",
@@ -1892,7 +3391,17 @@
         "Volcanic",
         "Fire",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Очищающее пламя",
+        "ko": "정제의 불길",
+        "ja": "スカリングフレイム",
+        "de": "Verzehrende Flamme",
+        "fr": "Flamme dévastatrice",
+        "es": "Llama devastadora",
+        "pt": "Chama do Expurgo",
+        "th": "Scouring Flame"
+      }
     },
     {
       "output": "Skyfall",
@@ -1906,7 +3415,17 @@
         "Ward",
         "Wisdom",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Падение небес",
+        "ko": "하늘 붕괴",
+        "ja": "スカイフォール",
+        "de": "Himmelssturz",
+        "fr": "Skyfall",
+        "es": "Caída del cielo",
+        "pt": "Céu em Queda",
+        "th": "เวหาร่วง"
+      }
     },
     {
       "output": "Skyfall",
@@ -1918,7 +3437,17 @@
         "Celestial",
         "Protective",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Падение небес",
+        "ko": "하늘 붕괴",
+        "ja": "スカイフォール",
+        "de": "Himmelssturz",
+        "fr": "Skyfall",
+        "es": "Caída del cielo",
+        "pt": "Céu em Queda",
+        "th": "เวหาร่วง"
+      }
     },
     {
       "output": "Triskelion Cascade",
@@ -1932,7 +3461,17 @@
         "Ward",
         "Wisdom",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Каскад Трискелиона",
+        "ko": "트리스켈리온의 폭포",
+        "ja": "トリスケリオン・カスケード",
+        "de": "Triskelion-Kaskade",
+        "fr": "Cascade triskélienne",
+        "es": "Cascada trisqueliana",
+        "pt": "Cascata Triskelion",
+        "th": "ทริสเกียลเรียงหลั่น"
+      }
     },
     {
       "output": "Triskelion Cascade",
@@ -1944,7 +3483,17 @@
         "Celestial",
         "Stone",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Каскад Трискелиона",
+        "ko": "트리스켈리온의 폭포",
+        "ja": "トリスケリオン・カスケード",
+        "de": "Triskelion-Kaskade",
+        "fr": "Cascade triskélienne",
+        "es": "Cascada trisqueliana",
+        "pt": "Cascata Triskelion",
+        "th": "ทริสเกียลเรียงหลั่น"
+      }
     },
     {
       "output": "Uncut Skill Gem",
@@ -1954,7 +3503,17 @@
       "runes": [
         "Momentum",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень умения",
+        "ko": "미가공 스킬 젬",
+        "ja": "スキルジェムの原石",
+        "de": "Ungeschnittene Fertigkeitengemme",
+        "fr": "Gemme d'aptitude brute",
+        "es": "Gema de habilidad sin tallar",
+        "pt": "Gema de Habilidade Bruta",
+        "th": "หินสกิลหยาบ"
+      }
     },
     {
       "output": "Uncut Skill Gem (Level 19)",
@@ -1967,7 +3526,17 @@
         "Electrocuting",
         "Cold",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень умения (уровень 19)",
+        "ko": "미가공 스킬 젬 (19레벨)",
+        "ja": "スキルジェムの原石 (レベル19)",
+        "de": "Ungeschnittene Fertigkeitengemme (Stufe 19)",
+        "fr": "Gemme d'aptitude brute (Niveau 19)",
+        "es": "Gema de habilidad sin tallar (nivel 19)",
+        "pt": "Gema de Habilidade Bruta (Nível 19)",
+        "th": "หินสกิลหยาบ (เลเวล 19)"
+      }
     },
     {
       "output": "Uncut Skill Gem (Level 20)",
@@ -1981,7 +3550,17 @@
         "Wisdom",
         "Protective",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень умения (уровень 20)",
+        "ko": "미가공 스킬 젬 (20레벨)",
+        "ja": "スキルジェムの原石 (レベル20)",
+        "de": "Ungeschnittene Fertigkeitengemme (Stufe 20)",
+        "fr": "Gemme d'aptitude brute (Niveau 20)",
+        "es": "Gema de habilidad sin tallar (nivel 20)",
+        "pt": "Gema de Habilidade Bruta (Nível 20)",
+        "th": "หินสกิลหยาบ (เลเวล 20)"
+      }
     },
     {
       "output": "Uncut Spirit Gem",
@@ -1991,7 +3570,17 @@
       "runes": [
         "Prismatic",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень духа",
+        "ko": "미가공 정신력 젬",
+        "ja": "スピリットジェムの原石",
+        "de": "Ungeschnittene Willegemme",
+        "fr": "Gemme d'esprit brute",
+        "es": "Gema de espíritu sin tallar",
+        "pt": "Gema Espiritual Bruta",
+        "th": "หินพลังวิญญาณหยาบ"
+      }
     },
     {
       "output": "Uncut Spirit Gem (Level 19)",
@@ -2004,7 +3593,17 @@
         "Prismatic",
         "Life",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень духа (уровень 19)",
+        "ko": "미가공 정신력 젬 (19레벨)",
+        "ja": "スピリットジェムの原石 (レベル19)",
+        "de": "Ungeschnittene Wille-Gemme (Stufe 19)",
+        "fr": "Gemme d'esprit brute (Niveau 19)",
+        "es": "Gema de espíritu sin tallar (nivel 19)",
+        "pt": "Gema Espiritual Bruta (Nível 19)",
+        "th": "หินพลังวิญญาณหยาบ (เลเวล 19)"
+      }
     },
     {
       "output": "Uncut Spirit Gem (Level 20)",
@@ -2018,7 +3617,17 @@
         "Wisdom",
         "Prismatic",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень духа (уровень 20)",
+        "ko": "미가공 정신력 젬 (20레벨)",
+        "ja": "スピリットジェムの原石 (レベル20)",
+        "de": "Ungeschnittene Wille-Gemme (Stufe 20)",
+        "fr": "Gemme d'esprit brute (Niveau 20)",
+        "es": "Gema de espíritu sin tallar (nivel 20)",
+        "pt": "Gema Espiritual Bruta (Nível 20)",
+        "th": "หินพลังวิญญาณหยาบ (เลเวล 20)"
+      }
     },
     {
       "output": "Uncut Support Gem",
@@ -2028,7 +3637,17 @@
       "runes": [
         "Momentum",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Неогранённый камень поддержки",
+        "ko": "미가공 보조 젬",
+        "ja": "サポートジェムの原石",
+        "de": "Ungeschnittene Unterstützungsgemme",
+        "fr": "Gemme de soutien brute",
+        "es": "Gema de asistencia sin tallar",
+        "pt": "Gema de Reforço Bruta",
+        "th": "หินเสริมหยาบ"
+      }
     },
     {
       "output": "Verisium Manifestations",
@@ -2041,7 +3660,17 @@
         "Ward",
         "Cold",
         "Soul"
-      ]
+      ],
+      "names": {
+        "ru": "Веризиевые проявления",
+        "ko": "베리시움 현신",
+        "ja": "ヴェリシウムマニフェステーション",
+        "de": "Verisium-Manifestationen",
+        "fr": "Verisium Manifestations",
+        "es": "Manifestaciones de verisium",
+        "pt": "Manifestações de Verísio",
+        "th": "เวรีเซียมสำแดงตน"
+      }
     },
     {
       "output": "Verisium Manifestations",
@@ -2052,7 +3681,17 @@
         "Rebirth",
         "Rage",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Веризиевые проявления",
+        "ko": "베리시움 현신",
+        "ja": "ヴェリシウムマニフェステーション",
+        "de": "Verisium-Manifestationen",
+        "fr": "Verisium Manifestations",
+        "es": "Manifestaciones de verisium",
+        "pt": "Manifestações de Verísio",
+        "th": "เวรีเซียมสำแดงตน"
+      }
     },
     {
       "output": "Voltaic Barrier",
@@ -2066,7 +3705,17 @@
         "Stone",
         "Death",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Электрический барьер",
+        "ko": "전도성 방어막",
+        "ja": "ボルタイックバリア",
+        "de": "Voltaische Barriere",
+        "fr": "Voltaic Barrier",
+        "es": "Barrera voltaica",
+        "pt": "Barreira Voltaica",
+        "th": "บาเรียประจุ"
+      }
     },
     {
       "output": "Voltaic Barrier",
@@ -2077,7 +3726,17 @@
         "Ward",
         "Sky",
         "Lightning"
-      ]
+      ],
+      "names": {
+        "ru": "Электрический барьер",
+        "ko": "전도성 방어막",
+        "ja": "ボルタイックバリア",
+        "de": "Voltaische Barriere",
+        "fr": "Voltaic Barrier",
+        "es": "Barrera voltaica",
+        "pt": "Barreira Voltaica",
+        "th": "บาเรียประจุ"
+      }
     },
     {
       "output": "Wardbound Minions",
@@ -2091,7 +3750,17 @@
         "Protective",
         "Oath",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерные приспешники",
+        "ko": "수호결속 소환수",
+        "ja": "ワードバウンドミニオン",
+        "de": "Schutzgebundene Kreaturen",
+        "fr": "Wardbound Minions",
+        "es": "Esbirros de barrera",
+        "pt": "Lacaios Vinculados à Salvaguarda",
+        "th": "มิเนียนพันธะวอร์ด"
+      }
     },
     {
       "output": "Wardbound Minions",
@@ -2102,7 +3771,17 @@
         "Tempest",
         "Sky",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерные приспешники",
+        "ko": "수호결속 소환수",
+        "ja": "ワードバウンドミニオン",
+        "de": "Schutzgebundene Kreaturen",
+        "fr": "Wardbound Minions",
+        "es": "Esbirros de barrera",
+        "pt": "Lacaios Vinculados à Salvaguarda",
+        "th": "มิเนียนพันธะวอร์ด"
+      }
     },
     {
       "output": "Adept Rune",
@@ -2112,7 +3791,17 @@
       "runes": [
         "Moon",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Руна искусности",
+        "ko": "숙달 룬",
+        "ja": "熟達のルーン",
+        "de": "Adept-Rune",
+        "fr": "Rune de l'Adepte",
+        "es": "Runa de habilidad",
+        "pt": "Runa do Perito",
+        "th": "อักขระช่ำชอง"
+      }
     },
     {
       "output": "Aldur's Legacy",
@@ -2130,7 +3819,17 @@
         "Protective",
         "Time",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Наследие Альдура",
+        "ko": "알두르의 유산",
+        "ja": "アルダーの遺産",
+        "de": "Aldurs Vermächtnis",
+        "fr": "Héritage d'Aldur",
+        "es": "Legado de Aldur",
+        "pt": "Legado de Aldur",
+        "th": "มรดกของอัลเดอร์"
+      }
     },
     {
       "output": "Ancient Rune of Animosity",
@@ -2142,7 +3841,17 @@
         "Momentum",
         "Rage",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна вражды",
+        "ko": "적대감의 고대 룬",
+        "ja": "敵意の古代ルーン",
+        "de": "Uralte Rune der Feindseligkeit",
+        "fr": "Rune antique de l'Animosité",
+        "es": "Runa antigua de animosidad",
+        "pt": "Runa da Animosidade Antiga",
+        "th": "อักขระโบราณ ปรปักษ์"
+      }
     },
     {
       "output": "Ancient Rune of Control",
@@ -2154,7 +3863,17 @@
         "Adaptive",
         "Moon",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна правления",
+        "ko": "통제의 고대 룬",
+        "ja": "制御の古代ルーン",
+        "de": "Uralte Rune der Kontrolle",
+        "fr": "Rune antique du Contrôle",
+        "es": "Runa antigua de control",
+        "pt": "Runa do Controle Antiga",
+        "th": "อักขระโบราณ ควบคุม"
+      }
     },
     {
       "output": "Ancient Rune of Decay",
@@ -2166,7 +3885,17 @@
         "Adaptive",
         "Arcane",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна тлена",
+        "ko": "부패의 고대 룬",
+        "ja": "腐敗の古代ルーン",
+        "de": "Uralte Rune des Verfalls",
+        "fr": "Rune antique de la Décomposition",
+        "es": "Runa antigua de decaimiento",
+        "pt": "Runa da Decadência Antiga",
+        "th": "อักขระโบราณ เสื่อมสลาย"
+      }
     },
     {
       "output": "Ancient Rune of Detonation",
@@ -2178,7 +3907,17 @@
         "Adaptive",
         "Tempest",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна подрыва",
+        "ko": "기폭의 고대 룬",
+        "ja": "起爆の古代ルーン",
+        "de": "Uralte Rune der Detonation",
+        "fr": "Rune antique de la Détonation",
+        "es": "Runa antigua de detonación",
+        "pt": "Runa da Detonação Antiga",
+        "th": "อักขระโบราณ จุดระเบิด"
+      }
     },
     {
       "output": "Ancient Rune of Discovery",
@@ -2190,7 +3929,17 @@
         "Celestial",
         "Sky",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна находки",
+        "ko": "발견의 고대 룬",
+        "ja": "発見の古代ルーン",
+        "de": "Uralte Rune der Entdeckung",
+        "fr": "Rune antique de la Découverte",
+        "es": "Runa antigua de descubrimiento",
+        "pt": "Runa da Descoberta Antiga",
+        "th": "อักขระโบราณ ค้นพบ"
+      }
     },
     {
       "output": "Ancient Rune of Dueling",
@@ -2202,7 +3951,17 @@
         "Earth",
         "Stone",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна поединка",
+        "ko": "결투의 고대 룬",
+        "ja": "決闘の古代ルーン",
+        "de": "Uralte Rune des Duells",
+        "fr": "Rune antique du Duel",
+        "es": "Runa antigua de duelo",
+        "pt": "Runa do Duelo Antiga",
+        "th": "อักขระโบราณ ดวล"
+      }
     },
     {
       "output": "Ancient Rune of Prowess",
@@ -2214,7 +3973,17 @@
         "Momentum",
         "Arcane",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна мастерства",
+        "ko": "기량의 고대 룬",
+        "ja": "武勇の古代ルーン",
+        "de": "Uralte Rune der Tapferkeit",
+        "fr": "Rune antique de la Prouesse",
+        "es": "Runa antigua de bravura",
+        "pt": "Runa da Proeza Antiga",
+        "th": "อักขระโบราณ แกร่งกล้า"
+      }
     },
     {
       "output": "Ancient Rune of Retaliation",
@@ -2226,7 +3995,17 @@
         "Sky",
         "Momentum",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна расплаты",
+        "ko": "보복의 고대 룬",
+        "ja": "報復の古代ルーン",
+        "de": "Uralte Rune der Vergeltung",
+        "fr": "Rune antique de la Riposte",
+        "es": "Runa antigua de represalia",
+        "pt": "Runa da Retaliação Antiga",
+        "th": "อักขระโบราณ โต้กลับ"
+      }
     },
     {
       "output": "Ancient Rune of Shattering",
@@ -2238,7 +4017,17 @@
         "Tidal",
         "Lightning",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна разбивания",
+        "ko": "산산조각의 고대 룬",
+        "ja": "破砕の古代ルーン",
+        "de": "Uralte Rune der Zerschmetterung",
+        "fr": "Rune antique du Fracassement",
+        "es": "Runa antigua de fragmentación",
+        "pt": "Runa do Estilhaçamento Antiga",
+        "th": "อักขระโบราณ แตกสลาย"
+      }
     },
     {
       "output": "Ancient Rune of Splinters",
@@ -2250,7 +4039,17 @@
         "Tempest",
         "Lightning",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна осколков",
+        "ko": "파편의 고대 룬",
+        "ja": "破片の古代ルーン",
+        "de": "Uralte Rune der Splitter",
+        "fr": "Rune antique des Éclats",
+        "es": "Runa antigua de astillas",
+        "pt": "Runa de Farpas Antiga",
+        "th": "อักขระโบราณ สะเก็ด"
+      }
     },
     {
       "output": "Ancient Rune of Witchcraft",
@@ -2262,7 +4061,17 @@
         "Bloodletting",
         "Celestial",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна ведьмовства",
+        "ko": "마술의 고대 룬",
+        "ja": "妖術の古代ルーン",
+        "de": "Uralte Rune der Hexerei",
+        "fr": "Rune antique de la Sorcellerie",
+        "es": "Runa antigua de brujería",
+        "pt": "Runa da Bruxaria Antiga",
+        "th": "อักขระโบราณ ศาสตร์แม่มด"
+      }
     },
     {
       "output": "Ancient Rune of the Horde",
@@ -2274,7 +4083,17 @@
         "Bloodletting",
         "Momentum",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна орды",
+        "ko": "떼의 고대 룬",
+        "ja": "大群の古代ルーン",
+        "de": "Uralte Rune der Horde",
+        "fr": "Rune antique de la Horde",
+        "es": "Runa antigua de la horda",
+        "pt": "Runa da Horda Antiga",
+        "th": "อักขระโบราณ ฝูง"
+      }
     },
     {
       "output": "Ancient Rune of the Titan",
@@ -2286,7 +4105,17 @@
         "Bloodletting",
         "Rage",
         "Opulent"
-      ]
+      ],
+      "names": {
+        "ru": "Древняя руна Титана",
+        "ko": "거신의 고대 룬",
+        "ja": "タイタンの古代ルーン",
+        "de": "Uralte Rune des Titanen",
+        "fr": "Rune antique du Titan",
+        "es": "Runa antigua del titán",
+        "pt": "Runa do Titã Antiga",
+        "th": "อักขระโบราณ ไททัน"
+      }
     },
     {
       "output": "Astrid's Creativity",
@@ -2301,7 +4130,17 @@
         "Power",
         "Volcanic",
         "Death"
-      ]
+      ],
+      "names": {
+        "ru": "Изобретательность Астрид",
+        "ko": "아스트리드의 창의성",
+        "ja": "アストリッドの創造性",
+        "de": "Astrids Kreativität",
+        "fr": "Créativité d'Astrid",
+        "es": "Creatividad de Astrid",
+        "pt": "Criatividade de Astrid",
+        "th": "ความสร้างสรรค์ของแอสทริด"
+      }
     },
     {
       "output": "Betrayal of Aldur",
@@ -2316,7 +4155,17 @@
         "Power",
         "Wisdom",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Предательство Альдура",
+        "ko": "알두르의 배신",
+        "ja": "アルダーの裏切り",
+        "de": "Verrat von Aldur",
+        "fr": "Trahison d'Aldur",
+        "es": "Traición de Aldur",
+        "pt": "Traição de Aldur",
+        "th": "การหักหลังอัลเดอร์"
+      }
     },
     {
       "output": "Blacksmith's Whetstone",
@@ -2326,7 +4175,17 @@
       "runes": [
         "Fire",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Точильный камень",
+        "ko": "대장장이의 숫돌",
+        "ja": "鍛冶屋の砥石",
+        "de": "Schleifstein",
+        "fr": "Pierre à aiguiser de forgeron",
+        "es": "Piedra de afilar",
+        "pt": "Lima do Ferreiro",
+        "th": "Blacksmith's Whetstone"
+      }
     },
     {
       "output": "Body Rune",
@@ -2336,7 +4195,17 @@
       "runes": [
         "Protective",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна тела",
+        "ko": "육신 룬",
+        "ja": "肉体のルーン",
+        "de": "Körperrune",
+        "fr": "Rune du Corps",
+        "es": "Runa del cuerpo",
+        "pt": "Runa Corporal",
+        "th": "อักขระกาย"
+      }
     },
     {
       "output": "Breath of Aldur",
@@ -2351,7 +4220,17 @@
         "Power",
         "Wisdom",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Дыхание Альдура",
+        "ko": "알두르의 숨결",
+        "ja": "アルダーの息吹",
+        "de": "Atem von Aldur",
+        "fr": "Souffle d'Aldur",
+        "es": "Aliento de Aldur",
+        "pt": "Sopro de Aldur",
+        "th": "ลมหายใจอัลเดอร์"
+      }
     },
     {
       "output": "Cadigan's Epiphany",
@@ -2366,7 +4245,17 @@
         "Power",
         "Soul",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Озарение Кадигана",
+        "ko": "캐디건의 통찰",
+        "ja": "カディガンの啓示",
+        "de": "Cadigans Erleuchtung",
+        "fr": "Épiphanie de Cadigan",
+        "es": "Epifanía de Cadigan",
+        "pt": "Epifania de Cadigan",
+        "th": "การตระหนักรู้ของแคดิแกน"
+      }
     },
     {
       "output": "Charging Rune",
@@ -2377,7 +4266,17 @@
         "Sky",
         "Tidal",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Руна заряда",
+        "ko": "충전 룬",
+        "ja": "チャージルーン",
+        "de": "Laderune",
+        "fr": "Rune de Charge",
+        "es": "Runa de carga",
+        "pt": "Runa de Carregamento",
+        "th": "อักขระชาร์จ"
+      }
     },
     {
       "output": "Countess Seske's Rune of Archery",
@@ -2391,7 +4290,17 @@
         "Wisdom",
         "Ward",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Руна меткости графини Сеске",
+        "ko": "세스케 백작 부인의 궁술의 룬",
+        "ja": "セスケ女伯爵の弓のルーン",
+        "de": "Gräfin Seskes Rune des Bogenschießens",
+        "fr": "Rune de l'Archerie de la Comtesse Seske",
+        "es": "Runa de arquería de la condesa Seske",
+        "pt": "Runa da Arqueria da Condessa Seske",
+        "th": "อักขระเคาน์เตสเซสเก้ ยิงธนู"
+      }
     },
     {
       "output": "Courtesan Mannan's Rune of Cruelty",
@@ -2404,7 +4313,17 @@
         "Toxic",
         "Time",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна жестокости куртизанки Маннан",
+        "ko": "매춘부 마난의 잔혹의 룬",
+        "ja": "宮廷女官マンナンの残虐のルーン",
+        "de": "Kurtisane Mannans Rune der Grausamkeit",
+        "fr": "Rune de Cruauté de Mannan la Courtisane",
+        "es": "Runa de crueldad de Mannan, la cortesana",
+        "pt": "Runa da Crueldade da Cortesã Mannan",
+        "th": "อักขระนางคณิกาแมนแน่น อำมหิต"
+      }
     },
     {
       "output": "Craiceann's Rune of Recovery",
@@ -2417,7 +4336,17 @@
         "Soul",
         "Time",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Руна восстановления Краценна",
+        "ko": "크라칸의 회복의 룬",
+        "ja": "クレイシアンの回復のルーン",
+        "de": "Craiceanns Rune der Wiederherstellung",
+        "fr": "Rune de Récupération de Craïcéann",
+        "es": "Runa de recuperación de Craiceann",
+        "pt": "Runa da Recuperação de Craiceann",
+        "th": "อักขระเครเชียนน์ รักษา"
+      }
     },
     {
       "output": "Craiceann's Rune of Warding",
@@ -2430,7 +4359,17 @@
         "Cold",
         "Time",
         "Ward"
-      ]
+      ],
+      "names": {
+        "ru": "Руна барьера Краценна",
+        "ko": "크라칸의 수호의 룬",
+        "ja": "クレイシアンの守りのルーン",
+        "de": "Craiceanns Rune des Schutzes",
+        "fr": "Rune de Protection de Saqawal",
+        "es": "Runa de protección de Craiceann",
+        "pt": "Runa da Salvaguarda de Craiceann",
+        "th": "อักขระเครเชียนน์ คุ้มภัย"
+      }
     },
     {
       "output": "Desert Rune",
@@ -2440,7 +4379,17 @@
       "runes": [
         "Rage",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна пустыни",
+        "ko": "사막 룬",
+        "ja": "砂漠のルーン",
+        "de": "Wüstenrune",
+        "fr": "Rune du Désert",
+        "es": "Runa desértica",
+        "pt": "Runa do Deserto",
+        "th": "อักขระทะเลทราย"
+      }
     },
     {
       "output": "Farrul's Rune of Grace",
@@ -2453,7 +4402,17 @@
         "Adaptive",
         "Time",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Руна грации Фаррул",
+        "ko": "페룰의 은총의 룬",
+        "ja": "ファルウルの気品のルーン",
+        "de": "Farruls Rune der Gnade",
+        "fr": "Rune de Grâce de Farrul",
+        "es": "Runa de gracia de Farrul",
+        "pt": "Runa da Graça de Farrul",
+        "th": "อักขระฟาร์รุล สง่างาม"
+      }
     },
     {
       "output": "Farrul's Rune of the Chase",
@@ -2467,7 +4426,17 @@
         "Wisdom",
         "Death",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Руна погони Фаррул",
+        "ko": "페룰의 추격의 룬",
+        "ja": "ファルウルの追跡のルーン",
+        "de": "Farruls Rune der Hatz",
+        "fr": "Rune de la Poursuite de Farrul",
+        "es": "Runa de la persecución de Farrul",
+        "pt": "Runa da Perseguição de Farrul",
+        "th": "อักขระฟาร์รุล ไล่ตาม"
+      }
     },
     {
       "output": "Farrul's Rune of the Hunt",
@@ -2480,7 +4449,17 @@
         "Bond",
         "Time",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Руна охоты Фаррул",
+        "ko": "페룰의 사냥의 룬",
+        "ja": "ファルウルの狩りのルーン",
+        "de": "Farruls Rune der Jagd",
+        "fr": "Rune de la Chasse de Farrul",
+        "es": "Runa de la cacería de Farrul",
+        "pt": "Runa da Caçada de Farrul",
+        "th": "อักขระฟาร์รุล ออกล่า"
+      }
     },
     {
       "output": "Fenumus' Rune of Agony",
@@ -2493,7 +4472,17 @@
         "Adaptive",
         "Time",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Руна агонии Фенумы",
+        "ko": "페누무스의 괴로움의 룬",
+        "ja": "フィヌムスの苦痛のルーン",
+        "de": "Fenumus' Rune der Qual",
+        "fr": "Rune d'Agonie de Fénumus",
+        "es": "Runa de agonía de Fenumus",
+        "pt": "Runa da Agonia de Fenumus",
+        "th": "อักขระเฟนูมัส ทุกข์ระทม"
+      }
     },
     {
       "output": "Fenumus' Rune of Draining",
@@ -2506,7 +4495,17 @@
         "Cold",
         "Time",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Руна высушивания Фенумы",
+        "ko": "페누무스의 고갈의 룬",
+        "ja": "フィヌムスの吸収のルーン",
+        "de": "Fenumus' Rune der Entziehung",
+        "fr": "Rune du Drainage de Fénumus",
+        "es": "Runa de agotamiento de Fenumus",
+        "pt": "Runa da Drenagem de Fenumus",
+        "th": "อักขระเฟนูมัส ดูดกลืน"
+      }
     },
     {
       "output": "Fenumus' Rune of Spinning",
@@ -2519,7 +4518,17 @@
         "Tempest",
         "Time",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна плетения Фенумы",
+        "ko": "페누무스의 회전의 룬",
+        "ja": "フィヌムスの紡績のルーン",
+        "de": "Fenumus' Rune des Wirbelns",
+        "fr": "Rune du Tournoiement de Fénumus",
+        "es": "Runa de rotación de Fenumus",
+        "pt": "Runa da Fiação de Fenumus",
+        "th": "อักขระเฟนูมัส ชักใย"
+      }
     },
     {
       "output": "Glacial Rune",
@@ -2529,7 +4538,17 @@
       "runes": [
         "Moon",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна ледника",
+        "ko": "빙하 룬",
+        "ja": "氷河のルーン",
+        "de": "Gletscherrune",
+        "fr": "Rune de la Glace",
+        "es": "Runa glacial",
+        "pt": "Runa Glacial",
+        "th": "อักขระน้ำค้างแข็ง"
+      }
     },
     {
       "output": "Greater Adept Rune",
@@ -2540,7 +4559,17 @@
         "Moon",
         "Vision",
         "Lightning"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна искусности",
+        "ko": "상위 숙달 룬",
+        "ja": "熟達のグレータールーン",
+        "de": "Große Adept-Rune",
+        "fr": "Rune de l'Adepte majeure",
+        "es": "Runa de habilidad mayor",
+        "pt": "Runa do Perito Maior",
+        "th": "อักขระช่ำชองชั้นสูง"
+      }
     },
     {
       "output": "Greater Body Rune",
@@ -2551,7 +4580,17 @@
         "Protective",
         "Volcanic",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна тела",
+        "ko": "상위 육신 룬",
+        "ja": "肉体のグレータールーン",
+        "de": "Große Körper-Rune",
+        "fr": "Rune du Corps majeure",
+        "es": "Runa del cuerpo mayor",
+        "pt": "Runa Corporal Maior",
+        "th": "อักขระกายชั้นสูง"
+      }
     },
     {
       "output": "Greater Charging Rune",
@@ -2562,7 +4601,17 @@
         "Protective",
         "Ward",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна заряда",
+        "ko": "상위 충전 룬",
+        "ja": "グレーターチャージルーン",
+        "de": "Große Laderune",
+        "fr": "Rune de Charge majeure",
+        "es": "Runa de carga mayor",
+        "pt": "Runa de Carregamento Maior",
+        "th": "อักขระชาร์จชั้นสูง"
+      }
     },
     {
       "output": "Greater Desert Rune",
@@ -2573,7 +4622,17 @@
         "Rage",
         "Cyclonic",
         "Earth"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна пустыни",
+        "ko": "상위 사막 룬",
+        "ja": "砂漠のグレータールーン",
+        "de": "Große Wüsten-Rune",
+        "fr": "Rune du Désert majeure",
+        "es": "Runa desértica mayor",
+        "pt": "Runa do Deserto Maior",
+        "th": "อักขระทะเลทรายชั้นสูง"
+      }
     },
     {
       "output": "Greater Glacial Rune",
@@ -2584,7 +4643,17 @@
         "Moon",
         "Cyclonic",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна ледника",
+        "ko": "상위 빙하 룬",
+        "ja": "氷河のグレータールーン",
+        "de": "Große Gletscher-Rune",
+        "fr": "Rune de la Glace majeure",
+        "es": "Runa glacial mayor",
+        "pt": "Runa Glacial Maior",
+        "th": "อักขระน้ำค้างแข็งชั้นสูง"
+      }
     },
     {
       "output": "Greater Inspiration Rune",
@@ -2595,7 +4664,17 @@
         "Electrocuting",
         "Protective",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна вдохновения",
+        "ko": "상위 영감 룬",
+        "ja": "鼓舞のグレータールーン",
+        "de": "Große Inspirations-Rune",
+        "fr": "Rune de l'Inspiration majeure",
+        "es": "Runa de inspiración mayor",
+        "pt": "Runa da Inspiração Maior",
+        "th": "อักขระแรงบันดาลใจชั้นสูง"
+      }
     },
     {
       "output": "Greater Iron Rune",
@@ -2606,7 +4685,17 @@
         "Protective",
         "Cyclonic",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна железа",
+        "ko": "상위 철 룬",
+        "ja": "鉄のグレータールーン",
+        "de": "Große Eisen-Rune",
+        "fr": "Rune du Fer majeure",
+        "es": "Runa de hierro mayor",
+        "pt": "Runa de Ferro Maior",
+        "th": "อักขระเหล็กชั้นสูง"
+      }
     },
     {
       "output": "Greater Mind Rune",
@@ -2617,7 +4706,17 @@
         "Volcanic",
         "Fire",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна разума",
+        "ko": "상위 정신 룬",
+        "ja": "精神のグレータールーン",
+        "de": "Große Gedanken-Rune",
+        "fr": "Rune de l'Esprit majeure",
+        "es": "Runa de la mente mayor",
+        "pt": "Runa Mental Maior",
+        "th": "อักขระจิตชั้นสูง"
+      }
     },
     {
       "output": "Greater Rebirth Rune",
@@ -2628,7 +4727,17 @@
         "Vision",
         "Protective",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна перерождения",
+        "ko": "상위 부활 룬",
+        "ja": "復活のグレータールーン",
+        "de": "Große Wiederbelebungsrune",
+        "fr": "Rune de la Renaissance majeure",
+        "es": "Runa de renacimiento mayor",
+        "pt": "Runa do Renascimento Maior",
+        "th": "อักขระกำเนิดใหม่ชั้นสูง"
+      }
     },
     {
       "output": "Greater Resolve Rune",
@@ -2639,7 +4748,17 @@
         "Tidal",
         "Vision",
         "Earth"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна решительности",
+        "ko": "상위 투지 룬",
+        "ja": "決意のグレータールーン",
+        "de": "Große Entschlossenheit-Rune",
+        "fr": "Rune de la Résolution majeure",
+        "es": "Runa de resolución mayor",
+        "pt": "Runa da Vontade Maior",
+        "th": "อักขระมุ่งมั่นชั้นสูง"
+      }
     },
     {
       "output": "Greater Robust Rune",
@@ -2650,7 +4769,17 @@
         "Rage",
         "Vision",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна мощи",
+        "ko": "상위 왕성 룬",
+        "ja": "強固のグレータールーン",
+        "de": "Große Robuste Rune",
+        "fr": "Rune de la Robustesse majeure",
+        "es": "Runa robusta mayor",
+        "pt": "Runa Robusta Maior",
+        "th": "อักขระกำยำชั้นสูง"
+      }
     },
     {
       "output": "Greater Stone Rune",
@@ -2661,7 +4790,17 @@
         "Protective",
         "Tidal",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна камня",
+        "ko": "상위 돌 룬",
+        "ja": "石のグレータールーン",
+        "de": "Große Stein-Rune",
+        "fr": "Rune de la Pierre majeure",
+        "es": "Runa de piedra mayor",
+        "pt": "Runa de Pedra Maior",
+        "th": "อักขระศิลาชั้นสูง"
+      }
     },
     {
       "output": "Greater Storm Rune",
@@ -2672,7 +4811,17 @@
         "Tidal",
         "Cyclonic",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна шторма",
+        "ko": "상위 폭풍 룬",
+        "ja": "嵐のグレータールーン",
+        "de": "Große Sturm-Rune",
+        "fr": "Rune de l'Orage majeure",
+        "es": "Runa de tormenta mayor",
+        "pt": "Runa da Tempestade Maior",
+        "th": "อักขระพายุชั้นสูง"
+      }
     },
     {
       "output": "Greater Vision Rune",
@@ -2683,7 +4832,17 @@
         "Vision",
         "Protective",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна видения",
+        "ko": "상위 환영 룬",
+        "ja": "先見のグレータールーン",
+        "de": "Große Visions-Rune",
+        "fr": "Rune de la Vision majeure",
+        "es": "Runa de visión mayor",
+        "pt": "Runa da Visão Maior",
+        "th": "อักขระวิสัยทัศน์ชั้นสูง"
+      }
     },
     {
       "output": "Greater Ward Rune",
@@ -2694,7 +4853,17 @@
         "Protective",
         "Ward",
         "Lightning"
-      ]
+      ],
+      "names": {
+        "ru": "Большая руна барьера",
+        "ko": "상위 수호 룬",
+        "ja": "グレーターワードルーン",
+        "de": "Große Schutzrune",
+        "fr": "Rune de Sauvegarde majeure",
+        "es": "Runa de barrera mayor",
+        "pt": "Runa de Salvaguarda Maior",
+        "th": "อักขระวอร์ดชั้นสูง"
+      }
     },
     {
       "output": "Hedgewitch Assandra's Rune of Wisdom",
@@ -2708,7 +4877,17 @@
         "Wisdom",
         "Sky",
         "Oath"
-      ]
+      ],
+      "names": {
+        "ru": "Руна мудрости лесной ведьмы Ассандры",
+        "ko": "산울마녀 아산드라의 지혜의 룬",
+        "ja": "ヘッジウィッチ・アサンドラの知恵のルーン",
+        "de": "Heckenhexe Assandras Rune der Weisheit",
+        "fr": "Rune de Sagesse d'Assandra la Sorcière des Haies",
+        "es": "Runa de sabiduría de Assandra, la bruja herbolaria",
+        "pt": "Runa da Sabedoria da Bruxa da Natureza Assandra",
+        "th": "อักขระแม่มดเขตแดนแอซันดรา ปัญญา"
+      }
     },
     {
       "output": "Inspiration Rune",
@@ -2718,7 +4897,17 @@
       "runes": [
         "Electrocuting",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна вдохновения",
+        "ko": "영감 룬",
+        "ja": "鼓舞のルーン",
+        "de": "Inspirationsrune",
+        "fr": "Rune de l'Inspiration",
+        "es": "Runa de inspiración",
+        "pt": "Runa da Inspiração",
+        "th": "อักขระแรงบันดาลใจ"
+      }
     },
     {
       "output": "Ire of Aldur",
@@ -2733,7 +4922,17 @@
         "Power",
         "Wisdom",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Гнев Альдура",
+        "ko": "알두르의 노여움",
+        "ja": "アルダーの怒り",
+        "de": "Zorn von Aldur",
+        "fr": "Ire d'Aldur",
+        "es": "Ira de Aldur",
+        "pt": "Ira de Aldur",
+        "th": "โทสะอัลเดอร์"
+      }
     },
     {
       "output": "Iron Rune",
@@ -2743,7 +4942,17 @@
       "runes": [
         "Protective",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна железа",
+        "ko": "철 룬",
+        "ja": "鉄のルーン",
+        "de": "Eisenrune",
+        "fr": "Rune du Fer",
+        "es": "Runa de hierro",
+        "pt": "Runa de Ferro",
+        "th": "อักขระเหล็ก"
+      }
     },
     {
       "output": "Katla's Gloom",
@@ -2759,7 +4968,17 @@
         "Vision",
         "Opulent",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Мрачность Катлы",
+        "ko": "카틀라의 순흑",
+        "ja": "カトラの陰鬱",
+        "de": "Katlas Finsternis",
+        "fr": "Morosité de Katla",
+        "es": "Melancolía de Katla",
+        "pt": "Trevas de Katla",
+        "th": "ความมืดมัวของแคทล่า"
+      }
     },
     {
       "output": "Kolr's Hunt",
@@ -2775,7 +4994,17 @@
         "Rage",
         "Opulent",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Охота Колра",
+        "ko": "콜르의 사냥",
+        "ja": "コルの狩り",
+        "de": "Kolrs Jagd",
+        "fr": "Traque de Kolr",
+        "es": "Cacería de Kolr",
+        "pt": "Caçada de Kolr",
+        "th": "การล่าของโคลร์"
+      }
     },
     {
       "output": "Lady Hestra's Rune of Winter",
@@ -2788,7 +5017,17 @@
         "Cyclonic",
         "Time",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Руна зимы леди Гестры",
+        "ko": "헤스트라 부인의 겨울의 룬",
+        "ja": "ヘストラ婦人の冬のルーン",
+        "de": "Lady Hestras Rune des Winters",
+        "fr": "Rune de l'Hiver de Lady Héstra",
+        "es": "Runa de invierno de lady Hestra",
+        "pt": "Runa do Inverno da Dama Hestra",
+        "th": "อักขระคุณหญิงเฮสตรา ฤดูหนาว"
+      }
     },
     {
       "output": "Lesser Adept Rune",
@@ -2798,7 +5037,17 @@
       "runes": [
         "Cold",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна искусности",
+        "ko": "하위 숙달 룬",
+        "ja": "熟達のレッサールーン",
+        "de": "Kleine Adept-Rune",
+        "fr": "Rune de l'Adepte mineure",
+        "es": "Runa de habilidad menor",
+        "pt": "Runa do Perito Menor",
+        "th": "อักขระช่ำชองชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Body Rune",
@@ -2808,7 +5057,17 @@
       "runes": [
         "Stone",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна тела",
+        "ko": "하위 육신 룬",
+        "ja": "肉体のレッサールーン",
+        "de": "Kleine Körper-Rune",
+        "fr": "Rune du Corps mineure",
+        "es": "Runa del cuerpo menor",
+        "pt": "Runa Corporal Menor",
+        "th": "อักขระกายชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Charging Rune",
@@ -2818,7 +5077,17 @@
       "runes": [
         "Cyclonic",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна заряда",
+        "ko": "하위 충전 룬",
+        "ja": "レッサーチャージルーン",
+        "de": "Kleine Laderune",
+        "fr": "Rune de Charge mineure",
+        "es": "Runa de carga menor",
+        "pt": "Runa de Carregamento Menor",
+        "th": "อักขระชาร์จชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Desert Rune",
@@ -2828,7 +5097,17 @@
       "runes": [
         "Fire",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна пустыни",
+        "ko": "하위 사막 룬",
+        "ja": "砂漠のレッサールーン",
+        "de": "Kleine Wüsten-Rune",
+        "fr": "Rune du Désert mineure",
+        "es": "Runa desértica menor",
+        "pt": "Runa do Deserto Menor",
+        "th": "อักขระทะเลทรายชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Glacial Rune",
@@ -2838,7 +5117,17 @@
       "runes": [
         "Cold",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна ледника",
+        "ko": "하위 빙하 룬",
+        "ja": "氷河のレッサールーン",
+        "de": "Kleine Gletscher-Rune",
+        "fr": "Rune de la Glace mineure",
+        "es": "Runa glacial menor",
+        "pt": "Runa Glacial Menor",
+        "th": "อักขระน้ำค้างแข็งชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Inspiration Rune",
@@ -2848,7 +5137,17 @@
       "runes": [
         "Rebirth",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна вдохновения",
+        "ko": "하위 영감 룬",
+        "ja": "鼓舞のレッサールーン",
+        "de": "Kleine Inspirations-Rune",
+        "fr": "Rune de l'Inspiration mineure",
+        "es": "Runa de inspiración menor",
+        "pt": "Runa da Inspiração Menor",
+        "th": "อักขระแรงบันดาลใจชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Iron Rune",
@@ -2858,7 +5157,17 @@
       "runes": [
         "Stone",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна железа",
+        "ko": "하위 철 룬",
+        "ja": "鉄のレッサールーン",
+        "de": "Kleine Eisen-Rune",
+        "fr": "Rune du Fer mineure",
+        "es": "Runa de hierro menor",
+        "pt": "Runa de Ferro Menor",
+        "th": "อักขระเหล็กชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Mind Rune",
@@ -2868,7 +5177,17 @@
       "runes": [
         "Arcane",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна разума",
+        "ko": "하위 정신 룬",
+        "ja": "精神のレッサールーン",
+        "de": "Kleine Gedanken-Rune",
+        "fr": "Rune de l'Esprit mineure",
+        "es": "Runa de la mente menor",
+        "pt": "Runa Mental Menor",
+        "th": "อักขระจิตชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Rebirth Rune",
@@ -2878,7 +5197,17 @@
       "runes": [
         "Rebirth",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна перерождения",
+        "ko": "하위 부활 룬",
+        "ja": "復活のレッサールーン",
+        "de": "Kleine Wiederbelebungsrune",
+        "fr": "Rune de la Renaissance mineure",
+        "es": "Runa de renacimiento menor",
+        "pt": "Runa do Renascimento Menor",
+        "th": "อักขระกำเนิดใหม่ชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Resolve Rune",
@@ -2888,7 +5217,17 @@
       "runes": [
         "Lightning",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна решительности",
+        "ko": "하위 투지 룬",
+        "ja": "決意のレッサールーン",
+        "de": "Kleine Entschlossenheit-Rune",
+        "fr": "Rune de la Résolution mineure",
+        "es": "Runa de resolución menor",
+        "pt": "Runa da Vontade Menor",
+        "th": "อักขระมุ่งมั่นชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Robust Rune",
@@ -2898,7 +5237,17 @@
       "runes": [
         "Fire",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна мощи",
+        "ko": "하위 왕성 룬",
+        "ja": "強固のレッサールーン",
+        "de": "Kleine Robuste Rune",
+        "fr": "Rune de la Robustesse mineure",
+        "es": "Runa robusta menor",
+        "pt": "Runa Robusta Menor",
+        "th": "อักขระกำยำชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Stone Rune",
@@ -2908,7 +5257,17 @@
       "runes": [
         "Stone",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна камня",
+        "ko": "하위 돌 룬",
+        "ja": "石のレッサールーン",
+        "de": "Kleine Stein-Rune",
+        "fr": "Rune de la Pierre mineure",
+        "es": "Runa de piedra menor",
+        "pt": "Runa de Pedra Menor",
+        "th": "อักขระศิลาชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Storm Rune",
@@ -2918,7 +5277,17 @@
       "runes": [
         "Lightning",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна шторма",
+        "ko": "하위 폭풍 룬",
+        "ja": "嵐のレッサールーン",
+        "de": "Kleine Sturm-Rune",
+        "fr": "Rune de l'Orage mineure",
+        "es": "Runa de tormenta menor",
+        "pt": "Runa da Tempestade Menor",
+        "th": "อักขระพายุชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Vision Rune",
@@ -2928,7 +5297,17 @@
       "runes": [
         "Rebirth",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна видения",
+        "ko": "하위 환영 룬",
+        "ja": "先見のレッサールーン",
+        "de": "Kleine Visions-Rune",
+        "fr": "Rune de la Vision mineure",
+        "es": "Runa de visión menor",
+        "pt": "Runa da Visão Menor",
+        "th": "อักขระวิสัยทัศน์ชั้นต่ำ"
+      }
     },
     {
       "output": "Lesser Ward Rune",
@@ -2938,7 +5317,17 @@
       "runes": [
         "Arcane",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Малая руна барьера",
+        "ko": "하위 수호 룬",
+        "ja": "レッサーワードルーン",
+        "de": "Kleine Schutzrune",
+        "fr": "Rune de Sauvegarde mineure",
+        "es": "Runa de barrera menor",
+        "pt": "Runa de Salvaguarda Menor",
+        "th": "อักขระวอร์ดชั้นต่ำ"
+      }
     },
     {
       "output": "Masterwork Rune",
@@ -2951,7 +5340,17 @@
         "Sky",
         "Arcane",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Мастерская руна",
+        "ko": "일품 룬",
+        "ja": "傑作のルーン",
+        "de": "Meisterwerk-Rune",
+        "fr": "Rune magistrale",
+        "es": "Runa maestra",
+        "pt": "Runa Obra-prima",
+        "th": "อักขระชิ้นเอก"
+      }
     },
     {
       "output": "Medved's Boon",
@@ -2969,7 +5368,17 @@
         "Protective",
         "Time",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Дар Медведю",
+        "ko": "메드베드의 은혜",
+        "ja": "メドヴェッドの恩恵",
+        "de": "Medveds Segen",
+        "fr": "Medved's Boon",
+        "es": "Bendición de Medved",
+        "pt": "Dádiva de Medved",
+        "th": "พรของเม็ดเว็ด"
+      }
     },
     {
       "output": "Medved's Tending",
@@ -2985,7 +5394,17 @@
         "Life",
         "Opulent",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Присмотр Медведя",
+        "ko": "메드베드의 보살핌",
+        "ja": "メドヴェッドの世話",
+        "de": "Medveds Fürsorge",
+        "fr": "Sollicitude de Medved",
+        "es": "Cuidado de Medved",
+        "pt": "Cuidados de Medved",
+        "th": "การดูแลของเม็ดเว็ด"
+      }
     },
     {
       "output": "Mind Rune",
@@ -2995,7 +5414,17 @@
       "runes": [
         "Volcanic",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Руна разума",
+        "ko": "정신 룬",
+        "ja": "精神のルーン",
+        "de": "Geistrune",
+        "fr": "Rune de l'Esprit",
+        "es": "Runa de la mente",
+        "pt": "Runa Mental",
+        "th": "อักขระจิต"
+      }
     },
     {
       "output": "Olroth's Boon",
@@ -3013,7 +5442,17 @@
         "Protective",
         "Time",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Дар Олроту",
+        "ko": "올로스의 은혜",
+        "ja": "オルロスの恩恵",
+        "de": "Olroths Segen",
+        "fr": "Olroth's Boon",
+        "es": "Bendición de Olroth",
+        "pt": "Dádiva de Olroth",
+        "th": "พรของออลรอธ"
+      }
     },
     {
       "output": "Passion of Aldur",
@@ -3028,7 +5467,17 @@
         "Power",
         "Wisdom",
         "Earth"
-      ]
+      ],
+      "names": {
+        "ru": "Страсть Альдура",
+        "ko": "알두르의 열정",
+        "ja": "アルダーの情熱",
+        "de": "Leidenschaft von Aldur",
+        "fr": "Passion d'Aldur",
+        "es": "Pasión de Aldur",
+        "pt": "Paixão de Aldur",
+        "th": "แรงปรารถนาอัลเดอร์"
+      }
     },
     {
       "output": "Perfect Orb of Augmentation",
@@ -3041,7 +5490,17 @@
         "Sky",
         "Tidal",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера усиления",
+        "ko": "완벽한 확장의 오브",
+        "ja": "増強のオーブ (完全)",
+        "de": "Perfekte Aufwertungssphäre",
+        "fr": "Orbe d'augmentation parfait",
+        "es": "Orbe de aumento perfecto",
+        "pt": "Orbe da Ampliação Perfeito",
+        "th": "Orb of Augmentation ไร้ที่ติ"
+      }
     },
     {
       "output": "Perfect Orb of Transmutation",
@@ -3054,7 +5513,17 @@
         "Sky",
         "Oath",
         "Celestial"
-      ]
+      ],
+      "names": {
+        "ru": "Совершенная сфера превращения",
+        "ko": "완벽한 진화의 오브",
+        "ja": "変成のオーブ (完全)",
+        "de": "Perfekte Umwandlungssphäre",
+        "fr": "Orbe de transmutation parfait",
+        "es": "Orbe de transmutación perfecto",
+        "pt": "Orbe da Transmutação Perfeito",
+        "th": "Orb of Transmutation ไร้ที่ติ"
+      }
     },
     {
       "output": "Rebirth Rune",
@@ -3064,7 +5533,17 @@
       "runes": [
         "Vision",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна перерождения",
+        "ko": "부활 룬",
+        "ja": "復活のルーン",
+        "de": "Wiederbelebungsrune",
+        "fr": "Rune de la Renaissance",
+        "es": "Runa de renacimiento",
+        "pt": "Runa do Renascimento",
+        "th": "อักขระกำเนิดใหม่"
+      }
     },
     {
       "output": "Resolve Rune",
@@ -3074,7 +5553,17 @@
       "runes": [
         "Tidal",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Руна решительности",
+        "ko": "투지 룬",
+        "ja": "決意のルーン",
+        "de": "Entschlossenheit-Rune",
+        "fr": "Rune de la Résolution",
+        "es": "Runa de resolución",
+        "pt": "Runa da Vontade",
+        "th": "อักขระมุ่งมั่น"
+      }
     },
     {
       "output": "Robust Rune",
@@ -3084,7 +5573,17 @@
       "runes": [
         "Rage",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Руна мощи",
+        "ko": "왕성한 룬",
+        "ja": "強固のルーン",
+        "de": "Robuste Rune",
+        "fr": "Rune de la Robustesse",
+        "es": "Runa robusta",
+        "pt": "Runa Robusta",
+        "th": "อักขระกำยำ"
+      }
     },
     {
       "output": "Rune of Accumulation",
@@ -3096,7 +5595,17 @@
         "Cyclonic",
         "Fire",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Руна накопления",
+        "ko": "축적의 룬",
+        "ja": "蓄積のルーン",
+        "de": "Rune der Anhäufung",
+        "fr": "Rune d'Accumulation",
+        "es": "Runa de acumulación",
+        "pt": "Runa da Acumulação",
+        "th": "อักขระสะสม"
+      }
     },
     {
       "output": "Rune of Acrobatics",
@@ -3108,7 +5617,17 @@
         "Cyclonic",
         "Cold",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Руна акробатики",
+        "ko": "곡예의 룬",
+        "ja": "軽業のルーン",
+        "de": "Rune der Akrobatik",
+        "fr": "Rune des Acrobaties",
+        "es": "Runa de acrobacia",
+        "pt": "Runa das Acrobacias",
+        "th": "อักขระกายกรรม"
+      }
     },
     {
       "output": "Rune of Confrontation",
@@ -3120,7 +5639,17 @@
         "Tidal",
         "Electrocuting",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Руна противоборства",
+        "ko": "대적의 룬",
+        "ja": "対峙のルーン",
+        "de": "Rune der Konfrontation",
+        "fr": "Rune de Portée",
+        "es": "Runa de confrontación",
+        "pt": "Runa do Confrontamento",
+        "th": "อักขระเผชิญหน้า"
+      }
     },
     {
       "output": "Rune of Consistency",
@@ -3132,7 +5661,17 @@
         "Cyclonic",
         "Momentum",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Руна постоянства",
+        "ko": "일관성의 룬",
+        "ja": "一貫性のルーン",
+        "de": "Rune der Beständigkeit",
+        "fr": "Rune de Constance",
+        "es": "Runa de consistencia",
+        "pt": "Runa da Consistência",
+        "th": "อักขระคงเส้นคงวา"
+      }
     },
     {
       "output": "Rune of Culmination",
@@ -3144,7 +5683,17 @@
         "Prismatic",
         "Cold",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Руна кульминации",
+        "ko": "고조의 룬",
+        "ja": "集大成のルーン",
+        "de": "Rune des Kulmination",
+        "fr": "Rune de Culmination",
+        "es": "Runa de culminación",
+        "pt": "Runa da Culminação",
+        "th": "อักขระบันดาล"
+      }
     },
     {
       "output": "Rune of Foundations",
@@ -3156,7 +5705,17 @@
         "Cyclonic",
         "Fire",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна основ",
+        "ko": "기초의 룬",
+        "ja": "基礎のルーン",
+        "de": "Rune der Grundlagen",
+        "fr": "Rune des Fondations",
+        "es": "Runa de cimientos",
+        "pt": "Runa das Fundações",
+        "th": "อักขระรากฐาน"
+      }
     },
     {
       "output": "Rune of Reach",
@@ -3168,7 +5727,17 @@
         "Momentum",
         "Lightning",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Руна охвата",
+        "ko": "범위의 룬",
+        "ja": "射程のルーン",
+        "de": "Rune der Reichweite",
+        "fr": "Rune d'Allonge",
+        "es": "Runa de alcance",
+        "pt": "Runa do Alcance",
+        "th": "อักขระเงื้อมมือ"
+      }
     },
     {
       "output": "Rune of Renown",
@@ -3180,7 +5749,17 @@
         "Electrocuting",
         "Fire",
         "Life"
-      ]
+      ],
+      "names": {
+        "ru": "Руна славы",
+        "ko": "명성의 룬",
+        "ja": "名声のルーン",
+        "de": "Rune des Ruhmes",
+        "fr": "Rune de Renom",
+        "es": "Runa de renombre",
+        "pt": "Runa do Renome",
+        "th": "อักขระเลื่องลือ"
+      }
     },
     {
       "output": "Rune of Vital Flame",
@@ -3192,7 +5771,17 @@
         "Lightning",
         "Earth",
         "Tempest"
-      ]
+      ],
+      "names": {
+        "ru": "Руна живого пламени",
+        "ko": "활력 불길의 룬",
+        "ja": "生命の炎のルーン",
+        "de": "Rune der Lebensflamme",
+        "fr": "Rune de la Flamme vitale",
+        "es": "Runa de llama vital",
+        "pt": "Runa da Chama Vital",
+        "th": "อักขระเพลิงชีวิต"
+      }
     },
     {
       "output": "Rune of Vitality",
@@ -3204,7 +5793,17 @@
         "Electrocuting",
         "Cold",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Руна живучести",
+        "ko": "활력의 룬",
+        "ja": "生命力のルーン",
+        "de": "Rune der Vitalität",
+        "fr": "Rune de Vitalité",
+        "es": "Runa de vitalidad",
+        "pt": "Runa da Vitalidade",
+        "th": "อักขระกำลังวังชา"
+      }
     },
     {
       "output": "Rune of the Blossom",
@@ -3216,7 +5815,17 @@
         "Cyclonic",
         "Lightning",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна цветения",
+        "ko": "만개의 룬",
+        "ja": "開花のルーン",
+        "de": "Rune der Blüte",
+        "fr": "Rune de l'Épanouissement",
+        "es": "Runa de la floración",
+        "pt": "Runa do Desabrochar",
+        "th": "อักขระผลิบาน"
+      }
     },
     {
       "output": "Rune of the Hunt",
@@ -3228,7 +5837,17 @@
         "Electrocuting",
         "Cold",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна охоты",
+        "ko": "사냥의 룬",
+        "ja": "狩猟のルーン",
+        "de": "Rune der Jagd",
+        "fr": "Rune de la Chasse",
+        "es": "Runa de la cacería",
+        "pt": "Runa da Caçada",
+        "th": "อักขระออกล่า"
+      }
     },
     {
       "output": "Rune of the Prism",
@@ -3240,7 +5859,17 @@
         "Electrocuting",
         "Fire",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна призмы",
+        "ko": "분광기의 룬",
+        "ja": "プリズムのルーン",
+        "de": "Rune des Prismas",
+        "fr": "Rune du Prisme",
+        "es": "Runa del prisma",
+        "pt": "Runa do Prisma",
+        "th": "อักขระปริซึม"
+      }
     },
     {
       "output": "Saqawal's Rune of Erosion",
@@ -3253,7 +5882,17 @@
         "Vision",
         "Time",
         "Toxic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна эрозии Сакаваля",
+        "ko": "사카왈의 침식의 룬",
+        "ja": "サカワルの浸食のルーン",
+        "de": "Saqawals Rune der Erosion",
+        "fr": "Rune d'Érosion de Saqawal",
+        "es": "Runa de erosión de Saqawal",
+        "pt": "Runa da Erosão de Saqawal",
+        "th": "อักขระซาคาวอล กัดกร่อน"
+      }
     },
     {
       "output": "Saqawal's Rune of Memory",
@@ -3266,7 +5905,17 @@
         "Soul",
         "Time",
         "Moon"
-      ]
+      ],
+      "names": {
+        "ru": "Руна памяти Сакаваля",
+        "ko": "사카왈의 기억의 룬",
+        "ja": "サカワルの記憶のルーン",
+        "de": "Saqawals Rune der Erinnerung",
+        "fr": "Rune de Souvenir de Saqawal",
+        "es": "Runa de recuerdos de Saqawal",
+        "pt": "Runa da Memória de Saqawal",
+        "th": "อักขระซาคาวอล ความทรงจำ"
+      }
     },
     {
       "output": "Saqawal's Rune of the Sky",
@@ -3279,7 +5928,17 @@
         "Bloodletting",
         "Time",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна неба Сакаваля",
+        "ko": "사카왈의 하늘의 룬",
+        "ja": "サカワルの空のルーン",
+        "de": "Saqawals Rune des Himmels",
+        "fr": "Rune du Ciel de Saqawal",
+        "es": "Runa del cielo de Saqawal",
+        "pt": "Runa do Céu de Saqawal",
+        "th": "อักขระซาคาวอล นภา"
+      }
     },
     {
       "output": "Serle's Triumph",
@@ -3295,7 +5954,17 @@
         "Oath",
         "Sky",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Триумф Серли",
+        "ko": "세를의 승리",
+        "ja": "セールの凱旋",
+        "de": "Serles Triumph",
+        "fr": "Triomphe de Serle",
+        "es": "Triunfo de Serle",
+        "pt": "Triunfo de Serle",
+        "th": "ชัยชนะของเซอร์ล"
+      }
     },
     {
       "output": "Stone Rune",
@@ -3305,7 +5974,17 @@
       "runes": [
         "Protective",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Руна камня",
+        "ko": "돌 룬",
+        "ja": "石のルーン",
+        "de": "Steinrune",
+        "fr": "Rune de la Pierre",
+        "es": "Runa de piedra",
+        "pt": "Runa de Pedra",
+        "th": "อักขระศิลา"
+      }
     },
     {
       "output": "Storm Rune",
@@ -3315,7 +5994,17 @@
       "runes": [
         "Tidal",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна шторма",
+        "ko": "폭풍 룬",
+        "ja": "嵐のルーン",
+        "de": "Sturmrune",
+        "fr": "Rune de l'Orage",
+        "es": "Runa de tormenta",
+        "pt": "Runa da Tempestade",
+        "th": "อักขระพายุ"
+      }
     },
     {
       "output": "Thane Girt's Rune of Wildness",
@@ -3328,7 +6017,17 @@
         "Rage",
         "Time",
         "Volcanic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна дикости тана Гирта",
+        "ko": "테인 거트의 야생의 룬",
+        "ja": "族長ガートの野生のルーン",
+        "de": "Thane Girts Rune der Wildheit",
+        "fr": "Rune de la Sauvagerie de Thane Girt",
+        "es": "Runa de salvajismo del thane Girt",
+        "pt": "Runa do Ermo do Nobre Girt",
+        "th": "อักขระเธนเกิร์ท ดุร้าย"
+      }
     },
     {
       "output": "Thane Grannell's Rune of Mastery",
@@ -3341,7 +6040,17 @@
         "Tidal",
         "Time",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна мастерства тана Граннеля",
+        "ko": "테인 그라넬의 숙련의 룬",
+        "ja": "族長グラネルの熟達のルーン",
+        "de": "Thane Grannells Rune der Beherrschung",
+        "fr": "Rune de la Maîtrise de Thane Grannell",
+        "es": "Runa de maestría del thane Grannell",
+        "pt": "Runa da Maestria do Nobre Grannell",
+        "th": "อักขระเธนแกรนเรล ช่ำชอง"
+      }
     },
     {
       "output": "Thane Leld's Rune of Spring",
@@ -3354,7 +6063,17 @@
         "Volcanic",
         "Time",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Руна весны тана Лельда",
+        "ko": "테인 렐드의 봄의 룬",
+        "ja": "族長レルドの春のルーン",
+        "de": "Thane Lelds Rune des Frühlings",
+        "fr": "Rune du Printemps de Thane Leld",
+        "es": "Runa de primavera del thane Leld",
+        "pt": "Runa da Primavera do Nobre Leld",
+        "th": "อักขระเธนเลลด์ ฤดูใบไม้ผลิ"
+      }
     },
     {
       "output": "Thane Myrk's Rune of Summer",
@@ -3367,7 +6086,17 @@
         "Rage",
         "Time",
         "Death"
-      ]
+      ],
+      "names": {
+        "ru": "Руна лета тана Мирка",
+        "ko": "테인 머크의 여름의 룬",
+        "ja": "族長ミュルクの夏のルーン",
+        "de": "Thane Myrks Rune des Sommers",
+        "fr": "Rune de l'Été de Thane Myrk",
+        "es": "Runa de verano del thane Myrk",
+        "pt": "Runa do Verão do Nobre Myrk",
+        "th": "อักขระเธนมิร์ค ฤดูร้อน"
+      }
     },
     {
       "output": "The Greatwolf's Rune of Claws",
@@ -3380,7 +6109,17 @@
         "Momentum",
         "Time",
         "Toxic"
-      ]
+      ],
+      "names": {
+        "ru": "Руна когтей Великого волка",
+        "ko": "위대한 늑대의 발톱의 룬",
+        "ja": "大狼の鉤爪のルーン",
+        "de": "Großwolfs Rune der Klauen",
+        "fr": "Rune des Griffes du Grand loup",
+        "es": "Runa de garras del Gran lobo",
+        "pt": "Runa das Garras do Grande Lobo",
+        "th": "อักขระองค์หมาป่า อุ้งเล็บ"
+      }
     },
     {
       "output": "The Greatwolf's Rune of Willpower",
@@ -3393,7 +6132,17 @@
         "Toxic",
         "Time",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Руна воли Великого волка",
+        "ko": "위대한 늑대의 의지의 룬",
+        "ja": "大狼の意志力のルーン",
+        "de": "Großwolfs Rune der Willenskraft",
+        "fr": "Rune de la Volonté du Grand loup",
+        "es": "Runa de voluntad del Gran lobo",
+        "pt": "Runa da Determinação do Grande Lobo",
+        "th": "อักขระองค์หมาป่า อำนาจจิต"
+      }
     },
     {
       "output": "Thrud's Might",
@@ -3409,7 +6158,17 @@
         "Ward",
         "Opulent",
         "Rebirth"
-      ]
+      ],
+      "names": {
+        "ru": "Сила Трада",
+        "ko": "스루드의 완력",
+        "ja": "スルードの力",
+        "de": "Thruds Macht",
+        "fr": "Puissance de Thurd",
+        "es": "Poder de Thrud",
+        "pt": "Poder de Thrud",
+        "th": "ความองอาจของธรัด"
+      }
     },
     {
       "output": "Uhtred's Boon",
@@ -3427,7 +6186,17 @@
         "Protective",
         "Time",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Дар Утреду",
+        "ko": "우트레드의 은혜",
+        "ja": "ウートレドの恩恵",
+        "de": "Uhtreds Segen",
+        "fr": "Uhtred's Boon",
+        "es": "Bendición de Uhtred",
+        "pt": "Dádiva de Uhtred",
+        "th": "พรของเออห์เทร็ด"
+      }
     },
     {
       "output": "Uhtred's Sidereus",
@@ -3443,7 +6212,17 @@
         "Volcanic",
         "Opulent",
         "Cold"
-      ]
+      ],
+      "names": {
+        "ru": "Сидерий Утреда",
+        "ko": "우트레드의 성좌",
+        "ja": "ウートレドの星読み",
+        "de": "Uhtreds Sternzeit",
+        "fr": "Sidereus d'Uthred",
+        "es": "Estrella de Uhtred",
+        "pt": "Sidereu de Uhtred",
+        "th": "ห้วงดาราของเออห์เทร็ด"
+      }
     },
     {
       "output": "Vision Rune",
@@ -3453,7 +6232,17 @@
       "runes": [
         "Vision",
         "Protective"
-      ]
+      ],
+      "names": {
+        "ru": "Руна видения",
+        "ko": "환영 룬",
+        "ja": "先見のルーン",
+        "de": "Visionsrune",
+        "fr": "Rune de la Vision",
+        "es": "Runa de visión",
+        "pt": "Runa da Visão",
+        "th": "อักขระวิสัยทัศน์"
+      }
     },
     {
       "output": "Vorana's Boon",
@@ -3471,7 +6260,17 @@
         "Protective",
         "Time",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Дар Воране",
+        "ko": "보라나의 은혜",
+        "ja": "ヴォラナの恩恵",
+        "de": "Voranas Segen",
+        "fr": "Vorana's Boon",
+        "es": "Bendición de Vorana",
+        "pt": "Dádiva de Vorana",
+        "th": "พรของวอราน่า"
+      }
     },
     {
       "output": "Vorana's Carnage",
@@ -3487,7 +6286,17 @@
         "Bloodletting",
         "Opulent",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Резня Вораны",
+        "ko": "보라나의 학살",
+        "ja": "ヴォラナの虐殺",
+        "de": "Voranas Gemetzel",
+        "fr": "Carnage de Vorana",
+        "es": "Matanza de Vorana",
+        "pt": "Carnificina de Vorana",
+        "th": "การนองเลือดของวอราน่า"
+      }
     },
     {
       "output": "Ward Rune",
@@ -3497,7 +6306,17 @@
       "runes": [
         "Volcanic",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Руна барьера",
+        "ko": "수호 룬",
+        "ja": "ワードルーン",
+        "de": "Schutzrune",
+        "fr": "Rune de Sauvegarde",
+        "es": "Runa de barrera",
+        "pt": "Runa de Salvaguarda",
+        "th": "อักขระวอร์ด"
+      }
     },
     {
       "output": "Warding Rune of Annihilation",
@@ -3509,7 +6328,17 @@
         "Ward",
         "Electrocuting",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна уничтожения",
+        "ko": "전멸의 수호하는 룬",
+        "ja": "殲滅のワードルーン",
+        "de": "Schützende Rune der Vernichtung",
+        "fr": "Rune de Sauvegarde de l'Annihilation",
+        "es": "Runa protectora de Aniquilación",
+        "pt": "Runa de Salvaguarda da Aniquilação",
+        "th": "อักขระปัดเป่า ทำลายล้าง"
+      }
     },
     {
       "output": "Warding Rune of Armature",
@@ -3522,7 +6351,17 @@
         "Bond",
         "Stone",
         "Vision"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна панциря",
+        "ko": "골조의 수호하는 룬",
+        "ja": "骨組みのワードルーン",
+        "de": "Schützende Rune der Bewehrung",
+        "fr": "Rune de Sauvegarde de l'Armature",
+        "es": "Runa protectora de armazón",
+        "pt": "Runa de Salvaguarda da Armação",
+        "th": "อักขระปัดเป่า กระดอง"
+      }
     },
     {
       "output": "Warding Rune of Bodyguards",
@@ -3535,7 +6374,17 @@
         "Oath",
         "Stone",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна телохранителей",
+        "ko": "호위병의 수호하는 룬",
+        "ja": "護衛のワードルーン",
+        "de": "Schützende Rune der Leibwächter",
+        "fr": "Rune de Sauvegarde des Gardes du corps",
+        "es": "Runa protectora de guardaespaldas",
+        "pt": "Runa de Salvaguarda do Guarda-costas",
+        "th": "อักขระปัดเป่า องครักษ์"
+      }
     },
     {
       "output": "Warding Rune of Courage",
@@ -3546,7 +6395,17 @@
         "Cold",
         "Ward",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна храбрости",
+        "ko": "용기의 수호하는 룬",
+        "ja": "勇気のワードルーン",
+        "de": "Schützende Rune des Mutes",
+        "fr": "Rune de Sauvegarde du Courage",
+        "es": "Runa protectora de coraje",
+        "pt": "Runa de Salvaguarda da Coragem",
+        "th": "อักขระปัดเป่า กล้าหาญ"
+      }
     },
     {
       "output": "Warding Rune of Desperation",
@@ -3557,7 +6416,17 @@
         "Bloodletting",
         "Stone",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна отчаяния",
+        "ko": "필사의 수호하는 룬",
+        "ja": "窮地のワードルーン",
+        "de": "Schützende Rune der Verzweiflung",
+        "fr": "Rune de Sauvegarde de la Désespérance",
+        "es": "Runa protectora de desesperación",
+        "pt": "Runa de Salvaguarda do Desespero",
+        "th": "อักขระปัดเป่า จนตรอก"
+      }
     },
     {
       "output": "Warding Rune of Disintegration",
@@ -3568,7 +6437,17 @@
         "Cold",
         "Stone",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна расщепления",
+        "ko": "분해의 수호하는 룬",
+        "ja": "分解のワードルーン",
+        "de": "Schützende Rune der Auslöschung",
+        "fr": "Rune de Sauvegarde de la Désintégration",
+        "es": "Runa protectora de desintegración",
+        "pt": "Runa de Salvaguarda da Desintegração",
+        "th": "อักขระปัดเป่า แหลกสลาย"
+      }
     },
     {
       "output": "Warding Rune of Equinox",
@@ -3581,7 +6460,17 @@
         "Protective",
         "Stone",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна равноденствия",
+        "ko": "지점의 수호하는 룬",
+        "ja": "分点のワードルーン",
+        "de": "Schützende Rune des Äquinoktium",
+        "fr": "Rune de Sauvegarde de l'Équinoxe",
+        "es": "Runa protectora del equinoccio",
+        "pt": "Runa de Salvaguarda do Equinócio",
+        "th": "อักขระปัดเป่า วิษุวัต"
+      }
     },
     {
       "output": "Warding Rune of Glancing",
@@ -3593,7 +6482,17 @@
         "Ward",
         "Protective",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна скольжения",
+        "ko": "튕김의 수호하는 룬",
+        "ja": "浅い傷のワードルーン",
+        "de": "Schützende Rune des Blicks",
+        "fr": "Rune de Sauvegarde de la Déviation",
+        "es": "Runa protectora de observación",
+        "pt": "Runa de Salvaguarda do Resvalamento",
+        "th": "อักขระปัดเป่า แฉลบ"
+      }
     },
     {
       "output": "Warding Rune of Heart",
@@ -3605,7 +6504,17 @@
         "Ward",
         "Vision",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна сердца",
+        "ko": "심장의 수호하는 룬",
+        "ja": "心臓のワードルーン",
+        "de": "Schützende Rune des Herzens",
+        "fr": "Rune de Sauvegarde du Cœur",
+        "es": "Runa protectora de corazón",
+        "pt": "Runa de Salvaguarda do Coração",
+        "th": "อักขระปัดเป่า หัวใจ"
+      }
     },
     {
       "output": "Warding Rune of Hollowing",
@@ -3618,7 +6527,17 @@
         "Soul",
         "Stone",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна опустевания",
+        "ko": "공동화의 수호하는 룬",
+        "ja": "空洞のワードルーン",
+        "de": "Schützende Rune der Aushöhlung",
+        "fr": "Rune de Sauvegarde de la Vacuité",
+        "es": "Runa protectora de ahuecamiento",
+        "pt": "Runa de Salvaguarda do Esvaziamento",
+        "th": "อักขระปัดเป่า ขุดรู"
+      }
     },
     {
       "output": "Warding Rune of Nourishment",
@@ -3629,7 +6548,17 @@
         "Rebirth",
         "Stone",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна пропитания",
+        "ko": "자양분의 수호하는 룬",
+        "ja": "滋養のワードルーン",
+        "de": "Schützende Rune der Versorgung",
+        "fr": "Rune de Sauvegarde de la Subsistance",
+        "es": "Runa protectora de nutrición",
+        "pt": "Runa de Salvaguarda do Sustento",
+        "th": "อักขระปัดเป่า บำรุง"
+      }
     },
     {
       "output": "Warding Rune of Obsession",
@@ -3642,7 +6571,17 @@
         "Rage",
         "Stone",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна одержимости",
+        "ko": "집착의 수호하는 룬",
+        "ja": "執着のワードルーン",
+        "de": "Schützende Rune der Besessenheit",
+        "fr": "Rune de Sauvegarde de l'Obsession",
+        "es": "Runa protectora de obsesión",
+        "pt": "Runa de Salvaguarda da Obsessão",
+        "th": "อักขระปัดเป่า หมกมุ่น"
+      }
     },
     {
       "output": "Warding Rune of Protection",
@@ -3653,7 +6592,17 @@
         "Vision",
         "Protective",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна защиты",
+        "ko": "보호의 수호하는 룬",
+        "ja": "保護のワードルーン",
+        "de": "Schützende Rune des Schutzes",
+        "fr": "Rune de Sauvegarde de la Protection",
+        "es": "Runa protectora de defensa",
+        "pt": "Runa de Salvaguarda da Proteção",
+        "th": "อักขระปัดเป่า คุ้มครอง"
+      }
     },
     {
       "output": "Warding Rune of Reinforcement",
@@ -3664,7 +6613,17 @@
         "Lightning",
         "Ward",
         "Electrocuting"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна укрепления",
+        "ko": "보강의 수호하는 룬",
+        "ja": "補強のワードルーン",
+        "de": "Schützende Rune der Verstärkung",
+        "fr": "Rune de Sauvegarde du Renforcement",
+        "es": "Runa protectora de refuerzo",
+        "pt": "Runa de Salvaguarda do Reforço",
+        "th": "อักขระปัดเป่า กำลังเสริม"
+      }
     },
     {
       "output": "Warding Rune of Salvaging",
@@ -3676,7 +6635,17 @@
         "Ward",
         "Moon",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна обломков",
+        "ko": "분해의 수호하는 룬",
+        "ja": "回収のワードルーン",
+        "de": "Schützende Rune der Bergung",
+        "fr": "Rune de Sauvegarde du Salut",
+        "es": "Runa protectora de rescate",
+        "pt": "Runa de Salvaguarda do Aproveitamento",
+        "th": "อักขระปัดเป่า เก็บกู้"
+      }
     },
     {
       "output": "Warding Rune of Stability",
@@ -3688,7 +6657,17 @@
         "Ward",
         "Arcane",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна устойчивости",
+        "ko": "안정성의 수호하는 룬",
+        "ja": "安定のワードルーン",
+        "de": "Schützende Rune der Stabilität",
+        "fr": "Rune de Sauvegarde de la Stabilité",
+        "es": "Runa protectora de estabilidad",
+        "pt": "Runa de Salvaguarda da Estabilidade",
+        "th": "อักขระปัดเป่า เสถียร"
+      }
     },
     {
       "output": "Warding Rune of Symbiosis",
@@ -3700,7 +6679,17 @@
         "Ward",
         "Life",
         "Stone"
-      ]
+      ],
+      "names": {
+        "ru": "Барьерная руна симбиоза",
+        "ko": "공생의 수호하는 룬",
+        "ja": "共生のワードルーン",
+        "de": "Schützende Rune der Symbiose",
+        "fr": "Rune de Sauvegarde de la Symbiose",
+        "es": "Runa protectora de simbiosis",
+        "pt": "Runa de Salvaguarda da Simbiose",
+        "th": "อักขระปัดเป่า พึ่งพา"
+      }
     },
     {
       "output": "Rare Unique Item",
@@ -3713,7 +6702,17 @@
         "Protective",
         "Rage",
         "Bond"
-      ]
+      ],
+      "names": {
+        "ru": "Редкий уникальный предмет",
+        "ko": "희귀한 고유 아이템",
+        "ja": "貴重な ユニーク アイテム",
+        "de": "Seltener einzigartiger Gegenstand",
+        "fr": "Objet Unique rare",
+        "es": "Objeto único raro",
+        "pt": "Item Único Raro",
+        "th": "ไอเทม ยูนิค ที่พบได้ยาก"
+      }
     },
     {
       "output": "Unique Amulet",
@@ -3725,7 +6724,17 @@
         "Cold",
         "Fire",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный амулет",
+        "ko": "고유 목걸이",
+        "ja": "ユニーク アミュレット",
+        "de": "Einzigartiges Amulet",
+        "fr": "Amulette Unique",
+        "es": "Amuleto único",
+        "pt": "Amuleto Único",
+        "th": "สร้อย ยูนิค"
+      }
     },
     {
       "output": "Unique Belt",
@@ -3737,7 +6746,17 @@
         "Bond",
         "Ward",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный пояс",
+        "ko": "고유 허리띠",
+        "ja": "ユニーク ベルト",
+        "de": "Einzigartiger Gürtel",
+        "fr": "Ceinture Unique",
+        "es": "Cinturón único",
+        "pt": "Cinto Único",
+        "th": "เข็มขัด ยูนิค"
+      }
     },
     {
       "output": "Unique Body Armour",
@@ -3748,7 +6767,17 @@
         "Celestial",
         "Prismatic",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный нательный доспех",
+        "ko": "고유 갑옷",
+        "ja": "ユニーク アーマー",
+        "de": "Einzigartige Körperrüstung",
+        "fr": "Armure Unique",
+        "es": "Armadura única",
+        "pt": "Peitoral Único",
+        "th": "เสื้อเกราะ ยูนิค"
+      }
     },
     {
       "output": "Unique Boots",
@@ -3759,7 +6788,17 @@
         "Celestial",
         "Lightning",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальные сапоги",
+        "ko": "고유 장화",
+        "ja": "ユニーク ブーツ",
+        "de": "Einzigartige Stiefel",
+        "fr": "Bottes Uniques",
+        "es": "Botas únicas",
+        "pt": "Botas Únicas",
+        "th": "รองเท้า ยูนิค"
+      }
     },
     {
       "output": "Unique Bow",
@@ -3771,7 +6810,17 @@
         "Vision",
         "Wisdom",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный лук",
+        "ko": "고유 활",
+        "ja": "ユニーク 弓",
+        "de": "Einzigartiger Bogen",
+        "fr": "Arc Unique",
+        "es": "Arco único",
+        "pt": "Arco Único",
+        "th": "ธนู ยูนิค"
+      }
     },
     {
       "output": "Unique Crossbow",
@@ -3783,7 +6832,17 @@
         "Electrocuting",
         "Wisdom",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный самострел",
+        "ko": "고유 석궁",
+        "ja": "ユニーク クロスボウ",
+        "de": "Einzigartige Armbrust",
+        "fr": "Arbalète Unique",
+        "es": "Ballesta única",
+        "pt": "Besta Única",
+        "th": "หน้าไม้ ยูนิค"
+      }
     },
     {
       "output": "Unique Focus",
@@ -3795,7 +6854,17 @@
         "Protective",
         "Wisdom",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный фокус",
+        "ko": "고유 집중구",
+        "ja": "ユニーク フォーカス",
+        "de": "Einzigartiger Fokus",
+        "fr": "Focus Unique",
+        "es": "Foco único",
+        "pt": "Foco Único",
+        "th": "โฟกัส ยูนิค"
+      }
     },
     {
       "output": "Unique Gloves",
@@ -3806,7 +6875,17 @@
         "Celestial",
         "Lightning",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальные перчатки",
+        "ko": "고유 장갑",
+        "ja": "ユニーク グローブ",
+        "de": "Einzigartige Handschuhe",
+        "fr": "Gants Uniques",
+        "es": "Guantes únicos",
+        "pt": "Luvas Únicas",
+        "th": "ถุงมือ ยูนิค"
+      }
     },
     {
       "output": "Unique Helmet",
@@ -3817,7 +6896,17 @@
         "Celestial",
         "Tempest",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный шлем",
+        "ko": "고유 투구",
+        "ja": "ユニーク ヘルメット",
+        "de": "Einzigartiger Helm",
+        "fr": "Casque Unique",
+        "es": "Casco único",
+        "pt": "Elmo Único",
+        "th": "หมวก ยูนิค"
+      }
     },
     {
       "output": "Unique Jewellery",
@@ -3829,7 +6918,17 @@
         "Moon",
         "Wisdom",
         "Cyclonic"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальная бижутерия",
+        "ko": "고유 장신구",
+        "ja": "ユニーク 宝飾品",
+        "de": "Einzigartiger Schmuck",
+        "fr": "Accessoire Unique",
+        "es": "Joyería única",
+        "pt": "Pedraria Única",
+        "th": "เครื่่องประดับ ยูนิค"
+      }
     },
     {
       "output": "Unique One Hand Mace",
@@ -3841,7 +6940,17 @@
         "Rage",
         "Wisdom",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальная одноручная булава",
+        "ko": "고유 한손 철퇴",
+        "ja": "ユニーク 片手メイス",
+        "de": "Einzigartiger Einhandstreitkolben",
+        "fr": "Masse à une main Unique",
+        "es": "Maza a una mano única",
+        "pt": "Maça de Uma Mão Única",
+        "th": "กระบองมือเดียว ยูนิค"
+      }
     },
     {
       "output": "Unique Quarterstaff",
@@ -3853,7 +6962,17 @@
         "Rage",
         "Wisdom",
         "Adaptive"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный боевой посох",
+        "ko": "고유 육척봉",
+        "ja": "ユニーク クォータースタッフ",
+        "de": "Einzigartiger Kampfstab",
+        "fr": "Bâton de combat Unique",
+        "es": "Bastón único",
+        "pt": "Bastão Único",
+        "th": "ไม้พลองวรยุทธ์ ยูนิค"
+      }
     },
     {
       "output": "Unique Quiver",
@@ -3865,7 +6984,17 @@
         "Protective",
         "Wisdom",
         "Rage"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный колчан",
+        "ko": "고유 화살통",
+        "ja": "ユニーク 矢筒",
+        "de": "Einzigartiger Köcher",
+        "fr": "Carquois Unique",
+        "es": "Carcaj de flechas únicas",
+        "pt": "Aljava Única",
+        "th": "ซองธนู ยูนิค"
+      }
     },
     {
       "output": "Unique Ring",
@@ -3877,7 +7006,17 @@
         "Sky",
         "Cold",
         "Wisdom"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальное кольцо",
+        "ko": "고유 반지",
+        "ja": "ユニーク 指輪",
+        "de": "Einzigartiger Ring",
+        "fr": "Bague Unique",
+        "es": "Anillo único",
+        "pt": "Anel Único",
+        "th": "แหวน ยูนิค"
+      }
     },
     {
       "output": "Unique Sceptre",
@@ -3889,7 +7028,17 @@
         "Protective",
         "Wisdom",
         "Arcane"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный скипетр",
+        "ko": "고유 셉터",
+        "ja": "ユニーク セプター",
+        "de": "Einzigartiges Zepter",
+        "fr": "Sceptre Unique",
+        "es": "Cetro único",
+        "pt": "Cetro Único",
+        "th": "คทา ยูนิค"
+      }
     },
     {
       "output": "Unique Shield",
@@ -3901,7 +7050,17 @@
         "Protective",
         "Wisdom",
         "Prismatic"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный щит",
+        "ko": "고유 방패",
+        "ja": "ユニーク 盾",
+        "de": "Einzigartiger Schild",
+        "fr": "Bouclier Unique",
+        "es": "Escudo único",
+        "pt": "Escudo Único",
+        "th": "โล่ ยูนิค"
+      }
     },
     {
       "output": "Unique Spear",
@@ -3913,7 +7072,17 @@
         "Rage",
         "Wisdom",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальное копьё",
+        "ko": "고유 창",
+        "ja": "ユニーク スピア",
+        "de": "Einzigartiger Speer",
+        "fr": "Lance Unique",
+        "es": "Lanza única",
+        "pt": "Lança Única",
+        "th": "หอก ยูนิค"
+      }
     },
     {
       "output": "Unique Staff",
@@ -3925,7 +7094,17 @@
         "Arcane",
         "Wisdom",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный посох",
+        "ko": "고유 지팡이",
+        "ja": "ユニーク スタッフ",
+        "de": "Einzigartiger Stab",
+        "fr": "Bâton Unique",
+        "es": "Báculo único",
+        "pt": "Cajado Único",
+        "th": "ไม้พลอง ยูนิค"
+      }
     },
     {
       "output": "Unique Talisman",
@@ -3937,7 +7116,17 @@
         "Rage",
         "Wisdom",
         "Bloodletting"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный талисман",
+        "ko": "고유 부적",
+        "ja": "ユニーク タリスマン",
+        "de": "Einzigartiger Talisman",
+        "fr": "Talisman Unique",
+        "es": "Talismán único",
+        "pt": "Talismã Único",
+        "th": "เครื่องราง ยูนิค"
+      }
     },
     {
       "output": "Unique Two Hand Mace",
@@ -3949,7 +7138,17 @@
         "Rage",
         "Wisdom",
         "Tidal"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальная двуручная булава",
+        "ko": "고유 양손 철퇴",
+        "ja": "ユニーク 両手メイス",
+        "de": "Einzigartiger Zweihandstreitkolben",
+        "fr": "Masse à deux mains Unique",
+        "es": "Maza a dos manos única",
+        "pt": "Maça de Duas Mãos Única",
+        "th": "กระบองสองมือ ยูนิค"
+      }
     },
     {
       "output": "Unique Wand",
@@ -3961,7 +7160,17 @@
         "Arcane",
         "Wisdom",
         "Momentum"
-      ]
+      ],
+      "names": {
+        "ru": "Уникальный жезл",
+        "ko": "고유 마법봉",
+        "ja": "ユニーク ワンド",
+        "de": "Einzigartiger Zauberstab",
+        "fr": "Baguette Unique",
+        "es": "Varita única",
+        "pt": "Varinha Única",
+        "th": "ไม้กายสิทธิ์ ยูนิค"
+      }
     },
     {
       "output": "Very Rare Unique item",
@@ -3978,7 +7187,17 @@
         "Prismatic",
         "Rebirth",
         "Fire"
-      ]
+      ],
+      "names": {
+        "ru": "Очень редкий уникальный предмет",
+        "ko": "아주 희귀한 고유 아이템",
+        "ja": "とても貴重な ユニーク アイテム",
+        "de": "Sehr seltener einzigartiger Gegenstand",
+        "fr": "Objet Unique très rare",
+        "es": "Objeto único muy raro",
+        "pt": "Item Único Muito Raro",
+        "th": "ไอเทม ยูนิค ที่พบได้ยากยิ่ง"
+      }
     }
   ]
 }

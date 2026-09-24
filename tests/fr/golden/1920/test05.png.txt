@@ -1,0 +1,11 @@
+rows=10
+y=54 qty=1 name="Alliage du Père des runes" match="Alliage du Père des runes" mconf=100
+y=137 qty=1 name="Alliage souverain" match="Alliage souverain" mconf=100
+y=181 qty=1 name="Alliage mystique" match="Alliage mystique" mconf=100
+y=228 qty=1 name="Alliage prismatique" match="Alliage prismatique" mconf=100
+y=276 qty=1 name="Alliage véloce" match="Alliage véloce" mconf=100
+y=322 qty=1 name="Alliage cyclonique" match="Alliage cyclonique" mconf=100
+y=369 qty=1 name="Alliage expansif" match="Alliage expansif" mconf=100
+y=418 qty=1 name="Alliage protecteur" match="Alliage protecteur" mconf=100
+y=462 qty=1 name="Alliage adaptatif" match="Alliage adaptatif" mconf=100
+y=512 qty=2 name="Alliage runique" match="Alliage runique" mconf=100

@@ -1,0 +1,12 @@
+rows=11
+y=30 qty=1 name="Orbe divin" match="Orbe divin" mconf=100
+y=90 qty=1 name="Orbe du chaos majeur" match="Orbe du chaos majeur" mconf=100
+y=149 qty=1 name="Orbe exalté majeur" match="Orbe exalté majeur" mconf=100
+y=210 qty=1 name="Orbe royal majeur" match="Orbe royal majeur" mconf=100
+y=266 qty=1 name="Orbe de joaillier majeur" match="Orbe de joaillier majeur" mconf=100
+y=328 qty=2 name="Orbe du chaos" match="Orbe du chaos" mconf=100
+y=384 qty=3 name="Orbe d'alchimie" match="Orbe d'alchimie" mconf=100
+y=444 qty=3 name="Prisme de lapidaire" match="Prisme de lapidaire" mconf=100
+y=503 qty=3 name="Bulle de souffleur de verre" match="Bulle de souffleur de verre" mconf=100
+y=566 qty=3 name="Orbe exalté" match="Orbe exalté" mconf=100
+y=623 qty=1 name="Flux thaumaturgique (Niveau 18)" match="Flux thaumaturgique (Niveau 18)" mconf=100

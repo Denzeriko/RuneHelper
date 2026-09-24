@@ -1,0 +1,11 @@
+rows=10
+y=66 qty=1 name="A Liga do Pai das Runas" match="A Liga do Pai das Runas" mconf=100
+y=178 qty=1 name="Liga Soberana" match="Liga Soberana" mconf=100
+y=232 qty=1 name="Liga Mística" match="Liga Mística" mconf=100
+y=295 qty=1 name="Liga Prismática" match="Liga Prismática" mconf=100
+y=361 qty=1 name="Liga Veloz" match="Liga Veloz" mconf=100
+y=421 qty=1 name="Liga Ciclônica" match="Liga Ciclônica" mconf=100
+y=484 qty=1 name="Liga Expansiva" match="Liga Expansiva" mconf=100
+y=550 qty=1 name="Liga Protetora" match="Liga Protetora" mconf=100
+y=611 qty=1 name="Liga Adaptativa" match="Liga Adaptativa" mconf=100
+y=673 qty=2 name="Liga Rúnica" match="Liga Rúnica" mconf=100

@@ -1,0 +1,7 @@
+rows=6
+y=23 qty=1 name="Сидерий Утреда" match="Сидерий Утреда" mconf=100
+y=131 qty=1 name="Присмотр Медведя" match="Присмотр Медведя" mconf=100
+y=239 qty=1 name="Охота Колра" match="Охота Колра" mconf=100
+y=347 qty=1 name="Сила Трада" match="Сила Трада" mconf=100
+y=455 qty=1 name="Мрачность Катлы" match="Мрачность Катлы" mconf=100
+y=563 qty=1 name="Резня Вораны" match="Резня Вораны" mconf=100

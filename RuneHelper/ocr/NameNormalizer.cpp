@@ -2,14 +2,178 @@
 
 #include <algorithm>
 #include <array>
-#include <cctype>
 #include <cmath>
 
 namespace
 {
 constexpr size_t kMaxLen = 128;
+constexpr char32_t kReplacement = 0xFFFD;
 
-int BoundedLevenshteinDistance(std::string_view a, std::string_view b, int maxDistance)
+constexpr std::array<char, 32> kLatin1Letters = { 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'c',  'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i',
+                                                  'd', 'n', 'o', 'o', 'o', 'o', 'o', '\0', 'o', 'u', 'u', 'u', 'u', 'y', 't', 'y' };
+
+char32_t DecodeUtf8(std::string_view text, std::size_t& i)
+{
+    const unsigned char lead = static_cast<unsigned char>(text[i++]);
+
+    if (lead < 0x80)
+        return lead;
+
+    int extra = 0;
+    char32_t codePoint = 0;
+
+    if ((lead & 0xE0) == 0xC0)
+    {
+        extra = 1;
+        codePoint = lead & 0x1F;
+    }
+    else if ((lead & 0xF0) == 0xE0)
+    {
+        extra = 2;
+        codePoint = lead & 0x0F;
+    }
+    else if ((lead & 0xF8) == 0xF0)
+    {
+        extra = 3;
+        codePoint = lead & 0x07;
+    }
+    else
+    {
+        return kReplacement;
+    }
+
+    for (int k = 0; k < extra; ++k)
+    {
+        if (i >= text.size() || (static_cast<unsigned char>(text[i]) & 0xC0) != 0x80)
+            return kReplacement;
+
+        codePoint = (codePoint << 6) | (static_cast<unsigned char>(text[i++]) & 0x3F);
+    }
+
+    return codePoint;
+}
+
+void AppendUtf8(std::string& out, char32_t codePoint)
+{
+    if (codePoint < 0x80)
+    {
+        out.push_back(static_cast<char>(codePoint));
+    }
+    else if (codePoint < 0x800)
+    {
+        out.push_back(static_cast<char>(0xC0 | (codePoint >> 6)));
+        out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
+    }
+    else if (codePoint < 0x10000)
+    {
+        out.push_back(static_cast<char>(0xE0 | (codePoint >> 12)));
+        out.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
+    }
+    else
+    {
+        out.push_back(static_cast<char>(0xF0 | (codePoint >> 18)));
+        out.push_back(static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
+        out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
+    }
+}
+
+char32_t FoldLetter(char32_t c)
+{
+    if (c >= 0xFF01 && c <= 0xFF5E)
+        c -= 0xFEE0;
+
+    if (c >= 'A' && c <= 'Z')
+        return c - 'A' + 'a';
+
+    if (c < 0x80)
+        return c;
+
+    if (c >= 0xC0 && c <= 0xDE && c != 0xD7)
+        c += 0x20;
+
+    if (c == 0xDF)
+        return 's';
+
+    if (c >= 0xE0 && c <= 0xFF)
+        return static_cast<unsigned char>(kLatin1Letters[c - 0xE0]);
+
+    if (c == 0x152 || c == 0x153)
+        return 'o';
+
+    if (c >= 0x400 && c <= 0x40F)
+        c += 0x50;
+    else if (c >= 0x410 && c <= 0x42F)
+        c += 0x20;
+
+    if (c == 0x451)
+        return 0x435;
+
+    return c;
+}
+
+bool IsSeparator(char32_t c)
+{
+    return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == 0xA0 || c == 0x3000;
+}
+
+bool IsWordCharacter(char32_t c)
+{
+    if (c == 0 || c == kReplacement)
+        return false;
+
+    if (c < 0x80)
+        return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+
+    if (c < 0xC0 || c == 0xD7 || c == 0xF7)
+        return false;
+
+    if ((c >= 0x2000 && c <= 0x2BFF) || (c >= 0x3000 && c <= 0x303F))
+        return false;
+
+    return !((c >= 0xFE10 && c <= 0xFE4F) || (c >= 0xFF00 && c <= 0xFF65));
+}
+
+std::u32string NormalizeCodePoints(std::string_view s)
+{
+    std::u32string out;
+    out.reserve(s.size());
+
+    bool prevSpace = true;
+    std::size_t i = 0;
+
+    while (i < s.size())
+    {
+        const char32_t raw = DecodeUtf8(s, i);
+
+        if (IsSeparator(raw))
+        {
+            if (!prevSpace)
+            {
+                out.push_back(' ');
+                prevSpace = true;
+            }
+
+            continue;
+        }
+
+        const char32_t folded = FoldLetter(raw);
+
+        if (IsWordCharacter(folded))
+        {
+            out.push_back(folded);
+            prevSpace = false;
+        }
+    }
+
+    if (!out.empty() && out.back() == ' ')
+        out.pop_back();
+
+    return out;
+}
+
+int BoundedLevenshteinDistance(std::u32string_view a, std::u32string_view b, int maxDistance)
 {
     if (a == b)
         return 0;
@@ -43,7 +207,7 @@ int BoundedLevenshteinDistance(std::string_view a, std::string_view b, int maxDi
         cur[0] = i;
 
         int rowMin = cur[0];
-        const char ca = a[i - 1];
+        const char32_t ca = a[i - 1];
 
         for (int j = 1; j <= m; ++j)
         {
@@ -69,18 +233,18 @@ int BoundedLevenshteinDistance(std::string_view a, std::string_view b, int maxDi
     return prev[m];
 }
 
-CachedItemNames::Histogram MakeHistogram(std::string_view text)
+CachedItemNames::Histogram MakeHistogram(std::u32string_view text)
 {
     CachedItemNames::Histogram histogram{};
 
-    for (unsigned char ch : text)
+    for (const char32_t c : text)
     {
-        std::size_t bucket = CachedItemNames::kHistogramSize - 1;
+        std::size_t bucket = 36 + static_cast<std::size_t>(c % 32);
 
-        if (ch >= 'a' && ch <= 'z')
-            bucket = static_cast<std::size_t>(ch - 'a');
-        else if (ch >= '0' && ch <= '9')
-            bucket = 26 + static_cast<std::size_t>(ch - '0');
+        if (c >= 'a' && c <= 'z')
+            bucket = static_cast<std::size_t>(c - 'a');
+        else if (c >= '0' && c <= '9')
+            bucket = 26 + static_cast<std::size_t>(c - '0');
 
         if (histogram[bucket] < 255)
             ++histogram[bucket];
@@ -105,7 +269,7 @@ bool HistogramAllows(const CachedItemNames::Histogram& a, const CachedItemNames:
     return true;
 }
 
-int SimilarityPercentNormalized(std::string_view a, std::string_view b, int minConfidence)
+int SimilarityPercentNormalized(std::u32string_view a, std::u32string_view b, int minConfidence)
 {
     if (a.empty() || b.empty())
         return 0;
@@ -127,41 +291,32 @@ int SimilarityPercentNormalized(std::string_view a, std::string_view b, int minC
 std::string NormalizeName(std::string_view s)
 {
     std::string out;
-    out.reserve(s.size());
 
-    bool prevSpace = true;
-
-    for (unsigned char ch : s)
-    {
-        if (std::isalnum(ch))
-        {
-            out.push_back(static_cast<char>(std::tolower(ch)));
-            prevSpace = false;
-        }
-        else if (std::isspace(ch))
-        {
-            if (!prevSpace)
-            {
-                out.push_back(' ');
-                prevSpace = true;
-            }
-        }
-    }
-
-    if (!out.empty() && out.back() == ' ')
-        out.pop_back();
+    for (const char32_t c : NormalizeCodePoints(s))
+        AppendUtf8(out, c);
 
     return out;
 }
 
 CachedItemNames CachedItemNames::Build(const std::vector<std::string>& names)
 {
-    CachedItemNames cache;
-    cache.entries_.reserve(names.size());
+    std::vector<NameAlias> aliases;
+    aliases.reserve(names.size());
 
     for (const auto& name : names)
+        aliases.push_back({ name, name });
+
+    return Build(aliases);
+}
+
+CachedItemNames CachedItemNames::Build(const std::vector<NameAlias>& aliases)
+{
+    CachedItemNames cache;
+    cache.entries_.reserve(aliases.size());
+
+    for (const auto& [name, alias] : aliases)
     {
-        std::string normalized = NormalizeName(name);
+        std::u32string normalized = NormalizeCodePoints(alias);
 
         if (normalized.empty())
             continue;
@@ -198,7 +353,7 @@ std::size_t CachedItemNames::Size() const
 
 std::optional<MatchResult> CachedItemNames::FindBest(std::string_view input, int minConfidence) const
 {
-    const std::string normalizedInput = NormalizeName(input);
+    const std::u32string normalizedInput = NormalizeCodePoints(input);
 
     if (normalizedInput.empty() || entries_.empty())
         return std::nullopt;

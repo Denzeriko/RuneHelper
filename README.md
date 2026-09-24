@@ -2,12 +2,28 @@
 
 A lightweight overlay tool for **Path of Exile 2** that uses **OCR** to detect item names on the screen and display their current market prices.
 
+Reads the game client in **9 languages**: English, Русский, Deutsch, Français, Español, Português, 한국어, 日本語 and ไทย.
+
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)
 ![Language](https://img.shields.io/badge/language-C%2B%2B20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 [![Windows build](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
 [![Linux build](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml?query=branch%3Amaster)
-[![VirusTotal](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2FDenzeriko%2FRuneHelper%2Fmaster%2F.github%2Fbadges%2Fvirustotal.json)](https://www.virustotal.com/gui/file/37272781e8d4edfb27878427bf6c4fd80f8bb017311704bdca73242f9613829c)<!-- vt-badge -->
+
+![RuneHelper screenshot](assets/screenshot.png)
+
+## Features
+
+* Prices next to every item of the Runeshape loot list, read from the screen in real time.
+* A small built-in text recognizer for each client language, trained on the game fonts. Localized item names are translated to English for prices and recipes.
+* Works on HDR, dimmed and 4K screens: brightness is normalised and large regions are scaled down when needed.
+* Fuzzy matching absorbs OCR mistakes.
+* Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
+* Highlights rare runeshape tiles directly in the remnant panel.
+* Offline database of every runeshape combination, refreshed from a proxy at startup.
+* League-specific price cache, updated automatically, which keeps API requests low.
+* Debug window with OCR and matching results, plus optional image and text dumps.
+* No game memory reading or injection.
 
 ## Download
 
@@ -27,70 +43,83 @@ chmod +x RuneHelper-linux-x86_64-wayland
 
 The jobs under **Actions** are build checks, not downloads. Their artifacts need a GitHub login, and the Linux one links Ubuntu's own OpenCV dynamically, so it fails with an `undefined symbol` error anywhere else.
 
-## Features
-
-* Select any loot area on the screen.
-* Real-time OCR with a small built-in text recognizer trained on the game font.
-* Row-by-row OCR across up to eight worker threads, tuned for the Runeshape loot menu.
-* Reads HDR, dimmed and 4K captures: brightness is normalised and large regions are scaled down when needed.
-* Fuzzy matching for OCR mistakes.
-* Overlay displaying item prices next to detected items.
-* Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
-* Highlights rare runeshape tiles directly in the remnant panel.
-* Offline database of every runeshape combination, refreshed from a proxy at startup.
-* Automatic price cache updates.
-* League-specific offline price cache to reduce API requests.
-* Debug window showing OCR and matching results.
-* Optional OCR debug image/text dumps.
-* No game memory reading or injection.
-
-## Screenshot
-
-![RuneHelper screenshot](assets/screenshot.png)
-
 ## How to use
 
-Click **Select Region**, then drag a rectangle around the Runeshape loot list. It does not have to be tight: when the rectangle takes in some of the game around the list, RuneHelper finds the list inside it and reads only that. This only needs to be done once; RuneHelper saves the selected region in its config. Select it again only if the game window, UI scale, or menu position changes.
+1. Pick the language your game client runs in under **Game language**.
+2. Click **Select Region** and drag a rectangle around the Runeshape loot list. It does not have to be tight: RuneHelper finds the list inside it. The region is saved, so select it again only if the game window, UI scale or menu position changes.
+3. Tick **Enable OCR**. Prices appear next to the items whenever the loot list is on the screen.
 
 ![Region selection guide](assets/howto.gif)
 
-## How it works
+F8 toggles OCR, F9 reads the region once and F10 starts a region selection. All three can be changed under **HOTKEYS**.
 
-1. Select the loot area on your screen.
-2. RuneHelper periodically captures the selected region.
-3. When the region takes in part of the game around the loot panel, the panel is found by the edge where its parchment bars meet the dark frame, and only the panel is read. A panel wider than 750 px, as on 4K screens, is scaled down to 680 px before reading. When the text column is much darker, brighter or flatter than usual, as happens with HDR or a dimmed display, its brightness is normalised first. Correctly exposed regions of normal size are read untouched.
-4. The OCR pipeline finds text rows in the right side of the Runeshape loot menu. The panel frame on the right is cut off first, and only rows that reach the right edge where item names end are read, so rune icons of long recipes that spill into that side are skipped.
-5. Each detected row is cropped and read by a small convolutional network trained on the game font (see `tools/text-model`). Rows it reads with low confidence are dropped, which keeps rune icons and background out of the results.
-6. OCR mistakes are corrected using fuzzy matching.
-7. Prices are loaded from cache or downloaded from the API.
-8. An overlay is rendered next to the detected items.
+### Hotkeys on Wayland
 
-## OCR Debug
+Wayland lets no client grab keys globally, so the Wayland build listens on a control socket at `$XDG_RUNTIME_DIR/runehelper.sock`. Starting the binary with a command forwards it to the running instance and exits:
 
-Enable **Debug OCR** in the UI to write the latest OCR inputs and recognition logs to:
+```bash
+RuneHelper --toggle-ocr
+RuneHelper --snapshot
+RuneHelper --select-region
+```
+
+Bind them in the compositor config, for example in `hyprland.conf`:
+
+```text
+bind = , F8, exec, /path/to/RuneHelper --toggle-ocr
+bind = , F9, exec, /path/to/RuneHelper --snapshot
+bind = , F10, exec, /path/to/RuneHelper --select-region
+```
+
+## Known issues
+
+* The Wayland backend needs `wlr-layer-shell`, so GNOME Wayland sessions are not supported.
+* On KDE the portal asks which monitor to share; it has to be the one holding the capture region.
+* Prices come from the proxy at `denz.pw`; if it is unreachable the client falls back to poe.ninja directly.
+* Wayland has no global key grabs: hotkeys go through the control socket and a compositor binding.
+
+## OCR debug
+
+When items are missed or misread, click **Save OCR Debug** in the Debug tab. RuneHelper reads the region once and writes what OCR saw to:
 
 ```text
 Windows: %APPDATA%\Denz\RuneHelper\ocr_debug\latest
 Linux:   ~/.config/RuneHelper/ocr_debug/latest
 ```
 
-The folder is overwritten on each OCR run and may contain:
+Each save replaces the folder:
 
-* `source.png` - captured source region.
-* `prepared.png` - the panel as OCR reads it, written only when it was cut out of a larger region, scaled down or had its brightness normalised.
-* `rows_detected.png` - detected text rows and crop start markers, drawn on the image OCR reads.
-* `row_XX_row.png` - detected row crop.
-* `row_XX_text.png` - text crop passed to the recognizer.
-* `row_XX_read.png` - the crop as the recognizer sees it, scaled to 24 px high with its contrast stretched.
-* `row_XX_read.txt` - raw text, trimmed text, confidence, and accept/reject status.
+* `source.png` - the captured region.
+* `prepared.png` - the panel as OCR reads it, when it was cut out, scaled down or brightness-normalised.
+* `rows_detected.png` - detected rows and where their text starts.
+* `row_XX_row.png`, `row_XX_text.png` - each row and its text crop.
+* `row_XX_read.png` - the crop as the recognizer sees it.
+* `row_XX_read.txt` - the reading, its confidence and whether it was accepted.
 
-## Dependencies
+## How it works
+
+1. RuneHelper periodically captures the selected region and finds the loot panel inside it. 4K panels are scaled down, and HDR or dimmed ones have their brightness normalised.
+2. It finds the text rows in the right part of the panel and cuts each name out after its rune tiles.
+3. Each row is read by the small convolutional network of the selected client language (see `tools/text-model`), on up to eight worker threads. Rows read with low confidence are dropped, which keeps rune icons and background out of the results.
+4. Fuzzy matching fixes OCR mistakes and translates localized names to English.
+5. Prices come from the cache or the API and are drawn next to the items.
+
+## Price API
+
+poe.ninja asks that desktop clients not call its API from end-user machines, so prices go through a proxy at `https://denz.pw/poe2/economy?league=LEAGUE&type=TYPE`. It caches each league/type pair for an hour, which is how often the PoE 2 economy is recomputed. After three failed requests in a refresh cycle the client calls poe.ninja directly until the next cycle, and `RUNEHELPER_PRICE_API` points it at a proxy of your own.
+
+Prices are cached per league in `prices_dump_<league>.json` in the app data directory: `%APPDATA%\Denz\RuneHelper` on Windows, `~/.config/RuneHelper` on Linux.
+
+## Building from source
+
+### Dependencies
 
 * C++20
 * OpenCV
 * cpr
 * nlohmann/json
-* ImGui
+* Dear ImGui
+* GLFW on Linux
 
 On Linux, cpr, GLFW and Dear ImGui are vendored as git submodules under `external/`, so clone with them:
 
@@ -104,41 +133,27 @@ An existing clone catches up with:
 git submodule update --init --recursive
 ```
 
-Nothing is downloaded at configure time. System copies win when they exist: `cpr`, `glfw3` and `nlohmann_json` are looked up with `find_package` and the submodule is built only as a fallback, and the Wayland backend reads the `wlr-protocols` XML tree from its pkg-config `pkgdatadir`. Packagers can override the two source paths directly:
+Nothing is downloaded at configure time: system copies of `cpr`, `glfw3` and `nlohmann_json` win over the submodules, and packagers can point `RUNEHELPER_IMGUI_DIR` and `RUNEHELPER_WLR_PROTOCOLS_DIR` at their own trees.
 
-```bash
-cmake -S . -B build \
-    -DRUNEHELPER_IMGUI_DIR=/usr/src/imgui \
-    -DRUNEHELPER_WLR_PROTOCOLS_DIR=/usr/share/wlr-protocols
-```
+### Windows
 
-## Building on Windows
-
-Installed via vcpkg:
+The Windows build uses vcpkg in manifest mode: `vcpkg.json` lists the dependencies, and the CMake presets link them statically with clang-cl. It needs Visual Studio with the C++ Clang tools and a vcpkg checkout that `VCPKG_ROOT` points to. From a Developer PowerShell:
 
 ```powershell
-vcpkg install opencv:x64-windows
-vcpkg install cpr:x64-windows
-vcpkg install nlohmann-json:x64-windows
-vcpkg install imgui[dx11-binding,win32-binding]:x64-windows
+$env:VCPKG_ROOT = "C:\path\to\vcpkg"
+cmake --preset windows-clang-release
+cmake --build --preset windows-clang-release
 ```
 
-## Building on Ubuntu
+The first configure builds the dependencies, which takes a while. The executable lands in `build\windows-clang-release\RuneHelper.exe`.
+
+### Linux
 
 The Linux build targets X11 or Wayland, chosen at configure time with `RUNEHELPER_LINUX_BACKEND` (`x11` by default).
 
-The Wayland backend draws its overlay and region selector through `wlr-layer-shell`, which both wlroots compositors and KWin implement. For screen capture it picks a path at runtime:
+The Wayland backend draws through `wlr-layer-shell` (wlroots compositors and KWin). It captures with `wlr-screencopy` where the compositor offers it (Hyprland, Sway, river, labwc), and otherwise through the `xdg-desktop-portal` ScreenCast (KDE Plasma), which asks once which monitor to share. `RUNEHELPER_CAPTURE_PORTAL=1` forces the portal path for testing.
 
-* `wlr-screencopy` when the compositor offers it (Hyprland, Sway, river, labwc) — captures just the configured region, with no permission prompt;
-* `xdg-desktop-portal` ScreenCast over PipeWire otherwise (KDE Plasma) — the desktop asks once which monitor to share, and the answer is remembered in `~/.config/RuneHelper/screencast_token`.
-
-Share the monitor that contains the capture region: the portal gives the app a single output and the app cannot choose it for you. If the wrong monitor is shared, the log says which output arrived and which region was expected, and the saved permission is dropped so the picker opens again.
-
-Setting `RUNEHELPER_CAPTURE_PORTAL=1` forces the portal path on compositors that also support `wlr-screencopy`, which is useful for reproducing KDE behaviour.
-
-GNOME is not supported: it implements neither `wlr-layer-shell` nor `wlr-screencopy`, so the overlay has nowhere to live.
-
-### Install dependencies
+Dependencies on Ubuntu:
 
 ```bash
 sudo apt update
@@ -167,87 +182,22 @@ sudo apt install \
     libpipewire-0.3-dev
 ```
 
-### Configure and build
+Configure and build, adding `-DRUNEHELPER_LINUX_BACKEND=wayland` for Wayland:
 
 ```bash
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j$(nproc)
 ```
 
-For Wayland:
+### Docker
 
-```bash
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DRUNEHELPER_LINUX_BACKEND=wayland
-cmake --build build -j$(nproc)
-```
-
-## Building with Docker
-
-The Dockerfile produces the same self-contained binary the releases ship: OpenCV, GLFW, cpr and libstdc++ are linked statically, leaving only glibc, libcurl, the display server client libraries and libGL dynamic. It builds on Ubuntu 22.04 so the result keeps a glibc 2.35 floor and runs on newer distributions.
-
-The last stage is an export stage, not a runnable image. `--output` writes the binary onto the host and there is nothing to `docker run`:
-
-```bash
-docker build --output out .
-```
-
-The binary lands in `out/RuneHelper`. The backend defaults to Wayland and is switched with a build argument:
+The Dockerfile builds the same self-contained binary the releases ship, with OpenCV, GLFW, cpr and libstdc++ linked statically and a glibc 2.35 floor. Its last stage only exports the binary, so there is nothing to `docker run`:
 
 ```bash
 docker build --build-arg RUNEHELPER_LINUX_BACKEND=x11 --output out .
 ```
 
-Add `--network host` if the container cannot reach the package mirrors on your setup.
-
-The Linux build embeds `text_model.bin` and `combinations.json` into the executable the same way the Windows resource script does, so the binary runs from any working directory:
-
-```bash
-./out/RuneHelper
-```
-
-## Global hotkeys on Wayland
-
-Wayland lets no client grab keys globally, so the Wayland build listens on a control socket at `$XDG_RUNTIME_DIR/runehelper.sock`. Starting the binary with a command forwards it to the running instance and exits:
-
-```bash
-RuneHelper --toggle-ocr
-RuneHelper --snapshot
-RuneHelper --select-region
-```
-
-Bind them in the compositor config, for example in `hyprland.conf`:
-
-```text
-bind = , F8, exec, /path/to/RuneHelper --toggle-ocr
-bind = , F9, exec, /path/to/RuneHelper --snapshot
-bind = , F10, exec, /path/to/RuneHelper --select-region
-```
-
-## Price API
-
-poe.ninja asks that desktop clients not call its API from end-user machines, so prices go through a proxy:
-
-```text
-https://denz.pw/poe2/economy?league=LEAGUE&type=TYPE
-```
-
-The proxy fetches `https://poe.ninja/poe2/api/economy/exchange/current/overview` upstream, identifies itself with a descriptive User-Agent, revalidates with `If-None-Match`, and caches each league/type pair for an hour, which is how often the PoE 2 economy is recomputed. Clients therefore poll the proxy, not poe.ninja, and the interval in the settings only controls how soon a client picks up an already-cached answer.
-
-If the proxy fails three times in a refresh cycle, the client falls back to calling poe.ninja directly for the rest of that cycle and probes the proxy again on the next one. `RUNEHELPER_PRICE_API` overrides the proxy base URL, which is useful when running a proxy of your own.
-
-The cache is stored in the RuneHelper app data directory as a league-specific dump:
-
-```text
-Windows: %APPDATA%\Denz\RuneHelper\prices_dump_<league>.json
-Linux:   ~/.config/RuneHelper/prices_dump_<league>.json
-```
-
-## Known Issues
-
-* The Wayland backend needs `wlr-layer-shell`, so GNOME Wayland sessions are not supported.
-* On KDE the portal asks which monitor to share; it has to be the one holding the capture region.
-* Prices come from the proxy at `denz.pw`; if it is unreachable the client falls back to poe.ninja directly.
-* Wayland has no global key grabs: hotkeys go through the control socket and a compositor binding.
+The binary lands in `out/RuneHelper`, with the text models and `combinations.json` embedded. Leave out the build argument for Wayland, and add `--network host` if the container cannot reach the package mirrors.
 
 ## Disclaimer
 

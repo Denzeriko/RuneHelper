@@ -1,0 +1,12 @@
+rows=11
+y=23 qty=1 name="Orbe da Alquimia" match="Orbe da Alquimia" mconf=100
+y=70 qty=1 name="Pilha de Verísio" match="Pilha de Verísio" mconf=100
+y=118 qty=1 name="Orbe da Transmutação Maior" match="Orbe da Transmutação Maior" mconf=100
+y=165 qty=2 name="Bugiganga do Vidreiro" match="Bugiganga do Vidreiro" mconf=100
+y=212 qty=1 name="Orbe da Ampliação Maior" match="Orbe da Ampliação Maior" mconf=100
+y=259 qty=6 name="Lima do Ferreiro" match="Lima do Ferreiro" mconf=100
+y=307 qty=6 name="Gravador do Arcanista" match="Gravador do Arcanista" mconf=100
+y=354 qty=6 name="Sucata do Armeiro" match="Sucata do Armeiro" mconf=100
+y=401 qty=1 name="Orbe do Joalheiro Menor" match="Orbe do Joalheiro Menor" mconf=100
+y=448 qty=3 name="Orbe Real" match="Orbe Real" mconf=100
+y=496 qty=1 name="Orbe do Caos" match="Orbe do Caos" mconf=100

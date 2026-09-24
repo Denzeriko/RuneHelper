@@ -1,0 +1,12 @@
+rows=11
+y=10 qty=1 name="Runa de Salvaguarda da Aniquilação" match="Runa de Salvaguarda da Aniquilação" mconf=100
+y=58 qty=1 name="Runa de Salvaguarda do Coração" match="Runa de Salvaguarda do Coração" mconf=100
+y=106 qty=1 name="Runa de Salvaguarda do Resvalamento" match="Runa de Salvaguarda do Resvalamento" mconf=100
+y=151 qty=1 name="Runa de Salvaguarda da Estabilidade" match="Runa de Salvaguarda da Estabilidade" mconf=100
+y=199 qty=1 name="Runa de Salvaguarda do Sustento" match="Runa de Salvaguarda do Sustento" mconf=100
+y=247 qty=1 name="Runa de Salvaguarda da Coragem" match="Runa de Salvaguarda da Coragem" mconf=100
+y=294 qty=1 name="Runa de Salvaguarda do Desespero" match="Runa de Salvaguarda do Desespero" mconf=100
+y=342 qty=1 name="Runa de Salvaguarda da Desintegração" match="Runa de Salvaguarda da Desintegração" mconf=100
+y=388 qty=1 name="Runa de Salvaguarda da Proteção" match="Runa de Salvaguarda da Proteção" mconf=100
+y=436 qty=1 name="Runa de Salvaguarda do Reforço" match="Runa de Salvaguarda do Reforço" mconf=100
+y=483 qty=1 name="Runa de Carregamento Maior" match="Runa de Carregamento Maior" mconf=100

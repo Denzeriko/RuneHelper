@@ -11,9 +11,9 @@
 #include <vector>
 
 #include "TestScenes.h"
-#include "core/Config.h"
 #include "ocr/OCR.h"
 #include "ocr/OcrRowCache.h"
+#include "ocr/RowFinder.h"
 #include "platform/linux/ResourceHelper.h"
 
 namespace fs = std::filesystem;
@@ -130,7 +130,6 @@ struct Totals
 std::string ReadThroughColdCache(
     OCR& ocr,
     const cv::Mat& gray,
-    const AppConfig& config,
     const std::optional<TextLevels>& levels,
     const std::optional<cv::Rect>& panel
 )
@@ -141,7 +140,7 @@ std::string ReadThroughColdCache(
     if (panel)
         cold.SetPanel(*panel);
 
-    return Serialize(ocr.RecognizeLoot(gray, config, &cold));
+    return Serialize(ocr.RecognizeLoot(gray, &cold));
 }
 
 void Exercise(
@@ -149,16 +148,15 @@ void Exercise(
     const std::string& name,
     const cv::Mat& gray,
     const std::vector<cv::Rect>& rows,
-    const AppConfig& config,
     Totals& totals,
     std::vector<Failure>& failures
 )
 {
-    const std::string plain = Serialize(ocr.RecognizeLoot(gray, config));
+    const std::string plain = Serialize(ocr.RecognizeLoot(gray));
 
     OcrRowCache cache;
 
-    if (Serialize(ocr.RecognizeLoot(gray, config, &cache)) != plain)
+    if (Serialize(ocr.RecognizeLoot(gray, &cache)) != plain)
     {
         failures.push_back({ name, "a cold cache changed the result" });
         return;
@@ -175,7 +173,7 @@ void Exercise(
 
     cache.ResetCounters();
 
-    if (Serialize(ocr.RecognizeLoot(gray, config, &cache)) != plain)
+    if (Serialize(ocr.RecognizeLoot(gray, &cache)) != plain)
         failures.push_back({ name, "the same frame through a warm cache changed the result" });
 
     if (cache.Misses() != 0)
@@ -194,13 +192,13 @@ void Exercise(
         ++totals.editedPanels;
 
         OcrRowCache editedCache;
-        ocr.RecognizeLoot(gray, config, &editedCache);
+        ocr.RecognizeLoot(gray, &editedCache);
         editedCache.ResetCounters();
 
         const std::optional<TextLevels> heldLevels = editedCache.Levels();
         const std::optional<cv::Rect> heldPanel = editedCache.Panel();
-        const std::string cached = Serialize(ocr.RecognizeLoot(edited, config, &editedCache));
-        const std::string uncached = ReadThroughColdCache(ocr, edited, config, heldLevels, heldPanel);
+        const std::string cached = Serialize(ocr.RecognizeLoot(edited, &editedCache));
+        const std::string uncached = ReadThroughColdCache(ocr, edited, heldLevels, heldPanel);
 
         if (cached != uncached)
         {
@@ -210,7 +208,7 @@ void Exercise(
                                      DescribeRows(rows) +
                                      "\n"
                                      "      edited rows:   " +
-                                     DescribeRows(ocr.FindLootRows(edited)) });
+                                     DescribeRows(FindLootRows(edited)) });
         }
 
         if (editedCache.Hits() == 0)
@@ -221,7 +219,7 @@ void Exercise(
                                      DescribeRows(rows) +
                                      "\n"
                                      "      edited rows:   " +
-                                     DescribeRows(ocr.FindLootRows(edited)) });
+                                     DescribeRows(FindLootRows(edited)) });
         }
 
         totals.editedHits += editedCache.Hits();
@@ -230,7 +228,7 @@ void Exercise(
 
     {
         OcrRowCache driftCache;
-        ocr.RecognizeLoot(gray, config, &driftCache);
+        ocr.RecognizeLoot(gray, &driftCache);
 
         int reReadAt = 0;
         cv::Mat drifted;
@@ -241,7 +239,7 @@ void Exercise(
                 break;
 
             driftCache.ResetCounters();
-            ocr.RecognizeLoot(drifted, config, &driftCache);
+            ocr.RecognizeLoot(drifted, &driftCache);
 
             if (driftCache.Misses() > 0)
                 reReadAt = step;
@@ -265,12 +263,12 @@ void Exercise(
     }
 
     OcrRowCache noiseCache;
-    ocr.RecognizeLoot(gray, config, &noiseCache);
+    ocr.RecognizeLoot(gray, &noiseCache);
     noiseCache.ResetCounters();
 
     const cv::Mat noisy = WithNoise(gray, 0.8);
 
-    if (Serialize(ocr.RecognizeLoot(noisy, config, &noiseCache)) == plain)
+    if (Serialize(ocr.RecognizeLoot(noisy, &noiseCache)) == plain)
         ++totals.noiseStable;
 
     totals.noiseHits += noiseCache.Hits();
@@ -336,7 +334,7 @@ int main(int argc, char** argv)
 
     OCR ocr;
 
-    if (!ocr.Init(EmbeddedTextModel()))
+    if (!ocr.Init(EmbeddedTextModel("en")))
     {
         std::printf("ocr_row_cache: OCR::Init failed on the embedded text model\n");
         return 2;
@@ -358,8 +356,6 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    const AppConfig config;
-
     std::vector<Failure> failures;
     std::vector<cv::Mat> grays;
     std::vector<std::vector<cv::Rect>> rows;
@@ -367,7 +363,7 @@ int main(int argc, char** argv)
     for (const fs::path& image : images)
     {
         grays.push_back(LoadGray(image));
-        rows.push_back(grays.back().empty() ? std::vector<cv::Rect>{} : ocr.FindLootRows(grays.back()));
+        rows.push_back(grays.back().empty() ? std::vector<cv::Rect>{} : FindLootRows(grays.back()));
     }
 
     Totals captured;
@@ -383,7 +379,7 @@ int main(int argc, char** argv)
             continue;
         }
 
-        Exercise(ocr, name, grays[i], rows[i], config, captured, failures);
+        Exercise(ocr, name, grays[i], rows[i], captured, failures);
     }
 
     for (std::size_t i = 0; i < images.size(); ++i)
@@ -394,7 +390,7 @@ int main(int argc, char** argv)
         cv::Mat dim;
         grays[i].convertTo(dim, -1, 0.7, 0.0);
 
-        Exercise(ocr, fs::relative(images[i], panels).generic_string() + " dimmed", dim, rows[i], config, dimmed, failures);
+        Exercise(ocr, fs::relative(images[i], panels).generic_string() + " dimmed", dim, rows[i], dimmed, failures);
     }
 
     Totals surrounded;
@@ -415,7 +411,6 @@ int main(int argc, char** argv)
             fs::relative(images[i], panels).generic_string() + " inside a busy scene",
             SurroundWithGame(grays[i], Surroundings::Busy),
             shifted,
-            config,
             surrounded,
             failures
         );

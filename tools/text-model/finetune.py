@@ -1,6 +1,9 @@
+import os
 import random
+import re
 import sys
 import time
+from functools import partial
 
 import cv2
 import numpy as np
@@ -9,25 +12,79 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader, IterableDataset, get_worker_info
 
-from common import MIN_CONFIDENCE, SCENES, Matcher, expected_name, load_real, panel_of, prepare
+from common import LANGUAGE, MIN_CONFIDENCE, SCENES, TRUTH, Matcher, load_real, panel_of, prepare
 from synth import Synth
 from train import collate, load, read, save
 
-GROUPS = [
-    ['1280_test00', '1920_test00', '2560_test00', '3840_test03'],
-    ['1280_test01', '3840_test02'],
-    ['1280_test02', '1920_test01', '2560_test01', '3840_test01'],
-    ['1280_test03', '1920_test03', '2560_test03'],
-    ['1280_test04', '1920_test04'],
-    ['1280_test05', '1920_test05', '3840_test00'],
-    ['1280_test06', '1920_test08', '2560_test07'],
-    ['1920_test02', '2560_test02'],
-    ['1920_test06', '2560_test05'],
-    ['1920_test07'],
-    ['2560_test04'],
-    ['2560_test06'],
-]
-FOLDS = [[0, 7, 11], [2, 8, 10], [5, 6, 9], [1, 3, 4]]
+SPLITS = {
+    'en': (
+        [
+            ['1280_test00', '1920_test00', '2560_test00', '3840_test03'],
+            ['1280_test01', '3840_test02'],
+            ['1280_test02', '1920_test01', '2560_test01', '3840_test01'],
+            ['1280_test03', '1920_test03', '2560_test03'],
+            ['1280_test04', '1920_test04'],
+            ['1280_test05', '1920_test05', '3840_test00'],
+            ['1280_test06', '1920_test08', '2560_test07'],
+            ['1920_test02', '2560_test02'],
+            ['1920_test06', '2560_test05'],
+            ['1920_test07'],
+            ['2560_test04'],
+            ['2560_test06'],
+        ],
+        [[0, 7, 11], [2, 8, 10], [5, 6, 9], [1, 3, 4]],
+    ),
+    'ru': (
+        [
+            ['1920_test00', '2560_test07'],
+            ['1920_test01', '2560_test06'],
+            ['1920_test02', '2560_test03'],
+            ['1920_test04', '2560_test01'],
+            ['1920_test05', '2560_test02'],
+            ['1920_test03', '2560_test00'],
+            ['2560_test04'],
+            ['1920_test06'],
+            ['2560_test05'],
+        ],
+        [[0, 6], [1, 7], [2, 5], [3, 4, 8]],
+    ),
+    'de': (
+        [
+            ['1920_test06', '2560_test00'],
+            ['1920_test00', '2560_test01'],
+            ['1920_test01', '2560_test02'],
+            ['1920_test02', '2560_test03'],
+            ['1920_test03', '2560_test04', '2560_test06'],
+            ['1920_test05', '2560_test05'],
+            ['1920_test04'],
+        ],
+        [[0, 6], [1, 5], [2, 3], [4]],
+    ),
+}
+
+
+def content_splits(folds=4):
+    panels = {}
+    for path in sorted(TRUTH.glob('*/*.png.txt')):
+        panels[f'{path.parent.name}_{path.name.split(".")[0]}'] = set(re.findall(r'name="(.*)"', path.read_text(encoding='utf-8')))
+    groups = []
+    for panel, names in panels.items():
+        group = next((g for g in groups if any(len(names & panels[p]) * 2 >= min(len(names), len(panels[p]), 1) for p in g)), None)
+        if group is None:
+            groups.append([panel])
+        else:
+            group.append(panel)
+    groups.sort(key=len, reverse=True)
+    assignment = [[] for _ in range(folds)]
+    sizes = [0] * folds
+    for index, group in enumerate(groups):
+        target = sizes.index(min(sizes))
+        assignment[target].append(index)
+        sizes[target] += len(group)
+    return groups, assignment
+
+
+GROUPS, FOLDS = SPLITS[LANGUAGE] if LANGUAGE in SPLITS else content_splits()
 
 
 def augment(gray, rng):
@@ -67,7 +124,7 @@ def fine_tune(base, held, steps, seed, device):
     torch.manual_seed(0)
     model, width = load(base, device)
     real = [(gray, label) for scene in SCENES for name, gray, label in load_real(scene) if panel_of(name) not in held]
-    loader = DataLoader(MixedStream(real, 0.25, seed), batch_size=128, num_workers=12, collate_fn=collate, prefetch_factor=4, persistent_workers=True)
+    loader = DataLoader(MixedStream(real, 0.25, seed), batch_size=128, num_workers=int(os.environ.get('RUNEHELPER_WORKERS', '12')), collate_fn=partial(collate, charset=model.charset), prefetch_factor=4, persistent_workers=True)
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3, weight_decay=1e-4)
     schedule = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=1e-3, total_steps=steps, pct_start=0.1)
     ctc = nn.CTCLoss(blank=0, zero_infinity=True)
@@ -95,7 +152,8 @@ def score(model, device, held, matcher, table):
             text, confidence = read(model, device, gray)
             accepted = bool(text.strip()) and confidence >= MIN_CONFIDENCE
             if label:
-                row[0] += accepted and matcher.best(text) == expected_name(label)
+                target = matcher.best(label)
+                row[0] += accepted and target is not None and matcher.best(text) == target
                 row[1] += accepted and text == label
                 row[2] += 1
             else:

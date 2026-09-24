@@ -11,7 +11,6 @@
 #include <vector>
 
 #include "TestScenes.h"
-#include "core/Config.h"
 #include "ocr/OCR.h"
 #include "platform/PlatformPaths.h"
 
@@ -115,9 +114,6 @@ int main(int argc, char** argv)
         { .name = "narrow", .surroundings = Surroundings::Busy, .margin = 0.3 },
     };
 
-    AppConfig config;
-    config.debugOCR = true;
-
     const fs::path debugDir = GetUserDataDir() / "ocr_debug" / "latest";
 
     for (const Scene& scene : scenes)
@@ -133,7 +129,7 @@ int main(int argc, char** argv)
             const fs::path relative = fs::relative(file, panelsDir);
             const std::string resolution = relative.begin()->string();
 
-            ocr.RecognizeLoot(Render(file, std::stod(resolution), scene), config);
+            ocr.RecognizeLoot(Render(file, std::stod(resolution), scene), nullptr, true);
             crops += CopyRows(debugDir, target, resolution + "_" + file.stem().string());
         }
 

@@ -1,0 +1,7 @@
+rows=6
+y=65 qty=3 name="Exalted Orb ไร้ที่ติ" match="Exalted Orb ไร้ที่ติ" mconf=100
+y=178 qty=3 name="Orb of Annulment" match="Orb of Annulment" mconf=100
+y=281 qty=3 name="Regal Orb ไร้ที่ติ" match="Regal Orb ไร้ที่ติ" mconf=100
+y=389 qty=3 name="Orb of Transmutation ไร้ที่ติ" match="Orb of Transmutation ไร้ที่ติ" mconf=100
+y=497 qty=3 name="Orb of Augmentation ไร้ที่ติ" match="Orb of Augmentation ไร้ที่ติ" mconf=100
+y=610 qty=2 name="Orb of Annulment" match="Orb of Annulment" mconf=100

@@ -5,7 +5,7 @@
 
 #include <opencv2/core.hpp>
 
-#include "ocr/OCR.h"
+#include "ocr/PanelPreparation.h"
 
 struct RuneTileBand
 {

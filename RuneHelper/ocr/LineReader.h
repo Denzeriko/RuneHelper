@@ -49,6 +49,6 @@ private:
     static Tensor Convolve(const Tensor& input, const Layer& layer, int padHeight, int padWidth, bool relu);
     static Tensor Pool(const Tensor& input, int poolHeight, int poolWidth);
 
-    std::string charset_;
+    std::vector<std::string> charset_;
     std::vector<Layer> layers_;
 };

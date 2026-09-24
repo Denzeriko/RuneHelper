@@ -1,0 +1,7 @@
+rows=6
+y=51 qty=1 name="Estrella de Uhtred" match="Estrella de Uhtred" mconf=100
+y=132 qty=1 name="Cuidado de Medved" match="Cuidado de Medved" mconf=100
+y=213 qty=1 name="Cacería de Kolr" match="Cacería de Kolr" mconf=100
+y=294 qty=1 name="Poder de Thrud" match="Poder de Thrud" mconf=100
+y=375 qty=1 name="Melancolía de Katla" match="Melancolía de Katla" mconf=100
+y=458 qty=1 name="Matanza de Vorana" match="Matanza de Vorana" mconf=100

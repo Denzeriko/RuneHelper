@@ -1,0 +1,10 @@
+rows=9
+y=57 qty=1 name="スキルレベル 20: レイライン" match="-" mconf=0
+y=138 qty=1 name="スキルレベル 20: アニムスエクスチェンジ" match="-" mconf=0
+y=183 qty=1 name="スキルレベル 20: ヴェリシウムマニフェステーション" match="-" mconf=0
+y=230 qty=1 name="スキルレベル 20: パワードバイヴェリシウム" match="-" mconf=0
+y=278 qty=1 name="スキルレベル 20: レムナントオブカルグール" match="-" mconf=0
+y=371 qty=1 name="スキルレベル 20: ビターデッド" match="-" mconf=0
+y=418 qty=1 name="スキルレベル 20: コンダクティブルーン" match="-" mconf=0
+y=465 qty=1 name="スキルレベル 20: リパルジョン" match="-" mconf=0
+y=512 qty=1 name="スキルレベル 20: フロストフレイムノヴァ" match="-" mconf=0

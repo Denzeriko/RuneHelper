@@ -4,14 +4,88 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from common import FONT, REAL, UNPREFIXED, WORK, load_vocabulary
+from common import CHARSET, FONT, FONT_INDEX, LANGUAGE, LATIN_FONT, REAL, WORK, displayed, load_vocabulary, unquantified
 
 SUPERSAMPLE = 4
+
+STYLES = {
+    'en': {
+        'level': [' (Level {n})'],
+        'prefixed': ['Skill: {tail}', 'Support: {tail}', 'Unique {tail}', 'Rare Unique Item', 'Skill Level {n}: {tail}'],
+        'letters': 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'underlined': ('Unique',),
+        'tracking': (0.0, 0.0),
+    },
+    'ru': {
+        'level': [' (Уровень {n})', ' (уровень {n})'],
+        'prefixed': ['Умение: {tail}', 'Поддержка: {tail}', 'Уникальный {tail}', 'Уникальная {tail}', 'Уникальное {tail}',
+                     'Редкий уникальный предмет', 'Уровень умения {n}: {tail}'],
+        'letters': 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
+        'underlined': ('Уникальный', 'Уникальная', 'Уникальное', 'уникальный'),
+        'tracking': (0.03, 0.13),
+    },
+    'de': {
+        'level': [' (Stufe {n})'],
+        'prefixed': ['Fertigkeit: {tail}', 'Unterstützung: {tail}', 'Einzigartiger {tail}', 'Einzigartige {tail}', 'Einzigartiges {tail}',
+                     'Seltener einzigartiger Gegenstand', 'Fertigkeitsstufe {n}: {tail}'],
+        'letters': 'abcdefghijklmnopqrstuvwxyzäöüßABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ',
+        'underlined': ('Einzigartiger', 'Einzigartige', 'Einzigartiges', 'einzigartiger'),
+        'tracking': (0.0, 0.0),
+    },
+    'fr': {
+        'level': [' (Niveau {n})'],
+        'prefixed': ['Aptitude : {tail}', 'Gemme de soutien : {tail}', '{tail} Unique', 'Objet Unique rare'],
+        'letters': 'abcdefghijklmnopqrstuvwxyzéèêàâçîïôûùëABCDEFGHIJKLMNOPQRSTUVWXYZÉ',
+        'underlined': ('Unique',),
+        'tracking': (0.0, 0.0),
+    },
+    'es': {
+        'level': [' (nivel {n})'],
+        'prefixed': ['Habilidad: {tail}', 'Asistencia: {tail}', '{tail} único', '{tail} única', 'Objeto único raro'],
+        'letters': 'abcdefghijklmnopqrstuvwxyzáéíóúñABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'underlined': ('único', 'única'),
+        'tracking': (0.0, 0.0),
+    },
+    'pt': {
+        'level': [' (Nível {n})'],
+        'prefixed': ['Habilidade: {tail}', 'Reforço: {tail}', '{tail} Único', '{tail} Única', 'Item Único Raro'],
+        'letters': 'abcdefghijklmnopqrstuvwxyzáàâãçéêíóôõúABCDEFGHIJKLMNOPQRSTUVWXYZ',
+        'underlined': ('Único', 'Única'),
+        'tracking': (0.0, 0.0),
+    },
+    'ko': {
+        'cap': 0.88,
+        'level': [' ({n}레벨)'],
+        'prefixed': ['스킬 레벨 {n}: {tail}', '고유 {tail}', '희귀한 고유 아이템'],
+        'letters': None,
+        'underlined': ('고유',),
+        'tracking': (0.0, 0.05),
+    },
+    'ja': {
+        'cap': 0.88,
+        'level': [' (レベル{n})', '(レベル{n})'],
+        'prefixed': ['スキルレベル {n}: {tail}', 'ユニーク{tail}', '貴重なユニークアイテム'],
+        'letters': None,
+        'underlined': ('ユニーク',),
+        'tracking': (0.0, 0.05),
+    },
+    'th': {
+        'cap': 0.8,
+        'level': [' (เลเวล {n})'],
+        'prefixed': ['สกิล: {tail}', 'เสริม: {tail}', '{tail}ยูนิค', 'ไอเทมยูนิคที่พบได้ยาก'],
+        'letters': None,
+        'underlined': ('ยูนิค',),
+        'tracking': (0.0, 0.0),
+    },
+}
+STYLE = STYLES[LANGUAGE]
+LETTERS = STYLE['letters'] or ''.join(c for c in CHARSET if c.isalpha())
 
 
 def parchment_bank():
     bank = []
-    for path in sorted((REAL / 'clean').glob('*.png')):
+    folder = next((f for f in (REAL / 'clean', WORK / 'real' / 'clean') if f.exists()), REAL / 'clean')
+    for path in sorted(folder.glob('*.png')):
         gray = cv2.imread(str(path), cv2.IMREAD_GRAYSCALE)
         _, ink = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY_INV | cv2.THRESH_OTSU)
         columns = (ink > 0).mean(axis=0)
@@ -26,14 +100,33 @@ class Synth:
     def __init__(self, seed=0):
         self.rng = random.Random(seed)
         self.names = load_vocabulary()
-        self.words = sorted({w for n in self.names for w in n.split() if w.isalpha() and len(w) > 1})
+        pieces = (piece for n in self.names for piece in n.replace('の', ' ').replace('・', ' ').split())
+        self.words = sorted({w for w in pieces if w.isalpha() and len(w) > 1})
         self.bank = parchment_bank()
         self.fonts = {}
 
-    def font(self, size):
-        if size not in self.fonts:
-            self.fonts[size] = ImageFont.truetype(str(FONT), size)
-        return self.fonts[size]
+    def font(self, size, latin=False):
+        key = (size, latin)
+        if key not in self.fonts:
+            path = LATIN_FONT if latin else FONT
+            engine = ImageFont.Layout.RAQM if LATIN_FONT else ImageFont.Layout.BASIC
+            self.fonts[key] = ImageFont.truetype(str(path), size, index=0 if latin else FONT_INDEX, layout_engine=engine)
+        return self.fonts[key]
+
+    def runs(self, text, size):
+        if LATIN_FONT is None:
+            return [(text, self.font(size))]
+        out = []
+        for ch in text:
+            latin = not ('\u0e00' <= ch <= '\u0e7f') and ch != ' '
+            if out and (ch == ' ' or out[-1][2] == latin):
+                out[-1] = (out[-1][0] + ch, out[-1][1], out[-1][2])
+            else:
+                out.append((ch, self.font(size, latin), latin))
+        return [(t, f) for t, f, _ in out]
+
+    def measure(self, draw, text, size):
+        return sum(draw.textlength(t, font=f) for t, f in self.runs(text, size))
 
     def text(self):
         r = self.rng.random()
@@ -43,18 +136,17 @@ class Synth:
             count = self.rng.choice([1, 2, 2, 3, 3, 4])
             name = ' '.join(self.rng.choice(self.words) for _ in range(count))
             if self.rng.random() < 0.15:
-                name += f' (Level {self.rng.randint(1, 21)})'
+                name += self.rng.choice(STYLE['level']).format(n=self.rng.randint(1, 21))
         elif r < 0.90:
             tail = ' '.join(self.rng.choice(self.words) for _ in range(self.rng.choice([1, 2, 3])))
-            name = self.rng.choice([f'Skill: {tail}', f'Support: {tail}', f'Unique {tail}', 'Rare Unique Item', f'Skill Level {self.rng.randint(1, 21)}: {tail}'])
+            name = self.rng.choice(STYLE['prefixed']).format(tail=tail, n=self.rng.randint(1, 21))
         else:
-            letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-            name = ' '.join(''.join(self.rng.choice(letters) for _ in range(self.rng.randint(2, 9))) for _ in range(self.rng.randint(1, 3)))
-        if name.startswith(UNPREFIXED) or self.rng.random() < 0.08:
+            name = ' '.join(''.join(self.rng.choice(LETTERS) for _ in range(self.rng.randint(2, 9))) for _ in range(self.rng.randint(1, 3)))
+        if unquantified(name) or self.rng.random() < 0.08:
             return name
         roll = self.rng.random()
         quantity = 1 if roll < 0.35 else self.rng.randint(2, 9) if roll < 0.85 else self.rng.randint(10, 20)
-        return f'{quantity}x {name}'
+        return displayed(quantity, name)
 
     def background(self, width, height):
         if self.bank and self.rng.random() < 0.7:
@@ -85,7 +177,9 @@ class Synth:
         size = max(6, int(round(em * SUPERSAMPLE)))
         font = self.font(size)
         probe = ImageDraw.Draw(Image.new('L', (1, 1)))
-        text_width = probe.textlength(label, font=font) / SUPERSAMPLE
+        tracking = rng.uniform(*STYLE['tracking']) * size
+        advances = [probe.textlength(ch, font=font) + tracking for ch in label] if tracking > 0 else []
+        text_width = (sum(advances) if advances else self.measure(probe, label, size)) / SUPERSAMPLE
         ascent, descent = font.getmetrics()
         left_margin = rng.uniform(0.2, 2.5) * height
         right_margin = rng.uniform(0.25, 1.2) * height
@@ -93,15 +187,29 @@ class Synth:
         canvas = Image.new('L', (width * SUPERSAMPLE, height * SUPERSAMPLE), 0)
         draw = ImageDraw.Draw(canvas)
         cap_top = rng.uniform(0.0, 0.35) * height
-        origin_y = cap_top * SUPERSAMPLE - (ascent - 0.72 * size)
+        origin_y = cap_top * SUPERSAMPLE - (ascent - STYLE.get('cap', 0.72) * size)
         origin_x = left_margin * SUPERSAMPLE
         weight = rng.random()
         stroke = 2 if weight < 0.1 else 1 if weight < 0.7 else 0
-        draw.text((origin_x, origin_y), label, font=font, fill=255, stroke_width=stroke, stroke_fill=255)
-        if 'Unique' in label and rng.random() < 0.8:
-            start = label.index('Unique')
-            x0 = origin_x + draw.textlength(label[:start], font=font)
-            x1 = x0 + draw.textlength('Unique', font=font)
+        if advances:
+            x = origin_x
+            for ch, advance in zip(label, advances):
+                draw.text((x, origin_y), ch, font=font, fill=255, stroke_width=stroke, stroke_fill=255)
+                x += advance
+        else:
+            x = origin_x
+            for text, run_font in self.runs(label, size):
+                draw.text((x, origin_y), text, font=run_font, fill=255, stroke_width=stroke, stroke_fill=255)
+                x += draw.textlength(text, font=run_font)
+        word = next((w for w in STYLE['underlined'] if w in label), None)
+        if word and rng.random() < 0.8:
+            start = label.index(word)
+            if advances:
+                x0 = origin_x + sum(advances[:start])
+                x1 = x0 + sum(advances[start:start + len(word)]) - tracking
+            else:
+                x0 = origin_x + self.measure(draw, label[:start], size)
+                x1 = origin_x + self.measure(draw, label[:start + len(word)], size)
             y = origin_y + ascent + 0.12 * size
             draw.line([(x0, y), (x1, y)], fill=255, width=max(1, size // 14))
         mask = cv2.resize(np.asarray(canvas, dtype=np.float32) / 255.0, (width, height), interpolation=cv2.INTER_AREA)

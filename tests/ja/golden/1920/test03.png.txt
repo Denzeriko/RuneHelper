@@ -1,0 +1,8 @@
+rows=7
+y=52 qty=1 name="ウートレドの星読み" match="ウートレドの星読み" mconf=100
+y=117 qty=1 name="一一一ー一一ー越一" match="-" mconf=0
+y=133 qty=1 name="メドヴェッドの世話" match="メドヴェッドの世話" mconf=100
+y=215 qty=1 name="コルの狩り" match="コルの狩り" mconf=100
+y=296 qty=1 name="スルードの力" match="スルードの力" mconf=100
+y=376 qty=1 name="カトラの陰鬱" match="カトラの陰鬱" mconf=100
+y=457 qty=1 name="ヴォラナの虐殺" match="ヴォラナの虐殺" mconf=100

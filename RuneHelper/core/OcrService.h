@@ -6,12 +6,14 @@
 #include <cstdint>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <thread>
 #include <vector>
 
 #include "core/ConfigManager.h"
 #include "core/DebugData.h"
 #include "core/ScreenCaptureService.h"
+#include "ocr/NameNormalizer.h"
 #include "ocr/OcrFrameDiffer.h"
 #include "ocr/OcrRowCache.h"
 #include "ocr/OCR.h"
@@ -41,6 +43,7 @@ public:
     void Stop();
 
     void RequestSingleSnapshot();
+    void RequestDebugDump();
 
     OcrServiceStatus GetStatus() const;
     bool ConsumeDebugData(DebugData& data);
@@ -49,6 +52,7 @@ public:
 
 private:
     void InitOcr();
+    bool LoadLanguage(const std::string& language);
     void WorkerLoop();
 
     void ResetFrameState();
@@ -69,6 +73,8 @@ private:
 
     PriceService* prices_ = nullptr;
     OCR ocr_;
+    std::string language_;
+    CachedItemNames translations_;
     ScreenCaptureService screenCapture_;
     OcrFrameDiffer frameDiffer_;
     OcrRowCache rowCache_;
@@ -81,6 +87,7 @@ private:
     std::atomic<bool> captureFailing_ = false;
 
     std::atomic<bool> singleSnapshotRequested_ = false;
+    std::atomic<bool> debugDumpRequested_ = false;
     std::chrono::steady_clock::time_point singleSnapshotUntil_;
 
     std::atomic<bool> overlayDirty_ = false;

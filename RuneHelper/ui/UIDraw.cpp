@@ -14,6 +14,13 @@
 #include "price/ResolvedPrice.h"
 #include "ui/UIManager.h"
 #include "ui/UiScale.h"
+#include "ui/UiTooltip.h"
+
+#ifdef _WIN32
+#include "platform/windows/ResourceHelper.h"
+#else
+#include "platform/linux/ResourceHelper.h"
+#endif
 
 namespace
 {
@@ -22,6 +29,61 @@ constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
 constexpr double kConfigSaveDelaySeconds = 0.5;
 constexpr float kMinDebugTableHeight = 120.0f;
+
+const std::vector<GameLanguage>& ReadableLanguages()
+{
+    static const std::vector<GameLanguage> languages = []
+    {
+        std::vector<GameLanguage> found;
+
+        for (const GameLanguage& language : kGameLanguages)
+        {
+            if (!EmbeddedTextModel(language.code).empty())
+                found.push_back(language);
+        }
+
+        return found;
+    }();
+
+    return languages;
+}
+
+bool DrawGameLanguage(AppConfig& config)
+{
+    const std::vector<GameLanguage>& languages = ReadableLanguages();
+
+    if (languages.size() < 2)
+        return false;
+
+    const auto current = std::find_if(
+        languages.begin(),
+        languages.end(),
+        [&config](const GameLanguage& language) { return language.code == config.gameLanguage; }
+    );
+
+    bool changed = false;
+
+    if (ImGui::BeginCombo("Game language", current != languages.end() ? current->name.data() : config.gameLanguage.c_str()))
+    {
+        for (const GameLanguage& language : languages)
+        {
+            const bool selected = language.code == config.gameLanguage;
+
+            if (ImGui::Selectable(language.name.data(), selected) && !selected)
+            {
+                config.gameLanguage = std::string(language.code);
+                changed = true;
+            }
+
+            if (selected)
+                ImGui::SetItemDefaultFocus();
+        }
+
+        ImGui::EndCombo();
+    }
+
+    return changed;
+}
 }
 
 void UIDraw::CellText(const char* text)
@@ -100,7 +162,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kGreen, "OK");
 
     if (ImGui::IsItemHovered() && state.captureFailing)
-        ImGui::SetTooltip("The selected region cannot be captured. See runehelper.log for the reason.");
+        UiTooltip("The selected region cannot be captured. See runehelper.log for the reason.");
 
     row("Overlay");
     if (state.overlayAvailable)
@@ -109,7 +171,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kRed, "Unavailable");
 
     if (ImGui::IsItemHovered() && !state.overlayAvailable)
-        ImGui::SetTooltip("The overlay window could not be created, prices are shown in the Debug Menu only.");
+        UiTooltip("The overlay window could not be created, prices are shown in the Debug Menu only.");
 
     row("Prices");
     if (state.priceDownloading)
@@ -144,7 +206,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         }
 
         if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("%s", url.empty() ? "No download link was reported" : url.c_str());
+            UiTooltip(url.empty() ? "No download link was reported" : url.c_str());
     }
 
     ImGui::EndTable();
@@ -181,6 +243,8 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     else
         ImGui::TextColored(kRed, "Stopped");
 
+    configChanged |= DrawGameLanguage(config);
+
     ImGui::Spacing();
 
     // PRICES
@@ -193,7 +257,7 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
             state.wantsRefreshPrices = true;
     }
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
+        UiTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
 
     if (!config.priceSearchEnabled)
         ImGui::BeginDisabled();
@@ -297,7 +361,7 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     }
 
     if (leagueHovered)
-        ImGui::SetTooltip("A league missing from the list can be typed in. New leagues work as soon as the price proxy carries them.");
+        UiTooltip("A league missing from the list can be typed in. New leagues work as soon as the price proxy carries them.");
 
     constexpr const char* kPriceUnits[] = { "Exalted", "Exalted + divine", "Divine" };
 
@@ -310,8 +374,8 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     }
 
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows "
-                          "every price in divine orbs.");
+        UiTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows "
+                  "every price in divine orbs.");
 
     ImGui::Spacing();
 
@@ -331,12 +395,12 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     configChanged |= ImGui::Checkbox("Background", &config.overlayBackground);
 
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Draws a dark plate behind the overlay text. Turn it off for bare text over the game.");
+        UiTooltip("Draws a dark plate behind the overlay text. Turn it off for bare text over the game.");
 
     configChanged |= ImGui::Checkbox("Outline", &config.overlayOutline);
 
     if (ImGui::IsItemHovered())
-        ImGui::SetTooltip("Traces the text in black so it stays readable without a background plate.");
+        UiTooltip("Traces the text in black so it stays readable without a background plate.");
 
     ImGui::Spacing();
 
@@ -357,23 +421,13 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
 
 void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 {
-    if (manager.HasConfig())
-    {
-        AppConfig& config = manager.ConfigDraft();
+    if (ImGui::Button("Save OCR Debug"))
+        manager.RequestOcrDebug();
 
-        if (ImGui::Checkbox("Debug OCR", &config.debugOCR))
-        {
-            manager.ApplyConfigDraft();
+    if (ImGui::IsItemHovered())
+        UiTooltip("Reads the region once and writes its crops and recognition logs into the ocr_debug/latest folder.");
 
-            if (!manager.SaveConfig())
-                LOG_ERROR("UI failed to autosave config");
-        }
-
-        if (ImGui::IsItemHovered())
-            ImGui::SetTooltip("Writes OCR crops and recognition logs into the ocr_debug/latest folder.");
-
-        ImGui::Spacing();
-    }
+    ImGui::Spacing();
 
     ImGui::SeparatorText("OCR DEBUG");
 
@@ -429,7 +483,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
                 ImGui::TextDisabled("-");
 
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("This item has no price on the market, so RuneHelper has nothing to show.");
+                    UiTooltip("This item has no price on the market, so RuneHelper has nothing to show.");
             }
             else if (line.confidence >= kTrustedMatchConfidence)
             {
@@ -440,7 +494,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
                 ImGui::TextColored(kYellow, "%d%% ?", line.confidence);
 
                 if (ImGui::IsItemHovered())
-                    ImGui::SetTooltip("The name was guessed, not read cleanly. Verify before trusting this price.");
+                    UiTooltip("The name was guessed, not read cleanly. Verify before trusting this price.");
             }
 
             ImGui::TableSetColumnIndex(3);

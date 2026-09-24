@@ -149,6 +149,7 @@ bool UIBackend::Init(UIManager* manager)
     ImGuiIO& io = ImGui::GetIO();
     io.IniFilename = nullptr;
 
+    ImGuiStyleSetup::AddFonts();
     impl_->ApplyScale();
 
     if (!ImGui_ImplWin32_Init(impl_->hwnd))

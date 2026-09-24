@@ -1,0 +1,12 @@
+rows=11
+y=12 qty=1 name="Rune antique de la Prouesse" match="Rune antique de la Prouesse" mconf=100
+y=71 qty=1 name="Rune antique du Fracassement" match="Rune antique du Fracassement" mconf=100
+y=130 qty=1 name="Rune antique du Titan" match="Rune antique du Titan" mconf=100
+y=189 qty=1 name="Rune de Portée" match="Rune de Portée" mconf=100
+y=247 qty=1 name="Rune de la Flamme vitale" match="Rune de la Flamme vitale" mconf=100
+y=308 qty=1 name="Rune antique du Duel" match="Rune antique du Duel" mconf=100
+y=367 qty=1 name="Rune antique de la Riposte" match="Rune antique de la Riposte" mconf=100
+y=427 qty=1 name="Rune antique de la Détonation" match="Rune antique de la Détonation" mconf=100
+y=485 qty=1 name="Rune antique de l'Animosité" match="Rune antique de l'Animosité" mconf=100
+y=545 qty=1 name="Rune antique de la Horde" match="Rune antique de la Horde" mconf=100
+y=604 qty=1 name="Rune antique des Éclats" match="Rune antique des Éclats" mconf=100

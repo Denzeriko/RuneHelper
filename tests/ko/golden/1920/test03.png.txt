@@ -1,0 +1,7 @@
+rows=6
+y=49 qty=1 name="우트레드의 성좌" match="우트레드의 성좌" mconf=100
+y=131 qty=1 name="메드베드의 보살핌" match="메드베드의 보살핌" mconf=100
+y=211 qty=1 name="콜르의 사냥" match="콜르의 사냥" mconf=100
+y=292 qty=1 name="스루드의 완력" match="스루드의 완력" mconf=100
+y=373 qty=1 name="카틀라의 순흑" match="카틀라의 순흑" mconf=100
+y=455 qty=1 name="보라나의 학살" match="보라나의 학살" mconf=100

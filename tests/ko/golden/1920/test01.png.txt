@@ -1,0 +1,12 @@
+rows=11
+y=7 qty=2 name="신성한 오브" match="신성한 오브" mconf=100
+y=54 qty=3 name="카오스 오브" match="카오스 오브" mconf=100
+y=100 qty=1 name="완벽한 쥬얼러 오브" match="완벽한 쥬얼러 오브" mconf=100
+y=149 qty=1 name="기회의 오브" match="기회의 오브" mconf=100
+y=196 qty=3 name="상위 진화의 오브" match="상위 진화의 오브" mconf=100
+y=242 qty=3 name="상위 확장의 오브" match="상위 확장의 오브" mconf=100
+y=290 qty=1 name="무작위 화폐 5개" match="무작위 화폐 5개" mconf=100
+y=338 qty=1 name="신성한 오브" match="신성한 오브" mconf=100
+y=385 qty=1 name="상위 카오스 오브" match="상위 카오스 오브" mconf=100
+y=431 qty=1 name="상위 엑잘티드 오브" match="상위 엑잘티드 오브" mconf=100
+y=478 qty=1 name="상위 제왕의 오브" match="상위 제왕의 오브" mconf=100

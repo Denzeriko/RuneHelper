@@ -1,0 +1,7 @@
+rows=6
+text="1x Sidereus d'Uthred" qty=1 name="Sidereus d'Uthred"
+text="1x Sollicitude de Medved" qty=1 name="Sollicitude de Medved"
+text="1x Traque de Kolr" qty=1 name="Traque de Kolr"
+text="1x Puissance de Thurd" qty=1 name="Puissance de Thurd"
+text="1x Morosité de Katla" qty=1 name="Morosité de Katla"
+text="1x Carnage de Vorana" qty=1 name="Carnage de Vorana"

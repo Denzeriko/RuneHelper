@@ -1,0 +1,11 @@
+rows=10
+y=63 qty=3 name="상위 엑잘티드 오브" match="상위 엑잘티드 오브" mconf=100
+y=120 qty=1 name="마석학 유동체 (19레벨)" match="마석학 유동체 (19레벨)" mconf=100
+y=183 qty=2 name="신성한 오브" match="신성한 오브" mconf=100
+y=244 qty=3 name="카오스 오브" match="카오스 오브" mconf=100
+y=305 qty=1 name="완벽한 쥬얼러 오브" match="완벽한 쥬얼러 오브" mconf=100
+y=367 qty=1 name="기회의 오브" match="기회의 오브" mconf=100
+y=428 qty=3 name="상위 진화의 오브" match="상위 진화의 오브" mconf=100
+y=489 qty=3 name="상위 확장의 오브" match="상위 확장의 오브" mconf=100
+y=551 qty=1 name="무작위 화폐 5개" match="무작위 화폐 5개" mconf=100
+y=613 qty=1 name="신성한 오브" match="신성한 오브" mconf=100

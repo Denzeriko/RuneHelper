@@ -1,0 +1,12 @@
+rows=11
+y=17 qty=1 name="Objeto único raro" match="Objeto único raro" mconf=100
+y=81 qty=1 name="Anillo único" match="Anillo único" mconf=100
+y=139 qty=1 name="Cinturón único" match="Cinturón único" mconf=100
+y=204 qty=1 name="Amuleto único" match="Amuleto único" mconf=100
+y=266 qty=1 name="Joyería única" match="Joyería única" mconf=100
+y=327 qty=1 name="Varita única" match="Varita única" mconf=100
+y=389 qty=1 name="Maza a dos manos única" match="Maza a dos manos única" mconf=100
+y=446 qty=1 name="Talismán único" match="Talismán único" mconf=100
+y=508 qty=1 name="Báculo único" match="Báculo único" mconf=100
+y=574 qty=1 name="Lanza única" match="Lanza única" mconf=100
+y=631 qty=1 name="Escudo único" match="Escudo único" mconf=100

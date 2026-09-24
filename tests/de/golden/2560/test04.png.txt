@@ -1,0 +1,12 @@
+rows=11
+y=12 qty=1 name="Uralte Rune der Hexerei" match="Uralte Rune der Hexerei" mconf=100
+y=72 qty=1 name="Uralte Rune des Verfalls" match="Uralte Rune des Verfalls" mconf=100
+y=135 qty=1 name="Uralte Rune der Entdeckung" match="Uralte Rune der Entdeckung" mconf=100
+y=197 qty=1 name="Uralte Rune der Kontrolle" match="Uralte Rune der Kontrolle" mconf=100
+y=257 qty=1 name="Uralte Rune der Tapferkeit" match="Uralte Rune der Tapferkeit" mconf=100
+y=322 qty=1 name="Uralte Rune der Zerschmetterung" match="Uralte Rune der Zerschmetterung" mconf=100
+y=381 qty=1 name="Uralte Rune des Titanen" match="Uralte Rune des Titanen" mconf=100
+y=443 qty=1 name="Rune der Konfrontation" match="Rune der Konfrontation" mconf=100
+y=502 qty=1 name="Rune der Lebensflamme" match="Rune der Lebensflamme" mconf=100
+y=566 qty=1 name="Uralte Rune des Duells" match="Uralte Rune des Duells" mconf=100
+y=627 qty=1 name="Uralte Rune der Vergeltung" match="Uralte Rune der Vergeltung" mconf=100

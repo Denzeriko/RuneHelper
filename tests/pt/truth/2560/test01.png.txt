@@ -1,0 +1,11 @@
+rows=10
+text="3 Orbe Exaltado Maior" qty=3 name="Orbe Exaltado Maior"
+text="1 Fluxo Taumatúrgico (Nível 19)" qty=1 name="Fluxo Taumatúrgico (Nível 19)"
+text="2 Orbe Divino" qty=2 name="Orbe Divino"
+text="3 Orbe do Caos" qty=3 name="Orbe do Caos"
+text="1 Orbe do Joalheiro Perfeito" qty=1 name="Orbe do Joalheiro Perfeito"
+text="1 Orbe da Chance" qty=1 name="Orbe da Chance"
+text="3 Orbe da Transmutação Maior" qty=3 name="Orbe da Transmutação Maior"
+text="3 Orbe da Ampliação Maior" qty=3 name="Orbe da Ampliação Maior"
+text="5 Moedas Aleatórias" qty=5 name="Aleatórias"
+text="1 Orbe Divino" qty=1 name="Orbe Divino"

@@ -470,3 +470,8 @@ void TextRaster::Draw(
         }
     }
 }
+
+std::filesystem::path FindSystemFont()
+{
+    return FindFont();
+}

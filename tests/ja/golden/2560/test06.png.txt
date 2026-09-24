@@ -1,0 +1,12 @@
+rows=11
+y=24 qty=1 name="貴重なユニークアイテム" match="貴重な ユニーク アイテム" mconf=85
+y=87 qty=1 name="ユニーク指輪" match="ユニーク 指輪" mconf=86
+y=148 qty=1 name="ユニークベルト" match="ユニーク ベルト" mconf=88
+y=210 qty=1 name="ユニークアミュレット" match="ユニーク アミュレット" mconf=91
+y=270 qty=1 name="ユニーク宝飾品" match="ユニーク 宝飾品" mconf=88
+y=333 qty=1 name="ユニークワンド" match="ユニーク ワンド" mconf=88
+y=393 qty=1 name="ユニーク両手メイス" match="ユニーク 両手メイス" mconf=90
+y=456 qty=1 name="ユニークタリスマン" match="ユニーク タリスマン" mconf=90
+y=517 qty=1 name="ユニークスタッフ" match="ユニーク スタッフ" mconf=89
+y=579 qty=1 name="ユニークスピア" match="ユニーク スピア" mconf=88
+y=639 qty=1 name="ユニーク盾" match="ユニーク 盾" mconf=84

@@ -1,0 +1,12 @@
+rows=11
+y=12 qty=1 name="희귀한 고유 아이템" match="희귀한 고유 아이템" mconf=100
+y=62 qty=1 name="고유 반지" match="고유 반지" mconf=100
+y=108 qty=1 name="고유 허리띠" match="고유 허리띠" mconf=100
+y=154 qty=1 name="고유 목걸이" match="고유 목걸이" mconf=100
+y=202 qty=1 name="고유 장신구" match="고유 장신구" mconf=100
+y=249 qty=1 name="고유 마법봉" match="고유 마법봉" mconf=100
+y=296 qty=1 name="고유 양손 철퇴" match="고유 양손 철퇴" mconf=100
+y=344 qty=1 name="고유 부적" match="고유 부적" mconf=100
+y=391 qty=1 name="고유 지팡이" match="고유 지팡이" mconf=100
+y=440 qty=1 name="고유 창" match="고유 창" mconf=100
+y=485 qty=1 name="고유 방패" match="고유 방패" mconf=100

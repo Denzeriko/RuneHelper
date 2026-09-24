@@ -12,7 +12,8 @@ namespace
 constexpr int kInputHeight = 24;
 constexpr int kStride = 4;
 constexpr std::size_t kLayerCount = 8;
-constexpr char kMagic[8] = { 'R', 'H', 'O', 'C', 'R', '1', '\0', '\0' };
+constexpr std::uint32_t kMaxSymbols = 65536;
+constexpr char kMagic[8] = { 'R', 'H', 'O', 'C', 'R', '2', '\0', '\0' };
 
 class Cursor
 {
@@ -30,6 +31,8 @@ public:
     }
 
     bool ReadU32(std::uint32_t& value) { return Read(&value, sizeof(value)); }
+
+    bool ReadU8(std::uint8_t& value) { return Read(&value, sizeof(value)); }
 
 private:
     std::string_view data_;
@@ -63,13 +66,30 @@ bool LineReader::Load(std::string_view model)
     char magic[8] = {};
     std::uint32_t charsetSize = 0;
 
-    if (!cursor.Read(magic, sizeof(magic)) || std::memcmp(magic, kMagic, sizeof(magic)) != 0 || !cursor.ReadU32(charsetSize))
+    if (!cursor.Read(magic, sizeof(magic)) || std::memcmp(magic, kMagic, sizeof(magic)) != 0 || !cursor.ReadU32(charsetSize) ||
+        charsetSize == 0 || charsetSize > kMaxSymbols)
+    {
         return false;
+    }
 
-    std::string charset(charsetSize, '\0');
+    std::vector<std::string> charset(charsetSize);
+
+    for (std::string& symbol : charset)
+    {
+        std::uint8_t length = 0;
+
+        if (!cursor.ReadU8(length) || length == 0)
+            return false;
+
+        symbol.resize(length);
+
+        if (!cursor.Read(symbol.data(), length))
+            return false;
+    }
+
     std::uint32_t layerCount = 0;
 
-    if (!cursor.Read(charset.data(), charsetSize) || !cursor.ReadU32(layerCount) || layerCount != kLayerCount)
+    if (!cursor.ReadU32(layerCount) || layerCount != kLayerCount)
         return false;
 
     std::vector<Layer> layers(layerCount);
@@ -312,7 +332,7 @@ LineReader::Result LineReader::Read(const cv::Mat& gray) const
 
         if (best != 0 && best != previous)
         {
-            result.text.push_back(charset_[static_cast<std::size_t>(best - 1)]);
+            result.text += charset_[static_cast<std::size_t>(best - 1)];
             confidence += 1.0 / sum;
             ++emitted;
         }

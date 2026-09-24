@@ -1,0 +1,7 @@
+rows=6
+text="3x Orbe exalté parfait" qty=3 name="Orbe exalté parfait"
+text="3x Orbe d'annulation" qty=3 name="Orbe d'annulation"
+text="3x Orbe royal parfait" qty=3 name="Orbe royal parfait"
+text="3x Orbe de transmutation parfait" qty=3 name="Orbe de transmutation parfait"
+text="3x Orbe d'augmentation parfait" qty=3 name="Orbe d'augmentation parfait"
+text="2x Orbe d'annulation" qty=2 name="Orbe d'annulation"

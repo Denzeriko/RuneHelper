@@ -1,0 +1,12 @@
+rows=11
+y=12 qty=1 name="Schützende Rune des Äquinoktium" match="Schützende Rune des Äquinoktium" mconf=100
+y=59 qty=1 name="Schützende Rune der Besessenheit" match="Schützende Rune der Besessenheit" mconf=100
+y=106 qty=1 name="Schützende Rune der Bewehrung" match="Schützende Rune der Bewehrung" mconf=100
+y=154 qty=1 name="Uralte Rune der Hexerei" match="Uralte Rune der Hexerei" mconf=100
+y=201 qty=1 name="Uralte Rune des Verfalls" match="Uralte Rune des Verfalls" mconf=100
+y=248 qty=1 name="Uralte Rune der Entdeckung" match="Uralte Rune der Entdeckung" mconf=100
+y=295 qty=1 name="Uralte Rune der Kontrolle" match="Uralte Rune der Kontrolle" mconf=100
+y=343 qty=1 name="Uralte Rune der Tapferkeit" match="Uralte Rune der Tapferkeit" mconf=100
+y=390 qty=1 name="Uralte Rune der Zerschmetterung" match="Uralte Rune der Zerschmetterung" mconf=100
+y=437 qty=1 name="Uralte Rune des Titanen" match="Uralte Rune des Titanen" mconf=100
+y=484 qty=1 name="Rune der Konfrontation" match="Rune der Konfrontation" mconf=100

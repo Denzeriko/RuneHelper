@@ -14,10 +14,17 @@ struct MatchResult
     int confidence = 0;
 };
 
+struct NameAlias
+{
+    std::string name;
+    std::string alias;
+};
+
 class CachedItemNames
 {
 public:
     static CachedItemNames Build(const std::vector<std::string>& names);
+    static CachedItemNames Build(const std::vector<NameAlias>& aliases);
 
     bool Empty() const;
     std::size_t Size() const;
@@ -25,14 +32,14 @@ public:
     std::optional<MatchResult> FindBest(std::string_view input, int minConfidence = 82) const;
 
 public:
-    static constexpr std::size_t kHistogramSize = 37;
+    static constexpr std::size_t kHistogramSize = 68;
     using Histogram = std::array<std::uint8_t, kHistogramSize>;
 
 private:
     struct Entry
     {
         std::string original;
-        std::string normalized;
+        std::u32string normalized;
         Histogram histogram{};
     };
 

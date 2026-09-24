@@ -1,0 +1,12 @@
+rows=11
+text="1x Orbe divin" qty=1 name="Orbe divin"
+text="1x Orbe du chaos majeur" qty=1 name="Orbe du chaos majeur"
+text="1x Orbe exalté majeur" qty=1 name="Orbe exalté majeur"
+text="1x Orbe royal majeur" qty=1 name="Orbe royal majeur"
+text="1x Orbe de joaillier majeur" qty=1 name="Orbe de joaillier majeur"
+text="2x Orbe du chaos" qty=2 name="Orbe du chaos"
+text="3x Orbe d'alchimie" qty=3 name="Orbe d'alchimie"
+text="3x Prisme de lapidaire" qty=3 name="Prisme de lapidaire"
+text="3x Bulle de souffleur de verre" qty=3 name="Bulle de souffleur de verre"
+text="3x Orbe exalté" qty=3 name="Orbe exalté"
+text="1x Flux thaumaturgique (Niveau 18)" qty=1 name="Flux thaumaturgique (Niveau 18)"

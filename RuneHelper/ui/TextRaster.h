@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <memory>
 #include <string>
 
@@ -34,3 +35,5 @@ private:
     struct Impl;
     std::unique_ptr<Impl> impl_;
 };
+
+std::filesystem::path FindSystemFont();

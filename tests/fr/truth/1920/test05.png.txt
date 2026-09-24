@@ -1,0 +1,11 @@
+rows=10
+text="1x Alliage du Père des runes" qty=1 name="Alliage du Père des runes"
+text="1x Alliage souverain" qty=1 name="Alliage souverain"
+text="1x Alliage mystique" qty=1 name="Alliage mystique"
+text="1x Alliage prismatique" qty=1 name="Alliage prismatique"
+text="1x Alliage véloce" qty=1 name="Alliage véloce"
+text="1x Alliage cyclonique" qty=1 name="Alliage cyclonique"
+text="1x Alliage expansif" qty=1 name="Alliage expansif"
+text="1x Alliage protecteur" qty=1 name="Alliage protecteur"
+text="1x Alliage adaptatif" qty=1 name="Alliage adaptatif"
+text="2x Alliage runique" qty=2 name="Alliage runique"

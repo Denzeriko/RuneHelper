@@ -58,19 +58,12 @@ struct Score
 
 inline std::string Squash(const std::string& text)
 {
-    std::string out;
-    out.reserve(text.size());
-
-    for (unsigned char c : text)
-    {
-        if (std::isalnum(c))
-            out.push_back(static_cast<char>(std::tolower(c)));
-    }
-
+    std::string out = NormalizeName(text);
+    out.erase(std::remove(out.begin(), out.end(), ' '), out.end());
     return out;
 }
 
-inline std::vector<std::string> LoadVocabulary(const std::filesystem::path& combinations)
+inline std::vector<std::string> LoadVocabulary(const std::filesystem::path& combinations, const std::string& language = "en")
 {
     std::ifstream in(combinations);
     nlohmann::json parsed = nlohmann::json::parse(in, nullptr, false);
@@ -82,7 +75,10 @@ inline std::vector<std::string> LoadVocabulary(const std::filesystem::path& comb
 
     for (const auto& entry : parsed["combinations"])
     {
-        const std::string output = entry.value("output", std::string());
+        const std::string output = language == "en" ? entry.value("output", std::string())
+                                   : entry.contains("names") && entry["names"].is_object()
+                                       ? entry["names"].value(language, std::string())
+                                       : std::string();
 
         if (!output.empty())
             names.push_back(output);

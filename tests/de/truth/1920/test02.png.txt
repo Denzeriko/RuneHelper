@@ -1,0 +1,12 @@
+rows=11
+qty=2 name="Göttliche Sphäre"
+qty=3 name="Chaossphäre"
+qty=1 name="Perfekte Sphäre des Goldschmieds"
+qty=1 name="Sphäre der Möglichkeiten"
+qty=3 name="Größere Umwandlungssphäre"
+qty=3 name="Größere Aufwertungssphäre"
+qty=5 name="zufällige Währung"
+qty=1 name="Göttliche Sphäre"
+qty=1 name="Größere Chaossphäre"
+qty=1 name="Größere Erhabene Sphäre"
+qty=1 name="Größere Hoheitliche Sphäre"

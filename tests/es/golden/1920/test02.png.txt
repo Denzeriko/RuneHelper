@@ -1,0 +1,12 @@
+rows=11
+y=20 qty=1 name="Runa protectora de obsesión" match="Runa protectora de obsesión" mconf=100
+y=68 qty=1 name="Runa protectora de armazón" match="Runa protectora de armazón" mconf=100
+y=113 qty=1 name="Runa antigua de brujería" match="Runa antigua de brujería" mconf=100
+y=162 qty=1 name="Runa antigua de decaimiento" match="Runa antigua de decaimiento" mconf=100
+y=207 qty=1 name="Runa antigua de descubrimiento" match="Runa antigua de descubrimiento" mconf=100
+y=255 qty=1 name="Runa antigua de control" match="Runa antigua de control" mconf=100
+y=303 qty=1 name="Runa antigua de bravura" match="Runa antigua de bravura" mconf=100
+y=350 qty=1 name="Runa antigua de fragmentación" match="Runa antigua de fragmentación" mconf=100
+y=396 qty=1 name="Runa antigua del titán" match="Runa antigua del titán" mconf=100
+y=443 qty=1 name="Runa de confrontación" match="Runa de confrontación" mconf=100
+y=490 qty=1 name="Runa de llama vital" match="Runa de llama vital" mconf=100

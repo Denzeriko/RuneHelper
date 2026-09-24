@@ -66,6 +66,18 @@ add_test(
         "${CMAKE_CURRENT_SOURCE_DIR}/truth"
 )
 
+foreach(language IN LISTS RUNEHELPER_TEXT_MODEL_LANGUAGES)
+    add_test(
+        NAME ocr_golden_${language}
+        COMMAND ocr_golden
+            "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/panels"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/golden"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/truth"
+            --language ${language}
+    )
+endforeach()
+
 add_test(
     NAME ocr_rune_tiles
     COMMAND ocr_rune_tiles
@@ -85,13 +97,29 @@ add_custom_target(runehelper_tests
     DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests
 )
 
-add_custom_target(bless_ocr_golden
+set(RUNEHELPER_BLESS_COMMANDS
     COMMAND ocr_golden
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
         "${CMAKE_CURRENT_SOURCE_DIR}/panels"
         "${CMAKE_CURRENT_SOURCE_DIR}/golden"
         "${CMAKE_CURRENT_SOURCE_DIR}/truth"
         --bless
+)
+
+foreach(language IN LISTS RUNEHELPER_TEXT_MODEL_LANGUAGES)
+    list(APPEND RUNEHELPER_BLESS_COMMANDS
+        COMMAND ocr_golden
+            "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/panels"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/golden"
+            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/truth"
+            --bless
+            --language ${language}
+    )
+endforeach()
+
+add_custom_target(bless_ocr_golden
+    ${RUNEHELPER_BLESS_COMMANDS}
     DEPENDS ocr_golden
     VERBATIM
 )

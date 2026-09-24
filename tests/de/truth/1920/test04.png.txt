@@ -1,0 +1,7 @@
+rows=6
+qty=1 name="Uhtreds Sternzeit"
+qty=1 name="Medveds Fürsorge"
+qty=1 name="Kolrs Jagd"
+qty=1 name="Thruds Macht"
+qty=1 name="Katlas Finsternis"
+qty=1 name="Voranas Gemetzel"

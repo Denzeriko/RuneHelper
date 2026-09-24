@@ -3,4 +3,5 @@
 namespace ImGuiStyleSetup
 {
 void ApplyRuneHelperStyle();
+void AddFonts();
 }

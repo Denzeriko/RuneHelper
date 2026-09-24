@@ -43,13 +43,15 @@ public:
     const Recipe* FindRecipe(std::string_view output, int count) const;
     bool IsRareRune(const std::string& rune) const;
 
+    CachedItemNames Translations(std::string_view language) const;
+
     static bool Accepts(const nlohmann::json& j);
 
 private:
     static std::string NormalizeRune(std::string_view name);
     static std::string StripOcrNoise(std::string_view name);
 
-    bool LoadFromJson(const nlohmann::json& j, std::string_view source);
+    bool LoadFromJson(const nlohmann::json& j, std::string_view source, const nlohmann::json* namesFallback = nullptr);
 
     bool loaded_ = false;
     bool complete_ = false;

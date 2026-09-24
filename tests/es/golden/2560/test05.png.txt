@@ -1,0 +1,11 @@
+rows=10
+y=62 qty=1 name="Aleación del Padre de las runas" match="Aleación del Padre de las runas" mconf=100
+y=173 qty=1 name="Aleación soberana" match="Aleación soberana" mconf=100
+y=227 qty=1 name="Aleación mística" match="Aleación mística" mconf=100
+y=288 qty=1 name="Aleación prismática" match="Aleación prismática" mconf=100
+y=353 qty=1 name="Aleación veloz" match="Aleación veloz" mconf=100
+y=411 qty=1 name="Aleación ciclónica" match="Aleación ciclónica" mconf=100
+y=476 qty=1 name="Aleación extensa" match="Aleación extensa" mconf=100
+y=537 qty=1 name="Aleación protectora" match="Aleación protectora" mconf=100
+y=595 qty=1 name="Aleación adaptativa" match="Aleación adaptativa" mconf=100
+y=657 qty=2 name="Aleación rúnica" match="Aleación rúnica" mconf=100

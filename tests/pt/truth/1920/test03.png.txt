@@ -1,0 +1,7 @@
+rows=6
+text="1 Sidereu de Uhtred" qty=1 name="Sidereu de Uhtred"
+text="1 Cuidados de Medved" qty=1 name="Cuidados de Medved"
+text="1 Caçada de Kolr" qty=1 name="Caçada de Kolr"
+text="1 Poder de Thrud" qty=1 name="Poder de Thrud"
+text="1 Trevas de Katla" qty=1 name="Trevas de Katla"
+text="1 Carnificina de Vorana" qty=1 name="Carnificina de Vorana"

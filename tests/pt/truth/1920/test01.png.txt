@@ -1,0 +1,12 @@
+rows=11
+text="1 Orbe da Alquimia" qty=1 name="Orbe da Alquimia"
+text="Pilha de Verísio" qty=1 name="Pilha de Verísio"
+text="1 Orbe da Transmutação Maior" qty=1 name="Orbe da Transmutação Maior"
+text="2 Bugiganga do Vidreiro" qty=2 name="Bugiganga do Vidreiro"
+text="1 Orbe da Ampliação Maior" qty=1 name="Orbe da Ampliação Maior"
+text="6 Lima do Ferreiro" qty=6 name="Lima do Ferreiro"
+text="6 Gravador do Arcanista" qty=6 name="Gravador do Arcanista"
+text="6 Sucata do Armeiro" qty=6 name="Sucata do Armeiro"
+text="1 Orbe do Joalheiro Menor" qty=1 name="Orbe do Joalheiro Menor"
+text="3 Orbe Real" qty=3 name="Orbe Real"
+text="1 Orbe do Caos" qty=1 name="Orbe do Caos"

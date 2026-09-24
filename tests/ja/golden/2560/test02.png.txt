@@ -1,0 +1,12 @@
+rows=11
+y=39 qty=1 name="クレイシアンの守りのルーン" match="クレイシアンの守りのルーン" mconf=100
+y=100 qty=1 name="傑作のルーン" match="傑作のルーン" mconf=100
+y=161 qty=1 name="空洞のワードルーン" match="空洞のワードルーン" mconf=100
+y=223 qty=1 name="護衛のワードルーン" match="護衛のワードルーン" mconf=100
+y=285 qty=1 name="分点のワードルーン" match="分点のワードルーン" mconf=100
+y=346 qty=1 name="執着のワードルーン" match="執着のワードルーン" mconf=100
+y=407 qty=1 name="骨組みのワードルーン" match="骨組みのワードルーン" mconf=100
+y=469 qty=1 name="妖術の古代ルーン" match="妖術の古代ルーン" mconf=100
+y=530 qty=1 name="腐敗の古代ルーン" match="腐敗の古代ルーン" mconf=100
+y=592 qty=1 name="発見の古代ルーン" match="発見の古代ルーン" mconf=100
+y=652 qty=1 name="制御の古代ルーン" match="制御の古代ルーン" mconf=100

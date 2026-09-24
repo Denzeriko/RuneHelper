@@ -8,6 +8,18 @@ Usage:
     python tools/scrape_poe2db.py --icons DIR           # also download rune icons (needs pillow)
     python tools/scrape_poe2db.py --dump-html page.html # also save raw HTML for debugging
     python tools/scrape_poe2db.py --from-html page.html # parse a saved HTML file instead of fetching
+    python tools/scrape_poe2db.py --dump-localized DIR  # also save the localized pages and trade data
+    python tools/scrape_poe2db.py --from-localized DIR  # parse saved localized pages and trade data instead
+
+Every combination also gets "names": the output as the game shows it in each
+client language, keyed by language code. Names the official trade site knows
+come from its static item data, matched to English through the item id; that
+data follows the live game. poe2db's localized pages fill in the rest, like
+gems and uniques. There an output that links to an item page is matched
+through that link, and outputs without a link, like "Unique Wand" or
+"5x Random Currency", by their runes and count in page order. Levels are
+ignored: the localized pages can be older than the English one and still carry
+old levels. The braces poe2db puts around some Thai gem names are dropped.
 
 Run this after every PoE2 patch that changes combinations, commit the result,
 and upload it to the price proxy. RuneHelper embeds this file into the binary
@@ -49,6 +61,31 @@ import sys
 from pathlib import Path
 
 URL = "https://poe2db.tw/Runeshape_Combinations"
+LOCALIZED_URL = "https://poe2db.tw/{prefix}/Runeshape_Combinations"
+
+LANGUAGES = {
+    "ru": "ru",
+    "ko": "kr",
+    "ja": "jp",
+    "de": "de",
+    "fr": "fr",
+    "es": "sp",
+    "pt": "pt",
+    "th": "th",
+}
+
+TRADE_URL = "https://{host}/api/trade2/data/static"
+TRADE_HOSTS = {
+    "en": "www.pathofexile.com",
+    "ru": "ru.pathofexile.com",
+    "ko": "poe.kakaogames.com",
+    "ja": "jp.pathofexile.com",
+    "de": "de.pathofexile.com",
+    "fr": "fr.pathofexile.com",
+    "es": "es.pathofexile.com",
+    "pt": "br.pathofexile.com",
+    "th": "th.pathofexile.com",
+}
 UA = "RuneHelper-scraper/1.1 (+https://github.com/Denzeriko/RuneHelper)"
 
 RUNE_HREF = re.compile(r"^(?:[a-z]{2}/)?([A-Za-z_]+)_Rune$")
@@ -66,10 +103,10 @@ CATEGORY_HEADERS = {
 EXCLUDED_OUTPUT_HREFS = {"Rarity"}
 
 
-def fetch_html(dump_path: str | None) -> str:
+def fetch_html(url: str, dump_path: str | None) -> str:
     import requests
 
-    resp = requests.get(URL, headers={"User-Agent": UA}, timeout=30)
+    resp = requests.get(url, headers={"User-Agent": UA}, timeout=30)
     resp.raise_for_status()
     if dump_path:
         Path(dump_path).write_text(resp.text, encoding="utf-8")
@@ -217,6 +254,87 @@ def make_soup(html: str):
     return BeautifulSoup(html, "html.parser")
 
 
+def output_link(entry) -> str:
+    headrow = entry_header(entry)
+    left = headrow.find("div") if headrow is not None else None
+    name_span = left.find("span") if left is not None else None
+    if name_span is None:
+        return ""
+    for a in name_span.find_all("a", href=True):
+        href = a["href"].split("?")[0].split("#")[0]
+        if href.startswith("Economy_") or href in EXCLUDED_OUTPUT_HREFS:
+            continue
+        return re.sub(r"^/?(?:[a-z]{2}/)?", "", href)
+    return ""
+
+
+def page_outputs(soup) -> tuple[dict[str, str], dict[tuple, list[str]]]:
+    best: list = []
+    for card in soup.select("div.card"):
+        entries = card.select("div.d-flex.border-top")
+        if len(entries) > len(best):
+            best = entries
+    by_link: dict[str, str] = {}
+    by_runes: dict[tuple, list[str]] = {}
+    for entry in best:
+        parsed = parse_entry(entry)
+        if parsed is None:
+            continue
+        link = output_link(entry)
+        if link:
+            by_link.setdefault(link, parsed["output"])
+            continue
+        group = by_runes.setdefault((tuple(sorted(parsed["runes"])), parsed["count"]), [])
+        if parsed["output"] not in group:
+            group.append(parsed["output"])
+    return by_link, by_runes
+
+
+def localized_names(soup, localized_soup) -> tuple[dict[str, str], int]:
+    english_links, english_runes = page_outputs(soup)
+    localized_links, localized_runes = page_outputs(localized_soup)
+    pairs = [(output, localized_links.get(link)) for link, output in english_links.items()]
+    for key, outputs in english_runes.items():
+        pairs.extend(zip(outputs, localized_runes.get(key, [])))
+    names: dict[str, str] = {}
+    conflicts = 0
+    for output, name in pairs:
+        if name is not None and name.startswith("{") and name.endswith("}"):
+            name = name[1:-1]
+        if name is not None and names.setdefault(output, name) != name:
+            conflicts += 1
+    return names, conflicts
+
+
+def localized_html(prefix: str, from_dir: str | None, dump_dir: str | None) -> str | None:
+    if from_dir:
+        path = Path(from_dir) / f"{prefix}.html"
+        return path.read_text(encoding="utf-8") if path.exists() else None
+    html = fetch_html(LOCALIZED_URL.format(prefix=prefix), None)
+    if dump_dir:
+        Path(dump_dir).mkdir(parents=True, exist_ok=True)
+        (Path(dump_dir) / f"{prefix}.html").write_text(html, encoding="utf-8")
+    return html
+
+
+def trade_items(language: str, from_dir: str | None, dump_dir: str | None) -> dict[str, str]:
+    if from_dir:
+        path = Path(from_dir) / f"trade_{language}.json"
+        if not path.exists():
+            return {}
+        data = json.loads(path.read_text(encoding="utf-8"))
+    else:
+        import requests
+
+        resp = requests.get(TRADE_URL.format(host=TRADE_HOSTS[language]), headers={"User-Agent": UA}, timeout=30)
+        resp.raise_for_status()
+        data = resp.json()
+        if dump_dir:
+            Path(dump_dir).mkdir(parents=True, exist_ok=True)
+            (Path(dump_dir) / f"trade_{language}.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    return {entry["id"]: entry["text"] for group in data["result"] for entry in group["entries"] if "id" in entry}
+
+
 def parse(soup) -> list[dict]:
     combined_card = None
     category_cards = {}
@@ -288,10 +406,12 @@ def main() -> int:
     ap.add_argument("-o", "--output", default="RuneHelper/resources/combinations.json")
     ap.add_argument("--dump-html", default=None)
     ap.add_argument("--from-html", default=None)
+    ap.add_argument("--dump-localized", default=None)
+    ap.add_argument("--from-localized", default=None)
     ap.add_argument("--icons", default=None)
     args = ap.parse_args()
 
-    html = Path(args.from_html).read_text(encoding="utf-8") if args.from_html else fetch_html(args.dump_html)
+    html = Path(args.from_html).read_text(encoding="utf-8") if args.from_html else fetch_html(URL, args.dump_html)
     soup = make_soup(html)
     combos = parse(soup)
 
@@ -299,6 +419,31 @@ def main() -> int:
         print("ERROR: parsed 0 combinations — poe2db markup likely changed.", file=sys.stderr)
         print("Re-run with --dump-html page.html and inspect/adjust selectors.", file=sys.stderr)
         return 1
+
+    outputs = {c["output"] for c in combos}
+    trade_ids: dict[str, str] = {}
+    for item_id, text in trade_items("en", args.from_localized, args.dump_localized).items():
+        trade_ids.setdefault(text, item_id)
+    for language, prefix in LANGUAGES.items():
+        html_localized = localized_html(prefix, args.from_localized, args.dump_localized)
+        if html_localized is None:
+            print(f"WARNING: no {language} page, skipped", file=sys.stderr)
+            continue
+        names, conflicts = localized_names(soup, make_soup(html_localized))
+        trade = trade_items(language, args.from_localized, args.dump_localized)
+        from_trade = 0
+        for output in outputs:
+            if trade_ids.get(output) in trade:
+                names[output] = trade[trade_ids[output]]
+                from_trade += 1
+        for c in combos:
+            if c["output"] in names:
+                c.setdefault("names", {})[language] = names[c["output"]]
+        missing = len(outputs - names.keys())
+        print(
+            f"{language}: {len(outputs) - missing} of {len(outputs)} outputs named, {from_trade} from the trade site"
+            + (f", {conflicts} conflicting pairs" if conflicts else "")
+        )
 
     by_cat: dict[str, int] = {}
     for c in combos:
@@ -313,7 +458,7 @@ def main() -> int:
     }
     out = Path(args.output)
     out.parent.mkdir(parents=True, exist_ok=True)
-    out.write_text(json.dumps(doc, indent=2), encoding="utf-8")
+    out.write_text(json.dumps(doc, indent=2, ensure_ascii=False), encoding="utf-8")
 
     print(f"wrote {len(combos)} combinations to {out}")
     print(f"rare runes: {len(doc['rareRunes'])}")

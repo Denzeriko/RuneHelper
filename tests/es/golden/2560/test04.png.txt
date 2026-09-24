@@ -1,0 +1,12 @@
+rows=11
+y=19 qty=1 name="Gema de habilidad sin tallar (nivel 19)" match="Gema de habilidad sin tallar (nivel 19)" mconf=100
+y=79 qty=1 name="Gema de espíritu sin tallar (nivel 19)" match="Gema de espíritu sin tallar (nivel 19)" mconf=100
+y=142 qty=1 name="Asistencia: Runas curativas" match="-" mconf=0
+y=201 qty=1 name="Habilidad: Caída del cielo" match="-" mconf=0
+y=263 qty=1 name="Habilidad: Cascada trisqueliana" match="-" mconf=0
+y=324 qty=1 name="Habilidad: Refutación" match="-" mconf=0
+y=386 qty=1 name="Habilidad: Alivio rúnico" match="-" mconf=0
+y=447 qty=1 name="Habilidad: Líneas ley" match="-" mconf=0
+y=509 qty=1 name="Habilidad: Intercambio de ánima" match="-" mconf=0
+y=570 qty=2 name="Prisma del tallador de gemas" match="Prisma del tallador de gemas" mconf=100
+y=632 qty=1 name="Habilidad: Lluvia de filos" match="-" mconf=0

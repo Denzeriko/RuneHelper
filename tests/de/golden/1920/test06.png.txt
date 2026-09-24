@@ -1,0 +1,11 @@
+rows=10
+y=56 qty=1 name="Legierung des Runenvaters" match="Legierung des Runenvaters" mconf=100
+y=135 qty=1 name="Fürstliche Legierung" match="Fürstliche Legierung" mconf=100
+y=179 qty=1 name="Mystische Legierung" match="Mystische Legierung" mconf=100
+y=227 qty=1 name="Prismatische Legierung" match="Prismatische Legierung" mconf=100
+y=274 qty=1 name="Flinke Legierung" match="Flinke Legierung" mconf=100
+y=321 qty=1 name="Wirbelnde Legierung" match="Wirbelnde Legierung" mconf=100
+y=370 qty=1 name="Umfassende Legierung" match="Umfassende Legierung" mconf=100
+y=416 qty=1 name="Verstärkte Legierung" match="Verstärkte Legierung" mconf=100
+y=465 qty=1 name="Adaptive Legierung" match="Adaptive Legierung" mconf=100
+y=512 qty=2 name="Runenlegierung" match="Runenlegierung" mconf=100

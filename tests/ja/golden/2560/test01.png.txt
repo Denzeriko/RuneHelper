@@ -1,0 +1,11 @@
+rows=10
+y=78 qty=3 name="カオスオーブ (上級)" match="カオスオーブ (上級)" mconf=100
+y=183 qty=3 name="高貴なオーブ (上級)" match="高貴なオーブ (上級)" mconf=100
+y=241 qty=1 name="ソーマタージ・フラックス (レベル19)" match="ソーマタージ・フラックス (レベル19)" mconf=100
+y=303 qty=2 name="神のオーブ" match="神のオーブ" mconf=100
+y=364 qty=3 name="カオスオーブ" match="カオスオーブ" mconf=100
+y=424 qty=1 name="宝飾職人のオーブ (完全)" match="宝飾職人のオーブ (完全)" mconf=100
+y=485 qty=1 name="可能性のオーブ" match="可能性のオーブ" mconf=100
+y=547 qty=3 name="変成のオーブ (上級)" match="変成のオーブ (上級)" mconf=100
+y=608 qty=3 name="増強のオーブ (上級)" match="増強のオーブ (上級)" mconf=100
+y=671 qty=1 name="ランダムなカレンシー 5個" match="ランダムなカレンシー 5個" mconf=100

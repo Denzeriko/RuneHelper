@@ -26,17 +26,12 @@ std::string_view Bytes(const EmbeddedResource& resource)
 }
 }
 
-std::string_view EmbeddedTextModel()
+std::string_view EmbeddedTextModel(std::string_view language)
 {
-    const EmbeddedResource* resource = FindEmbedded("text_model.bin");
+    const std::string name = language == "en" ? "text_model.bin" : "text_model_" + std::string(language) + ".bin";
+    const EmbeddedResource* resource = FindEmbedded(name);
 
-    if (!resource)
-    {
-        LOG_ERROR("Linux text model is not embedded in the binary");
-        return {};
-    }
-
-    return Bytes(*resource);
+    return resource ? Bytes(*resource) : std::string_view();
 }
 
 std::string LoadEmbeddedRecipeDatabase()
