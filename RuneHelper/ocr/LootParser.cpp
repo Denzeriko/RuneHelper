@@ -301,11 +301,6 @@ std::string LootParser::FormatPrice(double value)
     return FormatAmount(value, "ex");
 }
 
-std::string LootParser::FormatDivine(double divines)
-{
-    return FormatAmount(divines, "div");
-}
-
 std::string LootParser::FormatStack(double unitValue, int quantity, const std::string& unit)
 {
     std::string single = FormatAmount(unitValue, unit);

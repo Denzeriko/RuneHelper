@@ -14,6 +14,7 @@
 
 #include "core/Logger.h"
 #include "ui/ImGuiStyleSetup.h"
+#include "ui/UIDraw.h"
 #include "ui/UIManager.h"
 
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -41,8 +42,6 @@ constexpr int kUnfocusedFrameIntervalMs = 100;
 constexpr float kDefaultDpi = 96.0f;
 constexpr int kWindowX = 100;
 constexpr int kWindowY = 100;
-constexpr int kWindowWidth = 420;
-constexpr int kWindowHeight = 476;
 constexpr int kTitleBarHeight = 34;
 constexpr int kTitleButtonsWidth = 80;
 
@@ -361,8 +360,8 @@ bool UIBackend::Impl::CreateWindowUI()
         WS_POPUP,
         kWindowX,
         kWindowY,
-        ScaledPixels(kWindowWidth, dpiScale),
-        ScaledPixels(kWindowHeight, dpiScale),
+        ScaledPixels(UIDraw::kWindowWidth, dpiScale),
+        ScaledPixels(UIDraw::kWindowHeight, dpiScale),
         nullptr,
         nullptr,
         windowClass.hInstance,

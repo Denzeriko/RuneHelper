@@ -292,6 +292,11 @@ void DrawFeatureControls(UIManager& ui)
 
 void DrawSignature()
 {
+    const float spare = ImGui::GetContentRegionAvail().y - ImGui::GetTextLineHeight();
+
+    if (spare > 0.0f)
+        ImGui::SetCursorPosY(ImGui::GetCursorPosY() + spare);
+
     ImGui::Separator();
 
     const char* signature = "Denz";
@@ -466,6 +471,11 @@ void DrawSettingsTab(UIManager& ui)
 
     if (ImGui::IsItemHovered())
         UiTooltip("Traces the text in black so it stays readable without a background plate.");
+
+    configChanged |= ImGui::Checkbox("Currency icons", &config.overlayIcons);
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Shows the Exalted and Divine Orb pictures instead of ex and div.");
 
     ImGui::Spacing();
 

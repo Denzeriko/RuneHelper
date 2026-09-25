@@ -54,6 +54,7 @@ struct AppConfig
     int overlayFontSize = 24;
     bool overlayBackground = true;
     bool overlayOutline = false;
+    bool overlayIcons = true;
 
     PriceUnit priceUnit = PriceUnit::ExaltedWithDivine;
 

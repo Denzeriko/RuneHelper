@@ -20,6 +20,7 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/price/PriceService.cpp
     RuneHelper/recipes/RecipeDatabase.cpp
     RuneHelper/recipes/RecipeUpdater.cpp
+    RuneHelper/ui/OverlayIcons.cpp
 )
 
 set(RUNEHELPER_COMMON_SOURCES

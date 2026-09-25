@@ -16,7 +16,7 @@ body:
     attributes:
       label: RuneHelper version
       description: Shown on the RuneHelper tab, next to Version.
-      placeholder: 1.7.5 (abc12)
+      placeholder: 1.8.0 (abc12)
     validations:
       required: true
   - type: dropdown

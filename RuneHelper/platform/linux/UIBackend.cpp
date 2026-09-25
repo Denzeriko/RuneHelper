@@ -12,6 +12,7 @@
 #include "core/Logger.h"
 #include "platform/linux/LinuxHotkeys.h"
 #include "ui/ImGuiStyleSetup.h"
+#include "ui/UIDraw.h"
 #include "ui/UIManager.h"
 
 struct UIBackend::Impl
@@ -160,7 +161,7 @@ bool UIBackend::Init(UIManager* manager)
     glfwWindowHintString(GLFW_X11_INSTANCE_NAME, "runehelper");
 #endif
 
-    impl_->window = glfwCreateWindow(420, 476, "RuneHelper", nullptr, nullptr);
+    impl_->window = glfwCreateWindow(UIDraw::kWindowWidth, UIDraw::kWindowHeight, "RuneHelper", nullptr, nullptr);
 
     if (!impl_->window)
     {

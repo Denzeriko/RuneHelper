@@ -6,6 +6,7 @@
 
 #include <opencv2/imgproc.hpp>
 
+#include "ui/OverlayIcons.h"
 #include "ui/TextRaster.h"
 
 namespace
@@ -62,7 +63,8 @@ TextLayout Measure(const OverlayText& text, const OverlayState& state)
 
     layout.thickness = std::max(1, pixelHeight / 16);
     layout.fontScale = cv::getFontScaleFromHeight(cv::FONT_HERSHEY_SIMPLEX, pixelHeight, layout.thickness);
-    layout.size = cv::getTextSize(text.text, cv::FONT_HERSHEY_SIMPLEX, layout.fontScale, layout.thickness, &layout.descent);
+    layout.size =
+        cv::getTextSize(WithIconLabels(text.text), cv::FONT_HERSHEY_SIMPLEX, layout.fontScale, layout.thickness, &layout.descent);
 
     return layout;
 }
@@ -142,11 +144,13 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
             continue;
         }
 
+        const std::string labelled = WithIconLabels(text.text);
+
         if (state.outline)
         {
             cv::putText(
                 canvas,
-                text.text,
+                labelled,
                 baseline,
                 cv::FONT_HERSHEY_SIMPLEX,
                 layout.fontScale,
@@ -158,7 +162,7 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
 
         cv::putText(
             canvas,
-            text.text,
+            labelled,
             baseline,
             cv::FONT_HERSHEY_SIMPLEX,
             layout.fontScale,

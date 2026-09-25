@@ -8,6 +8,8 @@
 #include <utility>
 #include <vector>
 
+#include <opencv2/imgproc.hpp>
+
 #if defined(__GNUC__)
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
@@ -23,11 +25,13 @@
 
 #include "core/Logger.h"
 #include "core/Text.h"
+#include "ui/OverlayIcons.h"
 
 namespace
 {
 constexpr int kMinPixelHeight = 6;
 constexpr int kMaxPixelHeight = 256;
+constexpr double kIconHeightPerCap = 1.4;
 
 #ifdef _WIN32
 const char* const kFontNames[] = {
@@ -216,6 +220,49 @@ void BlendOutline(cv::Mat& canvas, const Glyph& glyph, int penX, int penY)
         }
     }
 }
+
+cv::Mat Premultiplied(const cv::Mat& bgra)
+{
+    std::vector<cv::Mat> channels;
+    cv::split(bgra, channels);
+
+    for (int channel = 0; channel < 3; ++channel)
+        cv::multiply(channels[channel], channels[3], channels[channel], 1.0 / 255.0);
+
+    cv::Mat premultiplied;
+    cv::merge(channels, premultiplied);
+
+    return premultiplied;
+}
+
+void BlendImage(cv::Mat& canvas, const cv::Mat& image, int left, int top)
+{
+    for (int row = 0; row < image.rows; ++row)
+    {
+        const int y = top + row;
+
+        if (y < 0 || y >= canvas.rows)
+            continue;
+
+        unsigned char* line = canvas.ptr<unsigned char>(y);
+        const unsigned char* source = image.ptr<unsigned char>(row);
+
+        for (int column = 0; column < image.cols; ++column)
+        {
+            const int x = left + column;
+            const unsigned char* pixel = source + static_cast<std::size_t>(column) * 4;
+
+            if (x < 0 || x >= canvas.cols || pixel[3] == 0)
+                continue;
+
+            unsigned char* target = line + static_cast<std::size_t>(x) * 4;
+            const float keep = 1.0f - pixel[3] / 255.0f;
+
+            for (int channel = 0; channel < 4; ++channel)
+                target[channel] = static_cast<unsigned char>(std::lround(pixel[channel] + target[channel] * keep));
+        }
+    }
+}
 }
 
 struct TextRaster::Impl
@@ -225,6 +272,10 @@ struct TextRaster::Impl
     bool ready = false;
 
     std::map<std::pair<int, char32_t>, Glyph> glyphs;
+
+    std::map<char32_t, cv::Mat> iconSources;
+    std::map<std::pair<int, char32_t>, cv::Mat> icons;
+    bool iconsReady = false;
 
     float capRatio = 0.0f;
 
@@ -294,6 +345,50 @@ struct TextRaster::Impl
         return glyphs.emplace(key, std::move(glyph)).first->second;
     }
 
+    void LoadIcons()
+    {
+        iconsReady = true;
+
+        for (const OverlayIcon& icon : kOverlayIcons)
+        {
+            const cv::Mat image = LoadIconImage(icon);
+
+            if (image.empty())
+            {
+                iconsReady = false;
+                continue;
+            }
+
+            iconSources[icon.codePoint] = Premultiplied(image);
+        }
+    }
+
+    std::u32string CodePoints(const std::string& utf8) const
+    {
+        if (iconsReady)
+            return DecodeUtf8(utf8);
+
+        return DecodeUtf8(WithIconLabels(utf8));
+    }
+
+    const cv::Mat& GetIcon(char32_t codepoint, int pixelHeight)
+    {
+        const auto key = std::make_pair(pixelHeight, codepoint);
+        const auto it = icons.find(key);
+
+        if (it != icons.end())
+            return it->second;
+
+        const cv::Mat& source = iconSources.at(codepoint);
+        const int height = std::max(1, static_cast<int>(std::lround(pixelHeight * kIconHeightPerCap)));
+        const int width = std::max(1, static_cast<int>(std::lround(static_cast<double>(source.cols) * height / source.rows)));
+
+        cv::Mat scaled;
+        cv::resize(source, scaled, cv::Size(width, height), 0.0, 0.0, cv::INTER_AREA);
+
+        return icons.emplace(key, std::move(scaled)).first->second;
+    }
+
     int Kerning(char32_t first, char32_t second, float scale)
     {
         const int kern = stbtt_GetCodepointKernAdvance(&info, static_cast<int>(first), static_cast<int>(second));
@@ -343,6 +438,7 @@ TextRaster::TextRaster() : impl_(std::make_unique<Impl>())
     }
 
     impl_->ready = true;
+    impl_->LoadIcons();
     LOG_INFO("Overlay font: " + path.string());
 }
 
@@ -378,12 +474,18 @@ cv::Size TextRaster::Measure(const std::string& utf8, int pixelHeight)
 
     const int height = std::clamp(pixelHeight, kMinPixelHeight, kMaxPixelHeight);
     const float scale = impl_->ScaleFor(height);
-    const std::u32string points = DecodeUtf8(utf8);
+    const std::u32string points = impl_->CodePoints(utf8);
 
     int width = 0;
 
     for (std::size_t i = 0; i < points.size(); ++i)
     {
+        if (FindOverlayIcon(points[i]))
+        {
+            width += impl_->GetIcon(points[i], height).cols;
+            continue;
+        }
+
         width += impl_->GetGlyph(points[i], height).advance;
 
         if (i + 1 < points.size())
@@ -411,12 +513,20 @@ void TextRaster::Draw(
 
     const int height = std::clamp(pixelHeight, kMinPixelHeight, kMaxPixelHeight);
     const float scale = impl_->ScaleFor(height);
-    const std::u32string points = DecodeUtf8(utf8);
+    const std::u32string points = impl_->CodePoints(utf8);
 
     int pen = baseline.x;
 
     for (std::size_t i = 0; i < points.size(); ++i)
     {
+        if (FindOverlayIcon(points[i]))
+        {
+            const cv::Mat& icon = impl_->GetIcon(points[i], height);
+            BlendImage(canvas, icon, pen, baseline.y - (height + icon.rows) / 2);
+            pen += icon.cols;
+            continue;
+        }
+
         const Glyph& glyph = impl_->GetGlyph(points[i], height);
 
         if (outline)

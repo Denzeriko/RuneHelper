@@ -22,6 +22,7 @@
 #include "price/PoeNinjaPriceProvider.h"
 #include "price/PriceCache.h"
 #include "recipes/RecipeDatabase.h"
+#include "ui/OverlayIcons.h"
 
 namespace
 {
@@ -190,9 +191,27 @@ void TestFormatting()
     CheckEqual(LootParser::FormatPrice(1.0), "1 ex", "a whole price drops the decimals");
     CheckEqual(LootParser::FormatPrice(1.5), "1.5 ex", "a small price keeps one decimal");
     CheckEqual(LootParser::FormatPrice(250.0), "250 ex", "a large price has no decimals");
-    CheckEqual(LootParser::FormatDivine(2.0), "2 div", "divine uses its own unit");
+    CheckEqual(LootParser::FormatAmount(2.0, "div"), "2 div", "the unit follows the amount");
     CheckEqual(LootParser::FormatStack(2.0, 1, "ex"), "2 ex", "a single item shows no total");
     CheckEqual(LootParser::FormatStack(2.0, 3, "ex"), "2 ex (6 ex)", "a stack shows the total");
+}
+
+void TestOverlayIcons()
+{
+    Section("Overlay icons");
+
+    const std::string exalted = IconString(kExaltedOrbIcon);
+    const std::string divine = IconString(kDivineOrbIcon);
+
+    CheckEqual(WithIconLabels("2 " + exalted + " (6 " + exalted + ")"), "2 ex (6 ex)", "the stroke font shows the exalted label");
+    CheckEqual(WithIconLabels("1.5 " + divine + " ?"), "1.5 div ?", "the stroke font shows the divine label");
+    Check(FindOverlayIcon(U'e') == nullptr, "ordinary text is not an icon");
+
+    for (const OverlayIcon& icon : kOverlayIcons)
+    {
+        const cv::Mat image = LoadIconImage(icon);
+        Check(!image.empty() && image.type() == CV_8UC4, std::string(icon.file) + " is embedded with an alpha channel");
+    }
 }
 
 void TestNameMatching()
@@ -462,6 +481,7 @@ void TestConfigLoadMalformed()
         Check(values.ocrEnabled, "a string boolean keeps the default");
         CheckEqual(values.priceLeague, "Forbidden Rites", "a null league keeps the default");
         CheckEqual(values.overlayFontSize, 30, "the font size is read");
+        Check(values.overlayIcons, "a config written before the icon switch shows currency icons");
     }
 
     for (const char* text : { "null", "[1, 2]", "{broken" })
@@ -489,6 +509,21 @@ void TestConfigLoadMalformed()
 
     std::error_code ec;
     std::filesystem::remove(aside, ec);
+}
+
+void TestConfigSaveLoad()
+{
+    Section("ConfigManager, save and load");
+
+    {
+        ConfigManager manager;
+        manager.Update([](AppConfig& config) { config.overlayIcons = false; });
+        manager.Flush();
+    }
+
+    ConfigManager manager;
+    Check(manager.Load(), "a saved config loads");
+    Check(!manager.Snapshot().overlayIcons, "the currency icon switch survives a restart");
 }
 
 void TestRecipeDatabaseDownloadWithoutNames()
@@ -670,12 +705,14 @@ int main()
     TestLootParser();
     TestOverlayAnchor();
     TestFormatting();
+    TestOverlayIcons();
     TestNameMatching();
     TestLocalizedNames();
     TestFrameSimilarity();
     TestRecipeDatabase();
     TestPriceCacheDump();
     TestConfigLoadMalformed();
+    TestConfigSaveLoad();
     TestRecipeDatabaseMalformedDownload();
     TestRecipeDatabaseDownloadWithoutNames();
     TestPriceCacheMalformedDump();

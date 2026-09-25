@@ -34,6 +34,13 @@ std::string_view EmbeddedTextModel(std::string_view language)
     return resource ? Bytes(*resource) : std::string_view();
 }
 
+std::string_view EmbeddedImage(std::string_view file)
+{
+    const EmbeddedResource* resource = FindEmbedded(file);
+
+    return resource ? Bytes(*resource) : std::string_view();
+}
+
 std::string LoadEmbeddedRecipeDatabase()
 {
     const EmbeddedResource* resource = FindEmbedded("combinations.json");

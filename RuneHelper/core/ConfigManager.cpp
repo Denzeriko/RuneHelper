@@ -219,6 +219,7 @@ bool ConfigManager::Load()
     config_.ocrEnabled = JsonValue(j, "ocrEnabled", config_.ocrEnabled);
     config_.overlayBackground = JsonValue(j, "overlayBackground", config_.overlayBackground);
     config_.overlayOutline = JsonValue(j, "overlayOutline", config_.overlayOutline);
+    config_.overlayIcons = JsonValue(j, "overlayIcons", config_.overlayIcons);
     config_.priceSearchEnabled = JsonValue(j, "priceSearchEnabled", config_.priceSearchEnabled);
 
     config_.hotkeyToggleOCR = JsonValue(j, "hotkeyToggleOCR", config_.hotkeyToggleOCR);
@@ -266,6 +267,7 @@ bool ConfigManager::Save() const
     j["ocrEnabled"] = config.ocrEnabled;
     j["overlayBackground"] = config.overlayBackground;
     j["overlayOutline"] = config.overlayOutline;
+    j["overlayIcons"] = config.overlayIcons;
     j["priceSearchEnabled"] = config.priceSearchEnabled;
 
     j["overlayOffsetX"] = config.overlayOffsetX;

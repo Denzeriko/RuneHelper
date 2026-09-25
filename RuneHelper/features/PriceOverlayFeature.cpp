@@ -3,6 +3,7 @@
 #include <string>
 
 #include "ocr/LootParser.h"
+#include "ui/OverlayIcons.h"
 
 namespace
 {
@@ -19,12 +20,20 @@ OverlayColor ColorForPrice(double priceEx, const AppConfig& config)
 
     return OverlayRgb(160, 160, 160);
 }
+
+std::string UnitText(const OverlayIcon& icon, bool picture)
+{
+    return picture ? IconString(icon) : std::string(icon.label);
+}
 }
 
 void PriceOverlayFeature::OnFrame(FrameContext& frame)
 {
     if (!frame.config.priceSearchEnabled)
         return;
+
+    const std::string exalted = UnitText(kExaltedOrbIcon, frame.config.overlayIcons);
+    const std::string divine = UnitText(kDivineOrbIcon, frame.config.overlayIcons);
 
     for (size_t i = 0; i < frame.rows.size(); ++i)
     {
@@ -45,8 +54,8 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
         const bool hasRate = frame.divineToEx > 0.0;
         const bool inDivine = hasRate && frame.config.priceUnit == PriceUnit::Divine;
 
-        std::string note = inDivine ? LootParser::FormatStack(*resolved.unitEx / frame.divineToEx, row.quantity, "div")
-                                    : LootParser::FormatStack(*resolved.unitEx, row.quantity, "ex");
+        std::string note = inDivine ? LootParser::FormatStack(*resolved.unitEx / frame.divineToEx, row.quantity, divine)
+                                    : LootParser::FormatStack(*resolved.unitEx, row.quantity, exalted);
 
         if (resolved.confidence < kTrustedMatchConfidence)
             note += " ?";
@@ -58,7 +67,7 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
             const double divines = resolved.totalEx / frame.divineToEx;
 
             if (divines >= 1.0)
-                frame.rowOverlays[i].Append(LootParser::FormatDivine(divines));
+                frame.rowOverlays[i].Append(LootParser::FormatAmount(divines, divine));
         }
 
         frame.rowOverlays[i].SetColor(ColorForPrice(resolved.totalEx, frame.config));

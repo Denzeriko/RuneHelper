@@ -2,6 +2,7 @@
 
 #include <windows.h>
 
+#include <span>
 #include <string>
 #include <string_view>
 
@@ -12,22 +13,21 @@ namespace
 {
 const LPCWSTR kRcDataResourceType = MAKEINTRESOURCEW(10);
 
-struct TextModelResource
+struct NamedResource
 {
-    std::string_view language;
+    std::string_view name;
     int id = 0;
 };
 
-constexpr TextModelResource kTextModels[] = {
-    { "en", IDR_TEXT_MODEL },
-    { "ru", IDR_TEXT_MODEL_RU },
-    { "de", IDR_TEXT_MODEL_DE },
-    { "fr", IDR_TEXT_MODEL_FR },
-    { "es", IDR_TEXT_MODEL_ES },
-    { "pt", IDR_TEXT_MODEL_PT },
-    { "ko", IDR_TEXT_MODEL_KO },
-    { "ja", IDR_TEXT_MODEL_JA },
-    { "th", IDR_TEXT_MODEL_TH },
+constexpr NamedResource kTextModels[] = {
+    { "en", IDR_TEXT_MODEL },    { "ru", IDR_TEXT_MODEL_RU }, { "de", IDR_TEXT_MODEL_DE },
+    { "fr", IDR_TEXT_MODEL_FR }, { "es", IDR_TEXT_MODEL_ES }, { "pt", IDR_TEXT_MODEL_PT },
+    { "ko", IDR_TEXT_MODEL_KO }, { "ja", IDR_TEXT_MODEL_JA }, { "th", IDR_TEXT_MODEL_TH },
+};
+
+constexpr NamedResource kImages[] = {
+    { "exalted_orb.png", IDR_EXALTED_ORB },
+    { "divine_orb.png", IDR_DIVINE_ORB },
 };
 
 std::string_view ResourceBytes(int id, const char* label)
@@ -52,17 +52,27 @@ std::string_view ResourceBytes(int id, const char* label)
 
     return std::string_view(static_cast<const char*>(data), size);
 }
+
+std::string_view NamedResourceBytes(std::span<const NamedResource> resources, std::string_view name, const char* label)
+{
+    for (const NamedResource& resource : resources)
+    {
+        if (resource.name == name)
+            return ResourceBytes(resource.id, label);
+    }
+
+    return {};
+}
 }
 
 std::string_view EmbeddedTextModel(std::string_view language)
 {
-    for (const TextModelResource& model : kTextModels)
-    {
-        if (model.language == language)
-            return ResourceBytes(model.id, "Text model");
-    }
+    return NamedResourceBytes(kTextModels, language, "Text model");
+}
 
-    return {};
+std::string_view EmbeddedImage(std::string_view file)
+{
+    return NamedResourceBytes(kImages, file, "Image");
 }
 
 std::string LoadEmbeddedRecipeDatabase()

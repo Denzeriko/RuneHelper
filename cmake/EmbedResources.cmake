@@ -5,6 +5,8 @@ set(RUNEHELPER_TEXT_MODEL_LANGUAGES ru de fr es pt ko ja th)
 set(RUNEHELPER_EMBEDDED_FILES
     "${RUNEHELPER_RESOURCE_DIR}/text_model.bin"
     "${RUNEHELPER_RESOURCE_DIR}/combinations.json"
+    "${RUNEHELPER_RESOURCE_DIR}/exalted_orb.png"
+    "${RUNEHELPER_RESOURCE_DIR}/divine_orb.png"
 )
 
 foreach(language IN LISTS RUNEHELPER_TEXT_MODEL_LANGUAGES)
