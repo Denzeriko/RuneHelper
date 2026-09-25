@@ -10,21 +10,6 @@ Reads the game client in **9 languages**: English, Русский, Deutsch, Fran
 [![Windows build](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/msbuild.yml?query=branch%3Amaster)
 [![Linux build](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml/badge.svg?branch=master)](https://github.com/Denzeriko/RuneHelper/actions/workflows/linux-build.yml?query=branch%3Amaster)
 
-![RuneHelper screenshot](assets/screenshot.png)
-
-## Features
-
-* Prices next to every item of the Runeshape loot list, read from the screen in real time.
-* A small built-in text recognizer for each client language, trained on the game fonts. Localized item names are translated to English for prices and recipes.
-* Works on HDR, dimmed and 4K screens: brightness is normalised and large regions are scaled down when needed.
-* Fuzzy matching absorbs OCR mistakes.
-* Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
-* Highlights rare runeshape tiles directly in the remnant panel.
-* Offline database of every runeshape combination, refreshed from a proxy at startup.
-* League-specific price cache, updated automatically, which keeps API requests low.
-* Debug window with OCR and matching results, plus optional image and text dumps.
-* No game memory reading or injection.
-
 ## Download
 
 [![Download](https://img.shields.io/badge/download-latest%20release-blue?logo=github)](https://github.com/Denzeriko/RuneHelper/releases/latest)
@@ -42,6 +27,21 @@ chmod +x RuneHelper-linux-x86_64-wayland
 ```
 
 The jobs under **Actions** are build checks, not downloads. Their artifacts need a GitHub login, and the Linux one links Ubuntu's own OpenCV dynamically, so it fails with an `undefined symbol` error anywhere else.
+
+![RuneHelper screenshot](assets/screenshot.png)
+
+## Features
+
+* Prices next to every item of the Runeshape loot list, read from the screen in real time.
+* A small built-in text recognizer for each client language, trained on the game fonts. Localized item names are translated to English for prices and recipes.
+* Works on HDR, dimmed and 4K screens: brightness is normalised and large regions are scaled down when needed.
+* Fuzzy matching absorbs OCR mistakes.
+* Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
+* Highlights rare runeshape tiles directly in the remnant panel.
+* Offline database of every runeshape combination, refreshed from a proxy at startup.
+* League-specific price cache, updated automatically, which keeps API requests low.
+* Debug window with OCR and matching results, plus optional image and text dumps.
+* No game memory reading or injection.
 
 ## How to use
 
