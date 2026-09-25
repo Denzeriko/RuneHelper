@@ -87,6 +87,7 @@ bool DrawGameLanguage(AppConfig& config)
 
 void DrawTitleBar(UIManager& ui)
 {
+    UIState& state = ui.State();
     const float titleBarHeight = UiScaled(16.0f);
     const ImVec2 titleButton(UiScaled(16.0f), UiScaled(16.0f));
 
@@ -97,6 +98,7 @@ void DrawTitleBar(UIManager& ui)
     ImGui::TextDisabled("v%s", RUNEHELPER_VERSION_LABEL);
 
     ImGui::SameLine(ImGui::GetWindowWidth() - UiScaled(40.0f));
+    state.titleButtonsLeft = ImGui::GetCursorScreenPos().x;
 
     if (ImGui::Button("_", titleButton))
         ui.Minimize();
@@ -113,6 +115,7 @@ void DrawTitleBar(UIManager& ui)
     ImGui::PopStyleColor(3);
 
     ImGui::EndChild();
+    state.titleBarBottom = ImGui::GetItemRectMax().y;
 }
 
 void StatusRow(const char* name)

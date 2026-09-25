@@ -42,8 +42,6 @@ constexpr int kUnfocusedFrameIntervalMs = 100;
 constexpr float kDefaultDpi = 96.0f;
 constexpr int kWindowX = 100;
 constexpr int kWindowY = 100;
-constexpr int kTitleBarHeight = 34;
-constexpr int kTitleButtonsWidth = 80;
 
 int ScaledPixels(int pixels, float scale)
 {
@@ -554,21 +552,16 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         if (hit != HTCLIENT)
             return hit;
 
-        if (!self)
+        if (!self || !self->manager)
             return HTCLIENT;
 
         POINT pt{ GET_X_LPARAM(lp), GET_Y_LPARAM(lp) };
 
         ScreenToClient(hwnd, &pt);
 
-        const int titleBarHeight = ScaledPixels(kTitleBarHeight, self->dpiScale);
-        const int buttonsWidth = ScaledPixels(kTitleButtonsWidth, self->dpiScale);
-
-        RECT rc;
-        GetClientRect(hwnd, &rc);
-
-        bool inTitleBar = pt.y >= 0 && pt.y < titleBarHeight;
-        bool inButtons = pt.x >= rc.right - buttonsWidth;
+        const UIState& state = self->manager->State();
+        const bool inTitleBar = pt.y >= 0 && static_cast<float>(pt.y) < state.titleBarBottom;
+        const bool inButtons = static_cast<float>(pt.x) >= state.titleButtonsLeft;
 
         if (inTitleBar && !inButtons)
             return HTCAPTION;

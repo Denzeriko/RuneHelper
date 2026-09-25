@@ -28,6 +28,9 @@ struct UIState
     bool debugTabOpen = false;
     bool featureTabOpen = false;
 
+    float titleBarBottom = 0.0f;
+    float titleButtonsLeft = 0.0f;
+
     int* waitingForHotkey = nullptr;
     bool hotkeyCaptureSkipFrame = false;
 
