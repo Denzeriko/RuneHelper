@@ -28,7 +28,7 @@ chmod +x RuneHelper-linux-x86_64-wayland
 
 The jobs under **Actions** are build checks, not downloads. Their artifacts need a GitHub login, and the Linux one links Ubuntu's own OpenCV dynamically, so it fails with an `undefined symbol` error anywhere else.
 
-![RuneHelper screenshot](assets/screenshot.png)
+![RuneHelper screenshot](assets/screenshot.jpg)
 
 ## Features
 

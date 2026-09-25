@@ -13,6 +13,7 @@
 #include <imgui_impl_win32.h>
 
 #include "core/Logger.h"
+#include "resources/resource.h"
 #include "ui/ImGuiStyleSetup.h"
 #include "ui/UIDraw.h"
 #include "ui/UIManager.h"
@@ -345,8 +346,19 @@ void UIBackend::Impl::ApplyScale()
 
 bool UIBackend::Impl::CreateWindowUI()
 {
-    windowClass = { sizeof(WNDCLASSEXW), CS_CLASSDC, WndProc, 0L, 0L, GetModuleHandle(nullptr), nullptr, nullptr, nullptr, nullptr,
-                    L"RuneHelperConfig", nullptr };
+    const HINSTANCE instance = GetModuleHandle(nullptr);
+    const HICON icon = LoadIconW(instance, MAKEINTRESOURCEW(IDI_APP_ICON));
+    const auto smallIcon = static_cast<HICON>(LoadImageW(
+        instance,
+        MAKEINTRESOURCEW(IDI_APP_ICON),
+        IMAGE_ICON,
+        GetSystemMetrics(SM_CXSMICON),
+        GetSystemMetrics(SM_CYSMICON),
+        LR_DEFAULTCOLOR
+    ));
+
+    windowClass = { sizeof(WNDCLASSEXW), CS_CLASSDC, WndProc, 0L, 0L, instance, icon, nullptr, nullptr, nullptr,
+                    L"RuneHelperConfig", smallIcon };
 
     RegisterClassExW(&windowClass);
 

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <radialGradient id="parch" cx="0.46" cy="0.42" r="0.8"><stop offset="0" stop-color="#e2d4b2"/><stop offset=".62" stop-color="#c3b08a"/><stop offset="1" stop-color="#978159"/></radialGradient>
+    <radialGradient id="burn" cx="0.5" cy="0.47" r="0.72"><stop offset=".45" stop-color="#2a180a" stop-opacity="0"/><stop offset="1" stop-color="#2a180a" stop-opacity=".75"/></radialGradient>
+    <filter id="worn" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="4" result="grain"/>
+      <feColorMatrix in="grain" type="saturate" values="0" result="g1"/>
+      <feComponentTransfer in="g1" result="grainSoft"><feFuncR type="linear" slope="0.3" intercept="0.76"/><feFuncG type="linear" slope="0.3" intercept="0.76"/><feFuncB type="linear" slope="0.3" intercept="0.76"/></feComponentTransfer>
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="4" seed="17" result="mottle"/>
+      <feColorMatrix in="mottle" type="saturate" values="0" result="g2"/>
+      <feComponentTransfer in="g2" result="mottleSoft"><feFuncR type="linear" slope="0.7" intercept="0.58"/><feFuncG type="linear" slope="0.7" intercept="0.58"/><feFuncB type="linear" slope="0.7" intercept="0.58"/></feComponentTransfer>
+      <feBlend in="SourceGraphic" in2="grainSoft" mode="multiply" result="a"/>
+      <feBlend in="a" in2="mottleSoft" mode="multiply" result="b"/>
+      <feComposite in="b" in2="SourceAlpha" operator="in"/>
+    </filter>
+    <filter id="patchy" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="3" seed="29" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1.6 -0.3" result="mask"/>
+      <feComposite in="SourceGraphic" in2="mask" operator="in"/>
+    </filter>
+    <filter id="edge" x="-3%" y="-3%" width="106%" height="106%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="2" seed="31" result="w"/>
+      <feDisplacementMap in="SourceGraphic" in2="w" scale="4" xChannelSelector="R" yChannelSelector="G" result="d"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.07" numOctaves="3" seed="12" result="n"/>
+      <feColorMatrix in="n" type="saturate" values="0" result="g"/>
+      <feComponentTransfer in="g" result="soft"><feFuncR type="linear" slope="0.5" intercept="0.65"/><feFuncG type="linear" slope="0.5" intercept="0.65"/><feFuncB type="linear" slope="0.5" intercept="0.65"/></feComponentTransfer>
+      <feBlend in="d" in2="soft" mode="multiply" result="t"/>
+      <feComposite in="t" in2="d" operator="in"/>
+    </filter>
+    <filter id="brush" x="-15%" y="-15%" width="130%" height="130%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="wobble"/>
+      <feDisplacementMap in="SourceGraphic" in2="wobble" scale="7" xChannelSelector="R" yChannelSelector="G" result="bent"/>
+      <feTurbulence type="fractalNoise" baseFrequency="0.35" numOctaves="2" seed="3" result="fray"/>
+      <feDisplacementMap in="bent" in2="fray" scale="3" xChannelSelector="R" yChannelSelector="G" result="rough"/>
+      <feGaussianBlur in="rough" stdDeviation=".45"/>
+    </filter>
+  </defs>
+  <rect x="10" y="10" width="236" height="236" rx="7" fill="#3a2616" filter="url(#edge)"/>
+  <rect x="26" y="26" width="204" height="204" rx="3" fill="#7a3e20" filter="url(#edge)"/>
+  <rect x="32" y="32" width="192" height="192" rx="2" fill="url(#parch)" filter="url(#worn)"/>
+  <rect x="32" y="32" width="192" height="192" rx="2" fill="url(#burn)" filter="url(#patchy)"/>
+  <rect x="32" y="32" width="192" height="192" rx="2" fill="url(#burn)" opacity=".45"/>
+  <g fill="none" stroke="#1f140b" stroke-width="21" stroke-linecap="round" stroke-linejoin="round" filter="url(#brush)">
+    <path d="M102 60 C99 104 100 152 104 198"/>
+    <path d="M106 64 L156 96 L108 130"/>
+    <path d="M110 134 L162 196"/>
+  </g>
+  <circle cx="160" cy="146" r="10" fill="#1f140b" filter="url(#brush)"/>
+</svg>
