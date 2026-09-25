@@ -1,9 +1,10 @@
 #include "PriceCache.h"
 
 #include "core/AtomicFile.h"
+#include "core/Config.h"
+#include "core/ExceptionLogging.h"
 #include "core/JsonRead.h"
 #include "core/Logger.h"
-#include "core/ThreadGuard.h"
 #include "platform/PlatformPaths.h"
 #include "price/PoeNinjaPriceProvider.h"
 
@@ -119,10 +120,10 @@ void PriceCache::RefreshIfNeeded()
     {
         std::lock_guard<std::mutex> lock(mutex_);
 
-        if (!prices_.empty() && now - dump_updated_at_ < refresh_seconds_)
+        if (!prices_.empty() && now - dumpUpdatedAt_ < refreshSeconds_)
             return;
 
-        if (now - last_failure_at_ < BackoffSeconds(failure_streak_))
+        if (now - lastFailureAt_ < BackoffSeconds(failureStreak_))
             return;
     }
 
@@ -153,9 +154,9 @@ void PriceCache::ForceRefreshAsync()
 
 void PriceCache::SetRefreshMinutes(int minutes)
 {
-    const int clampedMinutes = std::clamp(minutes, 5, 360);
+    const int clampedMinutes = std::clamp(minutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
     std::lock_guard<std::mutex> lock(mutex_);
-    refresh_seconds_ = static_cast<int64_t>(clampedMinutes) * 60;
+    refreshSeconds_ = static_cast<int64_t>(clampedMinutes) * 60;
 }
 
 void PriceCache::SetLeague(std::string league)
@@ -168,9 +169,9 @@ void PriceCache::SetLeague(std::string league)
         league_ = std::move(league);
         prices_.clear();
         divineToEx_ = 0.0;
-        dump_updated_at_ = 0;
-        last_failure_at_ = 0;
-        failure_streak_ = 0;
+        dumpUpdatedAt_ = 0;
+        lastFailureAt_ = 0;
+        failureStreak_ = 0;
         ++version_;
     }
 
@@ -222,10 +223,10 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
 
         {
             std::lock_guard<std::mutex> lock(mutex_);
-            ++failure_streak_;
-            last_failure_at_ = NowUnix();
-            attempt = failure_streak_;
-            retryIn = BackoffSeconds(failure_streak_);
+            ++failureStreak_;
+            lastFailureAt_ = NowUnix();
+            attempt = failureStreak_;
+            retryIn = BackoffSeconds(failureStreak_);
         }
 
         LOG_ERROR(
@@ -253,17 +254,17 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
             for (const auto& [name, info] : fresh.items)
                 prices_[name] = info;
 
-            ++failure_streak_;
-            last_failure_at_ = NowUnix();
-            attempt = failure_streak_;
-            retryIn = BackoffSeconds(failure_streak_);
+            ++failureStreak_;
+            lastFailureAt_ = NowUnix();
+            attempt = failureStreak_;
+            retryIn = BackoffSeconds(failureStreak_);
         }
         else
         {
             prices_ = std::move(fresh.items);
-            dump_updated_at_ = now;
-            last_failure_at_ = 0;
-            failure_streak_ = 0;
+            dumpUpdatedAt_ = now;
+            lastFailureAt_ = 0;
+            failureStreak_ = 0;
         }
 
         if (fresh.divineToEx > 0.0)
@@ -295,8 +296,6 @@ int64_t PriceCache::NowUnix()
 
 void PriceCache::SaveDump()
 {
-    LOG_INFO("PriceCache::SaveDump() -> call");
-
     json j;
     j["items"] = json::object();
 
@@ -305,25 +304,18 @@ void PriceCache::SaveDump()
         std::lock_guard<std::mutex> lock(mutex_);
         league = league_;
         j["league"] = league;
-        j["dump_updated_at"] = dump_updated_at_;
+        j["dump_updated_at"] = dumpUpdatedAt_;
         j["divine_to_ex"] = divineToEx_;
         for (const auto& [name, info] : prices_)
             j["items"][name] = info.ex;
     }
 
     if (!WriteFileAtomic(DumpPathForLeague(league), j.dump(4)))
-    {
         LOG_ERROR("PriceCache::SaveDump() -> failed to write file");
-        return;
-    }
-
-    LOG_INFO("PriceCache::SaveDump() -> return");
 }
 
 void PriceCache::LoadDump()
 {
-    LOG_INFO("PriceCache::LoadDump() -> call");
-
     std::string league;
     {
         std::lock_guard<std::mutex> lock(mutex_);
@@ -360,10 +352,9 @@ void PriceCache::LoadDump()
 
         prices_ = std::move(loaded);
         divineToEx_ = JsonValue(j, "divine_to_ex", 0.0);
-        dump_updated_at_ = JsonValue<std::int64_t>(j, "dump_updated_at", 0);
+        dumpUpdatedAt_ = JsonValue<std::int64_t>(j, "dump_updated_at", 0);
         ++version_;
     }
 
     LOG_INFO("Loaded dump prices -> " + std::to_string(GetPriceCount()));
-    LOG_INFO("PriceCache::LoadDump() -> return");
 }

@@ -10,6 +10,8 @@ struct DebugLine
     std::string price;
     double priceEx = 0.0;
     int confidence = 0;
+
+    bool Matched() const { return !matchedText.empty(); }
 };
 
 struct DebugData

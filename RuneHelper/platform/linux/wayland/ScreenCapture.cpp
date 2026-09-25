@@ -307,6 +307,9 @@ cv::Rect ToFramePixels(const cv::Rect& logicalRect, const cv::Size& logical, con
 
 constexpr std::chrono::seconds kFirstPortalRetry{ 30 };
 constexpr std::chrono::seconds kMaxPortalRetry{ 600 };
+constexpr int kFrameWaitAttempts = 100;
+constexpr std::chrono::milliseconds kFrameWaitStep{ 20 };
+constexpr int kMismatchesBeforeNewPicker = 20;
 
 struct PortalRetry
 {
@@ -359,12 +362,12 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
 
     cv::Mat frame;
 
-    for (int attempt = 0; attempt < 100 && frame.empty() && !portal.Cancelled(); ++attempt)
+    for (int attempt = 0; attempt < kFrameWaitAttempts && frame.empty() && !portal.Cancelled(); ++attempt)
     {
         frame = portal.LatestFrame();
 
         if (frame.empty())
-            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            std::this_thread::sleep_for(kFrameWaitStep);
     }
 
     if (frame.empty())
@@ -406,7 +409,7 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
             );
         }
 
-        if (mismatches >= 20)
+        if (mismatches >= kMismatchesBeforeNewPicker)
         {
             LOG_ERROR("Portal screencast: dropping the saved permission so the screen picker opens again");
             portal.Stop();

@@ -8,7 +8,7 @@ std::vector<FrameRow> ParseLootRows(
     const std::vector<LootLine>& loot,
     const cv::Rect& region,
     const AppConfig& config,
-    const CachedItemNames* translations
+    const NameMatcher* translations
 )
 {
     std::vector<FrameRow> rows;

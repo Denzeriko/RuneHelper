@@ -7,7 +7,7 @@ RuneHelper reads every loot row with a small convolutional network, one per game
 * The row crop is scaled to 24 px high and its contrast stretched. Convolutions reduce it to one column per 4 px, and a CTC head reads the language's symbols out of those columns: 73 for English, every character of the item names for Korean, Japanese and Thai. About 130k to 160k parameters.
 * Pretraining uses synthetic lines drawn in the client's font: recipe outputs from `combinations.json` plus any local price dumps, random words and letter strings, quantities, parchment cut from real crops, frame strips, blur, gain, gamma and noise.
 * Fine-tuning mixes those lines with the real row crops the OCR pipeline cuts out of the test panels in five scenes: as captured, dimmed to 70%, scaled to 4K, a loose crop over a busy game scene, and the same with a narrow margin. Labels come from the truth files next to the panels.
-* Export folds the batch norms into the convolutions and writes the weights as float32, together with the symbol set as UTF-8.
+* The layer list lives in one place, `FEATURES` and `SEQUENCE` in `model.py`. Export folds the batch norms into the convolutions and writes the weights as float32 together with the symbol set as UTF-8, the input height and every layer's padding, pooling and activation, so `LineReader` builds nothing from its own knowledge and simply follows the file.
 
 ## Setup
 
@@ -25,17 +25,17 @@ Pretraining takes 10 to 30 minutes per language on a CUDA GPU and several hours 
 
 ## Steps
 
-Run these from `tools/text-model` with the venv's `python`. `RUNEHELPER_LANGUAGE=<code>` switches every step to that language: its panels and truth in `tests/<code>` (English uses `tests/panels` and `tests/truth`), its crops in the work folder, its checkpoints and its model file. The examples use English and its tag `synthetic`; other languages use `<code>_synthetic`, since the checkpoints share the work folder.
+Run these from `tools/text-model` with the venv's `python`; every script takes `--help`. `RUNEHELPER_LANGUAGE=<code>` switches every step to that language: its panels and truth in `tests/<code>` (English uses `tests/panels` and `tests/truth`), its crops in the work folder, its checkpoints and its model file. The examples use English and its tag `synthetic`; other languages use `<code>_synthetic`, since the checkpoints share the work folder.
 
 1. `./crops.sh` builds `text_model_crops` in the OCR test image and writes the row crops to `real/<scene>/` (`<code>/real/<scene>/` for other languages) in the work folder. It needs the image that `tools/ocr-test.sh` builds.
 2. `python labels.py` matches every crop to its row in the truth, using what the current model reads as the guide. A reading much shorter than its row comes from a crop that misses part of the text and stays unlabelled, so the model is never taught to invent the missing words.
-3. `python train.py 20000 1.0 synthetic` pretrains on synthetic lines and keeps the checkpoint that reads the real crops best.
+3. `python train.py synthetic` pretrains on synthetic lines for 20000 steps (`--steps`, `--width` and `--seed` change that) and keeps the checkpoint that reads the real crops best.
 4. `python finetune.py synthetic cv` is the accuracy check: the panels are split into four folds, and each fold is fine-tuned without its own panels and scored on them.
 5. `python finetune.py synthetic all` fine-tunes on every crop.
 6. `python export.py synthetic_all` overwrites the model file in `RuneHelper/resources`.
 7. `./tools/ocr-test.sh` from the repository root, then `--bless` once the golden changes have been checked.
 
-A language with no model yet starts at step 3: without labelled crops `train.py` keeps the last checkpoint. Japanese and Thai pretrained from scratch never learn to read the leading `3x` and emit a bare `x` instead, so start them from the Korean checkpoint: `RUNEHELPER_INIT=ko_synthetic` copies its layers and the rows of every symbol both languages share. Export the result into the model file so the build finds it, run step 1 with `RUNEHELPER_MODEL=<file in the work folder>`, then `python draft_truth.py` writes the truth from what that model reads, snapped to the names in `combinations.json`. Check every draft against the screenshots: early models drop quantity digits and levels, and rows they cannot read at all are missing.
+A language with no model yet starts at step 3: without labelled crops `train.py` keeps the last checkpoint. Japanese and Thai pretrained from scratch never learn to read the leading `3x` and emit a bare `x` instead, so start them from the Korean checkpoint: `--init ko_synthetic` copies its layers and the rows of every symbol both languages share. Export the result into the model file so the build finds it, run step 1 with `RUNEHELPER_MODEL=<file in the work folder>`, then `python draft_truth.py` writes the truth from what that model reads, snapped to the names in `combinations.json`. Check every draft against the screenshots: early models drop quantity digits and levels, and rows they cannot read at all are missing.
 
 ## Judging a new model
 
@@ -84,11 +84,11 @@ What the clients write:
 | Japanese | sans-serif | `2x ルーンの合金` | `スキルレベル 20: …` |
 | Thai | sans-serif | `2x โลหะเจืออักขระ` | `สกิล: …`, `เสริม: …` |
 
-`LootParser` accepts every quantity format in every language, and unique items carry no count. Japanese and Thai draw unique names without the space the scraped names have (`ユニーク指輪`), and the Thai client keeps English names for most orbs (`Exalted Orb ไร้ที่ติ`). The game shrinks a name that does not fit into a smaller font, and a long name can run into the last rune tile; `FindTextStartX` in `OCR.cpp` then starts the text after the tile grid.
+`LootParser` accepts every quantity format in every language, and unique items carry no count. Japanese and Thai draw unique names without the space the scraped names have (`ユニーク指輪`), and the Thai client keeps English names for most orbs (`Exalted Orb ไร้ที่ติ`). The game shrinks a name that does not fit into a smaller font, and a long name can run into the last rune tile; `FindTextStartX` in `ocr/TextStart.cpp` then starts the text after the tile grid.
 
 A new language needs:
 
-* its font and an entry in `LANGUAGES` in `common.py` and `STYLES` in `synth.py`;
+* its font and an entry in `LANGUAGES` in `languages.py`, which holds both how the client writes rows and how synthetic lines are drawn;
 * panels from that client under `tests/<code>/panels` and checked truth in `tests/<code>/truth`;
 * its code in `RUNEHELPER_TEXT_MODEL_LANGUAGES` in `cmake/EmbedResources.cmake`, which embeds `text_model_<code>.bin` and adds its `ocr_golden_<code>` test, in `kGameLanguages` in `core/Config.h` and in the scraper's `LANGUAGES` and `TRADE_HOSTS`, and on Windows in `RuneHelper.rc`, `resource.h` and `kTextModels` in `platform/windows/ResourceHelper.cpp`.
 

@@ -12,7 +12,7 @@
 
 #include "nlohmann/json.hpp"
 
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "recipes/RecipeTypes.h"
 
 std::filesystem::path DownloadedRecipeDatabasePath();
@@ -43,7 +43,7 @@ public:
     const Recipe* FindRecipe(std::string_view output, int count) const;
     bool IsRareRune(const std::string& rune) const;
 
-    CachedItemNames Translations(std::string_view language) const;
+    NameMatcher Translations(std::string_view language) const;
 
     static bool Accepts(const nlohmann::json& j);
 
@@ -59,5 +59,5 @@ private:
     std::vector<Recipe> recipes_;
     std::unordered_map<std::pair<std::string, int>, size_t, RecipeOutputKeyHash> byOutput_;
     std::unordered_set<std::string> rareRunes_;
-    CachedItemNames outputNames_;
+    NameMatcher outputNames_;
 };

@@ -9,14 +9,25 @@
 #include "core/AtomicFile.h"
 #include "core/JsonRead.h"
 #include "core/Logger.h"
+#include "core/Text.h"
 #include "platform/PlatformPaths.h"
 
 using json = nlohmann::json;
 
 namespace
 {
-constexpr std::string_view kDefaultPriceLeague = "Forbidden Rites";
 constexpr std::size_t kMaxPriceLeagueLength = 64;
+constexpr std::chrono::milliseconds kSaveDelay{ 500 };
+
+struct LeagueRename
+{
+    std::string_view from;
+    std::string_view to;
+};
+
+constexpr LeagueRename kRenamedLeagues[] = {
+    { "Hardcore Runes of Aldur", "HC Runes of Aldur" },
+};
 
 void SetAsideUnreadableConfig(const std::filesystem::path& path)
 {
@@ -35,22 +46,16 @@ void SetAsideUnreadableConfig(const std::filesystem::path& path)
 
 std::string SanitizePriceLeague(std::string_view league)
 {
-    std::string cleaned;
-    cleaned.reserve(league.size());
+    std::string printable;
+    printable.reserve(league.size());
 
     for (unsigned char ch : league)
     {
         if (ch >= 0x20 && ch != 0x7f)
-            cleaned.push_back(static_cast<char>(ch));
+            printable.push_back(static_cast<char>(ch));
     }
 
-    const std::size_t first = cleaned.find_first_not_of(' ');
-
-    if (first == std::string::npos)
-        return {};
-
-    const std::size_t last = cleaned.find_last_not_of(' ');
-    cleaned = cleaned.substr(first, last - first + 1);
+    std::string cleaned(Trim(printable));
 
     if (cleaned.size() > kMaxPriceLeagueLength)
         cleaned.resize(kMaxPriceLeagueLength);
@@ -87,23 +92,61 @@ AppConfig ConfigManager::Snapshot() const
 
 void ConfigManager::Update(const std::function<void(AppConfig&)>& change)
 {
-    if (!change)
-        return;
-
     std::lock_guard<std::mutex> lock(mutex_);
 
+    const AppConfig before = config_;
     change(config_);
     Normalize(config_);
+
+    if (config_ != before)
+        MarkChanged();
+}
+
+void ConfigManager::MarkChanged()
+{
+    changed_ = true;
+    changedAt_ = std::chrono::steady_clock::now();
+}
+
+void ConfigManager::SaveIfSettled()
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        if (!changed_ || std::chrono::steady_clock::now() - changedAt_ < kSaveDelay)
+            return;
+    }
+
+    Flush();
+}
+
+void ConfigManager::Flush()
+{
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+
+        if (!changed_)
+            return;
+
+        changed_ = false;
+    }
+
+    if (!Save())
+        LOG_ERROR("config.json could not be saved");
 }
 
 void ConfigManager::Normalize(AppConfig& config)
 {
     config.regionW = std::max(0, config.regionW);
     config.regionH = std::max(0, config.regionH);
-    config.overlayFontSize = std::clamp(config.overlayFontSize, 8, 48);
-    config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, 5, 360);
-    if (config.priceLeague == "Hardcore Runes of Aldur")
-        config.priceLeague = "HC Runes of Aldur";
+    config.overlayFontSize = std::clamp(config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+    config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
+
+    for (const LeagueRename& rename : kRenamedLeagues)
+    {
+        if (config.priceLeague == rename.from)
+            config.priceLeague = std::string(rename.to);
+    }
 
     config.priceLeague = SanitizePriceLeague(config.priceLeague);
 
@@ -136,7 +179,14 @@ nlohmann::json ConfigManager::FeatureSettings(const std::string& feature) const
 void ConfigManager::SetFeatureSettings(const std::string& feature, nlohmann::json settings)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    features_[feature] = std::move(settings);
+
+    nlohmann::json& stored = features_[feature];
+
+    if (stored == settings)
+        return;
+
+    stored = std::move(settings);
+    MarkChanged();
 }
 
 bool ConfigManager::Load()
@@ -207,8 +257,6 @@ bool ConfigManager::Save() const
         if (!features_.empty())
             j["features"] = features_;
     }
-
-    Normalize(config);
 
     j["regionX"] = config.regionX;
     j["regionY"] = config.regionY;

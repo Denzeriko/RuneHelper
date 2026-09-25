@@ -28,6 +28,15 @@ constexpr int kRowSnap = 6;
 
 constexpr float kMinTableHeight = 120.0f;
 
+constexpr OverlayColor kBestRecipeColor = OverlayRgb(80, 220, 255);
+constexpr OverlayColor kRareRuneColor = OverlayRgb(255, 220, 80);
+
+struct RuneMarks
+{
+    std::vector<OverlayMark> marks;
+    bool everyRowResolved = true;
+};
+
 bool AtomicCheckbox(const char* label, std::atomic<bool>& value)
 {
     bool current = value;
@@ -53,12 +62,192 @@ std::string FormatPerWave(double value)
     return buffer;
 }
 
-struct ScreenRecipe
+std::string JoinRunes(const std::vector<std::string>& runes, std::size_t first, const char* separator)
 {
-    const Recipe* recipe = nullptr;
-    size_t rowIndex = 0;
-    double perWave = 0.0;
-};
+    std::string joined;
+
+    for (std::size_t i = first; i < runes.size(); ++i)
+    {
+        if (i > first)
+            joined += separator;
+
+        joined += runes[i];
+    }
+
+    return joined;
+}
+
+const Recipe* FindRecipeFor(const RecipeDatabase& database, const std::string& name, const std::string& readName, int count)
+{
+    const Recipe* recipe = database.FindRecipe(name, count);
+
+    if (!recipe && name != readName)
+        recipe = database.FindRecipe(readName, count);
+
+    return recipe && !recipe->runes.empty() ? recipe : nullptr;
+}
+
+std::vector<ScreenRecipe> FindScreenRecipes(const RecipeDatabase& database, const FrameContext& frame)
+{
+    std::vector<ScreenRecipe> found;
+
+    for (std::size_t i = 0; i < frame.rows.size(); ++i)
+    {
+        const FrameRow& row = frame.rows[i];
+        const ResolvedPrice& resolved = row.price;
+        const std::string& matchedName = resolved.name.empty() ? row.name : resolved.name;
+        const Recipe* recipe = FindRecipeFor(database, matchedName, row.name, row.quantity);
+
+        if (!recipe)
+            continue;
+
+        ScreenRecipe entry;
+        entry.recipe = recipe;
+        entry.rowIndex = i;
+
+        if (resolved.totalEx > 0.0)
+            entry.perWave = resolved.totalEx / static_cast<double>(recipe->runes.size());
+
+        found.push_back(entry);
+    }
+
+    return found;
+}
+
+const ScreenRecipe* BestPerWave(const std::vector<ScreenRecipe>& found)
+{
+    const ScreenRecipe* best = nullptr;
+
+    for (const ScreenRecipe& entry : found)
+    {
+        if (entry.perWave <= 0.0)
+            continue;
+
+        if (!best)
+        {
+            best = &entry;
+            continue;
+        }
+
+        const double relative = std::abs(entry.perWave - best->perWave) / best->perWave;
+
+        if (relative <= kPerWaveTolerance)
+        {
+            if (entry.recipe->runes.size() < best->recipe->runes.size())
+                best = &entry;
+        }
+        else if (entry.perWave > best->perWave)
+        {
+            best = &entry;
+        }
+    }
+
+    return best;
+}
+
+std::string RecipeNote(const ScreenRecipe& entry, bool showRunes)
+{
+    std::string note = std::to_string(entry.recipe->runes.size()) + "w";
+
+    if (entry.perWave > 0.0)
+    {
+        note += " ";
+        note += FormatPerWave(entry.perWave);
+    }
+
+    if (showRunes)
+    {
+        note += "  ";
+        note += JoinRunes(entry.recipe->runes, 0, "+");
+    }
+
+    return note;
+}
+
+void AnnotateRecipes(FrameContext& frame, const std::vector<ScreenRecipe>& found, bool showRunes)
+{
+    const ScreenRecipe* best = BestPerWave(found);
+
+    for (const ScreenRecipe& entry : found)
+    {
+        RowOverlay& overlay = frame.rowOverlays[entry.rowIndex];
+
+        overlay.Append(RecipeNote(entry, showRunes));
+
+        if (&entry == best)
+            overlay.SetColor(kBestRecipeColor);
+    }
+}
+
+std::string MarkSignature(const FrameContext& frame, const std::vector<ScreenRecipe>& found)
+{
+    std::string signature;
+
+    for (const ScreenRecipe& entry : found)
+    {
+        signature += entry.recipe->output;
+        signature += ':';
+        signature += std::to_string(entry.recipe->count);
+        signature += '@';
+        signature += std::to_string(frame.rows[entry.rowIndex].textTop / kRowSnap);
+        signature += ';';
+    }
+
+    return signature;
+}
+
+RuneMarks RareRuneMarks(
+    const RuneTileLocator& tiles,
+    const RecipeDatabase& database,
+    const FrameContext& frame,
+    const std::vector<ScreenRecipe>& found
+)
+{
+    RuneMarks result;
+
+    for (const ScreenRecipe& entry : found)
+    {
+        const std::vector<cv::Rect> rowTiles =
+            tiles.TilesForRow(frame.gray, frame.rows[entry.rowIndex].textTop, static_cast<int>(entry.recipe->runes.size()));
+
+        if (rowTiles.empty())
+        {
+            result.everyRowResolved = false;
+            continue;
+        }
+
+        for (std::size_t i = 0; i < rowTiles.size(); ++i)
+        {
+            if (!database.IsRareRune(entry.recipe->runes[i]))
+                continue;
+
+            OverlayMark mark;
+            mark.x = frame.region.x + rowTiles[i].x;
+            mark.y = frame.region.y + rowTiles[i].y;
+            mark.width = rowTiles[i].width;
+            mark.height = rowTiles[i].height;
+            mark.color = kRareRuneColor;
+
+            result.marks.push_back(mark);
+        }
+    }
+
+    return result;
+}
+
+void DrawPerWave(double perWave, bool best)
+{
+    if (perWave <= 0.0)
+    {
+        ImGui::TextDisabled("-");
+        return;
+    }
+
+    if (best)
+        ImGui::TextColored(kGreen, "%.2f", perWave);
+    else
+        ImGui::Text("%.2f", perWave);
+}
 }
 
 bool ExpeditionFeature::Init(ConfigManager& configManager)
@@ -104,6 +293,125 @@ void ExpeditionFeature::OnRegionChanged()
     regionDirty_ = true;
 }
 
+void ExpeditionFeature::StoreSettings()
+{
+    nlohmann::json settings;
+    settings["enabled"] = settings_.enabled.load();
+    settings["showRunes"] = settings_.showRunes.load();
+    settings["highlightRare"] = settings_.highlightRare.load();
+
+    configManager_->SetFeatureSettings(Name(), std::move(settings));
+}
+
+void ExpeditionFeature::OnFrame(FrameContext& frame)
+{
+    if (regionDirty_.exchange(false))
+    {
+        tiles_ = RuneTileLocator{};
+        ForgetMarks();
+    }
+
+    if (!database_.Loaded() || (!settings_.enabled && !settings_.highlightRare))
+        return;
+
+    const std::vector<ScreenRecipe> found = FindScreenRecipes(database_, frame);
+
+    if (found.empty())
+        return;
+
+    if (settings_.enabled)
+        AnnotateRecipes(frame, found, settings_.showRunes);
+
+    if (settings_.highlightRare)
+        HighlightRareRunes(frame, found);
+    else
+        ForgetMarks();
+}
+
+void ExpeditionFeature::HighlightRareRunes(FrameContext& frame, const std::vector<ScreenRecipe>& found)
+{
+    std::string signature = MarkSignature(frame, found);
+
+    if (signature != markSignature_)
+    {
+        if (!tiles_.Valid())
+            tiles_.Analyze(frame.gray, frame.panel, frame.levels);
+
+        if (!tiles_.Valid())
+            return;
+
+        RuneMarks rareRunes = RareRuneMarks(tiles_, database_, frame, found);
+
+        if (!rareRunes.everyRowResolved)
+            tiles_ = RuneTileLocator{};
+
+        markSignature_ = std::move(signature);
+        cachedMarks_ = std::move(rareRunes.marks);
+    }
+
+    frame.overlay.marks.insert(frame.overlay.marks.end(), cachedMarks_.begin(), cachedMarks_.end());
+}
+
+void ExpeditionFeature::ForgetMarks()
+{
+    markSignature_.clear();
+    cachedMarks_.clear();
+}
+
+void ExpeditionFeature::DrawTab(UIManager& manager)
+{
+    if (!database_.Loaded())
+    {
+        ImGui::TextColored(kYellow, "The combination database is not loaded.");
+        ImGui::TextWrapped("Check runehelper.log for the reason; the shipped database is embedded in the binary.");
+        return;
+    }
+
+    DrawAdvisorSettings();
+
+    if (!settings_.enabled)
+        return;
+
+    ImGui::SeparatorText("ON SCREEN");
+
+    RefreshTabRows(manager);
+
+    if (tabRows_.empty())
+    {
+        ImGui::TextDisabled("No combinations recognised. Point the region at the remnant panel.");
+        return;
+    }
+
+    DrawPlacedRunes();
+    DrawRecipeTable();
+}
+
+void ExpeditionFeature::DrawAdvisorSettings()
+{
+    bool changed = AtomicCheckbox("Enable Pick Advisor", settings_.enabled);
+
+    ImGui::SameLine();
+    ImGui::TextDisabled("%s", DataStatus().c_str());
+
+    if (settings_.enabled)
+        changed |= AtomicCheckbox("Show rune names on the overlay", settings_.showRunes);
+
+    if (changed)
+        StoreSettings();
+}
+
+void ExpeditionFeature::RefreshTabRows(const UIManager& manager)
+{
+    const std::uint64_t version = manager.DebugDataVersion();
+
+    if (tabBuilt_ && tabVersion_ == version)
+        return;
+
+    RebuildTabRows(manager.GetDebugData());
+    tabVersion_ = version;
+    tabBuilt_ = true;
+}
+
 void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
 {
     tabRows_.clear();
@@ -112,14 +420,10 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
     for (const auto& line : debug.lines)
     {
         const auto parsed = LootParser::ParseLootLine(line.ocrText);
-        const std::string& name = line.matchedText != "-" ? line.matchedText : parsed.itemName;
+        const std::string& name = line.Matched() ? line.matchedText : parsed.itemName;
+        const Recipe* recipe = FindRecipeFor(database_, name, parsed.itemName, parsed.quantity);
 
-        const Recipe* recipe = database_.FindRecipe(name, parsed.quantity);
-
-        if (!recipe && name != parsed.itemName)
-            recipe = database_.FindRecipe(parsed.itemName, parsed.quantity);
-
-        if (!recipe || recipe->runes.empty())
+        if (!recipe)
             continue;
 
         double perWave = 0.0;
@@ -160,259 +464,21 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
     );
 }
 
-void ExpeditionFeature::SaveSettings()
+void ExpeditionFeature::DrawPlacedRunes() const
 {
-    if (!configManager_)
-        return;
-
-    nlohmann::json settings;
-    settings["enabled"] = settings_.enabled.load();
-    settings["showRunes"] = settings_.showRunes.load();
-    settings["highlightRare"] = settings_.highlightRare.load();
-
-    configManager_->SetFeatureSettings(Name(), std::move(settings));
-
-    if (!configManager_->Save())
-        LOG_ERROR("Expedition feature failed to save settings");
-}
-
-void ExpeditionFeature::OnFrame(FrameContext& frame)
-{
-    if (regionDirty_.exchange(false))
-    {
-        tiles_ = RuneTileLocator{};
-        markSignature_.clear();
-        cachedMarks_.clear();
-    }
-
-    if (!database_.Loaded())
-        return;
-
-    if (!settings_.enabled && !settings_.highlightRare)
-        return;
-
-    std::vector<ScreenRecipe> found;
-
-    for (size_t i = 0; i < frame.rows.size(); ++i)
-    {
-        const FrameRow& row = frame.rows[i];
-        const ResolvedPrice& resolved = row.price;
-        const std::string& matchedName = resolved.name.empty() ? row.name : resolved.name;
-
-        const Recipe* recipe = database_.FindRecipe(matchedName, row.quantity);
-
-        if (!recipe && matchedName != row.name)
-            recipe = database_.FindRecipe(row.name, row.quantity);
-
-        if (!recipe || recipe->runes.empty())
-            continue;
-
-        ScreenRecipe entry;
-        entry.recipe = recipe;
-        entry.rowIndex = i;
-
-        if (resolved.totalEx > 0.0)
-            entry.perWave = resolved.totalEx / static_cast<double>(recipe->runes.size());
-
-        found.push_back(entry);
-    }
-
-    if (found.empty())
-        return;
-
-    if (settings_.enabled)
-    {
-        auto best = found.end();
-
-        for (auto it = found.begin(); it != found.end(); ++it)
-        {
-            if (it->perWave <= 0.0)
-                continue;
-
-            if (best == found.end())
-            {
-                best = it;
-                continue;
-            }
-
-            const double relative = std::abs(it->perWave - best->perWave) / best->perWave;
-
-            if (relative <= kPerWaveTolerance)
-            {
-                if (it->recipe->runes.size() < best->recipe->runes.size())
-                    best = it;
-            }
-            else if (it->perWave > best->perWave)
-            {
-                best = it;
-            }
-        }
-
-        for (auto it = found.begin(); it != found.end(); ++it)
-        {
-            RowOverlay& overlay = frame.rowOverlays[it->rowIndex];
-
-            std::string note = std::to_string(it->recipe->runes.size()) + "w";
-
-            if (it->perWave > 0.0)
-                note += " " + FormatPerWave(it->perWave);
-
-            if (settings_.showRunes)
-            {
-                note += "  ";
-
-                for (size_t i = 0; i < it->recipe->runes.size(); ++i)
-                {
-                    if (i > 0)
-                        note += "+";
-
-                    note += it->recipe->runes[i];
-                }
-            }
-
-            overlay.Append(note);
-
-            if (it == best)
-                overlay.SetColor(OverlayRgb(80, 220, 255));
-        }
-    }
-
-    if (!settings_.highlightRare)
-    {
-        markSignature_.clear();
-        cachedMarks_.clear();
-        return;
-    }
-
-    std::string signature;
-
-    for (const ScreenRecipe& entry : found)
-    {
-        signature += entry.recipe->output;
-        signature += ':';
-        signature += std::to_string(entry.recipe->count);
-        signature += '@';
-        signature += std::to_string(frame.rows[entry.rowIndex].textTop / kRowSnap);
-        signature += ';';
-    }
-
-    if (signature == markSignature_)
-    {
-        frame.overlay.marks.insert(frame.overlay.marks.end(), cachedMarks_.begin(), cachedMarks_.end());
-        return;
-    }
-
-    if (!tiles_.Valid())
-        tiles_.Analyze(frame.gray, frame.panel, frame.levels);
-
-    if (!tiles_.Valid())
-        return;
-
-    std::vector<OverlayMark> marks;
-    bool everyRowResolved = true;
-
-    for (const ScreenRecipe& entry : found)
-    {
-        const std::vector<cv::Rect> tiles =
-            tiles_.TilesForRow(frame.gray, frame.rows[entry.rowIndex].textTop, static_cast<int>(entry.recipe->runes.size()));
-
-        if (tiles.empty())
-        {
-            everyRowResolved = false;
-            continue;
-        }
-
-        for (size_t i = 0; i < tiles.size(); ++i)
-        {
-            if (!database_.IsRareRune(entry.recipe->runes[i]))
-                continue;
-
-            OverlayMark mark;
-            mark.x = frame.region.x + tiles[i].x;
-            mark.y = frame.region.y + tiles[i].y;
-            mark.width = tiles[i].width;
-            mark.height = tiles[i].height;
-            mark.color = OverlayRgb(255, 220, 80);
-
-            marks.push_back(mark);
-        }
-    }
-
-    if (!everyRowResolved)
-        tiles_ = RuneTileLocator{};
-
-    markSignature_ = std::move(signature);
-    cachedMarks_ = std::move(marks);
-
-    frame.overlay.marks.insert(frame.overlay.marks.end(), cachedMarks_.begin(), cachedMarks_.end());
-}
-
-void ExpeditionFeature::DrawTab(UIManager& manager)
-{
-    if (!database_.Loaded())
-    {
-        ImGui::TextColored(kYellow, "The combination database is not loaded.");
-        ImGui::TextWrapped("Check runehelper.log for the reason; the shipped database is embedded in the binary.");
-        return;
-    }
-
-    bool changed = false;
-
-    changed |= AtomicCheckbox("Enable Pick Advisor", settings_.enabled);
-
-    ImGui::SameLine();
-    ImGui::TextDisabled("%s", DataStatus().c_str());
-
-    if (settings_.enabled)
-        changed |= AtomicCheckbox("Show rune names on the overlay", settings_.showRunes);
-
-    if (changed)
-        SaveSettings();
-
-    if (!settings_.enabled)
-        return;
-
-    ImGui::SeparatorText("ON SCREEN");
-
-    const std::uint64_t version = manager.DebugDataVersion();
-
-    if (!tabBuilt_ || tabVersion_ != version)
-    {
-        RebuildTabRows(manager.GetDebugData());
-        tabVersion_ = version;
-        tabBuilt_ = true;
-    }
-
-    const std::vector<ExpeditionTabRow>& onScreen = tabRows_;
-    const std::vector<std::string>& placed = tabPlaced_;
-
-    if (onScreen.empty())
-    {
-        ImGui::TextDisabled("No combinations recognised. Point the region at the remnant panel.");
-        return;
-    }
-
-    if (placed.empty())
+    if (tabPlaced_.empty())
     {
         ImGui::TextDisabled("Nothing placed yet");
-    }
-    else
-    {
-        std::string placedText;
-
-        for (const auto& rune : placed)
-        {
-            if (!placedText.empty())
-                placedText += " + ";
-
-            placedText += rune;
-        }
-
-        ImGui::TextDisabled("Already placed:");
-        ImGui::SameLine();
-        ImGui::TextColored(kGreen, "%s", placedText.c_str());
+        return;
     }
 
+    ImGui::TextDisabled("Already placed:");
+    ImGui::SameLine();
+    ImGui::TextColored(kGreen, "%s", JoinRunes(tabPlaced_, 0, " + ").c_str());
+}
+
+void ExpeditionFeature::DrawRecipeTable() const
+{
     const float available = ImGui::GetContentRegionAvail().y;
     const float minimumHeight = UiScaled(kMinTableHeight);
     const ImVec2 tableSize(0.0f, available > minimumHeight ? available : minimumHeight);
@@ -439,7 +505,7 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
 
     bool first = true;
 
-    for (const auto& entry : onScreen)
+    for (const auto& entry : tabRows_)
     {
         ImGui::TableNextRow();
 
@@ -454,32 +520,10 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
         ImGui::Text("%zu", entry.recipe->runes.size());
 
         ImGui::TableSetColumnIndex(2);
-
-        if (entry.perWave > 0.0)
-        {
-            if (first)
-                ImGui::TextColored(kGreen, "%.2f", entry.perWave);
-            else
-                ImGui::Text("%.2f", entry.perWave);
-        }
-        else
-        {
-            ImGui::TextDisabled("-");
-        }
+        DrawPerWave(entry.perWave, first);
 
         ImGui::TableSetColumnIndex(3);
-
-        std::string adds;
-
-        for (size_t i = placed.size(); i < entry.recipe->runes.size(); ++i)
-        {
-            if (!adds.empty())
-                adds += ", ";
-
-            adds += entry.recipe->runes[i];
-        }
-
-        UIDraw::CellText(adds.c_str());
+        UIDraw::CellText(JoinRunes(entry.recipe->runes, tabPlaced_.size(), ", ").c_str());
 
         first = false;
     }
@@ -487,10 +531,8 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
     ImGui::EndTable();
 }
 
-void ExpeditionFeature::DrawMainControls(UIManager& manager)
+void ExpeditionFeature::DrawMainControls(UIManager&)
 {
-    (void)manager;
-
     if (!database_.Loaded())
     {
         ImGui::TextDisabled("Expedition: no combination database");
@@ -498,7 +540,7 @@ void ExpeditionFeature::DrawMainControls(UIManager& manager)
     }
 
     if (AtomicCheckbox("Highlight rare runes", settings_.highlightRare))
-        SaveSettings();
+        StoreSettings();
 
     if (ImGui::IsItemHovered())
         UiTooltip("Frames the rare rune tiles in the remnant panel. Works without the Pick Advisor.");

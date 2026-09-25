@@ -11,6 +11,7 @@
 
 #include "core/JsonRead.h"
 #include "core/Logger.h"
+#include "core/Text.h"
 #include "platform/PlatformPaths.h"
 
 #ifdef _WIN32
@@ -23,25 +24,7 @@ using json = nlohmann::json;
 
 namespace
 {
-std::string ToLower(std::string_view s)
-{
-    std::string out(s);
-    std::transform(out.begin(), out.end(), out.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-    return out;
-}
-
-std::string Trim(std::string_view s)
-{
-    size_t begin = 0;
-    size_t end = s.size();
-    while (begin < end && std::isspace(static_cast<unsigned char>(s[begin])))
-        ++begin;
-    while (end > begin && std::isspace(static_cast<unsigned char>(s[end - 1])))
-        --end;
-    return std::string(s.substr(begin, end - begin));
-}
-
-CachedItemNames BuildNames(const std::set<std::pair<std::string, std::string>>& aliases)
+NameMatcher BuildNames(const std::set<std::pair<std::string, std::string>>& aliases)
 {
     std::vector<NameAlias> names;
     names.reserve(aliases.size());
@@ -49,7 +32,7 @@ CachedItemNames BuildNames(const std::set<std::pair<std::string, std::string>>& 
     for (const auto& [name, alias] : aliases)
         names.push_back({ name, alias });
 
-    return CachedItemNames::Build(names);
+    return NameMatcher::Build(names);
 }
 
 std::map<std::string, std::string> ReadNames(const json& entry)
@@ -90,17 +73,13 @@ std::unordered_map<std::string, std::map<std::string, std::string>> NamesByOutpu
 
 std::string RecipeDatabase::NormalizeRune(std::string_view name)
 {
-    std::string trimmed = Trim(name);
+    std::string_view trimmed = Trim(name);
 
     constexpr std::string_view kSuffix = " Rune";
-    if (trimmed.size() > kSuffix.size())
-    {
-        std::string_view tail(trimmed.data() + trimmed.size() - kSuffix.size(), kSuffix.size());
-        if (ToLower(tail) == ToLower(kSuffix))
-            trimmed = Trim(trimmed.substr(0, trimmed.size() - kSuffix.size()));
-    }
+    if (trimmed.size() > kSuffix.size() && ToLowerAscii(trimmed.substr(trimmed.size() - kSuffix.size())) == ToLowerAscii(kSuffix))
+        trimmed = Trim(trimmed.substr(0, trimmed.size() - kSuffix.size()));
 
-    return trimmed;
+    return std::string(trimmed);
 }
 
 bool RecipeDatabase::IsRareRune(const std::string& rune) const
@@ -110,7 +89,7 @@ bool RecipeDatabase::IsRareRune(const std::string& rune) const
 
 std::string RecipeDatabase::StripOcrNoise(std::string_view name)
 {
-    std::string text = Trim(name);
+    std::string_view text = Trim(name);
 
     while (!text.empty())
     {
@@ -119,15 +98,14 @@ std::string RecipeDatabase::StripOcrNoise(std::string_view name)
         if (std::isalnum(last) || last == ')')
             break;
 
-        text.pop_back();
-        text = Trim(text);
+        text = Trim(text.substr(0, text.size() - 1));
     }
 
     const std::size_t space = text.find_last_of(' ');
 
-    if (space != std::string::npos)
+    if (space != std::string_view::npos)
     {
-        const std::string tail = text.substr(space + 1);
+        const std::string_view tail = text.substr(space + 1);
 
         const bool shortWord = tail.size() <= 2 && !tail.empty() &&
                                std::all_of(tail.begin(), tail.end(), [](unsigned char c) { return std::isalpha(c) != 0; });
@@ -136,10 +114,10 @@ std::string RecipeDatabase::StripOcrNoise(std::string_view name)
             text = Trim(text.substr(0, space));
     }
 
-    return text;
+    return std::string(text);
 }
 
-CachedItemNames RecipeDatabase::Translations(std::string_view language) const
+NameMatcher RecipeDatabase::Translations(std::string_view language) const
 {
     std::set<std::pair<std::string, std::string>> aliases;
 
@@ -156,20 +134,20 @@ CachedItemNames RecipeDatabase::Translations(std::string_view language) const
 
 const Recipe* RecipeDatabase::FindRecipe(std::string_view output, int count) const
 {
-    auto it = byOutput_.find(std::pair{ ToLower(Trim(output)), count });
+    auto it = byOutput_.find(std::pair{ ToLowerAscii(Trim(output)), count });
 
     if (it == byOutput_.end())
     {
         const std::string cleaned = StripOcrNoise(output);
 
         if (!cleaned.empty())
-            it = byOutput_.find(std::pair{ ToLower(cleaned), count });
+            it = byOutput_.find(std::pair{ ToLowerAscii(cleaned), count });
     }
 
     if (it == byOutput_.end() && !outputNames_.Empty())
     {
         if (const auto guess = outputNames_.FindBest(output))
-            it = byOutput_.find(std::pair{ ToLower(guess->name), count });
+            it = byOutput_.find(std::pair{ ToLowerAscii(guess->name), count });
     }
 
     if (it == byOutput_.end())
@@ -293,8 +271,6 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source, const 
                 recipe.names = fallback->second;
         }
         recipe.count = entry.contains("count") ? JsonValue(entry, "count", 0) : 1;
-        recipe.level = JsonValue(entry, "level", 0);
-        recipe.category = JsonValue(entry, "category", std::string("unknown"));
 
         if (recipe.output.empty() || recipe.count < 1 || !entry.contains("runes") || !entry["runes"].is_array())
             continue;
@@ -331,7 +307,7 @@ bool RecipeDatabase::LoadFromJson(const json& j, std::string_view source, const 
 
     for (size_t i = 0; i < recipes_.size(); ++i)
     {
-        byOutput_.emplace(std::pair{ ToLower(recipes_[i].output), recipes_[i].count }, i);
+        byOutput_.emplace(std::pair{ ToLowerAscii(recipes_[i].output), recipes_[i].count }, i);
         aliases.emplace(recipes_[i].output, recipes_[i].output);
 
         for (const auto& localized : recipes_[i].names)

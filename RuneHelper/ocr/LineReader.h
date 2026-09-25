@@ -2,6 +2,7 @@
 
 #include <opencv2/core.hpp>
 
+#include <cstddef>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -21,7 +22,7 @@ public:
 
     Result Read(const cv::Mat& gray) const;
 
-    static cv::Mat Prepare(const cv::Mat& gray);
+    cv::Mat Prepare(const cv::Mat& gray) const;
 
 private:
     struct Layer
@@ -30,6 +31,11 @@ private:
         int inputs = 0;
         int kernelHeight = 0;
         int kernelWidth = 0;
+        int padHeight = 0;
+        int padWidth = 0;
+        int poolHeight = 1;
+        int poolWidth = 1;
+        bool relu = false;
         std::vector<float> weights;
         std::vector<float> bias;
     };
@@ -46,9 +52,15 @@ private:
         const float* Plane(int channel) const { return data.data() + static_cast<std::size_t>(channel) * height * width; }
     };
 
-    static Tensor Convolve(const Tensor& input, const Layer& layer, int padHeight, int padWidth, bool relu);
+    static bool Fits(const std::vector<Layer>& layers, int inputHeight, int minInputWidth, std::size_t symbols);
+    static Tensor Convolve(const Tensor& input, const Layer& layer);
     static Tensor Pool(const Tensor& input, int poolHeight, int poolWidth);
 
+    Tensor InputTensor(const cv::Mat& prepared) const;
+    Result Decode(const Tensor& logits, int steps) const;
+
+    int inputHeight_ = 0;
+    int stride_ = 1;
     std::vector<std::string> charset_;
     std::vector<Layer> layers_;
 };

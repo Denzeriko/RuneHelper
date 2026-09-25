@@ -10,8 +10,8 @@
 #include <thread>
 #include <utility>
 
+#include "core/ExceptionLogging.h"
 #include "core/Logger.h"
-#include "core/ThreadGuard.h"
 #include "ocr/LootRows.h"
 #include "price/PriceService.h"
 #include "recipes/RecipeDatabase.h"
@@ -30,6 +30,9 @@ constexpr int kMaxOcrDelayMs = 1500;
 constexpr int kOcrSleepChunkMs = 50;
 constexpr int kEmptyOverlayFramesBeforeClear = 3;
 constexpr int kCaptureFailuresBeforeWarning = 3;
+constexpr int kOverlayYJitter = 3;
+constexpr int kOverlayRowSpacing = 25;
+constexpr std::chrono::seconds kSnapshotDuration{ 2 };
 
 void SleepOcrLoop(std::atomic<bool>& running, const std::atomic<bool>& singleSnapshotRequested, int sleepMs)
 {
@@ -42,7 +45,21 @@ void SleepOcrLoop(std::atomic<bool>& running, const std::atomic<bool>& singleSna
     }
 }
 
-constexpr int kOverlayYJitter = 3;
+bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDistance)
+{
+    for (const auto& text : texts)
+    {
+        if (std::abs(text.y - y) < minDistance)
+            return true;
+    }
+
+    return false;
+}
+}
+
+OcrService::OcrService(ConfigManager& configManager, FeatureRegistry& features, PriceService& prices)
+    : configManager_(configManager), features_(features), prices_(prices)
+{
 }
 
 OcrService::~OcrService()
@@ -50,56 +67,31 @@ OcrService::~OcrService()
     Stop();
 }
 
-void OcrService::Start(ConfigManager& configManager, FeatureRegistry& features, PriceService& prices)
+void OcrService::Start()
 {
-    std::lock_guard lifecycleLock(lifecycleMutex_);
-
-    if (running_.load())
+    if (running_.exchange(true))
     {
         LOG_INFO("OcrService::Start() ignored because service is already running");
         return;
     }
 
-    configManager_ = &configManager;
-    features_ = &features;
-    prices_ = &prices;
-    running_ = true;
-    ResetState(true);
-
-    initThread_ = std::jthread(
-        [this]
-        {
-            if (!RunLoggingExceptions("OcrService init thread", [this] { InitOcr(); }))
-            {
-                ocrFailed_ = true;
-                ocrInitializing_ = false;
-            }
-        }
-    );
+    ResetState(OcrState::Initializing);
 
     workerThread_ = std::jthread([this] { RunLoggingExceptions("OcrService worker thread", [this] { WorkerLoop(); }); });
 }
 
 void OcrService::Stop()
 {
-    std::lock_guard lifecycleLock(lifecycleMutex_);
-
-    if (!running_.exchange(false) && !initThread_.joinable() && !workerThread_.joinable())
+    if (!running_.exchange(false) && !workerThread_.joinable())
         return;
 
     screenCapture_.Cancel();
-
-    if (initThread_.joinable())
-        initThread_.join();
 
     if (workerThread_.joinable())
         workerThread_.join();
 
     screenCapture_.Shutdown();
-    configManager_ = nullptr;
-    features_ = nullptr;
-    prices_ = nullptr;
-    ResetState(false);
+    ResetState(OcrState::Stopped);
 }
 
 void OcrService::RequestSingleSnapshot()
@@ -121,9 +113,9 @@ void OcrService::RequestDebugDump()
     singleSnapshotRequested_ = true;
 }
 
-OcrServiceStatus OcrService::GetStatus() const
+OcrStatus OcrService::Status() const
 {
-    return { ocrInitializing_.load(), ocrReady_.load(), ocrFailed_.load(), captureFailing_.load() };
+    return { state_.load(), captureFailing_.load() };
 }
 
 bool OcrService::ConsumeDebugData(DebugData& data)
@@ -147,32 +139,29 @@ bool OcrService::ConsumeOverlayFrame(OverlayFrame& frame)
     return true;
 }
 
-void OcrService::InitOcr()
+bool OcrService::InitOcr()
 {
-    ocrInitializing_ = true;
-
     LOG_INFO("Initializing OCR");
 
-    if (!configManager_ || !LoadLanguage(configManager_->Snapshot().gameLanguage))
+    bool loaded = false;
+    RunLoggingExceptions("OcrService init", [&] { loaded = LoadLanguage(configManager_.Snapshot().gameLanguage); });
+
+    if (!loaded)
     {
         LOG_ERROR("OCR init failed");
-
-        ocrFailed_ = true;
-        ocrInitializing_ = false;
-
-        return;
+        state_ = OcrState::Failed;
+        return false;
     }
 
-    ocrReady_ = true;
-    ocrInitializing_ = false;
-
+    state_ = OcrState::Ready;
     LOG_INFO("OCR ready");
+    return true;
 }
 
 bool OcrService::LoadLanguage(const std::string& language)
 {
     language_ = language;
-    translations_ = CachedItemNames();
+    translations_ = NameMatcher();
 
     std::string_view model = EmbeddedTextModel(language);
 
@@ -209,22 +198,6 @@ void OcrService::ResetFrameState()
     rowCache_.Reset();
 }
 
-namespace
-{
-constexpr int kOverlayRowSpacing = 25;
-
-bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDistance)
-{
-    for (const auto& text : texts)
-    {
-        if (std::abs(text.y - y) < minDistance)
-            return true;
-    }
-
-    return false;
-}
-}
-
 void OcrService::PublishFrameResult(
     const std::vector<LootLine>& loot,
     const cv::Mat& gray,
@@ -234,46 +207,39 @@ void OcrService::PublishFrameResult(
 {
     std::vector<FrameRow> rows = ParseLootRows(loot, region, config, translations_.Empty() ? nullptr : &translations_);
 
-    if (prices_ && config.priceSearchEnabled)
+    if (config.priceSearchEnabled)
     {
         for (FrameRow& row : rows)
-            row.price = prices_->Resolve(row.name, row.quantity);
+            row.price = prices_.Resolve(row.name, row.quantity);
     }
 
     DebugData debug;
-    debug.lines.reserve(rows.size());
+    debug.lines.reserve(loot.size());
 
     for (const auto& item : loot)
     {
         DebugLine line;
         line.ocrText = item.text;
-        line.matchedText = "-";
-        line.price = "-";
-        line.confidence = 0;
-
         debug.lines.push_back(std::move(line));
     }
 
     std::vector<RowOverlay> rowOverlays(rows.size());
     OverlayFrame overlay;
 
-    if (features_)
-    {
-        FrameContext frame{
-            gray,
-            region,
-            rows,
-            config,
-            prices_ ? prices_->DivineRate() : 0.0,
-            rowOverlays,
-            overlay,
-            debug,
-            rowCache_.Panel().value_or(cv::Rect(0, 0, gray.cols, gray.rows)),
-            rowCache_.Levels(),
-        };
+    FrameContext frame{
+        gray,
+        region,
+        rows,
+        config,
+        prices_.DivineRate(),
+        rowOverlays,
+        overlay,
+        debug,
+        rowCache_.Panel().value_or(cv::Rect(0, 0, gray.cols, gray.rows)),
+        rowCache_.Levels(),
+    };
 
-        features_->RunFrame(frame);
-    }
+    features_.RunFrame(frame);
 
     for (size_t i = 0; i < rows.size(); ++i)
     {
@@ -352,32 +318,24 @@ bool OcrService::NeedsOcr(const cv::Mat& gray)
 
 void OcrService::WorkerLoop()
 {
-    while (running_ && !ocrReady_)
-    {
-        if (ocrFailed_)
-            return;
-
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
+    if (!InitOcr())
+        return;
 
     while (running_)
     {
-        if (!configManager_)
-            return;
-
-        const AppConfig config = configManager_->Snapshot();
+        const AppConfig config = configManager_.Snapshot();
 
         const bool snapshotRequested = singleSnapshotRequested_.exchange(false);
 
         if (snapshotRequested)
-            singleSnapshotUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+            singleSnapshotUntil_ = std::chrono::steady_clock::now() + kSnapshotDuration;
 
         const bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
         if (!config.ocrEnabled && !snapshotRequested && !keepSnapshot)
         {
             ResetFrameState();
             ClearOverlayTexts();
-            SleepOcrLoop(running_, singleSnapshotRequested_, 100);
+            SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
 
             continue;
         }
@@ -385,7 +343,7 @@ void OcrService::WorkerLoop()
         if (config.regionW <= 0 || config.regionH <= 0)
         {
             ResetFrameState();
-            SleepOcrLoop(running_, singleSnapshotRequested_, 100);
+            SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
 
             continue;
         }
@@ -427,11 +385,9 @@ void OcrService::WorkerLoop()
     }
 }
 
-void OcrService::ResetState(bool initializing)
+void OcrService::ResetState(OcrState state)
 {
-    ocrReady_ = false;
-    ocrFailed_ = false;
-    ocrInitializing_ = initializing;
+    state_ = state;
     singleSnapshotRequested_ = false;
     debugDumpRequested_ = false;
     singleSnapshotUntil_ = {};

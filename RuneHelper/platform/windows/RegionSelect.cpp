@@ -10,6 +10,7 @@
 namespace
 {
 constexpr int kCancelHotkeyId = 0x5253;
+constexpr BYTE kShadeAlpha = 120;
 }
 
 RegionSelector::~RegionSelector()
@@ -19,7 +20,7 @@ RegionSelector::~RegionSelector()
 
 cv::Rect RegionSelector::Select()
 {
-    LOG_INFO("RegionSelector::Select() -> call");
+    LOG_INFO("Windows region selection started");
 
     done_ = false;
     cancelled_ = false;
@@ -47,15 +48,11 @@ cv::Rect RegionSelector::Select()
         return {};
     }
 
-    LOG_INFO("RegionSelector::Select() -> return");
-
     return GetSelectedRect();
 }
 
 bool RegionSelector::CreateOverlayWindow()
 {
-    LOG_INFO("RegionSelector::CreateOverlayWindow() -> call");
-
     HINSTANCE hInst = GetModuleHandleW(nullptr);
 
     WNDCLASSW wc{};
@@ -95,15 +92,13 @@ bool RegionSelector::CreateOverlayWindow()
         return false;
     }
 
-    SetLayeredWindowAttributes(hwnd_, 0, 120, LWA_ALPHA);
+    SetLayeredWindowAttributes(hwnd_, 0, kShadeAlpha, LWA_ALPHA);
 
     ShowWindow(hwnd_, SW_SHOW);
     UpdateWindow(hwnd_);
 
     if (!RegisterHotKey(hwnd_, kCancelHotkeyId, MOD_NOREPEAT, VK_ESCAPE))
         LOG_INFO("RegionSelector::CreateOverlayWindow() -> Escape is taken by another program, a click without dragging cancels");
-
-    LOG_INFO("RegionSelector::CreateOverlayWindow() -> return");
 
     return true;
 }

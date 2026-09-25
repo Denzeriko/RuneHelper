@@ -6,6 +6,7 @@
 #include <cstring>
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <random>
 #include <string>
 
@@ -19,8 +20,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core.hpp>
 
+#include "core/ExceptionLogging.h"
 #include "core/Logger.h"
-#include "core/ThreadGuard.h"
 
 namespace
 {
@@ -36,12 +37,27 @@ constexpr const char* kPortalPath = "/org/freedesktop/portal/desktop";
 constexpr const char* kScreenCastInterface = "org.freedesktop.portal.ScreenCast";
 constexpr const char* kRequestInterface = "org.freedesktop.portal.Request";
 
+constexpr dbus_uint32_t kSourceTypeMonitor = 1;
+constexpr dbus_uint32_t kCursorModeHidden = 1;
+constexpr dbus_uint32_t kPersistUntilRevoked = 2;
+
+constexpr int kCreateSessionTimeoutMs = 30000;
+constexpr int kSelectSourcesTimeoutMs = 120000;
+constexpr int kStartTimeoutMs = 300000;
+constexpr int kOpenRemoteTimeoutMs = 30000;
+constexpr int kDispatchWaitMs = 100;
+
 std::string RandomToken()
 {
     static std::mt19937 engine(std::random_device{}());
     std::uniform_int_distribution<int> distribution(0, 0x7fffffff);
 
     return "runehelper" + std::to_string(distribution(engine));
+}
+
+std::string RequestPath(const std::string& sender, const std::string& token)
+{
+    return std::string(kPortalPath) + "/request/" + sender + "/" + token;
 }
 
 std::string SenderPart(DBusConnection* connection)
@@ -253,7 +269,7 @@ bool WaitForResponse(DBusConnection* connection, PortalResponse& response, int t
             return false;
         }
 
-        if (!dbus_connection_read_write_dispatch(connection, 100))
+        if (!dbus_connection_read_write_dispatch(connection, kDispatchWaitMs))
             return false;
 
         if (std::chrono::steady_clock::now() > deadline)
@@ -302,6 +318,14 @@ struct PortalScreenCast::Impl
     bool hasPosition = false;
     cv::Size logicalSize;
     spa_video_info format{};
+
+    bool ConnectBus();
+    bool CreateSession(const std::string& sender);
+    bool SelectSources(const std::string& sender, const std::string& restoreToken);
+    std::optional<dbus_uint32_t> StartStream(const std::string& sender, std::string& restoreToken);
+    bool OpenPipeWireRemote();
+    bool ConnectStream(dbus_uint32_t nodeId);
+    void AppendSessionHandle(DBusMessageIter* args) const;
 
     void OnParamChanged(std::uint32_t id, const spa_pod* param);
     void OnProcess();
@@ -424,25 +448,21 @@ PortalScreenCast::~PortalScreenCast()
 
 bool PortalScreenCast::IsRunning() const
 {
-    return impl_ && impl_->running.load();
+    return impl_->running.load();
 }
 
 void PortalScreenCast::Cancel()
 {
-    if (impl_)
-        impl_->cancelled = true;
+    impl_->cancelled = true;
 }
 
 bool PortalScreenCast::Cancelled() const
 {
-    return impl_ && impl_->cancelled.load();
+    return impl_->cancelled.load();
 }
 
 cv::Mat PortalScreenCast::LatestFrame()
 {
-    if (!impl_)
-        return {};
-
     const long long now = NowMs();
     const long long previous = impl_->frameWantedAtMs.exchange(now);
 
@@ -459,17 +479,17 @@ cv::Mat PortalScreenCast::LatestFrame()
 
 cv::Point PortalScreenCast::FramePosition() const
 {
-    return impl_ ? impl_->position : cv::Point(0, 0);
+    return impl_->position;
 }
 
 bool PortalScreenCast::HasFramePosition() const
 {
-    return impl_ && impl_->hasPosition;
+    return impl_->hasPosition;
 }
 
 cv::Size PortalScreenCast::FrameLogicalSize() const
 {
-    return impl_ ? impl_->logicalSize : cv::Size();
+    return impl_->logicalSize;
 }
 
 namespace
@@ -526,222 +546,9 @@ DBusMessage* NewScreenCastCall(const char* method)
 {
     return dbus_message_new_method_call(kPortalService, kPortalPath, kScreenCastInterface, method);
 }
-}
 
-bool PortalScreenCast::Start(std::string& restoreToken)
+const spa_pod* RawVideoFormat(spa_pod_builder* builder)
 {
-    if (impl_->running.load())
-        return true;
-
-    if (impl_->cancelled.load())
-        return false;
-
-    DBusError error;
-    dbus_error_init(&error);
-
-    impl_->connection = dbus_bus_get(DBUS_BUS_SESSION, &error);
-
-    if (!impl_->connection)
-    {
-        LOG_ERROR(std::string("Portal screencast: no session bus: ") + (error.message ? error.message : "unknown"));
-        dbus_error_free(&error);
-        return false;
-    }
-
-    dbus_connection_set_exit_on_disconnect(impl_->connection, FALSE);
-
-    const std::string sender = SenderPart(impl_->connection);
-
-    {
-        const std::string handleToken = RandomToken();
-        const std::string sessionToken = RandomToken();
-        const std::string requestPath = "/org/freedesktop/portal/desktop/request/" + sender + "/" + handleToken;
-
-        DBusMessage* message = NewScreenCastCall("CreateSession");
-        DBusMessageIter args;
-        DBusMessageIter options;
-
-        dbus_message_iter_init_append(message, &args);
-        dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
-        AppendVariantString(&options, "handle_token", handleToken.c_str());
-        AppendVariantString(&options, "session_handle_token", sessionToken.c_str());
-        dbus_message_iter_close_container(&args, &options);
-
-        PortalResponse response;
-
-        if (!CallAndWait(impl_->connection, message, requestPath, response, 30000, impl_->cancelled))
-        {
-            LOG_ERROR("Portal screencast: CreateSession failed");
-            return false;
-        }
-
-        impl_->sessionHandle = response.sessionHandle;
-    }
-
-    if (impl_->sessionHandle.empty())
-    {
-        LOG_ERROR("Portal screencast: portal returned no session handle");
-        return false;
-    }
-
-    {
-        const std::string handleToken = RandomToken();
-        const std::string requestPath = "/org/freedesktop/portal/desktop/request/" + sender + "/" + handleToken;
-
-        DBusMessage* message = NewScreenCastCall("SelectSources");
-        DBusMessageIter args;
-        DBusMessageIter options;
-
-        const char* session = impl_->sessionHandle.c_str();
-        dbus_message_iter_init_append(message, &args);
-        dbus_message_iter_append_basic(&args, DBUS_TYPE_OBJECT_PATH, &session);
-        dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
-        AppendVariantString(&options, "handle_token", handleToken.c_str());
-        AppendVariantUint(&options, "types", 1);
-        AppendVariantBool(&options, "multiple", FALSE);
-        AppendVariantUint(&options, "cursor_mode", 1);
-        AppendVariantUint(&options, "persist_mode", 2);
-
-        if (!restoreToken.empty())
-            AppendVariantString(&options, "restore_token", restoreToken.c_str());
-
-        dbus_message_iter_close_container(&args, &options);
-
-        PortalResponse response;
-
-        if (!CallAndWait(impl_->connection, message, requestPath, response, 120000, impl_->cancelled))
-        {
-            LOG_ERROR("Portal screencast: SelectSources failed");
-            return false;
-        }
-    }
-
-    dbus_uint32_t nodeId = 0;
-
-    {
-        const std::string handleToken = RandomToken();
-        const std::string requestPath = "/org/freedesktop/portal/desktop/request/" + sender + "/" + handleToken;
-
-        DBusMessage* message = NewScreenCastCall("Start");
-        DBusMessageIter args;
-        DBusMessageIter options;
-
-        const char* session = impl_->sessionHandle.c_str();
-        const char* parent = "";
-
-        dbus_message_iter_init_append(message, &args);
-        dbus_message_iter_append_basic(&args, DBUS_TYPE_OBJECT_PATH, &session);
-        dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &parent);
-        dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
-        AppendVariantString(&options, "handle_token", handleToken.c_str());
-        dbus_message_iter_close_container(&args, &options);
-
-        PortalResponse response;
-
-        if (!CallAndWait(impl_->connection, message, requestPath, response, 300000, impl_->cancelled))
-        {
-            LOG_ERROR("Portal screencast: Start failed or was denied");
-            return false;
-        }
-
-        if (!response.hasNode)
-        {
-            LOG_ERROR("Portal screencast: portal returned no stream");
-            return false;
-        }
-
-        nodeId = response.nodeId;
-
-        if (response.hasPosition)
-        {
-            impl_->position = response.position;
-            impl_->hasPosition = true;
-        }
-
-        impl_->logicalSize = response.size;
-
-        if (!response.restoreToken.empty())
-            restoreToken = response.restoreToken;
-    }
-
-    {
-        DBusMessage* message = NewScreenCastCall("OpenPipeWireRemote");
-        DBusMessageIter args;
-        DBusMessageIter options;
-
-        const char* session = impl_->sessionHandle.c_str();
-        dbus_message_iter_init_append(message, &args);
-        dbus_message_iter_append_basic(&args, DBUS_TYPE_OBJECT_PATH, &session);
-        dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
-        dbus_message_iter_close_container(&args, &options);
-
-        DBusMessage* reply = dbus_connection_send_with_reply_and_block(impl_->connection, message, 30000, &error);
-        dbus_message_unref(message);
-
-        if (!reply)
-        {
-            LOG_ERROR(std::string("Portal screencast: OpenPipeWireRemote failed: ") + (error.message ? error.message : "unknown"));
-            dbus_error_free(&error);
-            return false;
-        }
-
-        if (!dbus_message_get_args(reply, &error, DBUS_TYPE_UNIX_FD, &impl_->pipewireFd, DBUS_TYPE_INVALID))
-        {
-            LOG_ERROR("Portal screencast: portal returned no pipewire fd");
-            dbus_message_unref(reply);
-            return false;
-        }
-
-        dbus_message_unref(reply);
-    }
-
-    pw_init(nullptr, nullptr);
-
-    impl_->loop = pw_thread_loop_new("runehelper-capture", nullptr);
-
-    if (!impl_->loop)
-    {
-        LOG_ERROR("Portal screencast: pw_thread_loop_new failed");
-        return false;
-    }
-
-    pw_thread_loop_lock(impl_->loop);
-
-    impl_->context = pw_context_new(pw_thread_loop_get_loop(impl_->loop), nullptr, 0);
-
-    if (impl_->context)
-    {
-        impl_->core = pw_context_connect_fd(impl_->context, impl_->pipewireFd, nullptr, 0);
-        impl_->pipewireFd = -1;
-    }
-
-    if (!impl_->core)
-    {
-        LOG_ERROR("Portal screencast: could not connect to the pipewire remote");
-        pw_thread_loop_unlock(impl_->loop);
-        Stop();
-        return false;
-    }
-
-    impl_->stream = pw_stream_new(
-        impl_->core,
-        "runehelper-capture",
-        pw_properties_new(PW_KEY_MEDIA_TYPE, "Video", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Screen", nullptr)
-    );
-
-    if (!impl_->stream)
-    {
-        LOG_ERROR("Portal screencast: pw_stream_new failed");
-        pw_thread_loop_unlock(impl_->loop);
-        Stop();
-        return false;
-    }
-
-    pw_stream_add_listener(impl_->stream, &impl_->streamListener, &Impl::kEvents, impl_.get());
-
-    std::uint8_t podBuffer[1024];
-    spa_pod_builder builder = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
-
     spa_rectangle sizeDefault{ 1920, 1080 };
     spa_rectangle sizeMin{ 1, 1 };
     spa_rectangle sizeMax{ 8192, 8192 };
@@ -749,9 +556,8 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     spa_fraction rateMin{ 0, 1 };
     spa_fraction rateMax{ 15, 1 };
 
-    const spa_pod* params[1];
-    params[0] = static_cast<const spa_pod*>(spa_pod_builder_add_object(
-        &builder,
+    return static_cast<const spa_pod*>(spa_pod_builder_add_object(
+        builder,
         SPA_TYPE_OBJECT_Format,
         SPA_PARAM_EnumFormat,
         SPA_FORMAT_mediaType,
@@ -772,9 +578,233 @@ bool PortalScreenCast::Start(std::string& restoreToken)
         SPA_FORMAT_VIDEO_framerate,
         SPA_POD_CHOICE_RANGE_Fraction(&rateDefault, &rateMin, &rateMax)
     ));
+}
+}
+
+bool PortalScreenCast::Impl::ConnectBus()
+{
+    DBusError error;
+    dbus_error_init(&error);
+
+    connection = dbus_bus_get(DBUS_BUS_SESSION, &error);
+
+    if (!connection)
+    {
+        LOG_ERROR(std::string("Portal screencast: no session bus: ") + (error.message ? error.message : "unknown"));
+        dbus_error_free(&error);
+        return false;
+    }
+
+    dbus_connection_set_exit_on_disconnect(connection, FALSE);
+    return true;
+}
+
+void PortalScreenCast::Impl::AppendSessionHandle(DBusMessageIter* args) const
+{
+    const char* session = sessionHandle.c_str();
+    dbus_message_iter_append_basic(args, DBUS_TYPE_OBJECT_PATH, &session);
+}
+
+bool PortalScreenCast::Impl::CreateSession(const std::string& sender)
+{
+    const std::string handleToken = RandomToken();
+    const std::string sessionToken = RandomToken();
+
+    DBusMessage* message = NewScreenCastCall("CreateSession");
+    DBusMessageIter args;
+    DBusMessageIter options;
+
+    dbus_message_iter_init_append(message, &args);
+    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
+    AppendVariantString(&options, "handle_token", handleToken.c_str());
+    AppendVariantString(&options, "session_handle_token", sessionToken.c_str());
+    dbus_message_iter_close_container(&args, &options);
+
+    PortalResponse response;
+
+    if (!CallAndWait(connection, message, RequestPath(sender, handleToken), response, kCreateSessionTimeoutMs, cancelled))
+    {
+        LOG_ERROR("Portal screencast: CreateSession failed");
+        return false;
+    }
+
+    sessionHandle = response.sessionHandle;
+
+    if (sessionHandle.empty())
+    {
+        LOG_ERROR("Portal screencast: portal returned no session handle");
+        return false;
+    }
+
+    return true;
+}
+
+bool PortalScreenCast::Impl::SelectSources(const std::string& sender, const std::string& restoreToken)
+{
+    const std::string handleToken = RandomToken();
+
+    DBusMessage* message = NewScreenCastCall("SelectSources");
+    DBusMessageIter args;
+    DBusMessageIter options;
+
+    dbus_message_iter_init_append(message, &args);
+    AppendSessionHandle(&args);
+    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
+    AppendVariantString(&options, "handle_token", handleToken.c_str());
+    AppendVariantUint(&options, "types", kSourceTypeMonitor);
+    AppendVariantBool(&options, "multiple", FALSE);
+    AppendVariantUint(&options, "cursor_mode", kCursorModeHidden);
+    AppendVariantUint(&options, "persist_mode", kPersistUntilRevoked);
+
+    if (!restoreToken.empty())
+        AppendVariantString(&options, "restore_token", restoreToken.c_str());
+
+    dbus_message_iter_close_container(&args, &options);
+
+    PortalResponse response;
+
+    if (!CallAndWait(connection, message, RequestPath(sender, handleToken), response, kSelectSourcesTimeoutMs, cancelled))
+    {
+        LOG_ERROR("Portal screencast: SelectSources failed");
+        return false;
+    }
+
+    return true;
+}
+
+std::optional<dbus_uint32_t> PortalScreenCast::Impl::StartStream(const std::string& sender, std::string& restoreToken)
+{
+    const std::string handleToken = RandomToken();
+
+    DBusMessage* message = NewScreenCastCall("Start");
+    DBusMessageIter args;
+    DBusMessageIter options;
+
+    const char* parent = "";
+
+    dbus_message_iter_init_append(message, &args);
+    AppendSessionHandle(&args);
+    dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &parent);
+    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
+    AppendVariantString(&options, "handle_token", handleToken.c_str());
+    dbus_message_iter_close_container(&args, &options);
+
+    PortalResponse response;
+
+    if (!CallAndWait(connection, message, RequestPath(sender, handleToken), response, kStartTimeoutMs, cancelled))
+    {
+        LOG_ERROR("Portal screencast: Start failed or was denied");
+        return std::nullopt;
+    }
+
+    if (!response.hasNode)
+    {
+        LOG_ERROR("Portal screencast: portal returned no stream");
+        return std::nullopt;
+    }
+
+    if (response.hasPosition)
+    {
+        position = response.position;
+        hasPosition = true;
+    }
+
+    logicalSize = response.size;
+
+    if (!response.restoreToken.empty())
+        restoreToken = response.restoreToken;
+
+    return response.nodeId;
+}
+
+bool PortalScreenCast::Impl::OpenPipeWireRemote()
+{
+    DBusError error;
+    dbus_error_init(&error);
+
+    DBusMessage* message = NewScreenCastCall("OpenPipeWireRemote");
+    DBusMessageIter args;
+    DBusMessageIter options;
+
+    dbus_message_iter_init_append(message, &args);
+    AppendSessionHandle(&args);
+    dbus_message_iter_open_container(&args, DBUS_TYPE_ARRAY, "{sv}", &options);
+    dbus_message_iter_close_container(&args, &options);
+
+    DBusMessage* reply = dbus_connection_send_with_reply_and_block(connection, message, kOpenRemoteTimeoutMs, &error);
+    dbus_message_unref(message);
+
+    if (!reply)
+    {
+        LOG_ERROR(std::string("Portal screencast: OpenPipeWireRemote failed: ") + (error.message ? error.message : "unknown"));
+        dbus_error_free(&error);
+        return false;
+    }
+
+    const bool received = dbus_message_get_args(reply, &error, DBUS_TYPE_UNIX_FD, &pipewireFd, DBUS_TYPE_INVALID);
+    dbus_message_unref(reply);
+
+    if (!received)
+    {
+        LOG_ERROR("Portal screencast: portal returned no pipewire fd");
+        dbus_error_free(&error);
+        return false;
+    }
+
+    return true;
+}
+
+bool PortalScreenCast::Impl::ConnectStream(dbus_uint32_t nodeId)
+{
+    pw_init(nullptr, nullptr);
+
+    loop = pw_thread_loop_new("runehelper-capture", nullptr);
+
+    if (!loop)
+    {
+        LOG_ERROR("Portal screencast: pw_thread_loop_new failed");
+        return false;
+    }
+
+    pw_thread_loop_lock(loop);
+
+    context = pw_context_new(pw_thread_loop_get_loop(loop), nullptr, 0);
+
+    if (context)
+    {
+        core = pw_context_connect_fd(context, pipewireFd, nullptr, 0);
+        pipewireFd = -1;
+    }
+
+    if (!core)
+    {
+        LOG_ERROR("Portal screencast: could not connect to the pipewire remote");
+        pw_thread_loop_unlock(loop);
+        return false;
+    }
+
+    stream = pw_stream_new(
+        core,
+        "runehelper-capture",
+        pw_properties_new(PW_KEY_MEDIA_TYPE, "Video", PW_KEY_MEDIA_CATEGORY, "Capture", PW_KEY_MEDIA_ROLE, "Screen", nullptr)
+    );
+
+    if (!stream)
+    {
+        LOG_ERROR("Portal screencast: pw_stream_new failed");
+        pw_thread_loop_unlock(loop);
+        return false;
+    }
+
+    pw_stream_add_listener(stream, &streamListener, &kEvents, this);
+
+    std::uint8_t podBuffer[1024];
+    spa_pod_builder builder = SPA_POD_BUILDER_INIT(podBuffer, sizeof(podBuffer));
+
+    const spa_pod* params[1] = { RawVideoFormat(&builder) };
 
     const int connectResult = pw_stream_connect(
-        impl_->stream,
+        stream,
         PW_DIRECTION_INPUT,
         nodeId,
         static_cast<pw_stream_flags>(PW_STREAM_FLAG_AUTOCONNECT | PW_STREAM_FLAG_MAP_BUFFERS),
@@ -782,18 +812,46 @@ bool PortalScreenCast::Start(std::string& restoreToken)
         1
     );
 
-    pw_thread_loop_unlock(impl_->loop);
+    pw_thread_loop_unlock(loop);
 
     if (connectResult < 0)
     {
         LOG_ERROR("Portal screencast: pw_stream_connect failed: " + std::string(spa_strerror(connectResult)));
-        Stop();
         return false;
     }
 
-    if (pw_thread_loop_start(impl_->loop) < 0)
+    if (pw_thread_loop_start(loop) < 0)
     {
         LOG_ERROR("Portal screencast: pw_thread_loop_start failed");
+        return false;
+    }
+
+    return true;
+}
+
+bool PortalScreenCast::Start(std::string& restoreToken)
+{
+    if (impl_->running.load())
+        return true;
+
+    if (impl_->cancelled.load())
+        return false;
+
+    if (!impl_->ConnectBus())
+        return false;
+
+    const std::string sender = SenderPart(impl_->connection);
+
+    if (!impl_->CreateSession(sender) || !impl_->SelectSources(sender, restoreToken))
+        return false;
+
+    const std::optional<dbus_uint32_t> nodeId = impl_->StartStream(sender, restoreToken);
+
+    if (!nodeId || !impl_->OpenPipeWireRemote())
+        return false;
+
+    if (!impl_->ConnectStream(*nodeId))
+    {
         Stop();
         return false;
     }
@@ -801,7 +859,7 @@ bool PortalScreenCast::Start(std::string& restoreToken)
     impl_->running = true;
 
     LOG_INFO(
-        "Portal screencast: capture stream started on node " + std::to_string(nodeId) +
+        "Portal screencast: capture stream started on node " + std::to_string(*nodeId) +
         (impl_->hasPosition ? " at " + std::to_string(impl_->position.x) + "," + std::to_string(impl_->position.y)
                             : " without a reported position") +
         (impl_->logicalSize.empty()
@@ -813,9 +871,6 @@ bool PortalScreenCast::Start(std::string& restoreToken)
 
 void PortalScreenCast::Stop()
 {
-    if (!impl_)
-        return;
-
     impl_->running = false;
 
     if (impl_->loop)

@@ -9,11 +9,37 @@
 
 namespace
 {
-constexpr int kInputHeight = 24;
-constexpr int kStride = 4;
-constexpr std::size_t kLayerCount = 8;
+constexpr char kMagic[8] = { 'R', 'H', 'O', 'C', 'R', '3', '\0', '\0' };
+constexpr int kMinInputWidth = 8;
+constexpr int kMaxStride = 64;
+constexpr std::uint32_t kMaxInputHeight = 256;
 constexpr std::uint32_t kMaxSymbols = 65536;
-constexpr char kMagic[8] = { 'R', 'H', 'O', 'C', 'R', '2', '\0', '\0' };
+constexpr std::uint32_t kMaxLayers = 64;
+constexpr std::uint32_t kMaxChannels = 4096;
+constexpr std::uint32_t kMaxKernel = 32;
+
+struct LayerHeader
+{
+    std::uint32_t outputs = 0;
+    std::uint32_t inputs = 0;
+    std::uint32_t kernelHeight = 0;
+    std::uint32_t kernelWidth = 0;
+    std::uint32_t padHeight = 0;
+    std::uint32_t padWidth = 0;
+    std::uint32_t poolHeight = 0;
+    std::uint32_t poolWidth = 0;
+    std::uint32_t relu = 0;
+
+    bool Sane() const
+    {
+        return outputs >= 1 && outputs <= kMaxChannels && inputs >= 1 && inputs <= kMaxChannels && kernelHeight >= 1 &&
+               kernelHeight <= kMaxKernel && kernelWidth >= 1 && kernelWidth <= kMaxKernel && padHeight < kernelHeight &&
+               padWidth < kernelWidth && poolHeight >= 1 && poolHeight <= kMaxKernel && poolWidth >= 1 && poolWidth <= kMaxKernel &&
+               relu <= 1;
+    }
+};
+
+static_assert(sizeof(LayerHeader) == 9 * sizeof(std::uint32_t));
 
 class Cursor
 {
@@ -64,10 +90,12 @@ bool LineReader::Load(std::string_view model)
 
     Cursor cursor(model);
     char magic[8] = {};
+    std::uint32_t inputHeight = 0;
     std::uint32_t charsetSize = 0;
 
-    if (!cursor.Read(magic, sizeof(magic)) || std::memcmp(magic, kMagic, sizeof(magic)) != 0 || !cursor.ReadU32(charsetSize) ||
-        charsetSize == 0 || charsetSize > kMaxSymbols)
+    if (!cursor.Read(magic, sizeof(magic)) || std::memcmp(magic, kMagic, sizeof(magic)) != 0 || !cursor.ReadU32(inputHeight) ||
+        inputHeight == 0 || inputHeight > kMaxInputHeight || !cursor.ReadU32(charsetSize) || charsetSize == 0 ||
+        charsetSize > kMaxSymbols)
     {
         return false;
     }
@@ -89,65 +117,99 @@ bool LineReader::Load(std::string_view model)
 
     std::uint32_t layerCount = 0;
 
-    if (!cursor.ReadU32(layerCount) || layerCount != kLayerCount)
+    if (!cursor.ReadU32(layerCount) || layerCount == 0 || layerCount > kMaxLayers)
         return false;
 
     std::vector<Layer> layers(layerCount);
+    int stride = 1;
 
     for (Layer& layer : layers)
     {
-        std::uint32_t dims[4] = {};
+        LayerHeader header;
 
-        if (!cursor.Read(dims, sizeof(dims)))
+        if (!cursor.Read(&header, sizeof(header)) || !header.Sane())
             return false;
 
-        layer.outputs = static_cast<int>(dims[0]);
-        layer.inputs = static_cast<int>(dims[1]);
-        layer.kernelHeight = static_cast<int>(dims[2]);
-        layer.kernelWidth = static_cast<int>(dims[3]);
-        layer.weights.resize(static_cast<std::size_t>(dims[0]) * dims[1] * dims[2] * dims[3]);
-        layer.bias.resize(dims[0]);
+        layer.outputs = static_cast<int>(header.outputs);
+        layer.inputs = static_cast<int>(header.inputs);
+        layer.kernelHeight = static_cast<int>(header.kernelHeight);
+        layer.kernelWidth = static_cast<int>(header.kernelWidth);
+        layer.padHeight = static_cast<int>(header.padHeight);
+        layer.padWidth = static_cast<int>(header.padWidth);
+        layer.poolHeight = static_cast<int>(header.poolHeight);
+        layer.poolWidth = static_cast<int>(header.poolWidth);
+        layer.relu = header.relu != 0;
+        layer.weights.resize(static_cast<std::size_t>(header.outputs) * header.inputs * header.kernelHeight * header.kernelWidth);
+        layer.bias.resize(header.outputs);
 
         if (!cursor.Read(layer.weights.data(), layer.weights.size() * sizeof(float)) ||
             !cursor.Read(layer.bias.data(), layer.bias.size() * sizeof(float)))
         {
             return false;
         }
-    }
 
-    for (std::size_t i = 1; i < layers.size(); ++i)
-    {
-        if (layers[i].inputs != layers[i - 1].outputs)
+        stride *= layer.poolWidth;
+
+        if (stride > kMaxStride)
             return false;
     }
 
-    if (layers.front().inputs != 1 || layers.back().outputs != static_cast<int>(charset.size()) + 1)
+    const int minInputWidth = (kMinInputWidth + stride - 1) / stride * stride;
+
+    if (!Fits(layers, static_cast<int>(inputHeight), minInputWidth, charset.size()))
         return false;
 
+    inputHeight_ = static_cast<int>(inputHeight);
+    stride_ = stride;
     charset_ = std::move(charset);
     layers_ = std::move(layers);
     return true;
 }
 
-cv::Mat LineReader::Prepare(const cv::Mat& gray)
+bool LineReader::Fits(const std::vector<Layer>& layers, int inputHeight, int minInputWidth, std::size_t symbols)
 {
-    if (gray.empty() || gray.type() != CV_8UC1)
+    if (layers.front().inputs != 1 || layers.back().outputs != static_cast<int>(symbols) + 1)
+        return false;
+
+    int height = inputHeight;
+    int width = minInputWidth;
+
+    for (std::size_t i = 0; i < layers.size(); ++i)
+    {
+        const Layer& layer = layers[i];
+
+        if (i > 0 && layer.inputs != layers[i - 1].outputs)
+            return false;
+
+        height = (height + 2 * layer.padHeight - layer.kernelHeight + 1) / layer.poolHeight;
+        width = (width + 2 * layer.padWidth - layer.kernelWidth + 1) / layer.poolWidth;
+
+        if (height < 1 || width < 1)
+            return false;
+    }
+
+    return height == 1;
+}
+
+cv::Mat LineReader::Prepare(const cv::Mat& gray) const
+{
+    if (!Loaded() || gray.empty() || gray.type() != CV_8UC1)
         return {};
 
-    const double scale = static_cast<double>(kInputHeight) / gray.rows;
-    const int width = std::max(8, static_cast<int>(std::nearbyint(gray.cols * scale)));
+    const double scale = static_cast<double>(inputHeight_) / gray.rows;
+    const int width = std::max(kMinInputWidth, static_cast<int>(std::nearbyint(gray.cols * scale)));
 
     cv::Mat resized;
-    cv::resize(gray, resized, cv::Size(width, kInputHeight), 0, 0, scale < 1.0 ? cv::INTER_AREA : cv::INTER_CUBIC);
+    cv::resize(gray, resized, cv::Size(width, inputHeight_), 0, 0, scale < 1.0 ? cv::INTER_AREA : cv::INTER_CUBIC);
 
     std::vector<float> values(resized.begin<unsigned char>(), resized.end<unsigned char>());
     const float low = Percentile(values, 0.02);
     const float high = Percentile(values, 0.98);
     const float span = std::max(8.0f, high - low);
 
-    cv::Mat input(kInputHeight, width, CV_32F);
+    cv::Mat input(inputHeight_, width, CV_32F);
 
-    for (int y = 0; y < kInputHeight; ++y)
+    for (int y = 0; y < inputHeight_; ++y)
     {
         const unsigned char* source = resized.ptr<unsigned char>(y);
         float* target = input.ptr<float>(y);
@@ -159,8 +221,11 @@ cv::Mat LineReader::Prepare(const cv::Mat& gray)
     return input;
 }
 
-LineReader::Tensor LineReader::Convolve(const Tensor& input, const Layer& layer, int padHeight, int padWidth, bool relu)
+LineReader::Tensor LineReader::Convolve(const Tensor& input, const Layer& layer)
 {
+    const int padHeight = layer.padHeight;
+    const int padWidth = layer.padWidth;
+
     Tensor output;
     output.channels = layer.outputs;
     output.height = input.height + 2 * padHeight - layer.kernelHeight + 1;
@@ -219,7 +284,7 @@ LineReader::Tensor LineReader::Convolve(const Tensor& input, const Layer& layer,
         for (std::size_t i = 0; i < size; ++i)
         {
             const float value = out[i] + bias;
-            out[i] = relu ? std::max(0.0f, value) : value;
+            out[i] = layer.relu ? std::max(0.0f, value) : value;
         }
     }
 
@@ -265,25 +330,15 @@ LineReader::Tensor LineReader::Pool(const Tensor& input, int poolHeight, int poo
     return output;
 }
 
-LineReader::Result LineReader::Read(const cv::Mat& gray) const
+LineReader::Tensor LineReader::InputTensor(const cv::Mat& prepared) const
 {
-    Result result;
-
-    if (!Loaded())
-        return result;
-
-    const cv::Mat prepared = Prepare(gray);
-
-    if (prepared.empty())
-        return result;
-
     Tensor input;
     input.channels = 1;
-    input.height = kInputHeight;
-    input.width = (prepared.cols + kStride - 1) / kStride * kStride;
+    input.height = inputHeight_;
+    input.width = (prepared.cols + stride_ - 1) / stride_ * stride_;
     input.data.assign(static_cast<std::size_t>(input.height) * input.width, 1.0f);
 
-    for (int y = 0; y < kInputHeight; ++y)
+    for (int y = 0; y < inputHeight_; ++y)
     {
         std::memcpy(
             input.data.data() + static_cast<std::size_t>(y) * input.width,
@@ -292,19 +347,32 @@ LineReader::Result LineReader::Read(const cv::Mat& gray) const
         );
     }
 
-    Tensor t = Convolve(input, layers_[0], 1, 1, true);
-    t = Pool(t, 2, 2);
-    t = Convolve(t, layers_[1], 1, 1, true);
-    t = Pool(t, 2, 2);
-    t = Convolve(t, layers_[2], 1, 1, true);
-    t = Pool(t, 2, 1);
-    t = Convolve(t, layers_[3], 1, 1, true);
-    t = Convolve(t, layers_[4], 0, 0, true);
-    t = Convolve(t, layers_[5], 0, 1, true);
-    t = Convolve(t, layers_[6], 0, 1, true);
-    const Tensor logits = Convolve(t, layers_[7], 0, 0, false);
+    return input;
+}
 
-    const int steps = std::min(logits.width, prepared.cols / kStride);
+LineReader::Result LineReader::Read(const cv::Mat& gray) const
+{
+    const cv::Mat prepared = Prepare(gray);
+
+    if (prepared.empty())
+        return {};
+
+    Tensor tensor = InputTensor(prepared);
+
+    for (const Layer& layer : layers_)
+    {
+        tensor = Convolve(tensor, layer);
+
+        if (layer.poolHeight > 1 || layer.poolWidth > 1)
+            tensor = Pool(tensor, layer.poolHeight, layer.poolWidth);
+    }
+
+    return Decode(tensor, std::min(tensor.width, prepared.cols / stride_));
+}
+
+LineReader::Result LineReader::Decode(const Tensor& logits, int steps) const
+{
+    Result result;
     int previous = 0;
     double confidence = 0.0;
     int emitted = 0;

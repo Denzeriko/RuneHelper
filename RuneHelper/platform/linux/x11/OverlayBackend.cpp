@@ -15,20 +15,16 @@
 #include <X11/extensions/shape.h>
 
 #include "core/Logger.h"
+#include "platform/linux/x11/Session.h"
 #include "ui/OverlayRenderer.h"
 #include "ui/OverlayState.h"
 
 namespace
 {
 constexpr int kCoverageThreshold = 96;
+constexpr unsigned long kWindowOpacity = 0xd0000000UL;
 
-bool IsWaylandSession()
-{
-    const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-    return sessionType && std::string(sessionType) == "wayland";
-}
-
-class LinuxOverlayBackend final : public OverlayBackend
+class X11OverlayBackend final : public OverlayBackend
 {
 public:
     bool Init(const char* title, int width, int height) override;
@@ -78,14 +74,14 @@ private:
     int windowH_ = 120;
 };
 
-bool LinuxOverlayBackend::Init(const char* title, int width, int height)
+bool X11OverlayBackend::Init(const char* title, int width, int height)
 {
     windowW_ = std::max(1, width);
     windowH_ = std::max(1, height);
 
     if (IsWaylandSession())
     {
-        LOG_ERROR("Linux overlay requires an X11 session; Wayland is not supported yet");
+        LogWaylandBuildNeeded("show the overlay");
         return false;
     }
 
@@ -129,7 +125,7 @@ bool LinuxOverlayBackend::Init(const char* title, int width, int height)
     }
 
     XStoreName(display_, window_, title ? title : "RuneHelper Overlay");
-    SetOpacity(0xd0000000UL);
+    SetOpacity(kWindowOpacity);
     SetAlwaysOnTop(true);
 
     XSelectInput(display_, window_, ExposureMask | StructureNotifyMask);
@@ -153,7 +149,7 @@ bool LinuxOverlayBackend::Init(const char* title, int width, int height)
     return true;
 }
 
-void LinuxOverlayBackend::Shutdown()
+void X11OverlayBackend::Shutdown()
 {
     running_ = false;
     visible_ = false;
@@ -180,12 +176,12 @@ void LinuxOverlayBackend::Shutdown()
     }
 }
 
-bool LinuxOverlayBackend::IsRunning() const
+bool X11OverlayBackend::IsRunning() const
 {
     return running_;
 }
 
-void LinuxOverlayBackend::PumpEvents()
+void X11OverlayBackend::PumpEvents()
 {
     if (!display_ || !window_ || !running_)
         return;
@@ -200,7 +196,7 @@ void LinuxOverlayBackend::PumpEvents()
     }
 }
 
-void LinuxOverlayBackend::Render(const OverlayState& state)
+void X11OverlayBackend::Render(const OverlayState& state)
 {
     if (!display_ || !window_ || !running_)
         return;
@@ -211,7 +207,7 @@ void LinuxOverlayBackend::Render(const OverlayState& state)
     Redraw();
 }
 
-void LinuxOverlayBackend::SetVisible(bool visible)
+void X11OverlayBackend::SetVisible(bool visible)
 {
     visible_ = visible;
 
@@ -226,7 +222,7 @@ void LinuxOverlayBackend::SetVisible(bool visible)
     XFlush(display_);
 }
 
-void LinuxOverlayBackend::SetClickThrough(bool enabled)
+void X11OverlayBackend::SetClickThrough(bool enabled)
 {
     if (!display_ || !window_)
         return;
@@ -252,7 +248,7 @@ void LinuxOverlayBackend::SetClickThrough(bool enabled)
     XFlush(display_);
 }
 
-void LinuxOverlayBackend::SetAlwaysOnTop(bool enabled)
+void X11OverlayBackend::SetAlwaysOnTop(bool enabled)
 {
     if (!display_ || !window_)
         return;
@@ -272,7 +268,7 @@ void LinuxOverlayBackend::SetAlwaysOnTop(bool enabled)
     XFlush(display_);
 }
 
-void LinuxOverlayBackend::BringToTop()
+void X11OverlayBackend::BringToTop()
 {
     if (!display_ || !window_)
         return;
@@ -297,7 +293,7 @@ void LinuxOverlayBackend::BringToTop()
     XFlush(display_);
 }
 
-void LinuxOverlayBackend::ReleaseSurfaces()
+void X11OverlayBackend::ReleaseSurfaces()
 {
     if (colorImage_)
     {
@@ -327,7 +323,7 @@ void LinuxOverlayBackend::ReleaseSurfaces()
     surfaceH_ = 0;
 }
 
-bool LinuxOverlayBackend::EnsureSurfaces(int width, int height)
+bool X11OverlayBackend::EnsureSurfaces(int width, int height)
 {
     if (colorImage_ && maskImage_ && maskPixmap_ && surfaceW_ == width && surfaceH_ == height)
         return true;
@@ -411,7 +407,7 @@ bool LinuxOverlayBackend::EnsureSurfaces(int width, int height)
     return true;
 }
 
-void LinuxOverlayBackend::FillColorImage(const cv::Mat& canvas)
+void X11OverlayBackend::FillColorImage(const cv::Mat& canvas)
 {
     const std::size_t rowBytes = static_cast<std::size_t>(canvas.cols) * 4;
 
@@ -448,7 +444,7 @@ void LinuxOverlayBackend::FillColorImage(const cv::Mat& canvas)
     }
 }
 
-void LinuxOverlayBackend::FillMaskImage(const cv::Mat& alpha)
+void X11OverlayBackend::FillMaskImage(const cv::Mat& alpha)
 {
     const bool lsbFirst = maskImage_->bitmap_bit_order == LSBFirst;
     const std::size_t stride = static_cast<std::size_t>(maskImage_->bytes_per_line);
@@ -471,7 +467,7 @@ void LinuxOverlayBackend::FillMaskImage(const cv::Mat& alpha)
     }
 }
 
-void LinuxOverlayBackend::ResizeAndMove()
+void X11OverlayBackend::ResizeAndMove()
 {
     if (!display_ || !window_)
         return;
@@ -494,7 +490,7 @@ void LinuxOverlayBackend::ResizeAndMove()
     XMoveResizeWindow(display_, window_, windowX_, windowY_, static_cast<unsigned int>(windowW_), static_cast<unsigned int>(windowH_));
 }
 
-void LinuxOverlayBackend::Redraw()
+void X11OverlayBackend::Redraw()
 {
     if (!display_ || !window_ || !gc_)
         return;
@@ -547,7 +543,7 @@ void LinuxOverlayBackend::Redraw()
     XFlush(display_);
 }
 
-void LinuxOverlayBackend::SetOpacity(unsigned long opacity)
+void X11OverlayBackend::SetOpacity(unsigned long opacity)
 {
     if (!display_ || !window_)
         return;
@@ -559,5 +555,5 @@ void LinuxOverlayBackend::SetOpacity(unsigned long opacity)
 
 std::unique_ptr<OverlayBackend> CreateOverlayBackend()
 {
-    return std::make_unique<LinuxOverlayBackend>();
+    return std::make_unique<X11OverlayBackend>();
 }

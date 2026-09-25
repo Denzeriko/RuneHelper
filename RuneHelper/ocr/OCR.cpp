@@ -1,7 +1,7 @@
 #include "OCR.h"
 
 #include "core/Logger.h"
-#include "core/ThreadGuard.h"
+#include "core/Text.h"
 #include "ocr/OcrDebug.h"
 #include "ocr/OcrRowCache.h"
 #include "ocr/RowFinder.h"
@@ -9,7 +9,6 @@
 
 #include <algorithm>
 #include <atomic>
-#include <cctype>
 #include <cmath>
 #include <exception>
 #include <optional>
@@ -29,7 +28,7 @@ struct RowJob
     int offsetX = 0;
     int offsetY = 0;
     bool reused = false;
-    std::vector<LootLine> lines;
+    std::optional<LootLine> line;
 };
 
 int ToSource(int value, double scale)
@@ -92,7 +91,7 @@ std::vector<RowJob> CutRows(
         {
             if (const OcrRowCache::Row* cached = rowCache->Find(job.textGray))
             {
-                job.lines = cached->lines;
+                job.line = cached->line;
                 job.anchor = cached->textGray;
                 job.reused = true;
             }
@@ -105,8 +104,57 @@ std::vector<RowJob> CutRows(
     return jobs;
 }
 
-template <typename ReadRow>
-void ReadPendingRows(std::vector<RowJob>& jobs, std::size_t maxWorkers, ReadRow readRow)
+std::optional<LootLine> ReadRow(const LineReader& reader, const cv::Mat& textGray, const std::filesystem::path& debugPath)
+{
+    if (textGray.empty())
+        return std::nullopt;
+
+    if (!debugPath.empty())
+    {
+        cv::Mat input;
+        reader.Prepare(textGray).convertTo(input, CV_8U, 255.0);
+        SaveOcrDebugImage(debugPath, input);
+    }
+
+    const LineReader::Result read = reader.Read(textGray);
+    const std::string line(Trim(read.text));
+
+    if (line.empty())
+    {
+        SaveOcrDebugText(debugPath, read.text, line, read.confidence, "rejected_empty");
+        return std::nullopt;
+    }
+
+    if (read.confidence < kMinReadConfidence)
+    {
+        SaveOcrDebugText(debugPath, read.text, line, read.confidence, "rejected_low_confidence");
+        return std::nullopt;
+    }
+
+    SaveOcrDebugText(debugPath, read.text, line, read.confidence, "accepted");
+
+    return LootLine{ line, 0, 0, textGray.cols, textGray.rows, read.confidence };
+}
+
+void ReadRowLoggingErrors(const LineReader& reader, RowJob& job, std::atomic<bool>& errorLogged)
+{
+    try
+    {
+        job.line = ReadRow(reader, job.textGray, job.debugPath);
+    }
+    catch (const std::exception& error)
+    {
+        if (!errorLogged.exchange(true))
+            LOG_ERROR(std::string("OCR row failed: ") + error.what());
+    }
+    catch (...)
+    {
+        if (!errorLogged.exchange(true))
+            LOG_ERROR("OCR row failed with an exception of unknown type");
+    }
+}
+
+void ReadRows(const LineReader& reader, std::vector<RowJob>& jobs, std::size_t maxWorkers)
 {
     std::vector<std::size_t> pending;
     pending.reserve(jobs.size());
@@ -117,36 +165,28 @@ void ReadPendingRows(std::vector<RowJob>& jobs, std::size_t maxWorkers, ReadRow 
             pending.push_back(i);
     }
 
+    std::atomic<std::size_t> next{ 0 };
+    std::atomic<bool> errorLogged{ false };
+
+    auto readPending = [&]
+    {
+        for (std::size_t i = next++; i < pending.size(); i = next++)
+            ReadRowLoggingErrors(reader, jobs[pending[i]], errorLogged);
+    };
+
     const std::size_t workers = (std::min)(maxWorkers, pending.size());
 
     if (workers <= 1)
     {
-        for (std::size_t i : pending)
-            readRow(jobs[i]);
-
+        readPending();
         return;
     }
 
-    std::atomic<std::size_t> next{ 0 };
     std::vector<std::jthread> pool;
     pool.reserve(workers);
 
     for (std::size_t worker = 0; worker < workers; ++worker)
-    {
-        pool.emplace_back(
-            [&next, &jobs, &pending, &readRow]
-            {
-                RunLoggingExceptions(
-                    "OCR worker",
-                    [&]
-                    {
-                        for (std::size_t i = next++; i < pending.size(); i = next++)
-                            readRow(jobs[pending[i]]);
-                    }
-                );
-            }
-        );
-    }
+        pool.emplace_back(readPending);
 }
 
 void StoreRows(OcrRowCache& rowCache, const std::vector<RowJob>& jobs)
@@ -155,7 +195,7 @@ void StoreRows(OcrRowCache& rowCache, const std::vector<RowJob>& jobs)
     generation.reserve(jobs.size());
 
     for (const RowJob& job : jobs)
-        generation.push_back({ job.reused ? job.anchor : job.textGray.clone(), job.lines });
+        generation.push_back({ job.reused ? job.anchor : job.textGray.clone(), job.line });
 
     rowCache.Store(std::move(generation));
 }
@@ -166,15 +206,16 @@ std::vector<LootLine> ToSourceLines(std::vector<RowJob>& jobs, const cv::Rect& p
 
     for (RowJob& job : jobs)
     {
-        for (LootLine& line : job.lines)
-        {
-            line.x1 = panel.x + ToSource(line.x1 + job.offsetX, scale);
-            line.x2 = panel.x + ToSource(line.x2 + job.offsetX, scale);
-            line.y1 = panel.y + ToSource(line.y1 + job.offsetY, scale);
-            line.y2 = panel.y + ToSource(line.y2 + job.offsetY, scale);
+        if (!job.line)
+            continue;
 
-            result.push_back(std::move(line));
-        }
+        LootLine& line = *job.line;
+        line.x1 = panel.x + ToSource(line.x1 + job.offsetX, scale);
+        line.x2 = panel.x + ToSource(line.x2 + job.offsetX, scale);
+        line.y1 = panel.y + ToSource(line.y1 + job.offsetY, scale);
+        line.y2 = panel.y + ToSource(line.y2 + job.offsetY, scale);
+
+        result.push_back(std::move(line));
     }
 
     return result;
@@ -198,44 +239,6 @@ bool OCR::Init(std::string_view model)
     LOG_INFO("OCR initialized, workers: " + std::to_string(workers_));
 
     return true;
-}
-
-std::vector<LootLine> OCR::RecognizeTextOnly(const cv::Mat& textGray, const std::filesystem::path& debugPath) const
-{
-    std::vector<LootLine> result;
-
-    if (textGray.empty())
-        return result;
-
-    if (!debugPath.empty())
-    {
-        cv::Mat input;
-        LineReader::Prepare(textGray).convertTo(input, CV_8U, 255.0);
-        SaveOcrDebugImage(debugPath, input);
-    }
-
-    const LineReader::Result read = reader_.Read(textGray);
-    std::string line = read.text;
-
-    Trim(line);
-
-    if (line.empty())
-    {
-        SaveOcrDebugText(debugPath, read.text, line, read.confidence, "rejected_empty");
-        return result;
-    }
-
-    if (read.confidence < kMinReadConfidence)
-    {
-        SaveOcrDebugText(debugPath, read.text, line, read.confidence, "rejected_low_confidence");
-        return result;
-    }
-
-    SaveOcrDebugText(debugPath, read.text, line, read.confidence, "accepted");
-
-    result.push_back({ line, 0, 0, textGray.cols, textGray.rows, read.confidence });
-
-    return result;
 }
 
 void OCR::ReportPreparation(bool scaled, bool normalized, int sourceWidth, int readWidth, double p50, double p95)
@@ -320,37 +323,13 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, OcrRowCache* row
 
     const std::vector<cv::Rect> rows = FindLootRows(gray);
     const std::vector<int> textStarts = FindTextStartX(gray, rows);
+    OcrRowCache* const reusableRows = debugOCR ? nullptr : rowCache;
 
-    if (debugOCR)
-        rowCache = nullptr;
+    std::vector<RowJob> jobs = CutRows(gray, rows, textStarts, reusableRows, debugOCR ? &debug : nullptr);
+    ReadRows(reader_, jobs, workers_);
 
-    std::vector<RowJob> jobs = CutRows(gray, rows, textStarts, rowCache, debugOCR ? &debug : nullptr);
-    std::atomic<bool> rowErrorLogged{ false };
-
-    ReadPendingRows(
-        jobs,
-        workers_,
-        [this, &rowErrorLogged](RowJob& job)
-        {
-            try
-            {
-                job.lines = RecognizeTextOnly(job.textGray, job.debugPath);
-            }
-            catch (const std::exception& error)
-            {
-                if (!rowErrorLogged.exchange(true))
-                    LOG_ERROR(std::string("OCR row failed: ") + error.what());
-            }
-            catch (...)
-            {
-                if (!rowErrorLogged.exchange(true))
-                    LOG_ERROR("OCR row failed with an exception of unknown type");
-            }
-        }
-    );
-
-    if (rowCache)
-        StoreRows(*rowCache, jobs);
+    if (reusableRows)
+        StoreRows(*reusableRows, jobs);
 
     std::vector<LootLine> result = ToSourceLines(jobs, panel, prepared.scale);
 
@@ -358,11 +337,4 @@ std::vector<LootLine> OCR::RecognizeLoot(const cv::Mat& source, OcrRowCache* row
         debug.Finish();
 
     return result;
-}
-
-void OCR::Trim(std::string& s)
-{
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char c) { return !std::isspace(c); }));
-
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char c) { return !std::isspace(c); }).base(), s.end());
 }

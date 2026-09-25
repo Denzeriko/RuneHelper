@@ -8,6 +8,7 @@
 
 namespace
 {
+constexpr double kTextColumnStart = 0.50;
 constexpr int kInkThreshold = 115;
 constexpr double kVerticalLineInkRatio = 0.95;
 constexpr double kFrameInkRatio = 0.50;
@@ -66,7 +67,7 @@ void EraseRightFrame(cv::Mat& dark)
 
 cv::Mat TextColumnInk(const cv::Mat& gray)
 {
-    const int textAreaX = static_cast<int>(gray.cols * 0.50);
+    const int textAreaX = static_cast<int>(gray.cols * kTextColumnStart);
     cv::Mat rightGray = gray(cv::Rect(textAreaX, 0, gray.cols - textAreaX, gray.rows));
 
     cv::Mat dark;

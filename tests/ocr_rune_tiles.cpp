@@ -16,7 +16,7 @@
 
 #include "TestScenes.h"
 #include "ocr/LootParser.h"
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "ocr/OCR.h"
 #include "ocr/OcrRowCache.h"
 #include "ocr/RuneTileLocator.h"
@@ -74,7 +74,7 @@ public:
             }
         }
 
-        names_ = CachedItemNames::Build(outputs);
+        names_ = NameMatcher::Build(outputs);
     }
 
     bool Loaded() const { return !runeCounts_.empty(); }
@@ -117,7 +117,7 @@ public:
 private:
     OCR& ocr_;
     std::map<std::pair<std::string, int>, int> runeCounts_;
-    CachedItemNames names_;
+    NameMatcher names_;
 };
 
 cv::Rect Expected(const cv::Rect& tile, const cv::Point& shift, double scale)

@@ -6,15 +6,24 @@
 #include <dxgi1_2.h>
 #include <wrl/client.h>
 
-class ScreenCaptureWGC
+class DesktopDuplication
 {
 public:
-    bool InitForRegion(const cv::Rect& region);
     cv::Mat CaptureRegion(const cv::Rect& region);
     void Shutdown();
 
 private:
+    struct FrameCopy
+    {
+        cv::Mat gray;
+        bool resetDevice = false;
+    };
+
+    bool InitForRegion(const cv::Rect& region);
+    bool CoversRegion(const cv::Rect& region) const;
     bool HasCachedFrame(const cv::Rect& region) const;
+    FrameCopy CopyFrame(const cv::Rect& region, const Microsoft::WRL::ComPtr<IDXGIResource>& desktopResource);
+    HRESULT EnsureStagingTexture(const cv::Size& size, DXGI_FORMAT format);
 
     bool initialized_ = false;
 

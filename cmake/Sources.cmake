@@ -2,10 +2,11 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/core/AtomicFile.cpp
     RuneHelper/core/ConfigManager.cpp
     RuneHelper/core/Logger.cpp
+    RuneHelper/core/Text.cpp
     RuneHelper/ocr/LineReader.cpp
     RuneHelper/ocr/LootParser.cpp
     RuneHelper/ocr/LootRows.cpp
-    RuneHelper/ocr/NameNormalizer.cpp
+    RuneHelper/ocr/NameMatcher.cpp
     RuneHelper/ocr/OCR.cpp
     RuneHelper/ocr/OcrDebug.cpp
     RuneHelper/ocr/OcrFrameDiffer.cpp
@@ -52,7 +53,7 @@ if(WIN32)
         RuneHelper/platform/windows/PlatformShell.cpp
         RuneHelper/platform/windows/UIBackend.cpp
         RuneHelper/platform/windows/ScreenCapture.cpp
-        RuneHelper/platform/windows/ScreenCaptureDXGI.cpp
+        RuneHelper/platform/windows/DesktopDuplication.cpp
         RuneHelper/platform/windows/RegionSelect.cpp
     )
 elseif(UNIX AND NOT APPLE)

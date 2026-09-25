@@ -1,12 +1,11 @@
 #include "core/Feature.h"
 
+#include "core/ExceptionLogging.h"
 #include "core/Logger.h"
-#include "core/ThreadGuard.h"
 
 void FeatureRegistry::Add(std::unique_ptr<Feature> feature)
 {
-    if (feature)
-        features_.push_back(std::move(feature));
+    features_.push_back(std::move(feature));
 }
 
 bool FeatureRegistry::InitAll(ConfigManager& configManager)

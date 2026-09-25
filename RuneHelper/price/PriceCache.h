@@ -47,10 +47,10 @@ private:
     double divineToEx_ = 0.0;
 
     std::uint64_t version_ = 0;
-    int64_t dump_updated_at_ = 0;
-    int64_t refresh_seconds_ = 60LL * 60;
-    int64_t last_failure_at_ = 0;
-    int failure_streak_ = 0;
+    int64_t dumpUpdatedAt_ = 0;
+    int64_t refreshSeconds_ = 60LL * 60;
+    int64_t lastFailureAt_ = 0;
+    int failureStreak_ = 0;
     std::string league_;
     std::unique_ptr<PriceProvider> provider_;
 

@@ -4,82 +4,10 @@ import cv2
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-from common import CHARSET, FONT, FONT_INDEX, LANGUAGE, LATIN_FONT, REAL, WORK, displayed, load_vocabulary, unquantified
+from common import CHARSET, FONT, LANGUAGE, LATIN_FONT, REAL, WORK, displayed, load_vocabulary, unquantified
 
 SUPERSAMPLE = 4
-
-STYLES = {
-    'en': {
-        'level': [' (Level {n})'],
-        'prefixed': ['Skill: {tail}', 'Support: {tail}', 'Unique {tail}', 'Rare Unique Item', 'Skill Level {n}: {tail}'],
-        'letters': 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        'underlined': ('Unique',),
-        'tracking': (0.0, 0.0),
-    },
-    'ru': {
-        'level': [' (Уровень {n})', ' (уровень {n})'],
-        'prefixed': ['Умение: {tail}', 'Поддержка: {tail}', 'Уникальный {tail}', 'Уникальная {tail}', 'Уникальное {tail}',
-                     'Редкий уникальный предмет', 'Уровень умения {n}: {tail}'],
-        'letters': 'абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ',
-        'underlined': ('Уникальный', 'Уникальная', 'Уникальное', 'уникальный'),
-        'tracking': (0.03, 0.13),
-    },
-    'de': {
-        'level': [' (Stufe {n})'],
-        'prefixed': ['Fertigkeit: {tail}', 'Unterstützung: {tail}', 'Einzigartiger {tail}', 'Einzigartige {tail}', 'Einzigartiges {tail}',
-                     'Seltener einzigartiger Gegenstand', 'Fertigkeitsstufe {n}: {tail}'],
-        'letters': 'abcdefghijklmnopqrstuvwxyzäöüßABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜ',
-        'underlined': ('Einzigartiger', 'Einzigartige', 'Einzigartiges', 'einzigartiger'),
-        'tracking': (0.0, 0.0),
-    },
-    'fr': {
-        'level': [' (Niveau {n})'],
-        'prefixed': ['Aptitude : {tail}', 'Gemme de soutien : {tail}', '{tail} Unique', 'Objet Unique rare'],
-        'letters': 'abcdefghijklmnopqrstuvwxyzéèêàâçîïôûùëABCDEFGHIJKLMNOPQRSTUVWXYZÉ',
-        'underlined': ('Unique',),
-        'tracking': (0.0, 0.0),
-    },
-    'es': {
-        'level': [' (nivel {n})'],
-        'prefixed': ['Habilidad: {tail}', 'Asistencia: {tail}', '{tail} único', '{tail} única', 'Objeto único raro'],
-        'letters': 'abcdefghijklmnopqrstuvwxyzáéíóúñABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        'underlined': ('único', 'única'),
-        'tracking': (0.0, 0.0),
-    },
-    'pt': {
-        'level': [' (Nível {n})'],
-        'prefixed': ['Habilidade: {tail}', 'Reforço: {tail}', '{tail} Único', '{tail} Única', 'Item Único Raro'],
-        'letters': 'abcdefghijklmnopqrstuvwxyzáàâãçéêíóôõúABCDEFGHIJKLMNOPQRSTUVWXYZ',
-        'underlined': ('Único', 'Única'),
-        'tracking': (0.0, 0.0),
-    },
-    'ko': {
-        'cap': 0.88,
-        'level': [' ({n}레벨)'],
-        'prefixed': ['스킬 레벨 {n}: {tail}', '고유 {tail}', '희귀한 고유 아이템'],
-        'letters': None,
-        'underlined': ('고유',),
-        'tracking': (0.0, 0.05),
-    },
-    'ja': {
-        'cap': 0.88,
-        'level': [' (レベル{n})', '(レベル{n})'],
-        'prefixed': ['スキルレベル {n}: {tail}', 'ユニーク{tail}', '貴重なユニークアイテム'],
-        'letters': None,
-        'underlined': ('ユニーク',),
-        'tracking': (0.0, 0.05),
-    },
-    'th': {
-        'cap': 0.8,
-        'level': [' (เลเวล {n})'],
-        'prefixed': ['สกิล: {tail}', 'เสริม: {tail}', '{tail}ยูนิค', 'ไอเทมยูนิคที่พบได้ยาก'],
-        'letters': None,
-        'underlined': ('ยูนิค',),
-        'tracking': (0.0, 0.0),
-    },
-}
-STYLE = STYLES[LANGUAGE]
-LETTERS = STYLE['letters'] or ''.join(c for c in CHARSET if c.isalpha())
+LETTERS = LANGUAGE.letters or ''.join(c for c in CHARSET if c.isalpha())
 
 
 def parchment_bank():
@@ -110,7 +38,7 @@ class Synth:
         if key not in self.fonts:
             path = LATIN_FONT if latin else FONT
             engine = ImageFont.Layout.RAQM if LATIN_FONT else ImageFont.Layout.BASIC
-            self.fonts[key] = ImageFont.truetype(str(path), size, index=0 if latin else FONT_INDEX, layout_engine=engine)
+            self.fonts[key] = ImageFont.truetype(str(path), size, index=0 if latin else LANGUAGE.font_index, layout_engine=engine)
         return self.fonts[key]
 
     def runs(self, text, size):
@@ -128,25 +56,105 @@ class Synth:
     def measure(self, draw, text, size):
         return sum(draw.textlength(t, font=f) for t, f in self.runs(text, size))
 
+    def word_salad(self):
+        count = self.rng.choice([1, 2, 2, 3, 3, 4])
+        name = ' '.join(self.rng.choice(self.words) for _ in range(count))
+        if self.rng.random() < 0.15:
+            name += self.rng.choice(LANGUAGE.level).format(n=self.rng.randint(1, 21))
+        return name
+
+    def prefixed_name(self):
+        tail = ' '.join(self.rng.choice(self.words) for _ in range(self.rng.choice([1, 2, 3])))
+        return self.rng.choice(LANGUAGE.prefixed).format(tail=tail, n=self.rng.randint(1, 21))
+
+    def random_letters(self):
+        return ' '.join(''.join(self.rng.choice(LETTERS) for _ in range(self.rng.randint(2, 9))) for _ in range(self.rng.randint(1, 3)))
+
+    def quantity(self):
+        roll = self.rng.random()
+        if roll < 0.35:
+            return 1
+        if roll < 0.85:
+            return self.rng.randint(2, 9)
+        return self.rng.randint(10, 20)
+
     def text(self):
         r = self.rng.random()
         if r < 0.55:
             name = self.rng.choice(self.names)
         elif r < 0.75:
-            count = self.rng.choice([1, 2, 2, 3, 3, 4])
-            name = ' '.join(self.rng.choice(self.words) for _ in range(count))
-            if self.rng.random() < 0.15:
-                name += self.rng.choice(STYLE['level']).format(n=self.rng.randint(1, 21))
+            name = self.word_salad()
         elif r < 0.90:
-            tail = ' '.join(self.rng.choice(self.words) for _ in range(self.rng.choice([1, 2, 3])))
-            name = self.rng.choice(STYLE['prefixed']).format(tail=tail, n=self.rng.randint(1, 21))
+            name = self.prefixed_name()
         else:
-            name = ' '.join(''.join(self.rng.choice(LETTERS) for _ in range(self.rng.randint(2, 9))) for _ in range(self.rng.randint(1, 3)))
+            name = self.random_letters()
         if unquantified(name) or self.rng.random() < 0.08:
             return name
+        return displayed(self.quantity(), name)
+
+    def line_height(self):
         roll = self.rng.random()
-        quantity = 1 if roll < 0.35 else self.rng.randint(2, 9) if roll < 0.85 else self.rng.randint(10, 20)
-        return displayed(quantity, name)
+        if roll < 0.4:
+            return self.rng.randint(10, 18)
+        if roll < 0.7:
+            return self.rng.randint(19, 28)
+        return self.rng.randint(29, 46)
+
+    def stroke_width(self):
+        weight = self.rng.random()
+        if weight < 0.1:
+            return 2
+        if weight < 0.7:
+            return 1
+        return 0
+
+    def draw_text(self, draw, label, origin, size, advances, stroke):
+        x, y = origin
+        if advances:
+            font = self.font(size)
+            for ch, advance in zip(label, advances):
+                draw.text((x, y), ch, font=font, fill=255, stroke_width=stroke, stroke_fill=255)
+                x += advance
+            return
+        for text, run_font in self.runs(label, size):
+            draw.text((x, y), text, font=run_font, fill=255, stroke_width=stroke, stroke_fill=255)
+            x += draw.textlength(text, font=run_font)
+
+    def underline(self, draw, label, origin, size, ascent, advances, tracking):
+        word = next((w for w in LANGUAGE.underlined if w in label), None)
+        if not word or self.rng.random() >= 0.8:
+            return
+        origin_x, origin_y = origin
+        start = label.index(word)
+        if advances:
+            x0 = origin_x + sum(advances[:start])
+            x1 = x0 + sum(advances[start:start + len(word)]) - tracking
+        else:
+            x0 = origin_x + self.measure(draw, label[:start], size)
+            x1 = origin_x + self.measure(draw, label[:start + len(word)], size)
+        y = origin_y + ascent + 0.12 * size
+        draw.line([(x0, y), (x1, y)], fill=255, width=max(1, size // 14))
+
+    def render(self, label, height):
+        rng = self.rng
+        em = (rng.uniform(0.8, 1.2) if height <= 18 else rng.uniform(0.6, 1.02)) * height
+        size = max(6, int(round(em * SUPERSAMPLE)))
+        font = self.font(size)
+        probe = ImageDraw.Draw(Image.new('L', (1, 1)))
+        tracking = rng.uniform(*LANGUAGE.tracking) * size
+        advances = [probe.textlength(ch, font=font) + tracking for ch in label] if tracking > 0 else []
+        text_width = (sum(advances) if advances else self.measure(probe, label, size)) / SUPERSAMPLE
+        ascent, _ = font.getmetrics()
+        left_margin = rng.uniform(0.2, 2.5) * height
+        right_margin = rng.uniform(0.25, 1.2) * height
+        width = int(left_margin + text_width + right_margin) + 1
+        canvas = Image.new('L', (width * SUPERSAMPLE, height * SUPERSAMPLE), 0)
+        draw = ImageDraw.Draw(canvas)
+        cap_top = rng.uniform(0.0, 0.35) * height
+        origin = (left_margin * SUPERSAMPLE, cap_top * SUPERSAMPLE - (ascent - LANGUAGE.cap * size))
+        self.draw_text(draw, label, origin, size, advances, self.stroke_width())
+        self.underline(draw, label, origin, size, ascent, advances, tracking)
+        return cv2.resize(np.asarray(canvas, dtype=np.float32) / 255.0, (width, height), interpolation=cv2.INTER_AREA)
 
     def background(self, width, height):
         if self.bank and self.rng.random() < 0.7:
@@ -168,74 +176,50 @@ class Synth:
             canvas += np.random.default_rng(self.rng.randint(0, 1 << 30)).normal(0, 4, (height, width)).astype(np.float32)
         return canvas
 
-    def sample(self):
-        rng = self.rng
-        label = self.text()
-        roll = rng.random()
-        height = rng.randint(10, 18) if roll < 0.4 else rng.randint(19, 28) if roll < 0.7 else rng.randint(29, 46)
-        em = (rng.uniform(0.8, 1.2) if height <= 18 else rng.uniform(0.6, 1.02)) * height
-        size = max(6, int(round(em * SUPERSAMPLE)))
-        font = self.font(size)
-        probe = ImageDraw.Draw(Image.new('L', (1, 1)))
-        tracking = rng.uniform(*STYLE['tracking']) * size
-        advances = [probe.textlength(ch, font=font) + tracking for ch in label] if tracking > 0 else []
-        text_width = (sum(advances) if advances else self.measure(probe, label, size)) / SUPERSAMPLE
-        ascent, descent = font.getmetrics()
-        left_margin = rng.uniform(0.2, 2.5) * height
-        right_margin = rng.uniform(0.25, 1.2) * height
-        width = int(left_margin + text_width + right_margin) + 1
-        canvas = Image.new('L', (width * SUPERSAMPLE, height * SUPERSAMPLE), 0)
-        draw = ImageDraw.Draw(canvas)
-        cap_top = rng.uniform(0.0, 0.35) * height
-        origin_y = cap_top * SUPERSAMPLE - (ascent - STYLE.get('cap', 0.72) * size)
-        origin_x = left_margin * SUPERSAMPLE
-        weight = rng.random()
-        stroke = 2 if weight < 0.1 else 1 if weight < 0.7 else 0
-        if advances:
-            x = origin_x
-            for ch, advance in zip(label, advances):
-                draw.text((x, origin_y), ch, font=font, fill=255, stroke_width=stroke, stroke_fill=255)
-                x += advance
+    def add_frame_strip(self, image, width, height):
+        if self.rng.random() < 0.6:
+            strip = max(1, int(self.rng.uniform(0.1, 0.5) * height))
+            image[:, width - strip:] = self.rng.uniform(25, 80)
+        return image
+
+    def add_edge_band(self, image, height):
+        if self.rng.random() >= 0.25:
+            return image
+        band = max(1, int(self.rng.uniform(0.05, 0.2) * height))
+        level = self.rng.uniform(30, 90)
+        if self.rng.random() < 0.5:
+            image[:band, :] = image[:band, :] * 0.3 + level * 0.7
         else:
-            x = origin_x
-            for text, run_font in self.runs(label, size):
-                draw.text((x, origin_y), text, font=run_font, fill=255, stroke_width=stroke, stroke_fill=255)
-                x += draw.textlength(text, font=run_font)
-        word = next((w for w in STYLE['underlined'] if w in label), None)
-        if word and rng.random() < 0.8:
-            start = label.index(word)
-            if advances:
-                x0 = origin_x + sum(advances[:start])
-                x1 = x0 + sum(advances[start:start + len(word)]) - tracking
-            else:
-                x0 = origin_x + self.measure(draw, label[:start], size)
-                x1 = origin_x + self.measure(draw, label[:start + len(word)], size)
-            y = origin_y + ascent + 0.12 * size
-            draw.line([(x0, y), (x1, y)], fill=255, width=max(1, size // 14))
-        mask = cv2.resize(np.asarray(canvas, dtype=np.float32) / 255.0, (width, height), interpolation=cv2.INTER_AREA)
-        background = self.background(width, height)
-        ink = rng.uniform(10, 60)
-        image = background * (1.0 - mask) + ink * mask
-        if rng.random() < 0.6:
-            strip = max(1, int(rng.uniform(0.1, 0.5) * height))
-            image[:, width - strip:] = rng.uniform(25, 80)
-        if rng.random() < 0.25:
-            band = max(1, int(rng.uniform(0.05, 0.2) * height))
-            level = rng.uniform(30, 90)
-            if rng.random() < 0.5:
-                image[:band, :] = image[:band, :] * 0.3 + level * 0.7
-            else:
-                image[height - band:, :] = image[height - band:, :] * 0.3 + level * 0.7
-        if rng.random() < 0.5:
-            sigma = rng.uniform(0.2, 0.7)
-            image = cv2.GaussianBlur(image, (0, 0), sigma)
-        gain = rng.uniform(0.6, 1.2)
-        offset = rng.uniform(-30, 30)
-        gamma = rng.uniform(0.8, 1.25)
+            image[height - band:, :] = image[height - band:, :] * 0.3 + level * 0.7
+        return image
+
+    def blur(self, image):
+        if self.rng.random() < 0.5:
+            image = cv2.GaussianBlur(image, (0, 0), self.rng.uniform(0.2, 0.7))
+        return image
+
+    def adjust_exposure(self, image):
+        gain = self.rng.uniform(0.6, 1.2)
+        offset = self.rng.uniform(-30, 30)
+        gamma = self.rng.uniform(0.8, 1.25)
         image = np.clip(image, 0, 255) / 255.0
         image = 255.0 * np.power(image, gamma) * gain + offset
-        image += np.random.default_rng(rng.randint(0, 1 << 30)).normal(0, rng.uniform(0, 6), image.shape)
-        return np.clip(image, 0, 255).astype(np.uint8), label
+        noise = np.random.default_rng(self.rng.randint(0, 1 << 30))
+        image += noise.normal(0, self.rng.uniform(0, 6), image.shape)
+        return np.clip(image, 0, 255).astype(np.uint8)
+
+    def sample(self):
+        label = self.text()
+        height = self.line_height()
+        mask = self.render(label, height)
+        width = mask.shape[1]
+        background = self.background(width, height)
+        ink = self.rng.uniform(10, 60)
+        image = background * (1.0 - mask) + ink * mask
+        image = self.add_frame_strip(image, width, height)
+        image = self.add_edge_band(image, height)
+        image = self.blur(image)
+        return self.adjust_exposure(image), label
 
 
 if __name__ == '__main__':

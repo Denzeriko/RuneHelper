@@ -16,7 +16,7 @@
 #include "core/Logger.h"
 #include "ocr/LootParser.h"
 #include "ocr/LootRows.h"
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "ocr/OcrFrameDiffer.h"
 #include "platform/PlatformPaths.h"
 #include "price/PoeNinjaPriceProvider.h"
@@ -197,7 +197,7 @@ void TestFormatting()
 
 void TestNameMatching()
 {
-    Section("CachedItemNames::FindBest");
+    Section("NameMatcher::FindBest");
 
     const std::vector<std::string> names = {
         "Runic Alloy",
@@ -206,7 +206,7 @@ void TestNameMatching()
         "The Runefather's Alloy",
     };
 
-    const CachedItemNames cache = CachedItemNames::Build(names);
+    const NameMatcher cache = NameMatcher::Build(names);
 
     Check(!cache.Empty(), "the cache is built");
     CheckEqual(static_cast<int>(cache.Size()), 4, "every name is kept");
@@ -251,7 +251,7 @@ void TestLocalizedNames()
     CheckEqual(NormalizeName("카오스 오브"), "카오스 오브", "Hangul is kept");
     CheckEqual(NormalizeName("混沌石（Ｌｖ２０）"), "混沌石lv20", "full width letters fold and brackets drop");
 
-    const CachedItemNames translations = CachedItemNames::Build(std::vector<NameAlias>{
+    const NameMatcher translations = NameMatcher::Build(std::vector<NameAlias>{
         { "Chaos Orb", "Сфера хаоса" },
         { "Chaos Orb", "카오스 오브" },
         { "Mirror of Kalandra", "Зеркало Каландры" },
@@ -344,7 +344,7 @@ void TestLocalizedNames()
     const Recipe* legacy = database.FindRecipe("Наследие Альдура", 1);
     Check(legacy && legacy->output == "Aldur's Legacy", "a recipe is found by its Russian name");
 
-    const CachedItemNames koreanNames = database.Translations("ko");
+    const NameMatcher koreanNames = database.Translations("ko");
     Check(!koreanNames.Empty(), "Korean names load from the embedded database");
 
     const auto orb = koreanNames.FindBest("카오스 오브");

@@ -14,7 +14,7 @@
 #include <nlohmann/json.hpp>
 
 #include "ocr/LootParser.h"
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "ocr/OCR.h"
 
 struct Row
@@ -90,7 +90,7 @@ inline std::vector<std::string> LoadVocabulary(const std::filesystem::path& comb
     return names;
 }
 
-inline std::vector<Row> ToRows(const std::vector<LootLine>& loot, const CachedItemNames& vocabulary)
+inline std::vector<Row> ToRows(const std::vector<LootLine>& loot, const NameMatcher& vocabulary)
 {
     std::vector<Row> rows;
 

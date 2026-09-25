@@ -9,7 +9,7 @@
 cv::Mat ScreenCaptureService::CaptureRegion(const cv::Rect& region)
 {
 #ifdef _WIN32
-    cv::Mat img = wgcCapture_.CaptureRegion(region);
+    cv::Mat img = desktopDuplication_.CaptureRegion(region);
 
     if (!img.empty())
         return img;
@@ -28,6 +28,6 @@ void ScreenCaptureService::Cancel()
 void ScreenCaptureService::Shutdown()
 {
 #ifdef _WIN32
-    wgcCapture_.Shutdown();
+    desktopDuplication_.Shutdown();
 #endif
 }

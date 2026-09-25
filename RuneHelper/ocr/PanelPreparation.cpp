@@ -19,6 +19,17 @@ constexpr double kReferenceTextP95 = 190.0;
 constexpr double kTextLevelTolerance = 12.0;
 constexpr double kHeldLevelTolerance = 6.0;
 
+constexpr int kTextSampleLeftPercent = 50;
+constexpr int kTextSampleRightPercent = 85;
+constexpr int kTextSampleTopPercent = 10;
+constexpr int kTextSampleBottomPercent = 90;
+
+constexpr int kRightEdgeSearchFromPercent = 55;
+constexpr int kLeftEdgeSearchToPercent = 25;
+constexpr int kEdgeContrastDivisor = 5;
+constexpr int kMinEdgeDensityWindow = 8;
+constexpr int kEdgeDensityWindowDivisor = 16;
+
 constexpr int kMinPanelSide = 64;
 constexpr int kMinPanelEdgeContrast = 12;
 constexpr int kPanelEdgeSpan = 3;
@@ -42,14 +53,11 @@ struct RowSpan
     int bottom = -1;
 };
 
-TextLevels MeasureTextLevels(const cv::Mat& gray)
-{
-    const int left = gray.cols / 2;
-    const int right = gray.cols * 85 / 100;
-    const int top = gray.rows / 10;
-    const int bottom = gray.rows * 9 / 10;
+using Histogram = std::array<int, 256>;
 
-    std::array<int, 256> histogram{};
+Histogram LevelHistogram(const cv::Mat& gray, int left, int top, int right, int bottom)
+{
+    Histogram histogram{};
 
     for (int y = top; y < bottom; ++y)
     {
@@ -59,24 +67,40 @@ TextLevels MeasureTextLevels(const cv::Mat& gray)
             ++histogram[row[x]];
     }
 
+    return histogram;
+}
+
+int Percentile(const Histogram& histogram, double total, double share)
+{
+    const double wanted = share * total;
+    double seen = 0.0;
+
+    for (int level = 0; level < 256; ++level)
+    {
+        seen += histogram[level];
+
+        if (seen >= wanted)
+            return level;
+    }
+
+    return 255;
+}
+
+TextLevels MeasureTextLevels(const cv::Mat& gray)
+{
+    const int left = gray.cols * kTextSampleLeftPercent / 100;
+    const int right = gray.cols * kTextSampleRightPercent / 100;
+    const int top = gray.rows * kTextSampleTopPercent / 100;
+    const int bottom = gray.rows * kTextSampleBottomPercent / 100;
+
+    const Histogram histogram = LevelHistogram(gray, left, top, right, bottom);
     const double total = static_cast<double>(right - left) * (bottom - top);
 
-    auto percentile = [&histogram, total](double share)
-    {
-        double seen = 0.0;
-
-        for (int level = 0; level < 256; ++level)
-        {
-            seen += histogram[level];
-
-            if (seen >= share * total)
-                return static_cast<double>(level);
-        }
-
-        return 255.0;
+    return {
+        static_cast<double>(Percentile(histogram, total, 0.25)),
+        static_cast<double>(Percentile(histogram, total, 0.50)),
+        static_cast<double>(Percentile(histogram, total, 0.95)),
     };
-
-    return { percentile(0.25), percentile(0.50), percentile(0.95) };
 }
 
 bool CloseLevels(const TextLevels& a, const TextLevels& b)
@@ -87,33 +111,11 @@ bool CloseLevels(const TextLevels& a, const TextLevels& b)
 
 int EdgeThreshold(const cv::Mat& gray)
 {
-    std::array<int, 256> histogram{};
+    const Histogram histogram = LevelHistogram(gray, 0, 0, gray.cols, gray.rows);
+    const double total = static_cast<double>(gray.total());
+    const int spread = Percentile(histogram, total, 0.95) - Percentile(histogram, total, 0.05);
 
-    for (int y = 0; y < gray.rows; ++y)
-    {
-        const unsigned char* row = gray.ptr<unsigned char>(y);
-
-        for (int x = 0; x < gray.cols; ++x)
-            ++histogram[row[x]];
-    }
-
-    auto percentile = [&histogram, &gray](double share)
-    {
-        const double wanted = share * static_cast<double>(gray.total());
-        double seen = 0.0;
-
-        for (int level = 0; level < 256; ++level)
-        {
-            seen += histogram[level];
-
-            if (seen >= wanted)
-                return level;
-        }
-
-        return 255;
-    };
-
-    return std::max(kMinPanelEdgeContrast, (percentile(0.95) - percentile(0.05)) / 5);
+    return std::max(kMinPanelEdgeContrast, spread / kEdgeContrastDivisor);
 }
 
 int StrongestColumn(const int* counts, int from, int to)
@@ -176,7 +178,7 @@ RowSpan EdgeRowSpan(const cv::Mat& darkening, int column, int width)
     cv::blur(
         cv::Mat(darkening.rows, 1, CV_32F, edgeRows.data()),
         density,
-        cv::Size(1, std::max(8, darkening.rows / 16)),
+        cv::Size(1, std::max(kMinEdgeDensityWindow, darkening.rows / kEdgeDensityWindowDivisor)),
         cv::Point(-1, -1),
         cv::BORDER_REPLICATE
     );
@@ -209,7 +211,7 @@ cv::Rect FindPanel(const cv::Mat& gray)
     const int* darkeningRows = edges.darkeningPerColumn.ptr<int>(0);
     const int* brighteningRows = edges.brighteningPerColumn.ptr<int>(0);
 
-    const int right = StrongestColumn(darkeningRows, edges.width * 55 / 100, edges.width);
+    const int right = StrongestColumn(darkeningRows, edges.width * kRightEdgeSearchFromPercent / 100, edges.width);
 
     if (right < 0 || darkeningRows[right] < kPanelEdgeShare * 255.0 * gray.rows)
         return whole;
@@ -219,7 +221,7 @@ cv::Rect FindPanel(const cv::Mat& gray)
     if (span.top < 0)
         return whole;
 
-    const int left = StrongestColumn(brighteningRows, 0, edges.width / 4);
+    const int left = StrongestColumn(brighteningRows, 0, edges.width * kLeftEdgeSearchToPercent / 100);
     const bool framedLeft = left >= 0 && brighteningRows[left] >= kPanelLeftEdgeShare * darkeningRows[right];
 
     const int panelLeft = framedLeft ? left + kPanelEdgeSpan : 0;

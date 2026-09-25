@@ -13,17 +13,14 @@ OverlayWindow::~OverlayWindow()
 
 bool OverlayWindow::Create()
 {
-    if (!backend_)
-        return false;
-
     state_.running = backend_->Init("RuneHelperOverlay", 800, 600);
     dirty_ = true;
 
     if (state_.running)
     {
-        backend_->SetAlwaysOnTop(state_.alwaysOnTop);
-        backend_->SetClickThrough(state_.clickThrough);
-        backend_->SetVisible(state_.visible);
+        backend_->SetAlwaysOnTop(true);
+        backend_->SetClickThrough(true);
+        backend_->SetVisible(true);
     }
 
     return state_.running;
@@ -32,17 +29,12 @@ bool OverlayWindow::Create()
 void OverlayWindow::Shutdown()
 {
     state_.running = false;
-
-    if (backend_)
-        backend_->Shutdown();
+    backend_->Shutdown();
 }
 
 void OverlayWindow::BringToTop()
 {
-    state_.alwaysOnTop = true;
-
-    if (backend_)
-        backend_->BringToTop();
+    backend_->BringToTop();
 }
 
 void OverlayWindow::SetRegionPreview(bool enabled, const OverlayRect& rect)
@@ -95,18 +87,9 @@ void OverlayWindow::SetOutline(bool enabled)
     dirty_ = true;
 }
 
-void OverlayWindow::SetFontSizeForce(int size)
-{
-    if (size <= 0)
-        return;
-
-    state_.fontSize = size;
-    dirty_ = true;
-}
-
 void OverlayWindow::PumpMessages()
 {
-    if (!backend_ || !state_.running)
+    if (!state_.running)
         return;
 
     backend_->PumpEvents();

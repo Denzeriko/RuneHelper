@@ -8,9 +8,10 @@
 
 #include <imgui.h>
 
-#include "core/Logger.h"
-#include "platform/PlatformShell.h"
 #include "core/Feature.h"
+#include "core/Logger.h"
+#include "core/UpdateChecker.h"
+#include "platform/PlatformShell.h"
 #include "price/ResolvedPrice.h"
 #include "ui/UIManager.h"
 #include "ui/UiScale.h"
@@ -27,7 +28,6 @@ namespace
 constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
-constexpr double kConfigSaveDelaySeconds = 0.5;
 constexpr float kMinDebugTableHeight = 120.0f;
 
 const std::vector<GameLanguage>& ReadableLanguages()
@@ -84,16 +84,8 @@ bool DrawGameLanguage(AppConfig& config)
 
     return changed;
 }
-}
 
-void UIDraw::CellText(const char* text)
-{
-    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
-    ImGui::TextUnformatted(text);
-    ImGui::PopTextWrapPos();
-}
-
-void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
+void DrawTitleBar(UIManager& ui)
 {
     const float titleBarHeight = UiScaled(16.0f);
     const ImVec2 titleButton(UiScaled(16.0f), UiScaled(16.0f));
@@ -107,7 +99,7 @@ void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
     ImGui::SameLine(ImGui::GetWindowWidth() - UiScaled(40.0f));
 
     if (ImGui::Button("_", titleButton))
-        manager.RequestMinimize();
+        ui.Minimize();
 
     ImGui::SameLine();
 
@@ -116,70 +108,34 @@ void UIDraw::DrawTitleBar(UIManager& manager, UIState&)
     ImGui::PushStyleColor(ImGuiCol_ButtonActive, ImVec4(0.80f, 0.20f, 0.20f, 1.0f));
 
     if (ImGui::Button("X", titleButton))
-        manager.RequestExit();
+        ui.Exit();
 
     ImGui::PopStyleColor(3);
 
     ImGui::EndChild();
 }
 
-void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
+void StatusRow(const char* name)
 {
-    // Status
-    ImGui::SeparatorText("STATUS");
+    ImGui::TableNextRow();
+    ImGui::TableSetColumnIndex(0);
+    ImGui::TextDisabled("%s", name);
+    ImGui::TableSetColumnIndex(1);
+}
 
-    if (!ImGui::BeginTable("status_table", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
+void DrawOcrStatus(OcrState state)
+{
+    switch (state)
     {
-        return;
+    case OcrState::Initializing: ImGui::TextColored(kYellow, "Initializing"); break;
+    case OcrState::Failed: ImGui::TextColored(kRed, "Failed"); break;
+    case OcrState::Ready: ImGui::TextColored(kGreen, "Ready"); break;
+    case OcrState::Stopped: ImGui::TextDisabled("Waiting"); break;
     }
+}
 
-    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, UiScaled(95.0f));
-    ImGui::TableSetupColumn("Value");
-
-    auto row = [](const char* name)
-    {
-        ImGui::TableNextRow();
-        ImGui::TableSetColumnIndex(0);
-        ImGui::TextDisabled("%s", name);
-        ImGui::TableSetColumnIndex(1);
-    };
-
-    row("OCR");
-
-    if (state.ocrInitializing)
-        ImGui::TextColored(kYellow, "Initializing");
-    else if (state.ocrFailed)
-        ImGui::TextColored(kRed, "Failed");
-    else if (state.ocrReady)
-        ImGui::TextColored(kGreen, "Ready");
-    else
-        ImGui::TextDisabled("Waiting");
-
-    row("Capture");
-    if (state.captureFailing)
-        ImGui::TextColored(kRed, "Failing");
-    else
-        ImGui::TextColored(kGreen, "OK");
-
-    if (ImGui::IsItemHovered() && state.captureFailing)
-        UiTooltip("The selected region cannot be captured. See runehelper.log for the reason.");
-
-    row("Overlay");
-    if (state.overlayAvailable)
-        ImGui::TextColored(kGreen, "Ready");
-    else
-        ImGui::TextColored(kRed, "Unavailable");
-
-    if (ImGui::IsItemHovered() && !state.overlayAvailable)
-        UiTooltip("The overlay window could not be created, prices are shown in the Debug Menu only.");
-
-    row("Prices");
-    if (state.priceDownloading)
-        ImGui::TextColored(kYellow, "Downloading");
-    else
-        ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
-
-    row("Version");
+void DrawVersion(const UpdateChecker& updates)
+{
     ImGui::Text("v%s", RUNEHELPER_VERSION);
 
     if (RUNEHELPER_COMMIT[0] != '\0')
@@ -188,40 +144,83 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextDisabled(" (%s)", RUNEHELPER_COMMIT);
     }
 
-    if (manager.IsCheckingForUpdate())
+    if (updates.IsChecking())
     {
         ImGui::SameLine();
         ImGui::TextColored(kYellow, "(checking...)");
+        return;
     }
-    else if (manager.HasUpdate())
+
+    if (!updates.HasUpdate())
+        return;
+
+    const std::string url = updates.DownloadUrl();
+
+    ImGui::SameLine();
+
+    if (ImGui::SmallButton("Update"))
     {
-        const std::string& url = manager.UpdateDownloadUrl();
-
-        ImGui::SameLine();
-
-        if (ImGui::SmallButton("Update"))
-        {
-            if (!OpenExternalUrl(url))
-                LOG_ERROR("Could not open the update page in a browser");
-        }
-
-        if (ImGui::IsItemHovered())
-            UiTooltip(url.empty() ? "No download link was reported" : url.c_str());
+        if (!OpenExternalUrl(url))
+            LOG_ERROR("Could not open the update page in a browser");
     }
+
+    if (ImGui::IsItemHovered())
+        UiTooltip(url.empty() ? "No download link was reported" : url.c_str());
+}
+
+bool DrawStatusSection(UIManager& ui)
+{
+    const UIState& state = ui.State();
+
+    ImGui::SeparatorText("STATUS");
+
+    if (!ImGui::BeginTable("status_table", 2, ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp))
+        return false;
+
+    ImGui::TableSetupColumn("Name", ImGuiTableColumnFlags_WidthFixed, UiScaled(95.0f));
+    ImGui::TableSetupColumn("Value");
+
+    StatusRow("OCR");
+    DrawOcrStatus(state.ocr.state);
+
+    StatusRow("Capture");
+    if (state.ocr.captureFailing)
+        ImGui::TextColored(kRed, "Failing");
+    else
+        ImGui::TextColored(kGreen, "OK");
+
+    if (ImGui::IsItemHovered() && state.ocr.captureFailing)
+        UiTooltip("The selected region cannot be captured. See runehelper.log for the reason.");
+
+    StatusRow("Overlay");
+    if (state.overlayAvailable)
+        ImGui::TextColored(kGreen, "Ready");
+    else
+        ImGui::TextColored(kRed, "Unavailable");
+
+    if (ImGui::IsItemHovered() && !state.overlayAvailable)
+        UiTooltip("The overlay window could not be created, prices are shown in the Debug Menu only.");
+
+    StatusRow("Prices");
+    if (state.priceDownloading)
+        ImGui::TextColored(kYellow, "Downloading");
+    else
+        ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
+
+    StatusRow("Version");
+    DrawVersion(ui.Updates());
 
     ImGui::EndTable();
     ImGui::Spacing();
 
-    // Region
-    if (!manager.HasConfig())
-        return;
+    return true;
+}
 
-    AppConfig& config = manager.ConfigDraft();
-    bool configChanged = false;
-
+void DrawRegionSection(UIState& state, const AppConfig& config)
+{
     ImGui::SeparatorText("REGION");
     if (ImGui::Button("Select Region"))
-        state.wantsSelectRegion = true;
+        state.requests.selectRegion = true;
 
     state.regionHovered = ImGui::IsItemHovered();
 
@@ -232,10 +231,12 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::TextColored(kYellow, "No region selected");
 
     ImGui::Spacing();
+}
 
-    // OCR
+bool DrawOcrSection(AppConfig& config)
+{
     ImGui::SeparatorText("OCR");
-    configChanged |= ImGui::Checkbox("Enable OCR", &config.ocrEnabled);
+    bool changed = ImGui::Checkbox("Enable OCR", &config.ocrEnabled);
     ImGui::SameLine();
 
     if (config.ocrEnabled)
@@ -243,18 +244,24 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
     else
         ImGui::TextColored(kRed, "Stopped");
 
-    configChanged |= DrawGameLanguage(config);
+    changed |= DrawGameLanguage(config);
 
     ImGui::Spacing();
 
-    // PRICES
+    return changed;
+}
+
+bool DrawPriceSection(UIState& state, AppConfig& config)
+{
     ImGui::SeparatorText("PRICES");
+
+    bool changed = false;
 
     if (ImGui::Checkbox("Enable Price Search", &config.priceSearchEnabled))
     {
-        configChanged = true;
+        changed = true;
         if (config.priceSearchEnabled)
-            state.wantsRefreshPrices = true;
+            state.requests.refreshPrices = true;
     }
     if (ImGui::IsItemHovered())
         UiTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
@@ -263,46 +270,103 @@ void UIDraw::DrawMainTab(UIManager& manager, UIState& state)
         ImGui::BeginDisabled();
 
     if (ImGui::Button("Refresh Prices"))
-        state.wantsRefreshPrices = true;
+        state.requests.refreshPrices = true;
 
     if (!config.priceSearchEnabled)
         ImGui::EndDisabled();
 
     ImGui::Spacing();
 
-    if (FeatureRegistry* features = manager.Features())
-    {
-        ImGui::SeparatorText("FEATURES");
-
-        for (const auto& feature : features->All())
-            feature->DrawMainControls(manager);
-
-        ImGui::Spacing();
-    }
-
-    if (configChanged)
-    {
-        manager.ApplyConfigDraft();
-
-        state.configSavePending = true;
-        state.configSaveAt = ImGui::GetTime() + kConfigSaveDelaySeconds;
-    }
-
-    // Bottom
-    ImGui::Separator();
-
-    const char* DenzTag = "Denz";
-    ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(DenzTag).x);
-
-    ImGui::TextDisabled("%s", DenzTag);
+    return changed;
 }
 
-void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
+void DrawFeatureControls(UIManager& ui)
 {
-    if (!manager.HasConfig())
+    ImGui::SeparatorText("FEATURES");
+
+    for (const auto& feature : ui.Features().All())
+        feature->DrawMainControls(ui);
+
+    ImGui::Spacing();
+}
+
+void DrawSignature()
+{
+    ImGui::Separator();
+
+    const char* signature = "Denz";
+    ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - ImGui::CalcTextSize(signature).x);
+
+    ImGui::TextDisabled("%s", signature);
+}
+
+void DrawMainTab(UIManager& ui)
+{
+    if (!DrawStatusSection(ui))
         return;
 
-    AppConfig& config = manager.ConfigDraft();
+    UIState& state = ui.State();
+    AppConfig& config = ui.ConfigDraft();
+
+    DrawRegionSection(state, config);
+
+    bool configChanged = DrawOcrSection(config);
+    configChanged |= DrawPriceSection(state, config);
+
+    DrawFeatureControls(ui);
+
+    if (configChanged)
+        ui.ApplyConfigDraft();
+
+    DrawSignature();
+}
+
+void DrawHotkeyButton(UIManager& ui, const char* label, int& key)
+{
+    UIState& state = ui.State();
+
+    ImGui::PushID(label);
+
+    ImGui::TextUnformatted(label);
+    ImGui::SameLine(UiScaled(220.0f));
+
+    const bool capturing = state.waitingForHotkey == &key;
+    const std::string text = capturing ? "Press any key..." : ui.HotkeyToString(key);
+
+    if (ImGui::Button(text.c_str(), ImVec2(UiScaled(180.0f), 0.0f)))
+    {
+        state.waitingForHotkey = &key;
+        state.hotkeyCaptureSkipFrame = true;
+    }
+
+    if (!capturing)
+    {
+        ImGui::PopID();
+        return;
+    }
+
+    if (state.hotkeyCaptureSkipFrame)
+    {
+        state.hotkeyCaptureSkipFrame = false;
+        ImGui::PopID();
+        return;
+    }
+
+    if (ui.CaptureNextHotkey(key))
+    {
+        state.waitingForHotkey = nullptr;
+
+        ui.ApplyConfigDraft();
+        state.requests.registerHotkeys = true;
+    }
+
+    ImGui::PopID();
+}
+
+void DrawSettingsTab(UIManager& ui)
+{
+    UIState& state = ui.State();
+    AppConfig& config = ui.ConfigDraft();
     bool configChanged = false;
 
     ImGui::SeparatorText("PRICES");
@@ -319,7 +383,7 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
         configChanged = true;
 
         if (config.priceSearchEnabled)
-            state.wantsRefreshPrices = true;
+            state.requests.refreshPrices = true;
     };
 
     const bool leagueOpen = ImGui::BeginCombo("League", config.priceLeague.c_str());
@@ -382,7 +446,8 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
     configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
     configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
     configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
-    configChanged |= ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, 5, 360);
+    configChanged |=
+        ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
 
     ImGui::Spacing();
 
@@ -390,7 +455,7 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
 
     configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
     configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
-    configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, 8, 48);
+    configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
 
     configChanged |= ImGui::Checkbox("Background", &config.overlayBackground);
 
@@ -406,23 +471,18 @@ void UIDraw::DrawSettingsTab(UIManager& manager, UIState& state)
 
     ImGui::SeparatorText("HOTKEYS");
 
-    DrawHotkeyButton(manager, state, "Toggle OCR", config.hotkeyToggleOCR);
-    DrawHotkeyButton(manager, state, "Single Snapshot", config.hotkeySingleSnapshot);
-    DrawHotkeyButton(manager, state, "Select Region", config.hotkeySelectRegion);
+    DrawHotkeyButton(ui, "Toggle OCR", config.hotkeyToggleOCR);
+    DrawHotkeyButton(ui, "Single Snapshot", config.hotkeySingleSnapshot);
+    DrawHotkeyButton(ui, "Select Region", config.hotkeySelectRegion);
 
     if (configChanged)
-    {
-        manager.ApplyConfigDraft();
-
-        state.configSavePending = true;
-        state.configSaveAt = ImGui::GetTime() + kConfigSaveDelaySeconds;
-    }
+        ui.ApplyConfigDraft();
 }
 
-void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
+void DrawDebugTab(UIManager& ui)
 {
     if (ImGui::Button("Save OCR Debug"))
-        manager.RequestOcrDebug();
+        ui.State().requests.saveOcrDebug = true;
 
     if (ImGui::IsItemHovered())
         UiTooltip("Reads the region once and writes its crops and recognition logs into the ocr_debug/latest folder.");
@@ -431,7 +491,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
 
     ImGui::SeparatorText("OCR DEBUG");
 
-    const DebugData& debug = manager.GetDebugData();
+    const DebugData& debug = ui.GetDebugData();
 
     if (debug.lines.empty())
     {
@@ -443,7 +503,7 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
     const float minimumHeight = UiScaled(kMinDebugTableHeight);
     const ImVec2 tableSize(0.0f, available > minimumHeight ? available : minimumHeight);
 
-    if (ImGui::BeginTable(
+    if (!ImGui::BeginTable(
             "ocr_debug_table",
             4,
             ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_Resizable | ImGuiTableFlags_ScrollY |
@@ -451,67 +511,77 @@ void UIDraw::DrawDebugTab(UIManager& manager, UIState&)
             tableSize
         ))
     {
-        ImGui::TableSetupScrollFreeze(0, 1);
+        return;
+    }
 
-        ImGui::TableSetupColumn("OCR Text");
-        ImGui::TableSetupColumn("Matched");
-        ImGui::TableSetupColumn("Confidence");
-        ImGui::TableSetupColumn("Price");
+    ImGui::TableSetupScrollFreeze(0, 1);
 
-        ImGui::TableHeadersRow();
+    ImGui::TableSetupColumn("OCR Text");
+    ImGui::TableSetupColumn("Matched");
+    ImGui::TableSetupColumn("Confidence");
+    ImGui::TableSetupColumn("Price");
 
-        for (const auto& line : debug.lines)
+    ImGui::TableHeadersRow();
+
+    for (const auto& line : debug.lines)
+    {
+        ImGui::TableNextRow();
+
+        ImGui::TableSetColumnIndex(0);
+        UIDraw::CellText(line.ocrText.c_str());
+
+        const bool matched = line.Matched();
+
+        ImGui::TableSetColumnIndex(1);
+
+        if (matched)
+            UIDraw::CellText(line.matchedText.c_str());
+        else
+            ImGui::TextDisabled("not in price list");
+
+        ImGui::TableSetColumnIndex(2);
+
+        if (!matched)
         {
-            ImGui::TableNextRow();
+            ImGui::TextDisabled("-");
 
-            ImGui::TableSetColumnIndex(0);
-            CellText(line.ocrText.c_str());
+            if (ImGui::IsItemHovered())
+                UiTooltip("This item has no price on the market, so RuneHelper has nothing to show.");
+        }
+        else if (line.confidence >= kTrustedMatchConfidence)
+        {
+            ImGui::TextColored(kGreen, "%d%%", line.confidence);
+        }
+        else
+        {
+            ImGui::TextColored(kYellow, "%d%% ?", line.confidence);
 
-            const bool matched = line.matchedText != "-";
-
-            ImGui::TableSetColumnIndex(1);
-
-            if (matched)
-                CellText(line.matchedText.c_str());
-            else
-                ImGui::TextDisabled("not in price list");
-
-            ImGui::TableSetColumnIndex(2);
-
-            if (!matched)
-            {
-                ImGui::TextDisabled("-");
-
-                if (ImGui::IsItemHovered())
-                    UiTooltip("This item has no price on the market, so RuneHelper has nothing to show.");
-            }
-            else if (line.confidence >= kTrustedMatchConfidence)
-            {
-                ImGui::TextColored(kGreen, "%d%%", line.confidence);
-            }
-            else
-            {
-                ImGui::TextColored(kYellow, "%d%% ?", line.confidence);
-
-                if (ImGui::IsItemHovered())
-                    UiTooltip("The name was guessed, not read cleanly. Verify before trusting this price.");
-            }
-
-            ImGui::TableSetColumnIndex(3);
-
-            if (matched)
-                ImGui::Text("%s", line.price.c_str());
-            else
-                ImGui::TextDisabled("-");
+            if (ImGui::IsItemHovered())
+                UiTooltip("The name was guessed, not read cleanly. Verify before trusting this price.");
         }
 
-        ImGui::EndTable();
+        ImGui::TableSetColumnIndex(3);
+
+        if (matched)
+            ImGui::Text("%s", line.price.c_str());
+        else
+            ImGui::TextDisabled("-");
     }
+
+    ImGui::EndTable();
+}
 }
 
-void UIDraw::Draw(UIManager& manager)
+void UIDraw::CellText(const char* text)
 {
-    UIState& state = manager.State();
+    ImGui::PushTextWrapPos(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x);
+    ImGui::TextUnformatted(text);
+    ImGui::PopTextWrapPos();
+}
+
+void UIDraw::Draw(UIManager& ui)
+{
+    UIState& state = ui.State();
 
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
@@ -523,7 +593,7 @@ void UIDraw::Draw(UIManager& manager)
             ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
     );
 
-    DrawTitleBar(manager, state);
+    DrawTitleBar(ui);
 
     state.debugTabOpen = false;
     state.featureTabOpen = false;
@@ -532,38 +602,35 @@ void UIDraw::Draw(UIManager& manager)
     {
         if (ImGui::BeginTabItem("RuneHelper"))
         {
-            DrawMainTab(manager, state);
+            DrawMainTab(ui);
             ImGui::EndTabItem();
         }
 
-        if (FeatureRegistry* features = manager.Features())
+        for (const auto& feature : ui.Features().All())
         {
-            for (const auto& feature : features->All())
+            const char* title = feature->TabTitle();
+
+            if (!title)
+                continue;
+
+            if (ImGui::BeginTabItem(title))
             {
-                const char* title = feature->TabTitle();
-
-                if (!title)
-                    continue;
-
-                if (ImGui::BeginTabItem(title))
-                {
-                    state.featureTabOpen = true;
-                    feature->DrawTab(manager);
-                    ImGui::EndTabItem();
-                }
+                state.featureTabOpen = true;
+                feature->DrawTab(ui);
+                ImGui::EndTabItem();
             }
         }
 
         if (ImGui::BeginTabItem("Settings"))
         {
-            DrawSettingsTab(manager, state);
+            DrawSettingsTab(ui);
             ImGui::EndTabItem();
         }
 
         if (ImGui::BeginTabItem("Debug Menu"))
         {
             state.debugTabOpen = true;
-            DrawDebugTab(manager, state);
+            DrawDebugTab(ui);
             ImGui::EndTabItem();
         }
 
@@ -571,56 +638,4 @@ void UIDraw::Draw(UIManager& manager)
     }
 
     ImGui::End();
-
-    if (state.configSavePending && ImGui::GetTime() >= state.configSaveAt && manager.HasConfig())
-    {
-        state.configSavePending = false;
-
-        if (!manager.SaveConfig())
-            LOG_ERROR("UI failed to autosave config");
-    }
-}
-
-void UIDraw::DrawHotkeyButton(UIManager& manager, UIState& state, const char* label, int& key)
-{
-    ImGui::PushID(label);
-
-    ImGui::TextUnformatted(label);
-    ImGui::SameLine(UiScaled(220.0f));
-
-    const bool capturing = state.waitingForHotkey == &key;
-    const std::string text = capturing ? "Press any key..." : manager.HotkeyToString(key);
-
-    if (ImGui::Button(text.c_str(), ImVec2(UiScaled(180.0f), 0.0f)))
-    {
-        state.waitingForHotkey = &key;
-        state.hotkeyCaptureSkipFrame = true;
-    }
-
-    if (!capturing)
-    {
-        ImGui::PopID();
-        return;
-    }
-
-    if (state.hotkeyCaptureSkipFrame)
-    {
-        state.hotkeyCaptureSkipFrame = false;
-        ImGui::PopID();
-        return;
-    }
-
-    if (manager.CaptureNextHotkey(key))
-    {
-        state.waitingForHotkey = nullptr;
-
-        manager.ApplyConfigDraft();
-
-        if (!manager.SaveConfig())
-            LOG_ERROR("UI failed to save hotkey config");
-
-        manager.RequestRegisterHotkeys();
-    }
-
-    ImGui::PopID();
 }

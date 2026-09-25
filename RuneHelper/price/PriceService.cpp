@@ -52,7 +52,7 @@ void PriceService::RebuildNames()
     if (names_ && namesVersion_ == version)
         return;
 
-    names_ = std::make_shared<const CachedItemNames>(CachedItemNames::Build(cache_.GetAllItemNames()));
+    names_ = std::make_shared<const NameMatcher>(NameMatcher::Build(cache_.GetAllItemNames()));
 
     namesVersion_ = version;
 }
@@ -72,7 +72,7 @@ ResolvedPrice PriceService::Resolve(const std::string& rawName, int quantity)
     {
         RebuildNames();
 
-        std::shared_ptr<const CachedItemNames> names;
+        std::shared_ptr<const NameMatcher> names;
         {
             std::lock_guard lock(namesMutex_);
             names = names_;

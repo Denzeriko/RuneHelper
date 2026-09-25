@@ -1,11 +1,12 @@
 import difflib
-import json
 import re
 
-from common import LANGUAGE, REAL, REPO, SETTINGS, TRUTH, UNPREFIXED, displayed, load_vocabulary, panel_of, squash
+from common import LANGUAGE, REAL, TRUTH, combinations, displayed, load_vocabulary, panel_of, read_debug_text, squash
 
 MIN_SCORE = 0.75
+MAX_PREFIX_OFFSET = 6
 LEVEL = re.compile(r'^\s*([0-9Oo]{1,2})(?=\s|$)')
+CURRENCY_COUNT = re.compile(r'\s*\d+\s*\S*\s*$|^\s*\d+\s*\S*\s+')
 
 QUANTITY = {
     'prefix': re.compile(r'^\s*(\d{1,3})\s*[xXх]\s+(.*)$'),
@@ -15,19 +16,12 @@ QUANTITY = {
 }
 
 
-def reading(path):
-    for line in path.read_text(encoding='utf-8').splitlines():
-        if line.startswith('trimmed: '):
-            return line[len('trimmed: '):]
-    return ''
-
-
 def split_quantity(text):
-    match = QUANTITY[SETTINGS['quantity']].match(text)
+    match = QUANTITY[LANGUAGE.quantity].match(text)
     if not match:
         return 1, text.strip()
     groups = match.groups()
-    if SETTINGS['quantity'] in ('prefix', 'bare'):
+    if LANGUAGE.quantity in ('prefix', 'bare'):
         return int(groups[0]), groups[1].strip()
     return int(groups[1]), groups[0].strip()
 
@@ -39,17 +33,16 @@ def closest(text, names):
 
 
 def random_currency():
-    with open(REPO / 'RuneHelper' / 'resources' / 'combinations.json', encoding='utf-8') as handle:
-        for entry in json.load(handle)['combinations']:
-            if entry['output'] == '5x Random Currency':
-                return entry.get('names', {}).get(LANGUAGE, '')
+    for entry in combinations():
+        if entry['output'] == '5x Random Currency':
+            return entry.get('names', {}).get(LANGUAGE.code, '')
     return ''
 
 
 def draft(text, names, currency):
-    for prefix in UNPREFIXED:
+    for prefix in LANGUAGE.unprefixed:
         start = text.find(prefix)
-        if 0 <= start <= 6:
+        if 0 <= start <= MAX_PREFIX_OFFSET:
             if ':' in text[start:]:
                 head, tail = text[start:].split(':', 1)
             else:
@@ -59,10 +52,10 @@ def draft(text, names, currency):
                     head = f'{prefix} {level.group(1).replace("O", "0").replace("o", "0")}'
                     tail = tail[level.end():]
             score, name = closest(tail, names)
-            separator = ' : ' if head.endswith(' ') or LANGUAGE == 'fr' else ': '
+            separator = ' : ' if head.endswith(' ') or LANGUAGE.code == 'fr' else ': '
             return score, 1, f'{head.strip()}{separator}{name}', None
     if currency and closest(text, [currency])[0] >= 0.8:
-        return 1.0, 5, re.sub(r'\s*\d+\s*\S*\s*$|^\s*\d+\s*\S*\s+', '', currency).strip(), currency
+        return 1.0, 5, CURRENCY_COUNT.sub('', currency).strip(), currency
     quantity, name = split_quantity(text)
     score, snapped = closest(name, names)
     return score, quantity, snapped, None
@@ -79,7 +72,7 @@ def main():
         lines = []
         print(f'== {resolution}/{test}')
         for crop in crops:
-            text = reading(crop.with_suffix('.read.txt'))
+            text = read_debug_text(crop.with_suffix('.read.txt'))
             if not text.strip():
                 continue
             score, quantity, name, shown = draft(text, names, currency)

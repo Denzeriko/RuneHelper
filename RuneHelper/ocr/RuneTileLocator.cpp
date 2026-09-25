@@ -26,6 +26,14 @@ constexpr int kMaxTilesPerRow = 12;
 
 constexpr int kLightingWindowRows = 41;
 
+unsigned char UpperQuartile(std::vector<unsigned char>& values)
+{
+    auto quartile = values.begin() + static_cast<std::ptrdiff_t>(values.size() * 3 / 4);
+    std::nth_element(values.begin(), quartile, values.end());
+
+    return *quartile;
+}
+
 cv::Mat EvenRowLighting(const cv::Mat& view)
 {
     std::vector<float> level(static_cast<std::size_t>(view.rows), 0.0f);
@@ -36,10 +44,7 @@ cv::Mat EvenRowLighting(const cv::Mat& view)
         const unsigned char* row = view.ptr<unsigned char>(y);
         values.assign(row, row + view.cols);
 
-        auto quartile = values.begin() + static_cast<std::ptrdiff_t>(values.size() * 3 / 4);
-        std::nth_element(values.begin(), quartile, values.end());
-
-        level[static_cast<std::size_t>(y)] = *quartile;
+        level[static_cast<std::size_t>(y)] = UpperQuartile(values);
     }
 
     cv::Mat reach;

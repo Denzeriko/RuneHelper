@@ -10,6 +10,8 @@
 
 namespace
 {
+const LPCWSTR kRcDataResourceType = MAKEINTRESOURCEW(10);
+
 struct TextModelResource
 {
     std::string_view language;
@@ -30,7 +32,7 @@ constexpr TextModelResource kTextModels[] = {
 
 std::string_view ResourceBytes(int id, const char* label)
 {
-    HRSRC resource = FindResourceW(nullptr, MAKEINTRESOURCEW(id), MAKEINTRESOURCEW(10));
+    HRSRC resource = FindResourceW(nullptr, MAKEINTRESOURCEW(id), kRcDataResourceType);
 
     if (!resource)
     {

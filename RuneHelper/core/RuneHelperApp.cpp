@@ -1,25 +1,30 @@
 #include "RuneHelperApp.h"
 
 #include <chrono>
-#include <mutex>
+#include <memory>
 #include <thread>
 #include <utility>
-#include <vector>
 
+#include <opencv2/core.hpp>
 #include <opencv2/core/utility.hpp>
 
 #include "core/DebugData.h"
+#include "core/Logger.h"
 #include "features/ExpeditionFeature.h"
 #include "features/PriceOverlayFeature.h"
-#include "core/Logger.h"
-
-#include <opencv2/core.hpp>
 
 #ifdef _WIN32
 #include "platform/windows/RegionSelect.h"
 #else
 #include "platform/linux/RegionSelect.h"
 #endif
+
+namespace
+{
+constexpr int kMinRegionSide = 16;
+constexpr std::chrono::milliseconds kFrameInterval{ 33 };
+constexpr std::chrono::seconds kBringToTopInterval{ 2 };
+}
 
 int RuneHelperApp::Run()
 {
@@ -44,32 +49,29 @@ bool RuneHelperApp::Init()
 
     configManager_.Load();
 
-    if (!ui_.Init(&configManager_))
+    if (!ui_.Init())
         return false;
 
     const bool overlayAvailable = overlay_.Create();
 
     if (overlayAvailable)
-        overlay_.SetFontSizeForce(configManager_.Snapshot().overlayFontSize);
+        overlay_.SetFontSize(configManager_.Snapshot().overlayFontSize);
     else
         LOG_ERROR("Overlay is unavailable, RuneHelper will run without it");
 
-    ui_.SetOverlayAvailable(overlayAvailable);
+    ui_.State().overlayAvailable = overlayAvailable;
 
     updateChecker_.Start();
-    ui_.SetUpdateChecker(&updateChecker_);
 
     features_.Add(std::make_unique<PriceOverlayFeature>());
     features_.Add(std::make_unique<ExpeditionFeature>());
     features_.InitAll(configManager_);
 
-    ui_.SetFeatures(&features_);
-
     ui_.RegisterHotkeys();
 
     prices_.Apply(configManager_.Snapshot());
 
-    ocrService_.Start(configManager_, features_, prices_);
+    ocrService_.Start();
 
     return true;
 }
@@ -80,25 +82,13 @@ void RuneHelperApp::MainLoop()
 
     while (ui_.IsRunning())
     {
-        OcrServiceStatus ocrStatus = ocrService_.GetStatus();
-        ui_.SetStatus(ocrStatus.initializing, ocrStatus.ready, ocrStatus.failed);
-        ui_.SetCaptureFailing(ocrStatus.captureFailing);
-
-        const PriceStatus priceStatus = prices_.Status();
-        ui_.SetPriceStatus(priceStatus.downloading, priceStatus.priceCount);
-
-        if (ui_.NeedsDebugData())
-        {
-            DebugData debugData;
-
-            if (ocrService_.ConsumeDebugData(debugData))
-                ui_.SetDebugData(std::move(debugData));
-        }
+        PublishStatus();
 
         ui_.Pump();
         overlay_.PumpMessages();
 
-        HandleUIActions();
+        HandleRequests(ui_.TakeRequests());
+        configManager_.SaveIfSettled();
 
         const AppConfig config = configManager_.Snapshot();
 
@@ -112,63 +102,77 @@ void RuneHelperApp::MainLoop()
         overlay_.SetBackground(config.overlayBackground);
         overlay_.SetOutline(config.overlayOutline);
 
-        auto now = std::chrono::steady_clock::now();
+        const auto now = std::chrono::steady_clock::now();
 
-        if (now - lastTop > std::chrono::seconds(2))
+        if (now - lastTop > kBringToTopInterval)
         {
             overlay_.BringToTop();
             lastTop = now;
         }
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(33));
+        std::this_thread::sleep_for(kFrameInterval);
     }
 }
 
-void RuneHelperApp::HandleUIActions()
+void RuneHelperApp::PublishStatus()
 {
-    if (ui_.WantsToggleOCR())
-    {
+    UIState& state = ui_.State();
+    state.ocr = ocrService_.Status();
+
+    const PriceStatus priceStatus = prices_.Status();
+    state.priceDownloading = priceStatus.downloading;
+    state.priceCount = priceStatus.priceCount;
+
+    if (!ui_.NeedsDebugData())
+        return;
+
+    DebugData debugData;
+
+    if (ocrService_.ConsumeDebugData(debugData))
+        ui_.SetDebugData(std::move(debugData));
+}
+
+void RuneHelperApp::HandleRequests(const UIRequests& requests)
+{
+    if (requests.toggleOcr)
         configManager_.Update([](AppConfig& config) { config.ocrEnabled = !config.ocrEnabled; });
 
-        configManager_.Save();
-    }
-
-    if (ui_.WantsSingleSnapshot())
+    if (requests.singleSnapshot)
         ocrService_.RequestSingleSnapshot();
 
-    if (ui_.WantsOcrDebug())
+    if (requests.saveOcrDebug)
         ocrService_.RequestDebugDump();
 
-    if (ui_.WantsRefreshPrices())
+    if (requests.refreshPrices)
         prices_.ForceRefresh();
 
-    if (ui_.WantsSelectRegion())
-    {
-        RegionSelector selector;
+    if (requests.selectRegion)
+        SelectRegion();
 
-        cv::Rect newRegion = selector.Select();
-
-        constexpr int kMinRegionSide = 16;
-
-        if (newRegion.width >= kMinRegionSide && newRegion.height >= kMinRegionSide)
-        {
-            configManager_.Update(
-                [&newRegion](AppConfig& config)
-                {
-                    config.regionX = newRegion.x;
-                    config.regionY = newRegion.y;
-                    config.regionW = newRegion.width;
-                    config.regionH = newRegion.height;
-                }
-            );
-
-            configManager_.Save();
-            features_.NotifyRegionChanged();
-        }
-    }
-
-    if (ui_.WantsRegisterHotkeys())
+    if (requests.registerHotkeys)
         ui_.RegisterHotkeys();
+}
+
+void RuneHelperApp::SelectRegion()
+{
+    RegionSelector selector;
+
+    const cv::Rect region = selector.Select();
+
+    if (region.width < kMinRegionSide || region.height < kMinRegionSide)
+        return;
+
+    configManager_.Update(
+        [&region](AppConfig& config)
+        {
+            config.regionX = region.x;
+            config.regionY = region.y;
+            config.regionW = region.width;
+            config.regionH = region.height;
+        }
+    );
+
+    features_.NotifyRegionChanged();
 }
 
 void RuneHelperApp::UpdateOverlay()
@@ -181,19 +185,15 @@ void RuneHelperApp::UpdateOverlay()
     overlay_.SetFrame(std::move(frame));
 }
 
-void RuneHelperApp::UpdateRegionPreview(const AppConfig& localConfig)
+void RuneHelperApp::UpdateRegionPreview(const AppConfig& config)
 {
-    if (!ui_.IsRegionHovered() || localConfig.regionW <= 0)
+    if (!ui_.State().regionHovered || config.regionW <= 0)
     {
-        const OverlayRect empty{};
-        overlay_.SetRegionPreview(false, empty);
+        overlay_.SetRegionPreview(false, OverlayRect{});
         return;
     }
 
-    OverlayRect rect{ localConfig.regionX,
-                      localConfig.regionY,
-                      localConfig.regionX + localConfig.regionW,
-                      localConfig.regionY + localConfig.regionH };
+    const OverlayRect rect{ config.regionX, config.regionY, config.regionX + config.regionW, config.regionY + config.regionH };
 
     overlay_.SetRegionPreview(true, rect);
 }
@@ -204,4 +204,5 @@ void RuneHelperApp::Shutdown()
     ui_.UnregisterHotkeys();
     updateChecker_.Stop();
     features_.ShutdownAll();
+    configManager_.Flush();
 }

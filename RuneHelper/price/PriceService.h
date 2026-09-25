@@ -9,7 +9,7 @@
 #include <string>
 
 #include "core/Config.h"
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "price/PriceCache.h"
 #include "price/ResolvedPrice.h"
 
@@ -38,7 +38,7 @@ private:
     PriceCache cache_;
 
     std::mutex namesMutex_;
-    std::shared_ptr<const CachedItemNames> names_;
+    std::shared_ptr<const NameMatcher> names_;
     std::uint64_t namesVersion_ = 0;
 
     std::chrono::steady_clock::time_point lastRefreshCheck_{};

@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "OcrScoring.h"
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "ocr/OCR.h"
 #include "platform/linux/ResourceHelper.h"
 
@@ -21,7 +21,7 @@ namespace fs = std::filesystem;
 
 namespace
 {
-std::vector<Row> Recognize(OCR& ocr, const CachedItemNames& vocabulary, const fs::path& image)
+std::vector<Row> Recognize(OCR& ocr, const NameMatcher& vocabulary, const fs::path& image)
 {
     const cv::Mat bgr = cv::imread(image.string(), cv::IMREAD_COLOR);
 
@@ -157,7 +157,7 @@ int main(int argc, char** argv)
 
     const std::vector<std::string> vocabularyNames = LoadVocabulary(combinations, language);
     const std::set<std::string> knownNames(vocabularyNames.begin(), vocabularyNames.end());
-    const CachedItemNames vocabulary = CachedItemNames::Build(vocabularyNames);
+    const NameMatcher vocabulary = NameMatcher::Build(vocabularyNames);
 
     if (vocabulary.Empty())
     {

@@ -1,83 +1,23 @@
-#include "NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 
+#include "core/Text.h"
+
 namespace
 {
 constexpr size_t kMaxLen = 128;
-constexpr char32_t kReplacement = 0xFFFD;
+
+constexpr std::size_t kLetterBuckets = 26;
+constexpr std::size_t kDigitBuckets = 10;
+constexpr std::size_t kOtherBuckets = 32;
+
+static_assert(NameMatcher::kHistogramSize == kLetterBuckets + kDigitBuckets + kOtherBuckets);
 
 constexpr std::array<char, 32> kLatin1Letters = { 'a', 'a', 'a', 'a', 'a', 'a', 'a', 'c',  'e', 'e', 'e', 'e', 'i', 'i', 'i', 'i',
                                                   'd', 'n', 'o', 'o', 'o', 'o', 'o', '\0', 'o', 'u', 'u', 'u', 'u', 'y', 't', 'y' };
-
-char32_t DecodeUtf8(std::string_view text, std::size_t& i)
-{
-    const unsigned char lead = static_cast<unsigned char>(text[i++]);
-
-    if (lead < 0x80)
-        return lead;
-
-    int extra = 0;
-    char32_t codePoint = 0;
-
-    if ((lead & 0xE0) == 0xC0)
-    {
-        extra = 1;
-        codePoint = lead & 0x1F;
-    }
-    else if ((lead & 0xF0) == 0xE0)
-    {
-        extra = 2;
-        codePoint = lead & 0x0F;
-    }
-    else if ((lead & 0xF8) == 0xF0)
-    {
-        extra = 3;
-        codePoint = lead & 0x07;
-    }
-    else
-    {
-        return kReplacement;
-    }
-
-    for (int k = 0; k < extra; ++k)
-    {
-        if (i >= text.size() || (static_cast<unsigned char>(text[i]) & 0xC0) != 0x80)
-            return kReplacement;
-
-        codePoint = (codePoint << 6) | (static_cast<unsigned char>(text[i++]) & 0x3F);
-    }
-
-    return codePoint;
-}
-
-void AppendUtf8(std::string& out, char32_t codePoint)
-{
-    if (codePoint < 0x80)
-    {
-        out.push_back(static_cast<char>(codePoint));
-    }
-    else if (codePoint < 0x800)
-    {
-        out.push_back(static_cast<char>(0xC0 | (codePoint >> 6)));
-        out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-    }
-    else if (codePoint < 0x10000)
-    {
-        out.push_back(static_cast<char>(0xE0 | (codePoint >> 12)));
-        out.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-    }
-    else
-    {
-        out.push_back(static_cast<char>(0xF0 | (codePoint >> 18)));
-        out.push_back(static_cast<char>(0x80 | ((codePoint >> 12) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | ((codePoint >> 6) & 0x3F)));
-        out.push_back(static_cast<char>(0x80 | (codePoint & 0x3F)));
-    }
-}
 
 char32_t FoldLetter(char32_t c)
 {
@@ -120,7 +60,7 @@ bool IsSeparator(char32_t c)
 
 bool IsWordCharacter(char32_t c)
 {
-    if (c == 0 || c == kReplacement)
+    if (c == 0 || c == kReplacementCharacter)
         return false;
 
     if (c < 0x80)
@@ -233,18 +173,18 @@ int BoundedLevenshteinDistance(std::u32string_view a, std::u32string_view b, int
     return prev[m];
 }
 
-CachedItemNames::Histogram MakeHistogram(std::u32string_view text)
+NameMatcher::Histogram MakeHistogram(std::u32string_view text)
 {
-    CachedItemNames::Histogram histogram{};
+    NameMatcher::Histogram histogram{};
 
     for (const char32_t c : text)
     {
-        std::size_t bucket = 36 + static_cast<std::size_t>(c % 32);
+        std::size_t bucket = kLetterBuckets + kDigitBuckets + static_cast<std::size_t>(c % kOtherBuckets);
 
         if (c >= 'a' && c <= 'z')
             bucket = static_cast<std::size_t>(c - 'a');
         else if (c >= '0' && c <= '9')
-            bucket = 26 + static_cast<std::size_t>(c - '0');
+            bucket = kLetterBuckets + static_cast<std::size_t>(c - '0');
 
         if (histogram[bucket] < 255)
             ++histogram[bucket];
@@ -253,12 +193,12 @@ CachedItemNames::Histogram MakeHistogram(std::u32string_view text)
     return histogram;
 }
 
-bool HistogramAllows(const CachedItemNames::Histogram& a, const CachedItemNames::Histogram& b, int maxDistance)
+bool HistogramAllows(const NameMatcher::Histogram& a, const NameMatcher::Histogram& b, int maxDistance)
 {
     const int limit = 2 * maxDistance;
     int difference = 0;
 
-    for (std::size_t i = 0; i < CachedItemNames::kHistogramSize; ++i)
+    for (std::size_t i = 0; i < NameMatcher::kHistogramSize; ++i)
     {
         difference += std::abs(static_cast<int>(a[i]) - static_cast<int>(b[i]));
 
@@ -269,7 +209,24 @@ bool HistogramAllows(const CachedItemNames::Histogram& a, const CachedItemNames:
     return true;
 }
 
-int SimilarityPercentNormalized(std::u32string_view a, std::u32string_view b, int minConfidence)
+struct LengthRange
+{
+    int shortest = 0;
+    int longest = 0;
+};
+
+LengthRange CandidateLengths(int inputLength, int minConfidence)
+{
+    const int slack = 100 - minConfidence;
+    int longest = minConfidence > 0 ? (inputLength * 100) / minConfidence + 2 : inputLength * 2 + 2;
+
+    while (longest > inputLength && longest - (longest * slack) / 100 > inputLength)
+        --longest;
+
+    return { std::max(1, inputLength - (inputLength * slack) / 100 - 1), longest + 1 };
+}
+
+int SimilarityPercent(std::u32string_view a, std::u32string_view b, int minConfidence)
 {
     if (a.empty() || b.empty())
         return 0;
@@ -298,7 +255,7 @@ std::string NormalizeName(std::string_view s)
     return out;
 }
 
-CachedItemNames CachedItemNames::Build(const std::vector<std::string>& names)
+NameMatcher NameMatcher::Build(const std::vector<std::string>& names)
 {
     std::vector<NameAlias> aliases;
     aliases.reserve(names.size());
@@ -309,10 +266,10 @@ CachedItemNames CachedItemNames::Build(const std::vector<std::string>& names)
     return Build(aliases);
 }
 
-CachedItemNames CachedItemNames::Build(const std::vector<NameAlias>& aliases)
+NameMatcher NameMatcher::Build(const std::vector<NameAlias>& aliases)
 {
-    CachedItemNames cache;
-    cache.entries_.reserve(aliases.size());
+    NameMatcher matcher;
+    matcher.entries_.reserve(aliases.size());
 
     for (const auto& [name, alias] : aliases)
     {
@@ -323,12 +280,12 @@ CachedItemNames CachedItemNames::Build(const std::vector<NameAlias>& aliases)
 
         Histogram histogram = MakeHistogram(normalized);
 
-        cache.entries_.push_back({ name, std::move(normalized), histogram });
+        matcher.entries_.push_back({ name, std::move(normalized), histogram });
     }
 
     std::sort(
-        cache.entries_.begin(),
-        cache.entries_.end(),
+        matcher.entries_.begin(),
+        matcher.entries_.end(),
         [](const Entry& a, const Entry& b)
         {
             if (a.normalized.size() != b.normalized.size())
@@ -338,20 +295,20 @@ CachedItemNames CachedItemNames::Build(const std::vector<NameAlias>& aliases)
         }
     );
 
-    return cache;
+    return matcher;
 }
 
-bool CachedItemNames::Empty() const
+bool NameMatcher::Empty() const
 {
     return entries_.empty();
 }
 
-std::size_t CachedItemNames::Size() const
+std::size_t NameMatcher::Size() const
 {
     return entries_.size();
 }
 
-std::optional<MatchResult> CachedItemNames::FindBest(std::string_view input, int minConfidence) const
+std::optional<MatchResult> NameMatcher::FindBest(std::string_view input, int minConfidence) const
 {
     const std::u32string normalizedInput = NormalizeCodePoints(input);
 
@@ -360,27 +317,19 @@ std::optional<MatchResult> CachedItemNames::FindBest(std::string_view input, int
 
     const int inputLen = static_cast<int>(normalizedInput.size());
     const int slack = 100 - minConfidence;
-
-    int minLen = inputLen - (inputLen * slack) / 100 - 1;
-    int maxLen = minConfidence > 0 ? (inputLen * 100) / minConfidence + 2 : inputLen * 2 + 2;
-
-    while (maxLen > inputLen && maxLen - (maxLen * slack) / 100 > inputLen)
-        --maxLen;
-
-    ++maxLen;
-    minLen = std::max(1, minLen);
+    const LengthRange lengths = CandidateLengths(inputLen, minConfidence);
 
     const auto first = std::lower_bound(
         entries_.begin(),
         entries_.end(),
-        static_cast<std::size_t>(minLen),
+        static_cast<std::size_t>(lengths.shortest),
         [](const Entry& entry, std::size_t length) { return entry.normalized.size() < length; }
     );
 
     const auto last = std::upper_bound(
         entries_.begin(),
         entries_.end(),
-        static_cast<std::size_t>(maxLen),
+        static_cast<std::size_t>(lengths.longest),
         [](std::size_t length, const Entry& entry) { return length < entry.normalized.size(); }
     );
 
@@ -401,7 +350,7 @@ std::optional<MatchResult> CachedItemNames::FindBest(std::string_view input, int
         if (!HistogramAllows(inputHistogram, it->histogram, maxAllowedDistance))
             continue;
 
-        const int score = SimilarityPercentNormalized(normalizedInput, it->normalized, minConfidence);
+        const int score = SimilarityPercent(normalizedInput, it->normalized, minConfidence);
 
         if (score > bestScore)
         {

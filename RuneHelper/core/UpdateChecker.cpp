@@ -1,8 +1,8 @@
 #include "UpdateChecker.h"
 
-#include "Logger.h"
+#include "core/ExceptionLogging.h"
 #include "core/JsonRead.h"
-#include "core/ThreadGuard.h"
+#include "core/Logger.h"
 
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
@@ -112,8 +112,6 @@ std::string UpdateChecker::DownloadUrl() const
 
 void UpdateChecker::Check(const std::stop_token& stop)
 {
-    LOG_INFO("UpdateChecker::Check() -> call");
-
     auto r = cpr::Get(
         cpr::Url{ "https://api.github.com/repos/Denzeriko/RuneHelper/releases/latest" },
         cpr::Header{ { "User-Agent", "RuneHelper/" RUNEHELPER_VERSION }, { "Accept", "application/vnd.github+json" } },

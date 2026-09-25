@@ -104,6 +104,8 @@ Each save replaces the folder:
 4. Fuzzy matching fixes OCR mistakes and translates localized names to English.
 5. Prices come from the cache or the API and are drawn next to the items.
 
+`docs/ARCHITECTURE.md` goes through the threads, each OCR stage and the reasons behind its thresholds, for anyone reading the code.
+
 ## Price API
 
 poe.ninja asks that desktop clients not call its API from end-user machines, so prices go through a proxy at `https://denz.pw/poe2/economy?league=LEAGUE&type=TYPE`. It caches each league/type pair for an hour, which is how often the PoE 2 economy is recomputed. After three failed requests in a refresh cycle the client calls poe.ninja directly until the next cycle, and `RUNEHELPER_PRICE_API` points it at a proxy of your own.

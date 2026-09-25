@@ -33,6 +33,10 @@ bool IsMouseVk(int vk)
     }
 }
 
+constexpr int kToggleOcrHotkeyId = 1;
+constexpr int kSingleSnapshotHotkeyId = 2;
+constexpr int kSelectRegionHotkeyId = 3;
+
 constexpr int kUnfocusedFrameIntervalMs = 100;
 constexpr float kDefaultDpi = 96.0f;
 constexpr int kWindowX = 100;
@@ -90,6 +94,7 @@ struct UIBackend::Impl
     void CreateRenderTarget();
     void CleanupRenderTarget();
     void RegisterHotkey(int id, int key, const char* label);
+    void RequestFromHotkey(int id);
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };
@@ -115,13 +120,11 @@ bool UIBackend::Impl::IsInteractive() const
     return PtInRect(&bounds, cursor) != FALSE;
 }
 
-UIBackend::UIBackend() : impl_(new Impl()) {}
+UIBackend::UIBackend() : impl_(std::make_unique<Impl>()) {}
 
 UIBackend::~UIBackend()
 {
     Shutdown();
-    delete impl_;
-    impl_ = nullptr;
 }
 
 bool UIBackend::Init(UIManager* manager)
@@ -173,9 +176,6 @@ bool UIBackend::Init(UIManager* manager)
 
 void UIBackend::Shutdown()
 {
-    if (!impl_)
-        return;
-
     impl_->running = false;
     UnregisterHotkeys();
 
@@ -203,7 +203,7 @@ void UIBackend::Shutdown()
 
 bool UIBackend::BeginFrame()
 {
-    if (!impl_ || !impl_->running)
+    if (!impl_->running)
         return false;
 
     MSG msg;
@@ -240,7 +240,7 @@ bool UIBackend::BeginFrame()
 
 void UIBackend::EndFrame()
 {
-    if (!impl_ || !impl_->deviceContext || !impl_->swapChain || !impl_->renderTargetView)
+    if (!impl_->deviceContext || !impl_->swapChain || !impl_->renderTargetView)
         return;
 
     ImGui::Render();
@@ -254,20 +254,17 @@ void UIBackend::EndFrame()
 
 bool UIBackend::IsRunning() const
 {
-    return impl_ && impl_->running;
+    return impl_->running;
 }
 
 void UIBackend::Minimize()
 {
-    if (impl_ && impl_->hwnd)
+    if (impl_->hwnd)
         ShowWindow(impl_->hwnd, SW_MINIMIZE);
 }
 
 void UIBackend::RequestClose()
 {
-    if (!impl_)
-        return;
-
     impl_->running = false;
 
     if (impl_->hwnd)
@@ -307,25 +304,25 @@ bool UIBackend::CaptureNextHotkey(int& key)
 
 void UIBackend::RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int selectRegionKey)
 {
-    if (!impl_ || !impl_->hwnd)
+    if (!impl_->hwnd)
         return;
 
     UnregisterHotkeys();
 
-    impl_->RegisterHotkey(1, toggleOcrKey, "toggle OCR");
-    impl_->RegisterHotkey(2, singleSnapshotKey, "single snapshot");
-    impl_->RegisterHotkey(3, selectRegionKey, "select region");
+    impl_->RegisterHotkey(kToggleOcrHotkeyId, toggleOcrKey, "toggle OCR");
+    impl_->RegisterHotkey(kSingleSnapshotHotkeyId, singleSnapshotKey, "single snapshot");
+    impl_->RegisterHotkey(kSelectRegionHotkeyId, selectRegionKey, "select region");
     impl_->hotkeysRegistered = true;
 }
 
 void UIBackend::UnregisterHotkeys()
 {
-    if (!impl_ || !impl_->hwnd || !impl_->hotkeysRegistered)
+    if (!impl_->hwnd || !impl_->hotkeysRegistered)
         return;
 
-    UnregisterHotKey(impl_->hwnd, 1);
-    UnregisterHotKey(impl_->hwnd, 2);
-    UnregisterHotKey(impl_->hwnd, 3);
+    UnregisterHotKey(impl_->hwnd, kToggleOcrHotkeyId);
+    UnregisterHotKey(impl_->hwnd, kSingleSnapshotHotkeyId);
+    UnregisterHotKey(impl_->hwnd, kSelectRegionHotkeyId);
     impl_->hotkeysRegistered = false;
 }
 
@@ -480,6 +477,18 @@ void UIBackend::Impl::RegisterHotkey(int id, int key, const char* label)
         LOG_ERROR(std::string("Windows UI: failed to register hotkey for ") + label);
 }
 
+void UIBackend::Impl::RequestFromHotkey(int id)
+{
+    UIRequests& requests = manager->State().requests;
+
+    if (id == kToggleOcrHotkeyId)
+        requests.toggleOcr = true;
+    else if (id == kSingleSnapshotHotkeyId)
+        requests.singleSnapshot = true;
+    else if (id == kSelectRegionHotkeyId)
+        requests.selectRegion = true;
+}
+
 LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     if (ImGui_ImplWin32_WndProcHandler(hwnd, msg, wp, lp))
@@ -501,15 +510,8 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
     switch (msg)
     {
     case WM_HOTKEY:
-        if (self && self->manager)
-        {
-            if (wp == 1)
-                self->manager->RequestToggleOCR();
-            else if (wp == 2)
-                self->manager->RequestSingleSnapshot();
-            else if (wp == 3)
-                self->manager->RequestSelectRegion();
-        }
+        if (self)
+            self->RequestFromHotkey(static_cast<int>(wp));
         return 0;
 
     case WM_SIZE:
@@ -552,8 +554,6 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
 
         if (hit != HTCLIENT)
             return hit;
-
-        Impl* self = reinterpret_cast<Impl*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
 
         if (!self)
             return HTCLIENT;

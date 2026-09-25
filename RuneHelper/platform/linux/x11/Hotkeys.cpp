@@ -1,8 +1,6 @@
 #include "platform/linux/LinuxHotkeys.h"
 
 #include <array>
-#include <cctype>
-#include <cstdlib>
 #include <string>
 #include <vector>
 
@@ -11,6 +9,7 @@
 #include <X11/keysym.h>
 
 #include "core/Logger.h"
+#include "platform/linux/x11/Session.h"
 
 namespace
 {
@@ -21,19 +20,6 @@ struct RegisteredHotkey
     KeyCode keycode = 0;
     HotkeyAction action = HotkeyAction::ToggleOcr;
 };
-
-bool IsWaylandSession()
-{
-    const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-    if (!sessionType)
-        return false;
-
-    std::string value(sessionType);
-    for (char& ch : value)
-        ch = static_cast<char>(std::tolower(static_cast<unsigned char>(ch)));
-
-    return value == "wayland";
-}
 
 bool gSawXGrabError = false;
 
@@ -102,7 +88,7 @@ void X11Hotkeys::LogUnavailable()
     if (loggedUnavailable_)
         return;
 
-    LOG_INFO("Linux global hotkeys require X11; build with -DRUNEHELPER_LINUX_BACKEND=wayland for Wayland");
+    LOG_INFO("Global hotkeys are unavailable: the X11 build needs an X11 session, a Wayland session needs the Wayland build");
     loggedUnavailable_ = true;
 }
 

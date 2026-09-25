@@ -1,88 +1,68 @@
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <string>
+#include <utility>
 
 #include "core/Config.h"
-#include "core/ConfigManager.h"
 #include "core/DebugData.h"
-#include "core/UpdateChecker.h"
 #include "ui/UIState.h"
 
+class ConfigManager;
 class FeatureRegistry;
 class UIBackend;
+class UpdateChecker;
 
 class UIManager
 {
 public:
-    UIManager();
+    UIManager(ConfigManager& config, const UpdateChecker& updates, FeatureRegistry& features);
     ~UIManager();
 
     UIManager(const UIManager&) = delete;
     UIManager& operator=(const UIManager&) = delete;
 
-    bool Init(ConfigManager* configManager);
-
+    bool Init();
     void Shutdown();
     void Pump();
 
     bool IsRunning() const;
 
-    void SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed);
-    void SetOverlayAvailable(bool available);
-    void SetCaptureFailing(bool failing);
-    void SetPriceStatus(bool downloading, size_t priceCount);
-    void SetUpdateChecker(UpdateChecker* checker);
-    void SetFeatures(FeatureRegistry* features);
-    FeatureRegistry* Features() const;
-    bool IsCheckingForUpdate() const;
-    bool HasUpdate() const;
-    std::string UpdateDownloadUrl() const;
+    UIState& State() { return state_; }
 
-    bool HasConfig() const;
-    AppConfig& ConfigDraft();
+    UIRequests TakeRequests() { return std::exchange(state_.requests, {}); }
+
+    AppConfig& ConfigDraft() { return configDraft_; }
+
     void ApplyConfigDraft();
-    UIState& State();
 
-    bool WantsSelectRegion();
-    bool WantsRefreshPrices();
-    bool WantsToggleOCR();
-    bool WantsSingleSnapshot();
-    bool WantsOcrDebug();
-    bool WantsRegisterHotkeys();
+    const UpdateChecker& Updates() const { return updates_; }
 
-    bool IsRegionHovered() const;
+    FeatureRegistry& Features() { return features_; }
+
+    void SetDebugData(DebugData data);
+
+    const DebugData& GetDebugData() const { return debugData_; }
+
+    std::uint64_t DebugDataVersion() const { return debugDataVersion_; }
+
+    bool NeedsDebugData() const { return state_.debugTabOpen || state_.featureTabOpen; }
 
     std::string HotkeyToString(int key) const;
     bool CaptureNextHotkey(int& key);
-    bool SaveConfig();
-
     void RegisterHotkeys();
     void UnregisterHotkeys();
 
-    void SetDebugData(DebugData data);
-    const DebugData& GetDebugData() const;
-    std::uint64_t DebugDataVersion() const;
-    bool NeedsDebugData() const;
-    void FlushPendingConfigSave();
-
-    void RequestToggleOCR();
-    void RequestSingleSnapshot();
-    void RequestOcrDebug();
-    void RequestSelectRegion();
-    void RequestRegisterHotkeys();
-    void RequestMinimize();
-    void RequestExit();
+    void Minimize();
+    void Exit();
 
 private:
-    ConfigManager* configManager_ = nullptr;
-    AppConfig configDraft_;
-    UpdateChecker* updateChecker_ = nullptr;
-    FeatureRegistry* features_ = nullptr;
+    ConfigManager& config_;
+    const UpdateChecker& updates_;
+    FeatureRegistry& features_;
 
+    AppConfig configDraft_;
     UIState state_;
     DebugData debugData_;
     std::uint64_t debugDataVersion_ = 0;

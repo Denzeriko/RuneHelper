@@ -13,20 +13,10 @@
 #include <opencv2/imgproc.hpp>
 
 #include "core/Logger.h"
+#include "platform/linux/x11/Session.h"
 
 namespace
 {
-bool IsX11Session()
-{
-    static const bool value = []
-    {
-        const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-        return !(sessionType && std::string(sessionType) == "wayland");
-    }();
-
-    return value;
-}
-
 bool gSawXCaptureError = false;
 bool gReportedXCaptureError = false;
 
@@ -407,9 +397,9 @@ cv::Mat CaptureRootRegion(Display* display, SharedImage& shared, const cv::Rect&
 
 cv::Mat CaptureRegion(const cv::Rect& region)
 {
-    if (!IsX11Session())
+    if (IsWaylandSession())
     {
-        LOG_ERROR("Linux region capture requires an X11 session; Wayland is not supported yet");
+        LogWaylandBuildNeeded("capture the screen");
         return {};
     }
 

@@ -1,4 +1,4 @@
-#include "ScreenCaptureDXGI.h"
+#include "DesktopDuplication.h"
 
 #include <windows.h>
 
@@ -17,6 +17,15 @@ using Microsoft::WRL::ComPtr;
 
 namespace
 {
+constexpr UINT kFrameWaitMs = 16;
+
+void LogFailure(const char* what, HRESULT hr)
+{
+    char buffer[128];
+    sprintf_s(buffer, "%s failed: 0x%08X", what, static_cast<unsigned>(hr));
+    LOG_ERROR(buffer);
+}
+
 bool IntersectsOutput(const cv::Rect& region, const RECT& rc)
 {
     const int left = region.x;
@@ -53,12 +62,18 @@ cv::Rect ToTexturePixels(const cv::Rect& local, int outputWidth, int outputHeigh
 }
 }
 
-bool ScreenCaptureWGC::HasCachedFrame(const cv::Rect& region) const
+bool DesktopDuplication::HasCachedFrame(const cv::Rect& region) const
 {
     return !lastFrame_.empty() && lastFrameRegion_ == region;
 }
 
-bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
+bool DesktopDuplication::CoversRegion(const cv::Rect& region) const
+{
+    return initialized_ && region.x >= outputLeft_ && region.y >= outputTop_ && region.x + region.width <= outputRight_ &&
+           region.y + region.height <= outputBottom_;
+}
+
+bool DesktopDuplication::InitForRegion(const cv::Rect& region)
 {
     Shutdown();
 
@@ -177,9 +192,7 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
 
     if (FAILED(hr))
     {
-        char buf[128];
-        sprintf_s(buf, "DuplicateOutput failed: 0x%08X", static_cast<unsigned>(hr));
-        LOG_ERROR(buf);
+        LogFailure("DuplicateOutput", hr);
         return false;
     }
 
@@ -190,7 +203,7 @@ bool ScreenCaptureWGC::InitForRegion(const cv::Rect& region)
     return true;
 }
 
-void ScreenCaptureWGC::Shutdown()
+void DesktopDuplication::Shutdown()
 {
     stagingTexture_.Reset();
     stagingWidth_ = 0;
@@ -212,15 +225,12 @@ void ScreenCaptureWGC::Shutdown()
     outputBottom_ = 0;
 }
 
-cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
+cv::Mat DesktopDuplication::CaptureRegion(const cv::Rect& region)
 {
     if (region.width <= 0 || region.height <= 0)
         return {};
 
-    bool regionInsideCurrentOutput = initialized_ && region.x >= outputLeft_ && region.y >= outputTop_ &&
-                                     region.x + region.width <= outputRight_ && region.y + region.height <= outputBottom_;
-
-    if (!regionInsideCurrentOutput)
+    if (!CoversRegion(region))
     {
         Shutdown();
 
@@ -231,21 +241,14 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
     DXGI_OUTDUPL_FRAME_INFO frameInfo{};
     ComPtr<IDXGIResource> desktopResource;
 
-    HRESULT hr = duplication_->AcquireNextFrame(16, &frameInfo, &desktopResource);
+    const HRESULT hr = duplication_->AcquireNextFrame(kFrameWaitMs, &frameInfo, &desktopResource);
 
     if (hr == DXGI_ERROR_WAIT_TIMEOUT)
-    {
-        if (HasCachedFrame(region))
-            return lastFrame_.clone();
-
-        return {};
-    }
+        return HasCachedFrame(region) ? lastFrame_.clone() : cv::Mat();
 
     if (FAILED(hr))
     {
-        char buf[128];
-        sprintf_s(buf, "AcquireNextFrame failed: 0x%08X", static_cast<unsigned>(hr));
-        LOG_ERROR(buf);
+        LogFailure("AcquireNextFrame", hr);
 
         if (IsRecoverableDxgiError(hr))
             Shutdown();
@@ -259,23 +262,39 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
         return lastFrame_.clone();
     }
 
-    ComPtr<ID3D11Texture2D> desktopTexture;
-    hr = desktopResource.As(&desktopTexture);
+    FrameCopy copy = CopyFrame(region, desktopResource);
+    duplication_->ReleaseFrame();
 
-    if (FAILED(hr))
-    {
-        duplication_->ReleaseFrame();
+    if (copy.resetDevice)
+        Shutdown();
+
+    if (copy.gray.empty())
         return {};
-    }
+
+    if (copy.gray.size() != region.size())
+        cv::resize(copy.gray, copy.gray, region.size(), 0, 0, cv::INTER_AREA);
+
+    lastFrame_ = copy.gray;
+    lastFrameRegion_ = region;
+
+    return copy.gray;
+}
+
+DesktopDuplication::FrameCopy DesktopDuplication::CopyFrame(const cv::Rect& region, const ComPtr<IDXGIResource>& desktopResource)
+{
+    ComPtr<ID3D11Texture2D> desktopTexture;
+
+    if (FAILED(desktopResource.As(&desktopTexture)))
+        return {};
 
     D3D11_TEXTURE2D_DESC desktopDesc{};
     desktopTexture->GetDesc(&desktopDesc);
 
-    int localX = region.x - outputLeft_;
-    int localY = region.y - outputTop_;
+    const int localX = region.x - outputLeft_;
+    const int localY = region.y - outputTop_;
 
-    int outputWidth = outputRight_ - outputLeft_;
-    int outputHeight = outputBottom_ - outputTop_;
+    const int outputWidth = outputRight_ - outputLeft_;
+    const int outputHeight = outputBottom_ - outputTop_;
 
     if (localX < 0 || localY < 0 || localX + region.width > outputWidth || localY + region.height > outputHeight)
     {
@@ -288,20 +307,14 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
             " bottom=" + std::to_string(outputBottom_) + " localX=" + std::to_string(localX) + " localY=" + std::to_string(localY)
         );
 
-        duplication_->ReleaseFrame();
-        Shutdown();
-
-        return {};
+        return { {}, true };
     }
 
     const cv::Rect source =
         ToTexturePixels(cv::Rect(localX, localY, region.width, region.height), outputWidth, outputHeight, desktopDesc);
 
     if (source.empty())
-    {
-        duplication_->ReleaseFrame();
         return {};
-    }
 
     if (source.size() != region.size() && !loggedScaledDesktop_)
     {
@@ -314,62 +327,10 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
         );
     }
 
-    D3D11_TEXTURE2D_DESC stagingDesc{};
-    stagingDesc.Width = static_cast<UINT>(source.width);
-    stagingDesc.Height = static_cast<UINT>(source.height);
-    stagingDesc.MipLevels = 1;
-    stagingDesc.ArraySize = 1;
-    stagingDesc.Format = desktopDesc.Format;
-    stagingDesc.SampleDesc.Count = 1;
-    stagingDesc.SampleDesc.Quality = 0;
-    stagingDesc.Usage = D3D11_USAGE_STAGING;
-    stagingDesc.BindFlags = 0;
-    stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
-    stagingDesc.MiscFlags = 0;
+    const HRESULT staging = EnsureStagingTexture(source.size(), desktopDesc.Format);
 
-    if (!stagingTexture_ || stagingWidth_ != stagingDesc.Width || stagingHeight_ != stagingDesc.Height ||
-        stagingFormat_ != stagingDesc.Format)
-    {
-        stagingTexture_.Reset();
-
-        hr = device_->CreateTexture2D(&stagingDesc, nullptr, &stagingTexture_);
-
-        if (FAILED(hr))
-        {
-            char buf[256];
-            sprintf_s(
-                buf,
-                "CreateTexture2D failed: hr=0x%08X w=%u h=%u format=%u",
-                static_cast<unsigned>(hr),
-                stagingDesc.Width,
-                stagingDesc.Height,
-                stagingDesc.Format
-            );
-
-            LOG_ERROR(buf);
-
-            if (device_)
-            {
-                HRESULT reason = device_->GetDeviceRemovedReason();
-
-                char reasonBuf[128];
-                sprintf_s(reasonBuf, "Device removed reason: 0x%08X", static_cast<unsigned>(reason));
-
-                LOG_ERROR(reasonBuf);
-            }
-
-            duplication_->ReleaseFrame();
-
-            if (IsRecoverableDxgiError(hr))
-                Shutdown();
-
-            return {};
-        }
-
-        stagingWidth_ = stagingDesc.Width;
-        stagingHeight_ = stagingDesc.Height;
-        stagingFormat_ = stagingDesc.Format;
-    }
+    if (FAILED(staging))
+        return { {}, IsRecoverableDxgiError(staging) };
 
     D3D11_BOX srcBox{};
     srcBox.left = static_cast<UINT>(source.x);
@@ -383,35 +344,71 @@ cv::Mat ScreenCaptureWGC::CaptureRegion(const cv::Rect& region)
 
     D3D11_MAPPED_SUBRESOURCE mapped{};
 
-    hr = context_->Map(stagingTexture_.Get(), 0, D3D11_MAP_READ, 0, &mapped);
+    const HRESULT mapResult = context_->Map(stagingTexture_.Get(), 0, D3D11_MAP_READ, 0, &mapped);
+
+    if (FAILED(mapResult))
+    {
+        LogFailure("Map", mapResult);
+        return { {}, IsRecoverableDxgiError(mapResult) };
+    }
+
+    FrameCopy copy;
+
+    cv::Mat bgra(source.height, source.width, CV_8UC4, mapped.pData, mapped.RowPitch);
+    cv::cvtColor(bgra, copy.gray, cv::COLOR_BGRA2GRAY);
+
+    context_->Unmap(stagingTexture_.Get(), 0);
+
+    return copy;
+}
+
+HRESULT DesktopDuplication::EnsureStagingTexture(const cv::Size& size, DXGI_FORMAT format)
+{
+    D3D11_TEXTURE2D_DESC stagingDesc{};
+    stagingDesc.Width = static_cast<UINT>(size.width);
+    stagingDesc.Height = static_cast<UINT>(size.height);
+    stagingDesc.MipLevels = 1;
+    stagingDesc.ArraySize = 1;
+    stagingDesc.Format = format;
+    stagingDesc.SampleDesc.Count = 1;
+    stagingDesc.SampleDesc.Quality = 0;
+    stagingDesc.Usage = D3D11_USAGE_STAGING;
+    stagingDesc.BindFlags = 0;
+    stagingDesc.CPUAccessFlags = D3D11_CPU_ACCESS_READ;
+    stagingDesc.MiscFlags = 0;
+
+    if (stagingTexture_ && stagingWidth_ == stagingDesc.Width && stagingHeight_ == stagingDesc.Height &&
+        stagingFormat_ == stagingDesc.Format)
+        return S_OK;
+
+    stagingTexture_.Reset();
+
+    const HRESULT hr = device_->CreateTexture2D(&stagingDesc, nullptr, &stagingTexture_);
 
     if (FAILED(hr))
     {
-        char buf[128];
-        sprintf_s(buf, "Map failed: 0x%08X", static_cast<unsigned>(hr));
+        char buf[256];
+        sprintf_s(
+            buf,
+            "CreateTexture2D failed: hr=0x%08X w=%u h=%u format=%u",
+            static_cast<unsigned>(hr),
+            stagingDesc.Width,
+            stagingDesc.Height,
+            stagingDesc.Format
+        );
+
         LOG_ERROR(buf);
 
-        duplication_->ReleaseFrame();
+        char reason[128];
+        sprintf_s(reason, "Device removed reason: 0x%08X", static_cast<unsigned>(device_->GetDeviceRemovedReason()));
+        LOG_ERROR(reason);
 
-        if (IsRecoverableDxgiError(hr))
-            Shutdown();
-
-        return {};
+        return hr;
     }
 
-    cv::Mat bgra(source.height, source.width, CV_8UC4, mapped.pData, mapped.RowPitch);
+    stagingWidth_ = stagingDesc.Width;
+    stagingHeight_ = stagingDesc.Height;
+    stagingFormat_ = stagingDesc.Format;
 
-    cv::Mat result;
-    cv::cvtColor(bgra, result, cv::COLOR_BGRA2GRAY);
-
-    context_->Unmap(stagingTexture_.Get(), 0);
-    duplication_->ReleaseFrame();
-
-    if (result.size() != region.size())
-        cv::resize(result, result, region.size(), 0, 0, cv::INTER_AREA);
-
-    lastFrame_ = result;
-    lastFrameRegion_ = region;
-
-    return result;
+    return S_OK;
 }

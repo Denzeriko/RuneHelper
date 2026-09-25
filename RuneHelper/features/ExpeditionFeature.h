@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -23,6 +24,13 @@ struct ExpeditionTabRow
     double perWave = 0.0;
 };
 
+struct ScreenRecipe
+{
+    const Recipe* recipe = nullptr;
+    std::size_t rowIndex = 0;
+    double perWave = 0.0;
+};
+
 class ExpeditionFeature : public Feature
 {
 public:
@@ -42,8 +50,16 @@ public:
 
 private:
     std::string DataStatus() const;
-    void SaveSettings();
+    void StoreSettings();
+
+    void HighlightRareRunes(FrameContext& frame, const std::vector<ScreenRecipe>& found);
+    void ForgetMarks();
+
+    void DrawAdvisorSettings();
+    void RefreshTabRows(const UIManager& manager);
     void RebuildTabRows(const DebugData& debug);
+    void DrawPlacedRunes() const;
+    void DrawRecipeTable() const;
 
     ConfigManager* configManager_ = nullptr;
     ExpeditionSettings settings_;

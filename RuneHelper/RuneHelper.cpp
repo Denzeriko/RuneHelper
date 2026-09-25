@@ -4,10 +4,7 @@
 #include "platform/linux/LinuxHotkeys.h"
 #endif
 
-#include <exception>
-#include <string>
-
-#include "core/Logger.h"
+#include "core/ExceptionLogging.h"
 #include "core/RuneHelperApp.h"
 
 namespace
@@ -30,7 +27,7 @@ void UsePhysicalPixels()
 }
 #endif
 
-int RunGuarded(int argc, char** argv)
+int RunClientOrApp(int argc, char** argv)
 {
 #ifndef _WIN32
     const int clientResult = RunLinuxHotkeyClient(argc, argv);
@@ -46,22 +43,11 @@ int RunGuarded(int argc, char** argv)
     return app.Run();
 }
 
-int RunCatching(int argc, char** argv)
+int Run(int argc, char** argv)
 {
-    try
-    {
-        return RunGuarded(argc, argv);
-    }
-    catch (const std::exception& error)
-    {
-        LOG_ERROR(std::string("Unhandled exception: ") + error.what());
-    }
-    catch (...)
-    {
-        LOG_ERROR("Unhandled exception of unknown type");
-    }
-
-    return 1;
+    int result = 1;
+    RunLoggingExceptions("RuneHelper", [&] { result = RunClientOrApp(argc, argv); });
+    return result;
 }
 }
 
@@ -69,11 +55,11 @@ int RunCatching(int argc, char** argv)
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int)
 {
     UsePhysicalPixels();
-    return RunCatching(0, nullptr);
+    return Run(0, nullptr);
 }
 #else
 int main(int argc, char** argv)
 {
-    return RunCatching(argc, argv);
+    return Run(argc, argv);
 }
 #endif

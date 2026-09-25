@@ -55,23 +55,19 @@ public:
 
     virtual std::string Name() const = 0;
 
-    virtual bool Init(ConfigManager& configManager)
-    {
-        (void)configManager;
-        return true;
-    }
+    virtual bool Init(ConfigManager&) { return true; }
 
     virtual void Shutdown() {}
 
     virtual void OnRegionChanged() {}
 
-    virtual void OnFrame(FrameContext& frame) { (void)frame; }
+    virtual void OnFrame(FrameContext&) {}
 
-    virtual void DrawMainControls(UIManager& manager) { (void)manager; }
+    virtual void DrawMainControls(UIManager&) {}
 
     virtual const char* TabTitle() const { return nullptr; }
 
-    virtual void DrawTab(UIManager& manager) { (void)manager; }
+    virtual void DrawTab(UIManager&) {}
 };
 
 class FeatureRegistry

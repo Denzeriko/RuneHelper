@@ -5,7 +5,6 @@ Usage:
     pip install requests beautifulsoup4
     python tools/scrape_poe2db.py                       # writes RuneHelper/resources/combinations.json
     python tools/scrape_poe2db.py -o out.json           # custom output path
-    python tools/scrape_poe2db.py --icons DIR           # also download rune icons (needs pillow)
     python tools/scrape_poe2db.py --dump-html page.html # also save raw HTML for debugging
     python tools/scrape_poe2db.py --from-html page.html # parse a saved HTML file instead of fetching
     python tools/scrape_poe2db.py --dump-localized DIR  # also save the localized pages and trade data
@@ -41,20 +40,12 @@ Page structure (verified 2026-07-27):
     is Gasp). The href is authoritative, the filename is not.
   - Rare runes use the RemnantRareRune prefix instead. That set goes into
     combinations.json as "rareRunes" and drives the overlay highlight.
-
-Rune icons are only downloaded when --icons is given; nothing in RuneHelper
-needs them, because a combination is identified by its output name and stack
-count alone. poe2db serves the art as a bright glyph on transparency while the
-game draws dark ink on parchment, so the icons are composited on black and
-inverted to match the screen.
 """
 
 from __future__ import annotations
 
 import argparse
 import datetime as _dt
-import hashlib
-import io
 import json
 import re
 import sys
@@ -181,9 +172,6 @@ def parse_entry(entry) -> dict | None:
     }
 
 
-ICON_PREFIX = "shape_"
-
-
 def parse_rare_runes(soup) -> list[str]:
     rare: set[str] = set()
 
@@ -199,53 +187,6 @@ def parse_rare_runes(soup) -> list[str]:
             rare.add(m.group(1).replace("_", " "))
 
     return sorted(rare)
-
-
-def parse_icons(soup) -> dict[str, str]:
-    icons: dict[str, str] = {}
-    for a in soup.find_all("a", href=True):
-        href = a["href"].split("?")[0].split("#")[0]
-        m = RUNE_HREF.match(href)
-        if not m:
-            continue
-        img = a.find("img", src=True)
-        if img is None:
-            continue
-        icons.setdefault(m.group(1).replace("_", " "), img["src"])
-    return icons
-
-
-def download_icons(icons: dict[str, str], order: list[str], dest: Path) -> tuple[list[str], list[str]]:
-    import requests
-    from PIL import Image
-
-    dest.mkdir(parents=True, exist_ok=True)
-    session = requests.Session()
-    session.headers["User-Agent"] = UA
-    session.headers["Referer"] = URL
-
-    digests: dict[bytes, str] = {}
-    skipped: list[str] = []
-    written: list[str] = []
-
-    for rune in order:
-        resp = session.get(icons[rune], timeout=30)
-        resp.raise_for_status()
-
-        key = hashlib.sha256(resp.content).digest()
-        if key in digests:
-            skipped.append(f"{rune} shares artwork with {digests[key]} and gets no template")
-            continue
-
-        digests[key] = rune
-
-        image = Image.open(io.BytesIO(resp.content)).convert("RGBA")
-        onBlack = Image.alpha_composite(Image.new("RGBA", image.size, (0, 0, 0, 255)), image)
-        ink = onBlack.convert("L").point(lambda v: 255 - v)
-        ink.save(dest / f"{ICON_PREFIX}{rune.replace(' ', '_')}.png", "PNG", optimize=True)
-        written.append(rune)
-
-    return written, skipped
 
 
 def make_soup(html: str):
@@ -408,7 +349,6 @@ def main() -> int:
     ap.add_argument("--from-html", default=None)
     ap.add_argument("--dump-localized", default=None)
     ap.add_argument("--from-localized", default=None)
-    ap.add_argument("--icons", default=None)
     args = ap.parse_args()
 
     html = Path(args.from_html).read_text(encoding="utf-8") if args.from_html else fetch_html(URL, args.dump_html)
@@ -464,34 +404,6 @@ def main() -> int:
     print(f"rare runes: {len(doc['rareRunes'])}")
     print("per category:", json.dumps(by_cat, indent=2))
     print("sanity-check these against the page header counts (e.g. 'Currency /92').")
-
-    if not args.icons:
-        return 0
-
-    icons = parse_icons(soup)
-    used = {rune for c in combos for rune in c["runes"]}
-    absent = sorted(used - set(icons))
-
-    if absent:
-        print(f"ERROR: no icon found for {len(absent)} runes: {', '.join(absent)}", file=sys.stderr)
-        return 1
-
-    recipe_count: dict[str, int] = {}
-    for c in combos:
-        for rune in set(c["runes"]):
-            recipe_count[rune] = recipe_count.get(rune, 0) + 1
-
-    order = sorted(used, key=lambda r: (-recipe_count.get(r, 0), r))
-    written, skipped = download_icons({r: icons[r] for r in used}, order, Path(args.icons))
-
-    for stale in Path(args.icons).glob(f"{ICON_PREFIX}*.png"):
-        if stale.stem[len(ICON_PREFIX):].replace("_", " ") not in written:
-            stale.unlink()
-
-    print(f"wrote {len(written)} runeshape icons to {args.icons}")
-
-    for note in skipped:
-        print(f"WARNING: {note}", file=sys.stderr)
 
     return 0
 

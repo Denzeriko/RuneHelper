@@ -22,6 +22,7 @@
 #endif
 
 #include "core/Logger.h"
+#include "core/Text.h"
 
 namespace
 {
@@ -105,7 +106,9 @@ std::filesystem::path ScanForFont(const std::filesystem::path& root)
     return {};
 }
 
-std::filesystem::path FindFont()
+}
+
+std::filesystem::path FindSystemFont()
 {
     if (const char* fromEnv = std::getenv("RUNEHELPER_OVERLAY_FONT"); fromEnv && *fromEnv)
     {
@@ -148,49 +151,70 @@ std::filesystem::path FindFont()
 #endif
 }
 
-std::vector<std::uint32_t> DecodeUtf8(const std::string& text)
+namespace
 {
-    std::vector<std::uint32_t> points;
-    points.reserve(text.size());
+struct Glyph
+{
+    std::vector<unsigned char> coverage;
+    int width = 0;
+    int height = 0;
+    int left = 0;
+    int top = 0;
+    int advance = 0;
+};
 
-    for (std::size_t i = 0; i < text.size();)
+void BlendPixel(unsigned char* pixel, float alpha, const cv::Scalar& tint)
+{
+    const float keep = 1.0f - alpha;
+
+    for (int channel = 0; channel < 3; ++channel)
     {
-        const unsigned char lead = static_cast<unsigned char>(text[i]);
-        std::uint32_t point = lead;
-        std::size_t extra = 0;
-
-        if (lead >= 0xF0)
-        {
-            point = lead & 0x07u;
-            extra = 3;
-        }
-        else if (lead >= 0xE0)
-        {
-            point = lead & 0x0Fu;
-            extra = 2;
-        }
-        else if (lead >= 0xC0)
-        {
-            point = lead & 0x1Fu;
-            extra = 1;
-        }
-        else if (lead >= 0x80)
-        {
-            ++i;
-            continue;
-        }
-
-        if (i + extra >= text.size())
-            break;
-
-        for (std::size_t k = 1; k <= extra; ++k)
-            point = (point << 6) | (static_cast<unsigned char>(text[i + k]) & 0x3Fu);
-
-        points.push_back(point);
-        i += extra + 1;
+        const float premultiplied = static_cast<float>(tint[channel]) * alpha;
+        pixel[channel] = static_cast<unsigned char>(std::lround(premultiplied + pixel[channel] * keep));
     }
 
-    return points;
+    pixel[3] = static_cast<unsigned char>(std::lround(255.0f * alpha + pixel[3] * keep));
+}
+
+void BlendGlyph(cv::Mat& canvas, const Glyph& glyph, int penX, int penY, const cv::Scalar& tint)
+{
+    if (glyph.coverage.empty())
+        return;
+
+    for (int row = 0; row < glyph.height; ++row)
+    {
+        const int y = penY + glyph.top + row;
+
+        if (y < 0 || y >= canvas.rows)
+            continue;
+
+        unsigned char* line = canvas.ptr<unsigned char>(y);
+        const unsigned char* source = glyph.coverage.data() + static_cast<std::size_t>(row) * glyph.width;
+
+        for (int column = 0; column < glyph.width; ++column)
+        {
+            const int x = penX + glyph.left + column;
+
+            if (x < 0 || x >= canvas.cols || source[column] == 0)
+                continue;
+
+            BlendPixel(line + static_cast<std::size_t>(x) * 4, source[column] / 255.0f, tint);
+        }
+    }
+}
+
+void BlendOutline(cv::Mat& canvas, const Glyph& glyph, int penX, int penY)
+{
+    const cv::Scalar black(0, 0, 0, 255);
+
+    for (int dy = -1; dy <= 1; ++dy)
+    {
+        for (int dx = -1; dx <= 1; ++dx)
+        {
+            if (dx != 0 || dy != 0)
+                BlendGlyph(canvas, glyph, penX + dx, penY + dy, black);
+        }
+    }
 }
 }
 
@@ -200,17 +224,7 @@ struct TextRaster::Impl
     stbtt_fontinfo info{};
     bool ready = false;
 
-    struct Glyph
-    {
-        std::vector<unsigned char> coverage;
-        int width = 0;
-        int height = 0;
-        int left = 0;
-        int top = 0;
-        int advance = 0;
-    };
-
-    std::map<std::pair<int, std::uint32_t>, Glyph> glyphs;
+    std::map<std::pair<int, char32_t>, Glyph> glyphs;
 
     float capRatio = 0.0f;
 
@@ -234,7 +248,7 @@ struct TextRaster::Impl
         return stbtt_ScaleForPixelHeight(&info, static_cast<float>(pixelHeight) / capRatio);
     }
 
-    const Glyph& GetGlyph(std::uint32_t codepoint, int pixelHeight)
+    const Glyph& GetGlyph(char32_t codepoint, int pixelHeight)
     {
         const auto key = std::make_pair(pixelHeight, codepoint);
         const auto it = glyphs.find(key);
@@ -280,6 +294,13 @@ struct TextRaster::Impl
         return glyphs.emplace(key, std::move(glyph)).first->second;
     }
 
+    int Kerning(char32_t first, char32_t second, float scale)
+    {
+        const int kern = stbtt_GetCodepointKernAdvance(&info, static_cast<int>(first), static_cast<int>(second));
+
+        return static_cast<int>(std::lround(kern * scale));
+    }
+
     void VerticalMetrics(int pixelHeight, int& ascentPixels, int& descentPixels)
     {
         int ascent = 0;
@@ -296,11 +317,11 @@ struct TextRaster::Impl
 
 TextRaster::TextRaster() : impl_(std::make_unique<Impl>())
 {
-    const std::filesystem::path path = FindFont();
+    const std::filesystem::path path = FindSystemFont();
 
     if (path.empty())
     {
-        LOG_ERROR("Overlay text falls back to the stroke font: no TrueType font was found under /usr/share/fonts");
+        LOG_ERROR("Overlay text falls back to the stroke font: no TrueType font was found in the system font folders");
         return;
     }
 
@@ -357,7 +378,7 @@ cv::Size TextRaster::Measure(const std::string& utf8, int pixelHeight)
 
     const int height = std::clamp(pixelHeight, kMinPixelHeight, kMaxPixelHeight);
     const float scale = impl_->ScaleFor(height);
-    const std::vector<std::uint32_t> points = DecodeUtf8(utf8);
+    const std::u32string points = DecodeUtf8(utf8);
 
     int width = 0;
 
@@ -366,11 +387,7 @@ cv::Size TextRaster::Measure(const std::string& utf8, int pixelHeight)
         width += impl_->GetGlyph(points[i], height).advance;
 
         if (i + 1 < points.size())
-        {
-            const int kern = stbtt_GetCodepointKernAdvance(&impl_->info, static_cast<int>(points[i]), static_cast<int>(points[i + 1]));
-
-            width += static_cast<int>(std::lround(kern * scale));
-        }
+            width += impl_->Kerning(points[i], points[i + 1], scale);
     }
 
     int ascent = 0;
@@ -394,84 +411,22 @@ void TextRaster::Draw(
 
     const int height = std::clamp(pixelHeight, kMinPixelHeight, kMaxPixelHeight);
     const float scale = impl_->ScaleFor(height);
-    const std::vector<std::uint32_t> points = DecodeUtf8(utf8);
-
-    auto blit = [&canvas](const Impl::Glyph& glyph, int penX, int penY, const cv::Scalar& tint)
-    {
-        for (int row = 0; row < glyph.height; ++row)
-        {
-            const int y = penY + glyph.top + row;
-
-            if (y < 0 || y >= canvas.rows)
-                continue;
-
-            unsigned char* line = canvas.ptr<unsigned char>(y);
-            const unsigned char* source = glyph.coverage.data() + static_cast<std::size_t>(row) * glyph.width;
-
-            for (int column = 0; column < glyph.width; ++column)
-            {
-                const int x = penX + glyph.left + column;
-
-                if (x < 0 || x >= canvas.cols)
-                    continue;
-
-                const int coverage = source[column];
-
-                if (coverage == 0)
-                    continue;
-
-                const float alpha = coverage / 255.0f;
-                const float keep = 1.0f - alpha;
-                unsigned char* pixel = line + static_cast<std::size_t>(x) * 4;
-
-                for (int channel = 0; channel < 3; ++channel)
-                {
-                    const float premultiplied = static_cast<float>(tint[channel]) * alpha;
-                    pixel[channel] = static_cast<unsigned char>(std::lround(premultiplied + pixel[channel] * keep));
-                }
-
-                pixel[3] = static_cast<unsigned char>(std::lround(255.0f * alpha + pixel[3] * keep));
-            }
-        }
-    };
-
-    const cv::Scalar black(0, 0, 0, 255);
+    const std::u32string points = DecodeUtf8(utf8);
 
     int pen = baseline.x;
 
     for (std::size_t i = 0; i < points.size(); ++i)
     {
-        const Impl::Glyph& glyph = impl_->GetGlyph(points[i], height);
+        const Glyph& glyph = impl_->GetGlyph(points[i], height);
 
-        if (!glyph.coverage.empty())
-        {
-            if (outline)
-            {
-                for (int dy = -1; dy <= 1; ++dy)
-                {
-                    for (int dx = -1; dx <= 1; ++dx)
-                    {
-                        if (dx != 0 || dy != 0)
-                            blit(glyph, pen + dx, baseline.y + dy, black);
-                    }
-                }
-            }
+        if (outline)
+            BlendOutline(canvas, glyph, pen, baseline.y);
 
-            blit(glyph, pen, baseline.y, color);
-        }
+        BlendGlyph(canvas, glyph, pen, baseline.y, color);
 
         pen += glyph.advance;
 
         if (i + 1 < points.size())
-        {
-            const int kern = stbtt_GetCodepointKernAdvance(&impl_->info, static_cast<int>(points[i]), static_cast<int>(points[i + 1]));
-
-            pen += static_cast<int>(std::lround(kern * scale));
-        }
+            pen += impl_->Kerning(points[i], points[i + 1], scale);
     }
-}
-
-std::filesystem::path FindSystemFont()
-{
-    return FindFont();
 }

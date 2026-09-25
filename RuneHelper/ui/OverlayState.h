@@ -78,10 +78,7 @@ struct OverlayFrame
 struct OverlayState
 {
     bool running = false;
-    bool visible = true;
     bool previewEnabled = false;
-    bool clickThrough = true;
-    bool alwaysOnTop = true;
 
     OverlayRect previewRect{};
     std::vector<OverlayMark> marks;

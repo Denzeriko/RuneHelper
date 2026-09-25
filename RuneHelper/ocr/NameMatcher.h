@@ -20,11 +20,11 @@ struct NameAlias
     std::string alias;
 };
 
-class CachedItemNames
+class NameMatcher
 {
 public:
-    static CachedItemNames Build(const std::vector<std::string>& names);
-    static CachedItemNames Build(const std::vector<NameAlias>& aliases);
+    static NameMatcher Build(const std::vector<std::string>& names);
+    static NameMatcher Build(const std::vector<NameAlias>& aliases);
 
     bool Empty() const;
     std::size_t Size() const;

@@ -61,7 +61,7 @@ void ConfigureSession(cpr::Session& session, const std::stop_token& stop)
 
 bool Fetch(cpr::Session& session, const std::string& url, std::string& body, const std::stop_token& stop)
 {
-    LOG_INFO("PoeNinjaPriceProvider::DownloadCategory() -> " + url);
+    LOG_INFO("PoeNinjaPriceProvider::Fetch() -> " + url);
 
     session.SetUrl(cpr::Url{ url });
 
@@ -70,9 +70,7 @@ bool Fetch(cpr::Session& session, const std::string& url, std::string& body, con
     if (stop.stop_requested())
         return false;
 
-    LOG_INFO(
-        "PoeNinjaPriceProvider::DownloadCategory() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size())
-    );
+    LOG_INFO("PoeNinjaPriceProvider::Fetch() HTTP: " + std::to_string(r.status_code) + " bytes=" + std::to_string(r.text.size()));
 
     if (r.error.code != cpr::ErrorCode::OK)
     {

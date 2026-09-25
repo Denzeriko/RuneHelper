@@ -8,32 +8,18 @@
 #include <string>
 #include <string_view>
 
+#include "core/Text.h"
+
 namespace
 {
 constexpr std::string_view kCyrillicSmallHa = "\xD1\x85";
 constexpr std::string_view kCyrillicCapitalHa = "\xD0\xA5";
 constexpr std::size_t kMaxQuantityDigits = 3;
 
-std::size_t CodePoints(std::string_view text)
-{
-    std::size_t count = 0;
-
-    for (unsigned char ch : text)
-    {
-        if ((ch & 0xC0) != 0x80)
-            ++count;
-    }
-
-    return count;
-}
-
 bool CanBeWholeWord(std::string_view character)
 {
-    if (character.size() != 3)
-        return false;
-
-    const char32_t c = ((static_cast<unsigned char>(character[0]) & 0x0Fu) << 12) |
-                       ((static_cast<unsigned char>(character[1]) & 0x3Fu) << 6) | (static_cast<unsigned char>(character[2]) & 0x3Fu);
+    std::size_t i = 0;
+    const char32_t c = DecodeUtf8(character, i);
 
     return (c >= 0x0E00 && c <= 0x0E7F) || (c >= 0x3040 && c <= 0x30FF) || (c >= 0x3400 && c <= 0x9FFF) ||
            (c >= 0xAC00 && c <= 0xD7A3);
@@ -193,7 +179,7 @@ std::string StripTrailingNoise(std::string name)
     {
         const std::string_view last = std::string_view(name).substr(lastSpace + 1);
 
-        if (CodePoints(last) == 1 && !CanBeWholeWord(last))
+        if (CountCodePoints(last) == 1 && !CanBeWholeWord(last))
             name.erase(lastSpace);
     }
 

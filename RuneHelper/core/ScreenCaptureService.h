@@ -3,7 +3,7 @@
 #include <opencv2/core.hpp>
 
 #ifdef _WIN32
-#include "platform/windows/ScreenCaptureDXGI.h"
+#include "platform/windows/DesktopDuplication.h"
 #endif
 
 class ScreenCaptureService
@@ -15,6 +15,6 @@ public:
 
 private:
 #ifdef _WIN32
-    ScreenCaptureWGC wgcCapture_;
+    DesktopDuplication desktopDuplication_;
 #endif
 };

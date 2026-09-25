@@ -28,7 +28,6 @@ class OCR
 {
 public:
     OCR() = default;
-    ~OCR() = default;
 
     OCR(const OCR&) = delete;
     OCR& operator=(const OCR&) = delete;
@@ -36,7 +35,6 @@ public:
     bool Init(std::string_view model);
 
     std::vector<LootLine> RecognizeLoot(const cv::Mat& source, OcrRowCache* rowCache = nullptr, bool saveDebug = false);
-    std::vector<LootLine> RecognizeTextOnly(const cv::Mat& textGray, const std::filesystem::path& debugPath = {}) const;
 
 private:
     void ReportPreparation(bool scaled, bool normalized, int sourceWidth, int readWidth, double p50, double p95);
@@ -50,6 +48,4 @@ private:
     LineReader reader_;
     std::size_t workers_ = 1;
     std::mutex mutex_;
-
-    static void Trim(std::string& s);
 };

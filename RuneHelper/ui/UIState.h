@@ -2,33 +2,31 @@
 
 #include <cstddef>
 
+#include "core/OcrState.h"
+
+struct UIRequests
+{
+    bool selectRegion = false;
+    bool refreshPrices = false;
+    bool toggleOcr = false;
+    bool singleSnapshot = false;
+    bool saveOcrDebug = false;
+    bool registerHotkeys = false;
+};
+
 struct UIState
 {
     bool running = false;
 
-    bool ocrInitializing = false;
-    bool ocrReady = false;
-    bool ocrFailed = false;
-
+    OcrStatus ocr;
     bool overlayAvailable = true;
-    bool captureFailing = false;
+    bool priceDownloading = false;
+    std::size_t priceCount = 0;
 
-    bool wantsSelectRegion = false;
-    bool wantsRefreshPrices = false;
-    bool wantsToggleOCR = false;
-    bool wantsSingleSnapshot = false;
-    bool wantsOcrDebug = false;
-    bool wantsRegisterHotkeys = false;
-
+    UIRequests requests;
     bool regionHovered = false;
     bool debugTabOpen = false;
     bool featureTabOpen = false;
-
-    bool configSavePending = false;
-    double configSaveAt = 0.0;
-
-    bool priceDownloading = false;
-    size_t priceCount = 0;
 
     int* waitingForHotkey = nullptr;
     bool hotkeyCaptureSkipFrame = false;

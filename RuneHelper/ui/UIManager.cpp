@@ -1,57 +1,43 @@
 #include "ui/UIManager.h"
 
-#include <mutex>
 #include <utility>
 
-#include "core/Logger.h"
-
+#include "core/ConfigManager.h"
 #include "platform/UIBackend.h"
 #include "ui/UIDraw.h"
 
-UIManager::UIManager() : backend_(std::make_unique<UIBackend>()) {}
+UIManager::UIManager(ConfigManager& config, const UpdateChecker& updates, FeatureRegistry& features)
+    : config_(config), updates_(updates), features_(features), backend_(std::make_unique<UIBackend>())
+{
+}
 
 UIManager::~UIManager()
 {
     Shutdown();
 }
 
-bool UIManager::Init(ConfigManager* configManager)
+bool UIManager::Init()
 {
-    configManager_ = configManager;
-
-    if (configManager_)
-        configDraft_ = configManager_->Snapshot();
-
-    state_.running = backend_ && backend_->Init(this);
+    configDraft_ = config_.Snapshot();
+    state_.running = backend_->Init(this);
     return state_.running;
 }
 
 void UIManager::Shutdown()
 {
-    FlushPendingConfigSave();
-
     state_.running = false;
-
-    if (backend_)
-        backend_->Shutdown();
+    backend_->Shutdown();
 }
 
 void UIManager::Pump()
 {
-    if (!backend_)
-    {
-        state_.running = false;
-        return;
-    }
-
     if (!backend_->BeginFrame())
     {
         state_.running = backend_->IsRunning();
         return;
     }
 
-    if (configManager_)
-        configDraft_ = configManager_->Snapshot();
+    configDraft_ = config_.Snapshot();
 
     UIDraw::Draw(*this);
     backend_->EndFrame();
@@ -59,154 +45,14 @@ void UIManager::Pump()
 
 bool UIManager::IsRunning() const
 {
-    return state_.running && backend_ && backend_->IsRunning();
-}
-
-void UIManager::SetStatus(bool ocrInitializing, bool ocrReady, bool ocrFailed)
-{
-    state_.ocrInitializing = ocrInitializing;
-    state_.ocrReady = ocrReady;
-    state_.ocrFailed = ocrFailed;
-}
-
-void UIManager::SetFeatures(FeatureRegistry* features)
-{
-    features_ = features;
-}
-
-FeatureRegistry* UIManager::Features() const
-{
-    return features_;
-}
-
-void UIManager::SetOverlayAvailable(bool available)
-{
-    state_.overlayAvailable = available;
-}
-
-void UIManager::SetCaptureFailing(bool failing)
-{
-    state_.captureFailing = failing;
-}
-
-void UIManager::SetPriceStatus(bool downloading, size_t priceCount)
-{
-    state_.priceDownloading = downloading;
-    state_.priceCount = priceCount;
-}
-
-void UIManager::SetUpdateChecker(UpdateChecker* checker)
-{
-    updateChecker_ = checker;
-}
-
-bool UIManager::IsCheckingForUpdate() const
-{
-    return updateChecker_ && updateChecker_->IsChecking();
-}
-
-bool UIManager::HasUpdate() const
-{
-    return updateChecker_ && updateChecker_->HasUpdate();
-}
-
-std::string UIManager::UpdateDownloadUrl() const
-{
-    return updateChecker_ ? updateChecker_->DownloadUrl() : "";
-}
-
-bool UIManager::HasConfig() const
-{
-    return configManager_ != nullptr;
-}
-
-AppConfig& UIManager::ConfigDraft()
-{
-    return configDraft_;
+    return state_.running && backend_->IsRunning();
 }
 
 void UIManager::ApplyConfigDraft()
 {
-    if (!configManager_)
-        return;
+    config_.Update([this](AppConfig& config) { config = configDraft_; });
 
-    configManager_->Update([this](AppConfig& config) { config = configDraft_; });
-
-    configDraft_ = configManager_->Snapshot();
-}
-
-UIState& UIManager::State()
-{
-    return state_;
-}
-
-bool UIManager::WantsSelectRegion()
-{
-    return std::exchange(state_.wantsSelectRegion, false);
-}
-
-bool UIManager::WantsRefreshPrices()
-{
-    return std::exchange(state_.wantsRefreshPrices, false);
-}
-
-bool UIManager::WantsToggleOCR()
-{
-    return std::exchange(state_.wantsToggleOCR, false);
-}
-
-bool UIManager::WantsSingleSnapshot()
-{
-    return std::exchange(state_.wantsSingleSnapshot, false);
-}
-
-bool UIManager::WantsOcrDebug()
-{
-    return std::exchange(state_.wantsOcrDebug, false);
-}
-
-bool UIManager::WantsRegisterHotkeys()
-{
-    return std::exchange(state_.wantsRegisterHotkeys, false);
-}
-
-bool UIManager::IsRegionHovered() const
-{
-    return state_.regionHovered;
-}
-
-std::string UIManager::HotkeyToString(int key) const
-{
-    if (!backend_)
-        return "None";
-
-    return backend_->HotkeyToString(key);
-}
-
-bool UIManager::CaptureNextHotkey(int& key)
-{
-    return backend_ && backend_->CaptureNextHotkey(key);
-}
-
-bool UIManager::SaveConfig()
-{
-    return configManager_ && configManager_->Save();
-}
-
-void UIManager::RegisterHotkeys()
-{
-    if (backend_ && configManager_)
-    {
-        const AppConfig config = configManager_->Snapshot();
-
-        backend_->RegisterHotkeys(config.hotkeyToggleOCR, config.hotkeySingleSnapshot, config.hotkeySelectRegion);
-    }
-}
-
-void UIManager::UnregisterHotkeys()
-{
-    if (backend_)
-        backend_->UnregisterHotkeys();
+    configDraft_ = config_.Snapshot();
 }
 
 void UIManager::SetDebugData(DebugData data)
@@ -215,67 +61,35 @@ void UIManager::SetDebugData(DebugData data)
     ++debugDataVersion_;
 }
 
-std::uint64_t UIManager::DebugDataVersion() const
+std::string UIManager::HotkeyToString(int key) const
 {
-    return debugDataVersion_;
+    return backend_->HotkeyToString(key);
 }
 
-const DebugData& UIManager::GetDebugData() const
+bool UIManager::CaptureNextHotkey(int& key)
 {
-    return debugData_;
+    return backend_->CaptureNextHotkey(key);
 }
 
-bool UIManager::NeedsDebugData() const
+void UIManager::RegisterHotkeys()
 {
-    return state_.debugTabOpen || state_.featureTabOpen;
+    const AppConfig config = config_.Snapshot();
+
+    backend_->RegisterHotkeys(config.hotkeyToggleOCR, config.hotkeySingleSnapshot, config.hotkeySelectRegion);
 }
 
-void UIManager::FlushPendingConfigSave()
+void UIManager::UnregisterHotkeys()
 {
-    if (!state_.configSavePending || !configManager_)
-        return;
-
-    state_.configSavePending = false;
-
-    if (!configManager_->Save())
-        LOG_ERROR("UI failed to save pending config");
+    backend_->UnregisterHotkeys();
 }
 
-void UIManager::RequestToggleOCR()
+void UIManager::Minimize()
 {
-    state_.wantsToggleOCR = true;
+    backend_->Minimize();
 }
 
-void UIManager::RequestSingleSnapshot()
-{
-    state_.wantsSingleSnapshot = true;
-}
-
-void UIManager::RequestOcrDebug()
-{
-    state_.wantsOcrDebug = true;
-}
-
-void UIManager::RequestSelectRegion()
-{
-    state_.wantsSelectRegion = true;
-}
-
-void UIManager::RequestRegisterHotkeys()
-{
-    state_.wantsRegisterHotkeys = true;
-}
-
-void UIManager::RequestMinimize()
-{
-    if (backend_)
-        backend_->Minimize();
-}
-
-void UIManager::RequestExit()
+void UIManager::Exit()
 {
     state_.running = false;
-
-    if (backend_)
-        backend_->RequestClose();
+    backend_->RequestClose();
 }

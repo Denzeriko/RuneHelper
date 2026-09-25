@@ -118,24 +118,21 @@ const char* SpecialKeyName(int key)
 
 void UIBackend::Impl::DispatchHotkeyAction(HotkeyAction action)
 {
-    if (!manager)
-        return;
+    UIRequests& requests = manager->State().requests;
 
     switch (action)
     {
-    case HotkeyAction::ToggleOcr: manager->RequestToggleOCR(); break;
-    case HotkeyAction::SingleSnapshot: manager->RequestSingleSnapshot(); break;
-    case HotkeyAction::SelectRegion: manager->RequestSelectRegion(); break;
+    case HotkeyAction::ToggleOcr: requests.toggleOcr = true; break;
+    case HotkeyAction::SingleSnapshot: requests.singleSnapshot = true; break;
+    case HotkeyAction::SelectRegion: requests.selectRegion = true; break;
     }
 }
 
-UIBackend::UIBackend() : impl_(new Impl()) {}
+UIBackend::UIBackend() : impl_(std::make_unique<Impl>()) {}
 
 UIBackend::~UIBackend()
 {
     Shutdown();
-    delete impl_;
-    impl_ = nullptr;
 }
 
 bool UIBackend::Init(UIManager* manager)
@@ -213,9 +210,6 @@ bool UIBackend::Init(UIManager* manager)
 
 void UIBackend::Shutdown()
 {
-    if (!impl_)
-        return;
-
     impl_->running = false;
 
     UnregisterHotkeys();
@@ -244,7 +238,7 @@ void UIBackend::Shutdown()
 
 bool UIBackend::BeginFrame()
 {
-    if (!impl_ || !impl_->running || !impl_->window)
+    if (!impl_->running || !impl_->window)
         return false;
 
     glfwPollEvents();
@@ -278,7 +272,7 @@ bool UIBackend::BeginFrame()
 
 void UIBackend::EndFrame()
 {
-    if (!impl_ || !impl_->window)
+    if (!impl_->window)
         return;
 
     ImGui::Render();
@@ -296,20 +290,17 @@ void UIBackend::EndFrame()
 
 bool UIBackend::IsRunning() const
 {
-    return impl_ && impl_->running;
+    return impl_->running;
 }
 
 void UIBackend::Minimize()
 {
-    if (impl_ && impl_->window)
+    if (impl_->window)
         glfwIconifyWindow(impl_->window);
 }
 
 void UIBackend::RequestClose()
 {
-    if (!impl_)
-        return;
-
     impl_->running = false;
 
     if (impl_->window)
@@ -336,7 +327,7 @@ std::string UIBackend::HotkeyToString(int key) const
 
 bool UIBackend::CaptureNextHotkey(int& key)
 {
-    if (!impl_ || !impl_->window)
+    if (!impl_->window)
         return false;
 
     if (glfwGetKey(impl_->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -362,7 +353,7 @@ bool UIBackend::CaptureNextHotkey(int& key)
 
 void UIBackend::RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int selectRegionKey)
 {
-    if (!impl_ || !impl_->hotkeys)
+    if (!impl_->hotkeys)
         return;
 
     impl_->hotkeys->Register(toggleOcrKey, singleSnapshotKey, selectRegionKey);
@@ -370,7 +361,7 @@ void UIBackend::RegisterHotkeys(int toggleOcrKey, int singleSnapshotKey, int sel
 
 void UIBackend::UnregisterHotkeys()
 {
-    if (!impl_ || !impl_->hotkeys)
+    if (!impl_->hotkeys)
         return;
 
     impl_->hotkeys->Unregister();

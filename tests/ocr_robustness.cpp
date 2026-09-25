@@ -12,7 +12,7 @@
 
 #include "OcrScoring.h"
 #include "TestScenes.h"
-#include "ocr/NameNormalizer.h"
+#include "ocr/NameMatcher.h"
 #include "ocr/OCR.h"
 #include "platform/linux/ResourceHelper.h"
 
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
     const std::vector<std::string> vocabularyNames = LoadVocabulary(combinations);
     const std::set<std::string> knownNames(vocabularyNames.begin(), vocabularyNames.end());
-    const CachedItemNames vocabulary = CachedItemNames::Build(vocabularyNames);
+    const NameMatcher vocabulary = NameMatcher::Build(vocabularyNames);
 
     std::vector<Panel> panels;
 

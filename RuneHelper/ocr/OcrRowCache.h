@@ -14,7 +14,7 @@ public:
     struct Row
     {
         cv::Mat textGray;
-        std::vector<LootLine> lines;
+        std::optional<LootLine> line;
     };
 
     const Row* Find(const cv::Mat& textGray);

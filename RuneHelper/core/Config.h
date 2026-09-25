@@ -22,6 +22,12 @@ inline constexpr std::array<GameLanguage, 9> kGameLanguages = { {
     { "th", "Thai" },
 } };
 
+inline constexpr int kMinOverlayFontSize = 8;
+inline constexpr int kMaxOverlayFontSize = 48;
+inline constexpr int kMinPriceRefreshMinutes = 5;
+inline constexpr int kMaxPriceRefreshMinutes = 360;
+inline constexpr std::string_view kDefaultPriceLeague = "Forbidden Rites";
+
 enum class PriceUnit
 {
     Exalted,
@@ -57,7 +63,9 @@ struct AppConfig
 
     int priceRefreshMinutes = 15;
 
-    std::string priceLeague = "Forbidden Rites";
+    std::string priceLeague = std::string(kDefaultPriceLeague);
 
     std::string gameLanguage = "en";
+
+    bool operator==(const AppConfig&) const = default;
 };

@@ -1,9 +1,9 @@
 #pragma once
 
 #include "core/ConfigManager.h"
+#include "core/Feature.h"
 #include "core/OcrService.h"
 #include "core/UpdateChecker.h"
-#include "core/Feature.h"
 #include "price/PriceService.h"
 
 #include "ui/Overlay.h"
@@ -20,17 +20,18 @@ private:
 
     void MainLoop();
 
-    void HandleUIActions();
+    void PublishStatus();
+    void HandleRequests(const UIRequests& requests);
+    void SelectRegion();
     void UpdateOverlay();
     void UpdateRegionPreview(const AppConfig& config);
 
-private:
     ConfigManager configManager_;
-
-    UIManager ui_;
-    OverlayWindow overlay_;
     UpdateChecker updateChecker_;
     PriceService prices_;
     FeatureRegistry features_;
-    OcrService ocrService_;
+
+    UIManager ui_{ configManager_, updateChecker_, features_ };
+    OverlayWindow overlay_;
+    OcrService ocrService_{ configManager_, features_, prices_ };
 };

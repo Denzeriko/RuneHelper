@@ -10,9 +10,9 @@
 #include "nlohmann/json.hpp"
 
 #include "core/AtomicFile.h"
+#include "core/ExceptionLogging.h"
 #include "core/JsonRead.h"
 #include "core/Logger.h"
-#include "core/ThreadGuard.h"
 #include "platform/PlatformPaths.h"
 #include "recipes/RecipeDatabase.h"
 

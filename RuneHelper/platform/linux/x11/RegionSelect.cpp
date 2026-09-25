@@ -1,7 +1,6 @@
 #include "platform/linux/RegionSelect.h"
 
 #include <algorithm>
-#include <cstdlib>
 #include <string>
 
 #include <X11/Xlib.h>
@@ -10,19 +9,10 @@
 #include <X11/keysym.h>
 
 #include "core/Logger.h"
+#include "platform/linux/x11/Session.h"
 
 namespace
 {
-bool IsX11Session()
-{
-    const char* sessionType = std::getenv("XDG_SESSION_TYPE");
-
-    if (sessionType && std::string(sessionType) == "wayland")
-        return false;
-
-    return true;
-}
-
 cv::Rect RectFromPoints(int x1, int y1, int x2, int y2)
 {
     const int left = std::min(x1, x2);
@@ -45,9 +35,9 @@ void DrawSelectionRect(Display* display, Window root, GC gc, const cv::Rect& rec
 
 cv::Rect RegionSelector::Select()
 {
-    if (!IsX11Session())
+    if (IsWaylandSession())
     {
-        LOG_ERROR("Linux region selection requires an X11 session; Wayland is not supported yet");
+        LogWaylandBuildNeeded("select a region");
         return {};
     }
 

@@ -25,7 +25,6 @@ public:
     void SetFontSize(int size);
     void SetBackground(bool enabled);
     void SetOutline(bool enabled);
-    void SetFontSizeForce(int size);
     void PumpMessages();
 
 private:
