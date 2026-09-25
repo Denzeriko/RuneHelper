@@ -59,7 +59,7 @@ jobs:
             cmake --build /tmp/build --target runehelper_tests &&
             ctest --test-dir /tmp/build --output-on-failure'
 
-      - name: Run the English OCR pipeline under ThreadSanitizer
+      - name: Run the golden OCR tests under ThreadSanitizer
         run: |
           docker run --rm -v "$PWD":/src:ro -e TSAN_OPTIONS=halt_on_error=1 runehelper-deps:ci bash -lc '
             cmake -S /src -B /tmp/tsan -G Ninja \
@@ -69,4 +69,4 @@ jobs:
               -DCMAKE_CXX_FLAGS="-fsanitize=thread -g" \
               -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=thread" &&
             cmake --build /tmp/tsan --target runehelper_tests &&
-            ctest --test-dir /tmp/tsan --output-on-failure --exclude-regex "ocr_golden_|ocr_robustness"'
+            ctest --test-dir /tmp/tsan --output-on-failure --exclude-regex "ocr_row_cache|ocr_robustness|ocr_rune_tiles"'
