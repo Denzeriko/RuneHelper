@@ -378,7 +378,9 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
 
     if (tabRows_.empty())
     {
+        ImGui::PushTextWrapPos(0.0f);
         ImGui::TextDisabled("No combinations recognised. Point the region at the remnant panel.");
+        ImGui::PopTextWrapPos();
         return;
     }
 
@@ -391,7 +393,9 @@ void ExpeditionFeature::DrawAdvisorSettings()
     bool changed = AtomicCheckbox("Enable Pick Advisor", settings_.enabled);
 
     ImGui::SameLine();
+    ImGui::PushTextWrapPos(0.0f);
     ImGui::TextDisabled("%s", DataStatus().c_str());
+    ImGui::PopTextWrapPos();
 
     if (settings_.enabled)
         changed |= AtomicCheckbox("Show rune names on the overlay", settings_.showRunes);
@@ -474,7 +478,9 @@ void ExpeditionFeature::DrawPlacedRunes() const
 
     ImGui::TextDisabled("Already placed:");
     ImGui::SameLine();
+    ImGui::PushTextWrapPos(0.0f);
     ImGui::TextColored(kGreen, "%s", JoinRunes(tabPlaced_, 0, " + ").c_str());
+    ImGui::PopTextWrapPos();
 }
 
 void ExpeditionFeature::DrawRecipeTable() const
