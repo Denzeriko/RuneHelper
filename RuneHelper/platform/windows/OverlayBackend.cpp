@@ -15,10 +15,6 @@
 
 namespace
 {
-#ifndef WDA_EXCLUDEFROMCAPTURE
-constexpr DWORD WDA_EXCLUDEFROMCAPTURE = 0x00000011;
-#endif
-
 POINT ContentAnchor(const OverlayState& state)
 {
     if (!state.texts.empty())
@@ -99,9 +95,6 @@ bool WindowsOverlayBackend::Init(const char*, int, int)
         LOG_ERROR("Windows overlay: CreateWindowEx failed");
         return false;
     }
-
-    if (!SetWindowDisplayAffinity(hwnd_, WDA_EXCLUDEFROMCAPTURE))
-        LOG_ERROR("Windows overlay: SetWindowDisplayAffinity(WDA_EXCLUDEFROMCAPTURE) failed");
 
     running_ = true;
     LOG_INFO("Windows overlay backend initialized");
