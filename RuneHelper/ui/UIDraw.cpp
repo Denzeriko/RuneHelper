@@ -149,8 +149,60 @@ void DrawOcrStatus(const OcrStatus& status)
     }
 }
 
-void DrawVersion(const UpdateChecker& updates)
+void DrawReleasePageButton(const UpdateChecker& updates, const char* label)
 {
+    const std::string url = updates.DownloadUrl();
+
+    if (ImGui::SmallButton(label))
+    {
+        if (!OpenExternalUrl(url))
+            LOG_ERROR("Could not open the update page in a browser");
+    }
+
+    if (ImGui::IsItemHovered())
+        UiTooltip(url.empty() ? "No download link was reported" : url.c_str());
+}
+
+void DrawUpdate(UIManager& ui)
+{
+    const UpdateChecker& updates = ui.Updates();
+
+    switch (updates.Install())
+    {
+    case UpdateInstall::Downloading: ImGui::TextColored(kYellow, "Downloading %d%%", updates.InstallPercent()); return;
+    case UpdateInstall::Installing:
+    case UpdateInstall::Installed: ImGui::TextColored(kYellow, "Installing"); return;
+    case UpdateInstall::Failed:
+        ImGui::TextColored(kRed, "Update failed");
+
+        if (ImGui::IsItemHovered())
+            UiTooltip("See runehelper.log");
+
+        ImGui::SameLine();
+        DrawReleasePageButton(updates, "Open Page");
+        return;
+    case UpdateInstall::Idle: break;
+    }
+
+    if (!updates.CanInstall())
+    {
+        DrawReleasePageButton(updates, "Update");
+        return;
+    }
+
+    const std::string label = "Update to " + updates.LatestVersion();
+
+    if (ImGui::SmallButton(label.c_str()))
+        ui.State().requests.installUpdate = true;
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Downloads the new version and restarts RuneHelper");
+}
+
+void DrawVersion(UIManager& ui)
+{
+    const UpdateChecker& updates = ui.Updates();
+
     ImGui::Text("v%s", RUNEHELPER_VERSION);
 
     if (RUNEHELPER_COMMIT[0] != '\0')
@@ -169,18 +221,8 @@ void DrawVersion(const UpdateChecker& updates)
     if (!updates.HasUpdate())
         return;
 
-    const std::string url = updates.DownloadUrl();
-
     ImGui::SameLine();
-
-    if (ImGui::SmallButton("Update"))
-    {
-        if (!OpenExternalUrl(url))
-            LOG_ERROR("Could not open the update page in a browser");
-    }
-
-    if (ImGui::IsItemHovered())
-        UiTooltip(url.empty() ? "No download link was reported" : url.c_str());
+    DrawUpdate(ui);
 }
 
 bool DrawStatusSection(UIManager& ui)
@@ -223,7 +265,7 @@ bool DrawStatusSection(UIManager& ui)
         ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
 
     StatusRow("Version");
-    DrawVersion(ui.Updates());
+    DrawVersion(ui);
 
     ImGui::EndTable();
     ImGui::Spacing();

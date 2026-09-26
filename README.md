@@ -42,6 +42,7 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 * League-specific price cache, updated automatically, which keeps API requests low.
 * Price colors that follow the most valuable row on screen, or thresholds of your own.
 * Debug window with OCR and matching results, image and text dumps, and a one-click bug report.
+* One-click updates: the new release is downloaded, checked against the SHA-256 GitHub publishes for it, and RuneHelper restarts into it.
 * No game memory reading or injection.
 
 ## How to use

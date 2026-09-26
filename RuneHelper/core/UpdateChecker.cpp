@@ -1,72 +1,29 @@
 #include "UpdateChecker.h"
 
 #include "core/ExceptionLogging.h"
-#include "core/JsonRead.h"
 #include "core/Logger.h"
+#include "core/SelfUpdate.h"
+#include "core/UpdateInstaller.h"
+#include "platform/PlatformPaths.h"
+#include "platform/PlatformShell.h"
 
 #include <cpr/cpr.h>
 #include "nlohmann/json.hpp"
 
 #include <cstdint>
-#include <sstream>
-#include <string_view>
-#include <vector>
+#include <cstdlib>
 
 using json = nlohmann::json;
 
-constexpr std::string_view kReleasesUrl = "https://github.com/Denzeriko/RuneHelper/releases/";
-
-static std::string NormalizeVersion(std::string v)
+namespace
 {
-    if (!v.empty() && (v[0] == 'v' || v[0] == 'V'))
-        v.erase(v.begin());
+std::string CurrentVersion()
+{
+    if (const char* pretend = std::getenv("RUNEHELPER_PRETEND_VERSION"); pretend && *pretend)
+        return pretend;
 
-    return v;
+    return RUNEHELPER_VERSION;
 }
-
-static std::vector<int> ParseVersion(const std::string& version)
-{
-    std::vector<int> parts;
-
-    std::stringstream ss(NormalizeVersion(version));
-
-    std::string part;
-
-    while (std::getline(ss, part, '.'))
-    {
-        try
-        {
-            parts.push_back(std::stoi(part));
-        }
-        catch (...)
-        {
-            parts.push_back(0);
-        }
-    }
-
-    return parts;
-}
-
-static bool IsNewerVersion(const std::string& latest, const std::string& current)
-{
-    auto l = ParseVersion(latest);
-    auto c = ParseVersion(current);
-
-    size_t n = (std::max)(l.size(), c.size()); // #define NOMINMAX
-
-    l.resize(n);
-    c.resize(n);
-
-    for (size_t i = 0; i < n; ++i)
-    {
-        if (l[i] > c[i])
-            return true;
-
-        if (l[i] < c[i])
-            return false;
-    }
-
-    return false;
 }
 
 void UpdateChecker::Start()
@@ -86,6 +43,9 @@ void UpdateChecker::Stop()
 {
     if (thread_.joinable())
         thread_.request_stop();
+
+    if (installThread_.joinable())
+        installThread_.request_stop();
 }
 
 bool UpdateChecker::IsChecking() const
@@ -98,16 +58,57 @@ bool UpdateChecker::HasUpdate() const
     return hasUpdate_;
 }
 
+bool UpdateChecker::CanInstall() const
+{
+    std::lock_guard lock(mutex_);
+    return hasUpdate_ && release_.asset && !executable_.empty();
+}
+
 std::string UpdateChecker::LatestVersion() const
 {
     std::lock_guard lock(mutex_);
-    return latestVersion_;
+    return release_.version;
 }
 
 std::string UpdateChecker::DownloadUrl() const
 {
     std::lock_guard lock(mutex_);
-    return downloadUrl_;
+    return release_.pageUrl;
+}
+
+void UpdateChecker::StartInstall()
+{
+    if (!CanInstall())
+        return;
+
+    UpdateInstall idle = UpdateInstall::Idle;
+
+    if (!install_.compare_exchange_strong(idle, UpdateInstall::Downloading))
+        return;
+
+    installThread_ = std::jthread(
+        [this](const std::stop_token& stop)
+        {
+            if (!RunLoggingExceptions("Update install thread", [&] { RunInstall(stop); }))
+                install_ = UpdateInstall::Failed;
+        }
+    );
+}
+
+UpdateInstall UpdateChecker::Install() const
+{
+    return install_;
+}
+
+int UpdateChecker::InstallPercent() const
+{
+    return installPercent_;
+}
+
+std::filesystem::path UpdateChecker::ExecutablePath() const
+{
+    std::lock_guard lock(mutex_);
+    return executable_;
 }
 
 void UpdateChecker::Check(const std::stop_token& stop)
@@ -120,6 +121,19 @@ void UpdateChecker::Check(const std::stop_token& stop)
     );
 
     checking_ = false;
+
+    std::filesystem::path executable = CurrentExecutablePath();
+
+    if (!executable.empty())
+    {
+        RemoveUpdateLeftovers(UpdatePathsFor(executable));
+
+        if (!CanReplace(UpdatePathsFor(executable)))
+        {
+            LOG_INFO("Update: " + PathToUtf8(executable.parent_path()) + " is not writable, Update opens the release page");
+            executable.clear();
+        }
+    }
 
     if (stop.stop_requested())
         return;
@@ -145,28 +159,58 @@ void UpdateChecker::Check(const std::stop_token& stop)
         return;
     }
 
-    std::string latestVersion = JsonValue(j, "tag_name", "");
-    std::string downloadUrl = JsonValue(j, "html_url", "");
+    ReleaseInfo release = ParseRelease(j, ReleaseAssetName(RUNEHELPER_BUILD_VARIANT));
+    const std::string current = CurrentVersion();
 
-    if (!downloadUrl.starts_with(kReleasesUrl))
-        downloadUrl = std::string(kReleasesUrl) + "latest";
+    LOG_INFO("Current version: " + current + (current != RUNEHELPER_VERSION ? " (pretended)" : ""));
 
-    LOG_INFO("Current version: " + std::string(RUNEHELPER_VERSION));
+    LOG_INFO("Latest version: " + release.version);
 
-    LOG_INFO("Latest version: " + latestVersion);
+    const bool hasUpdate = !release.version.empty() && IsNewerVersion(release.version, current);
 
-    const bool hasUpdate = !latestVersion.empty() && IsNewerVersion(latestVersion, RUNEHELPER_VERSION);
+    if (hasUpdate && !release.asset)
+        LOG_INFO("The release has no verifiable " + ReleaseAssetName(RUNEHELPER_BUILD_VARIANT) + ", Update opens the release page");
 
     {
         std::lock_guard lock(mutex_);
-        latestVersion_ = std::move(latestVersion);
-        downloadUrl_ = std::move(downloadUrl);
+        release_ = std::move(release);
+        executable_ = executable;
     }
 
     hasUpdate_ = hasUpdate;
 
     if (hasUpdate_)
-        LOG_INFO("New version available: " + latestVersion_);
+        LOG_INFO("New version available: " + LatestVersion());
     else
         LOG_INFO("Application is up to date");
+}
+
+void UpdateChecker::RunInstall(const std::stop_token& stop)
+{
+    ReleaseAsset asset;
+    UpdatePaths paths;
+
+    {
+        std::lock_guard lock(mutex_);
+
+        if (!release_.asset)
+        {
+            install_ = UpdateInstall::Failed;
+            return;
+        }
+
+        asset = *release_.asset;
+        paths = UpdatePathsFor(executable_);
+    }
+
+    LOG_INFO("Update: downloading " + asset.url);
+
+    if (!DownloadUpdate(asset, paths, installPercent_, stop))
+    {
+        install_ = stop.stop_requested() ? UpdateInstall::Idle : UpdateInstall::Failed;
+        return;
+    }
+
+    install_ = UpdateInstall::Installing;
+    install_ = ApplyUpdate(asset, paths) ? UpdateInstall::Installed : UpdateInstall::Failed;
 }

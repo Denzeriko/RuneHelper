@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>
@@ -16,6 +17,9 @@
 #include "core/Config.h"
 #include "core/ConfigManager.h"
 #include "core/Logger.h"
+#include "core/ReleaseInfo.h"
+#include "core/SelfUpdate.h"
+#include "core/Sha256.h"
 #include "core/ZipWriter.h"
 #include "ocr/LootParser.h"
 #include "ocr/LootRows.h"
@@ -795,6 +799,143 @@ void TestBugReport()
     Check(zip.find("first line of the old log") == std::string::npos, "a long log loses its beginning");
     Check(zip.size() < 1150 * 1024, "a long log is cut to its last megabyte");
 }
+
+void TestSha256()
+{
+    Section("SHA-256");
+
+    CheckEqual(Sha256Hex(""), "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855", "the hash of nothing");
+    CheckEqual(Sha256Hex("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad", "the hash of abc");
+    CheckEqual(
+        Sha256Hex("abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"),
+        "248d6a61d20638b8e5c026930c3e6039a33ce45964ff2167f6ecedd419db06c1",
+        "a message spilling into a second block"
+    );
+
+    Sha256 million;
+    const std::string thousand(1000, 'a');
+
+    for (int i = 0; i < 1000; ++i)
+        million.Update(thousand);
+
+    CheckEqual(million.FinishHex(), "cdc76e5c9914fb9281a1c7e284d73e67f1809a48a497200e046d39ccc7112cd0", "a million a's fed in pieces");
+}
+
+void TestReleaseParsing()
+{
+    Section("ReleaseInfo, GitHub release parsing");
+
+    CheckEqual(ReleaseAssetName("windows"), "RuneHelper-windows-x86_64.exe", "the Windows build's asset");
+    CheckEqual(ReleaseAssetName("linux-x11"), "RuneHelper-linux-x86_64-x11", "the X11 build's asset");
+    CheckEqual(ReleaseAssetName("linux-wayland"), "RuneHelper-linux-x86_64-wayland", "the Wayland build's asset");
+    CheckEqual(ReleaseAssetName("macos"), "", "an unknown build has no asset");
+
+    const std::string downloads = "https://github.com/Denzeriko/RuneHelper/releases/download/1.9.0/";
+    const std::string windowsAsset = "RuneHelper-windows-x86_64.exe";
+
+    auto asset = [&downloads](const std::string& name, std::int64_t size, const std::string& digest) {
+        return nlohmann::json{ { "name", name },
+                               { "size", size },
+                               { "browser_download_url", downloads + name },
+                               { "digest", digest } };
+    };
+
+    const nlohmann::json release = {
+        { "tag_name", "1.9.0" },
+        { "html_url", "https://github.com/Denzeriko/RuneHelper/releases/tag/1.9.0" },
+        { "assets",
+          nlohmann::json::array({ asset("RuneHelper-linux-x86_64-x11", 100, "sha256:" + std::string(64, 'b')),
+                                  asset(windowsAsset, 12175872, "sha256:" + std::string(64, 'A')) }) },
+    };
+
+    const ReleaseInfo windows = ParseRelease(release, windowsAsset);
+    CheckEqual(windows.version, "1.9.0", "the tag is the version");
+    CheckEqual(windows.pageUrl, "https://github.com/Denzeriko/RuneHelper/releases/tag/1.9.0", "the release page is kept");
+    Check(windows.asset && windows.asset->size == 12175872, "this build's asset is picked with its size");
+    Check(windows.asset && windows.asset->sha256 == std::string(64, 'a'), "the digest is read and lowercased");
+    Check(windows.asset && windows.asset->url == downloads + windowsAsset, "the download link is kept");
+
+    Check(!ParseRelease(release, "RuneHelper-linux-x86_64-wayland").asset, "a build missing from the release gets no asset");
+    Check(!ParseRelease(release, "").asset, "an unknown build gets no asset");
+
+    auto broken = [&release, &windowsAsset](const char* field, const nlohmann::json& value)
+    {
+        nlohmann::json changed = release;
+
+        if (value.is_null())
+            changed["assets"][1].erase(field);
+        else
+            changed["assets"][1][field] = value;
+
+        return !ParseRelease(changed, windowsAsset).asset;
+    };
+
+    Check(
+        broken("browser_download_url", "https://example.com/RuneHelper.exe"),
+        "a download outside the repository's releases is refused"
+    );
+    Check(broken("digest", nullptr), "an asset without a digest is not installed");
+    Check(broken("digest", "sha1:0123"), "a digest that is not SHA-256 is refused");
+    Check(broken("digest", "sha256:" + std::string(64, 'x')), "a digest that is not hex is refused");
+    Check(broken("size", 0), "an empty asset is refused");
+
+    nlohmann::json foreignPage = release;
+    foreignPage["html_url"] = "https://example.com/";
+    CheckEqual(
+        ParseRelease(foreignPage, windowsAsset).pageUrl,
+        "https://github.com/Denzeriko/RuneHelper/releases/latest",
+        "a foreign page falls back to the latest release"
+    );
+    CheckEqual(ParseRelease(nlohmann::json::array(), windowsAsset).version, "", "a malformed answer yields no version");
+
+    Check(IsNewerVersion("1.8.1", "1.8.0"), "a patch release is newer");
+    Check(IsNewerVersion("v1.10.0", "1.9.9"), "versions compare by number, not text");
+    Check(!IsNewerVersion("1.8.0", "1.8.0"), "the same version is not newer");
+    Check(!IsNewerVersion("1.8", "1.8.0"), "a missing part counts as zero");
+    Check(!IsNewerVersion("1.7.9", "1.8.0"), "an older version is not newer");
+}
+
+void TestSelfUpdate()
+{
+    Section("SelfUpdate, replacing the binary");
+
+    const UpdatePaths windows = UpdatePathsFor(std::filesystem::path("dir") / "RuneHelper-windows-x86_64.exe");
+    CheckEqual(windows.download.filename().string(), "RuneHelper-windows-x86_64.new.exe", "the download keeps the .exe extension");
+    CheckEqual(windows.backup.filename().string(), "RuneHelper-windows-x86_64.old.exe", "so does the backup");
+    CheckEqual(
+        UpdatePathsFor("RuneHelper-linux-x86_64-wayland").download.filename().string(),
+        "RuneHelper-linux-x86_64-wayland.new",
+        "a Linux binary gets a suffix"
+    );
+
+    const std::filesystem::path dir = GetUserDataDir() / "self-update";
+    std::error_code ec;
+    std::filesystem::create_directories(dir, ec);
+
+    const UpdatePaths paths = UpdatePathsFor(dir / "RuneHelper");
+    WriteText(paths.current, "old build");
+
+    Check(CanReplace(paths), "a writable folder can take an update");
+    Check(!std::filesystem::exists(paths.download), "the write probe leaves nothing behind");
+
+    WriteText(paths.download, "new build");
+    Check(FileMatches(paths.download, 9, Sha256Hex("new build")), "the download matches its size and hash");
+    Check(!FileMatches(paths.download, 10, Sha256Hex("new build")), "a wrong size does not match");
+    Check(!FileMatches(paths.download, 9, Sha256Hex("old build")), "a wrong hash does not match");
+    Check(MakeExecutable(paths.download), "the download can be made executable");
+
+    Check(SwapExecutable(paths), "the binary is replaced");
+    CheckEqual(ReadText(paths.current), "new build", "the new build is in place");
+    CheckEqual(ReadText(paths.backup), "old build", "the old build is kept aside");
+    Check(!std::filesystem::exists(paths.download), "the download is used up");
+
+    RemoveUpdateLeftovers(paths);
+    Check(!std::filesystem::exists(paths.backup), "the old build is removed on the next start");
+    CheckEqual(ReadText(paths.current), "new build", "the current build stays");
+
+    Check(!SwapExecutable(paths), "a swap without a download fails");
+    CheckEqual(ReadText(paths.current), "new build", "and puts the running binary back");
+}
 }
 
 int main()
@@ -829,6 +970,9 @@ int main()
     TestPriceColors();
     TestZipWriter();
     TestBugReport();
+    TestSha256();
+    TestReleaseParsing();
+    TestSelfUpdate();
 
     std::filesystem::remove_all(sandbox, ec);
 

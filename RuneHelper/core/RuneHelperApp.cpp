@@ -59,6 +59,11 @@ int RuneHelperApp::Run()
     return 0;
 }
 
+std::optional<std::filesystem::path> RuneHelperApp::RestartTarget() const
+{
+    return restartTarget_;
+}
+
 bool RuneHelperApp::Init()
 {
     Logger::Instance().Init();
@@ -110,6 +115,12 @@ void RuneHelperApp::MainLoop()
 
         HandleRequests(ui_.TakeRequests());
         FinishBugReport();
+
+        if (updateChecker_.Install() == UpdateInstall::Installed && !restartTarget_)
+        {
+            restartTarget_ = updateChecker_.ExecutablePath();
+            ui_.Exit();
+        }
         configManager_.SaveIfSettled();
 
         const AppConfig config = configManager_.Snapshot();
@@ -167,6 +178,9 @@ void RuneHelperApp::HandleRequests(const UIRequests& requests)
 
     if (requests.createReport)
         StartBugReport();
+
+    if (requests.installUpdate)
+        updateChecker_.StartInstall();
 
     if (requests.refreshPrices)
         prices_.ForceRefresh();

@@ -3,6 +3,9 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/core/BugReport.cpp
     RuneHelper/core/ConfigManager.cpp
     RuneHelper/core/Logger.cpp
+    RuneHelper/core/ReleaseInfo.cpp
+    RuneHelper/core/SelfUpdate.cpp
+    RuneHelper/core/Sha256.cpp
     RuneHelper/core/Text.cpp
     RuneHelper/core/ZipWriter.cpp
     RuneHelper/ocr/LineReader.cpp
@@ -34,6 +37,7 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/core/RuneHelperApp.cpp
     RuneHelper/core/ScreenCaptureService.cpp
     RuneHelper/core/UpdateChecker.cpp
+    RuneHelper/core/UpdateInstaller.cpp
     RuneHelper/features/ExpeditionFeature.cpp
     RuneHelper/features/PriceOverlayFeature.cpp
     RuneHelper/ui/ImGuiStyleSetup.cpp

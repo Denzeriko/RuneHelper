@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
+#include <optional>
 #include <string>
 
 #include "core/ConfigManager.h"
@@ -16,6 +18,7 @@ class RuneHelperApp
 {
 public:
     int Run();
+    std::optional<std::filesystem::path> RestartTarget() const;
 
 private:
     bool Init();
@@ -40,6 +43,8 @@ private:
     UIManager ui_{ configManager_, updateChecker_, features_ };
     OverlayWindow overlay_;
     OcrService ocrService_{ configManager_, features_, prices_ };
+
+    std::optional<std::filesystem::path> restartTarget_;
 
     bool reportPending_ = false;
     unsigned reportDumps_ = 0;

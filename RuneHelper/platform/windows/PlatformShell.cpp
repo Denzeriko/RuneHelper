@@ -66,6 +66,24 @@ DWORD RegistryNumber(const wchar_t* name)
 
     return value;
 }
+
+bool Spawn(const std::filesystem::path& program, const std::vector<std::string>& args, PROCESS_INFORMATION& process)
+{
+    std::wstring commandLine = L"\"" + program.wstring() + L"\"";
+
+    for (const std::string& arg : args)
+        commandLine += L" " + ToWide(arg);
+
+    STARTUPINFOW startup{};
+    startup.cb = sizeof(startup);
+    process = {};
+
+    if (CreateProcessW(program.c_str(), commandLine.data(), nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &process))
+        return true;
+
+    LOG_ERROR("CreateProcessW failed for " + ToUtf8(program.wstring()) + ", error " + std::to_string(GetLastError()));
+    return false;
+}
 }
 
 bool OpenExternalUrl(const std::string& url)
@@ -104,4 +122,68 @@ std::string DescribeSystem()
         text += ", build " + ToUtf8(build) + "." + std::to_string(RegistryNumber(L"UBR"));
 
     return text + "\n";
+}
+
+std::filesystem::path CurrentExecutablePath()
+{
+    std::wstring buffer(MAX_PATH, L'\0');
+
+    while (true)
+    {
+        const DWORD length = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
+
+        if (length == 0)
+            return {};
+
+        if (length < buffer.size())
+        {
+            buffer.resize(length);
+            return std::filesystem::path(buffer);
+        }
+
+        buffer.resize(buffer.size() * 2);
+    }
+}
+
+ProcessResult RunProcess(const std::filesystem::path& program, const std::vector<std::string>& args, std::chrono::milliseconds timeout)
+{
+    constexpr DWORD kTerminateWaitMs = 5000;
+
+    ProcessResult result;
+    PROCESS_INFORMATION process{};
+
+    if (!Spawn(program, args, process))
+        return result;
+
+    result.started = true;
+    CloseHandle(process.hThread);
+
+    if (WaitForSingleObject(process.hProcess, static_cast<DWORD>(timeout.count())) == WAIT_TIMEOUT)
+    {
+        TerminateProcess(process.hProcess, 1);
+        WaitForSingleObject(process.hProcess, kTerminateWaitMs);
+        result.timedOut = true;
+    }
+    else
+    {
+        DWORD code = 0;
+
+        if (GetExitCodeProcess(process.hProcess, &code))
+            result.exitCode = static_cast<int>(code);
+    }
+
+    CloseHandle(process.hProcess);
+    return result;
+}
+
+bool StartProcess(const std::filesystem::path& program)
+{
+    PROCESS_INFORMATION process{};
+
+    if (!Spawn(program, {}, process))
+        return false;
+
+    CloseHandle(process.hThread);
+    CloseHandle(process.hProcess);
+    return true;
 }

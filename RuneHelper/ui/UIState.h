@@ -13,6 +13,7 @@ struct UIRequests
     bool singleSnapshot = false;
     bool saveOcrDebug = false;
     bool createReport = false;
+    bool installUpdate = false;
     bool registerHotkeys = false;
 };
 
