@@ -4,6 +4,8 @@ A lightweight overlay tool for **Path of Exile 2** that uses **OCR** to detect i
 
 Reads the game client in **9 languages**: English, Русский, Deutsch, Français, Español, Português, 한국어, 日本語 and ไทย.
 
+Project page, in English and Russian: [denz.pw/runehelper](https://denz.pw/runehelper).
+
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue)
 ![Language](https://img.shields.io/badge/language-C%2B%2B20-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
