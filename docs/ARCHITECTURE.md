@@ -16,11 +16,15 @@ Features run on two threads. `Feature::OnFrame` is called by the OCR worker, `Dr
 
 A hotkey sets a flag in `UIState::requests`: Windows through `RegisterHotKey`, X11 through `XGrabKey`, and Wayland through the control socket that `RuneHelper --toggle-ocr` and friends write to, because Wayland has no global key grabs. Clicks in the window set the same flags. Once per frame `RuneHelperApp::HandleRequests` takes all of them at once and acts: toggling OCR changes the config, a snapshot or a debug dump goes to `OcrService`, a region selection runs the platform selector.
 
+A bug report crosses both threads. The main thread asks `OcrService` for a debug dump, then checks every frame whether `DebugDumpsWritten` has moved, giving up after 5 s when the region cannot be read. It then flushes the config and zips the dump, the last megabyte of each log, `config.json` and `DescribeSystem` into `reports/` (`WriteBugReport`), which takes a few milliseconds on the main thread.
+
 Every config change goes through `ConfigManager::Update` or `SetFeatureSettings`, which mark the config as changed. The main loop writes `config.json` once nothing has changed for half a second (`SaveIfSettled`) and again on exit (`Flush`), so dragging a slider writes the file once.
 
 Hotkeys are stored as Win32 virtual-key codes on Windows and as GLFW key codes on Linux. The Linux builds still accept the F-key codes of the Windows defaults, which older configs carry.
 
 ## When a frame is read
+
+Before capturing, `OcrService::PauseForGame` asks which window is in front (`QueryGameFocus`). While it is neither Path of Exile nor RuneHelper itself, nothing is captured and the overlay is cleared; the first frame after the game comes back is read at once. A snapshot ignores the pause, and an answer of "unknown" never pauses.
 
 `OcrService::NeedsOcr` keeps the recognizer idle while nothing moves. A frame is read when a snapshot forces it, or when it differs from the last frame that was read, at least 600 ms have passed since that read, and the image is either settled (the same as the previous capture) or 1.5 s have passed. Two frames count as the same when fewer than 0.2% of their pixels differ by more than 8 levels (`SimilarImages`). A snapshot (F9 by default) keeps reading for 2 s even with OCR switched off. The overlay clears after three empty frames in a row, so one bad capture does not make it flicker.
 
@@ -57,6 +61,7 @@ The training crops come from the OCR debug dump. `text_model_crops` runs `Recogn
 * **Wayland layer shell.** The generated `wlr-layer-shell` header names a parameter `namespace`, a C++ keyword, so `WaylandSession.h` renames it with a `#define` around the include.
 * **Wayland capture.** wlr-screencopy is used when the compositor offers it. Every capture waits for the compositor's next frame, so it costs one refresh period no matter how small the region is. Without it (KDE, GNOME) the xdg-desktop-portal ScreenCast streams one monitor through PipeWire, without the cursor, with a permission that lasts until the user revokes it; the restore token is kept in `screencast_token` next to the config. A denied or failed start is retried after 30 s, doubling up to 10 minutes.
 * **Windows DPI.** `WinMain` makes the whole process per-monitor DPI aware, not just the UI thread, so the capture thread sees physical pixels too. Desktop Duplication maps the region into texture pixels whenever the texture size differs from the output's desktop coordinates.
+* **Active window.** Windows matches the foreground window's class, `POEWindowClass`, or compares it with `FindWindowW` for the title `Path of Exile 2`; reading the title of whatever window is in front ten times a second is what window-logging spyware does, and Defender already flags the build. X11 reads `_NET_ACTIVE_WINDOW` from the window manager and matches the window class (`steam_app_2694490` under Proton, `pathofexile` under Wine, `gamescope`), the exact title, or RuneHelper's own `_NET_WM_PID`. Wayland does not tell clients which window has focus, so the check answers "unknown" there and the Debug tab greys the switch out.
 * **X11.** Capture uses MIT-SHM, about 14 times faster than `XGetImage`. The overlay is click-through through an empty `ShapeInput` region, and the shape mask's GC needs an explicit foreground, or the mask comes out inverted.
 * **GLFW on Wayland** starts with libdecor disabled; libdecor would load GTK and cost about 32 MB of memory.
 * **Price league migration.** `ConfigManager::Normalize` moves the league name `Hardcore Runes of Aldur`, which older configs can hold, to `HC Runes of Aldur`, the name the price data uses.

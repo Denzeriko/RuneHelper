@@ -61,12 +61,15 @@ struct AppConfig
     int priceColorMedium = 5;
     int priceColorHigh = 20;
     int priceColorVeryHigh = 100;
+    bool autoPriceColors = true;
 
     int priceRefreshMinutes = 15;
 
     std::string priceLeague = std::string(kDefaultPriceLeague);
 
     std::string gameLanguage = "en";
+
+    bool pauseWhenGameInactive = true;
 
     bool operator==(const AppConfig&) const = default;
 };

@@ -5,12 +5,12 @@ body:
   - type: markdown
     attributes:
       value: |
-        A capture of the panel is what makes these fixable. Turn on **Debug OCR** in the **Debug Menu** tab, wait until the panel has been read once, then attach the files from the `ocr_debug/latest` folder:
+        A capture of the panel is what makes these fixable. Open the menu in the game, click **Create Bug Report** in the **Debug Menu** tab, then attach the zip it saves; **Open Folder** next to it shows where it is:
 
-        - Windows: `%APPDATA%\Denz\RuneHelper\ocr_debug\latest`
-        - Linux: `~/.config/RuneHelper/ocr_debug/latest`
+        - Windows: `%APPDATA%\Denz\RuneHelper\reports`
+        - Linux: `~/.config/RuneHelper/reports`
 
-        `source.png` matters most. Please attach it as a file rather than a screenshot of it, so no pixels change.
+        Older versions have only **Save OCR Debug**, which writes the files to `ocr_debug/latest` in the same place. `source.png` matters most there. Please attach it as a file rather than a screenshot of it, so no pixels change.
   - type: input
     id: version
     attributes:
@@ -72,7 +72,7 @@ body:
   - type: textarea
     id: files
     attributes:
-      label: Files from ocr_debug/latest
-      description: Drag source.png here, plus prepared.png and rows_detected.png when they exist.
+      label: Bug report
+      description: Drag the zip from Create Bug Report here, or source.png, prepared.png and rows_detected.png from ocr_debug/latest.
     validations:
       required: true

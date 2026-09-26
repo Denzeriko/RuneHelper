@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <cstdlib>
+#include <ctime>
 #include <exception>
 #include <filesystem>
 #include <fstream>
@@ -11,9 +12,11 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include "core/BugReport.h"
 #include "core/Config.h"
 #include "core/ConfigManager.h"
 #include "core/Logger.h"
+#include "core/ZipWriter.h"
 #include "ocr/LootParser.h"
 #include "ocr/LootRows.h"
 #include "ocr/NameMatcher.h"
@@ -21,6 +24,7 @@
 #include "platform/PlatformPaths.h"
 #include "price/PoeNinjaPriceProvider.h"
 #include "price/PriceCache.h"
+#include "price/PriceColors.h"
 #include "recipes/RecipeDatabase.h"
 #include "ui/OverlayIcons.h"
 
@@ -482,6 +486,8 @@ void TestConfigLoadMalformed()
         CheckEqual(values.priceLeague, "Forbidden Rites", "a null league keeps the default");
         CheckEqual(values.overlayFontSize, 30, "the font size is read");
         Check(values.overlayIcons, "a config written before the icon switch shows currency icons");
+        Check(values.autoPriceColors, "a config written before automatic colors uses them");
+        Check(values.pauseWhenGameInactive, "a config written before the pause switch pauses with the game");
     }
 
     for (const char* text : { "null", "[1, 2]", "{broken" })
@@ -687,6 +693,108 @@ void TestLoggerRepeats()
     CheckEqual(written, 3, "a repeated message is written three times, then held back");
     Check(log.find("unit test distinct message") != std::string::npos, "a different message is still written");
 }
+
+void TestPriceColors()
+{
+    Section("Price colors");
+
+    const OverlayColor red = OverlayRgb(255, 60, 60);
+    const OverlayColor yellow = OverlayRgb(255, 220, 80);
+    const OverlayColor green = OverlayRgb(80, 255, 80);
+    const OverlayColor gray = OverlayRgb(160, 160, 160);
+
+    const PriceTiers automatic = AutoPriceTiers(400.0);
+    Check(PriceColor(400.0, automatic) == red, "the most valuable row is red");
+    Check(PriceColor(200.0, automatic) == red, "half of the best row is still red");
+    Check(PriceColor(100.0, automatic) == yellow, "a quarter of the best row is yellow");
+    Check(PriceColor(30.0, automatic) == green, "a thirteenth of the best row is green");
+    Check(PriceColor(10.0, automatic) == gray, "a fortieth of the best row stays gray");
+    Check(PriceColor(0.0, AutoPriceTiers(0.0)) == gray, "a screen without prices stays gray");
+
+    AppConfig config;
+    config.priceColorMedium = 5;
+    config.priceColorHigh = 20;
+    config.priceColorVeryHigh = 100;
+
+    const PriceTiers manual = ManualPriceTiers(config);
+    Check(PriceColor(100.0, manual) == red, "a manual threshold includes its own value");
+    Check(PriceColor(99.0, manual) == yellow, "just under red is yellow");
+    Check(PriceColor(5.0, manual) == green, "the green threshold is green");
+    Check(PriceColor(4.0, manual) == gray, "under every threshold is gray");
+}
+
+void TestZipWriter()
+{
+    Section("ZipWriter");
+
+    Check(Crc32("123456789") == 0xCBF43926u, "CRC-32 matches the standard check value");
+    Check(Crc32("") == 0u, "the CRC-32 of nothing is zero");
+
+    std::tm time{};
+    time.tm_year = 126;
+    time.tm_mon = 8;
+    time.tm_mday = 26;
+    time.tm_hour = 12;
+
+    const std::vector<ZipEntry> entries = { { "system.txt", "hello" },
+                                            { "ocr_debug/latest/source.png", std::string("\x89PNG\0x", 6) } };
+    const std::string zip = BuildZip(entries, time);
+
+    std::size_t expectedSize = 22;
+
+    for (const ZipEntry& entry : entries)
+        expectedSize += 30 + 46 + 2 * entry.name.size() + entry.data.size();
+
+    CheckEqual(static_cast<int>(zip.size()), static_cast<int>(expectedSize), "headers, names, data and the end record add up");
+    Check(zip.starts_with(std::string("PK\x03\x04", 4)), "the archive starts with a local header");
+
+    const std::size_t end = zip.size() - 22;
+    Check(zip.compare(end, 4, std::string("PK\x05\x06", 4)) == 0, "the archive ends with the end record");
+    CheckEqual(
+        static_cast<unsigned char>(zip[end + 10]) | (static_cast<unsigned char>(zip[end + 11]) << 8),
+        2,
+        "the end record counts both files"
+    );
+}
+
+void TestBugReport()
+{
+    Section("Bug report");
+
+    const std::filesystem::path dataDir = GetUserDataDir();
+    const std::filesystem::path debugDir = dataDir / "ocr_debug" / "latest";
+
+    std::error_code ec;
+    std::filesystem::create_directories(debugDir, ec);
+    WriteText(debugDir / "source.png", "not really a png");
+
+    std::string oldLog = "first line of the old log\n";
+
+    while (oldLog.size() < 1200 * 1024)
+        oldLog += "an old log line that pads the file past the report limit\n";
+
+    oldLog += "last line of the old log\n";
+    WriteText(dataDir / "runehelper.old.log", oldLog);
+
+    const std::optional<std::filesystem::path> report = WriteBugReport("RuneHelper unit test system info\n");
+    Check(report.has_value(), "a report is written");
+
+    if (!report)
+        return;
+
+    CheckEqual(PathToUtf8(report->parent_path()), PathToUtf8(dataDir / "reports"), "the report lands in the reports folder");
+    Check(report->filename().string().starts_with("runehelper-report-"), "the report name says what it is");
+
+    const std::string zip = ReadText(*report);
+
+    for (const char* name : { "system.txt", "config.json", "runehelper.log", "runehelper.old.log", "ocr_debug/latest/source.png" })
+        Check(zip.find(name) != std::string::npos, std::string("the report holds ") + name);
+
+    Check(zip.find("RuneHelper unit test system info") != std::string::npos, "the system info is packed");
+    Check(zip.find("last line of the old log") != std::string::npos, "a long log keeps its end");
+    Check(zip.find("first line of the old log") == std::string::npos, "a long log loses its beginning");
+    Check(zip.size() < 1150 * 1024, "a long log is cut to its last megabyte");
+}
 }
 
 int main()
@@ -718,6 +826,9 @@ int main()
     TestPriceCacheMalformedDump();
     TestPoeNinjaParsing();
     TestLoggerRepeats();
+    TestPriceColors();
+    TestZipWriter();
+    TestBugReport();
 
     std::filesystem::remove_all(sandbox, ec);
 

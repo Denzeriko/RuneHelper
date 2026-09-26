@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 
 #include "core/OcrState.h"
 
@@ -11,7 +12,16 @@ struct UIRequests
     bool toggleOcr = false;
     bool singleSnapshot = false;
     bool saveOcrDebug = false;
+    bool createReport = false;
     bool registerHotkeys = false;
+};
+
+enum class ReportState
+{
+    None,
+    Collecting,
+    Saved,
+    Failed
 };
 
 struct UIState
@@ -22,6 +32,9 @@ struct UIState
     bool overlayAvailable = true;
     bool priceDownloading = false;
     std::size_t priceCount = 0;
+
+    ReportState report = ReportState::None;
+    std::string reportFolder;
 
     UIRequests requests;
     bool regionHovered = false;

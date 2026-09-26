@@ -13,6 +13,7 @@
 #include "core/ExceptionLogging.h"
 #include "core/Logger.h"
 #include "ocr/LootRows.h"
+#include "platform/GameFocus.h"
 #include "price/PriceService.h"
 #include "recipes/RecipeDatabase.h"
 
@@ -115,7 +116,12 @@ void OcrService::RequestDebugDump()
 
 OcrStatus OcrService::Status() const
 {
-    return { state_.load(), captureFailing_.load() };
+    return { state_.load(), captureFailing_.load(), waitingForGame_.load() };
+}
+
+unsigned OcrService::DebugDumpsWritten() const
+{
+    return debugDumpsWritten_.load();
 }
 
 bool OcrService::ConsumeDebugData(DebugData& data)
@@ -174,13 +180,13 @@ bool OcrService::LoadLanguage(const std::string& language)
     if (!ocr_.Init(model))
         return false;
 
+    const bool recipesLoaded = recipes_.Load();
+
     if (language == "en")
         return true;
 
-    RecipeDatabase recipes;
-
-    if (recipes.Load())
-        translations_ = recipes.Translations(language);
+    if (recipesLoaded)
+        translations_ = recipes_.Translations(language);
 
     LOG_INFO("OCR: game language '" + language + "', " + std::to_string(translations_.Size()) + " item names to translate");
 
@@ -207,10 +213,15 @@ void OcrService::PublishFrameResult(
 {
     std::vector<FrameRow> rows = ParseLootRows(loot, region, config, translations_.Empty() ? nullptr : &translations_);
 
-    if (config.priceSearchEnabled)
+    const bool pricesLoaded = config.priceSearchEnabled && prices_.Status().priceCount > 0;
+
+    for (FrameRow& row : rows)
     {
-        for (FrameRow& row : rows)
+        if (config.priceSearchEnabled)
             row.price = prices_.Resolve(row.name, row.quantity);
+
+        row.missingPrice =
+            pricesLoaded && !row.price.unitEx && recipes_.Loaded() && recipes_.FindRecipe(row.name, row.quantity) != nullptr;
     }
 
     DebugData debug;
@@ -270,6 +281,27 @@ void OcrService::PublishFrameResult(
     debugDirty_ = true;
 }
 
+bool OcrService::PauseForGame(const AppConfig& config, bool snapshot)
+{
+    const bool pause = config.pauseWhenGameInactive && !snapshot && QueryGameFocus() == GameFocus::Inactive;
+
+    if (pause == waitingForGame_.exchange(pause))
+        return pause;
+
+    if (pause)
+    {
+        ClearOverlayTexts();
+        LOG_INFO("OCR paused: Path of Exile is not the active window");
+    }
+    else
+    {
+        forceOcr_ = true;
+        LOG_INFO("OCR resumed: Path of Exile is the active window again");
+    }
+
+    return pause;
+}
+
 void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 {
     cv::Mat gray = screenCapture_.CaptureRegion(region);
@@ -290,9 +322,13 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 
     if (NeedsOcr(gray))
     {
-        lastLoot_ = ocr_.RecognizeLoot(gray, &rowCache_, debugDumpRequested_.exchange(false));
+        const bool dump = debugDumpRequested_.exchange(false);
+        lastLoot_ = ocr_.RecognizeLoot(gray, &rowCache_, dump);
         frameDiffer_.StoreOcrFrame(gray);
         lastOcrAt_ = std::chrono::steady_clock::now();
+
+        if (dump)
+            ++debugDumpsWritten_;
     }
 
     PublishFrameResult(lastLoot_, gray, region, config);
@@ -333,6 +369,7 @@ void OcrService::WorkerLoop()
         const bool keepSnapshot = std::chrono::steady_clock::now() < singleSnapshotUntil_;
         if (!config.ocrEnabled && !snapshotRequested && !keepSnapshot)
         {
+            waitingForGame_ = false;
             ResetFrameState();
             ClearOverlayTexts();
             SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
@@ -342,7 +379,15 @@ void OcrService::WorkerLoop()
 
         if (config.regionW <= 0 || config.regionH <= 0)
         {
+            waitingForGame_ = false;
             ResetFrameState();
+            SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
+
+            continue;
+        }
+
+        if (PauseForGame(config, snapshotRequested || keepSnapshot))
+        {
             SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
 
             continue;
@@ -388,6 +433,7 @@ void OcrService::WorkerLoop()
 void OcrService::ResetState(OcrState state)
 {
     state_ = state;
+    waitingForGame_ = false;
     singleSnapshotRequested_ = false;
     debugDumpRequested_ = false;
     singleSnapshotUntil_ = {};

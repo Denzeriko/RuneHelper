@@ -40,7 +40,8 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 * Highlights rare runeshape tiles directly in the remnant panel.
 * Offline database of every runeshape combination, refreshed from a proxy at startup.
 * League-specific price cache, updated automatically, which keeps API requests low.
-* Debug window with OCR and matching results, plus optional image and text dumps.
+* Price colors that follow the most valuable row on screen, or thresholds of your own.
+* Debug window with OCR and matching results, image and text dumps, and a one-click bug report.
 * No game memory reading or injection.
 
 ## How to use
@@ -80,7 +81,9 @@ bind = , F10, exec, /path/to/RuneHelper --select-region
 
 ## OCR debug
 
-When items are missed or misread, click **Save OCR Debug** in the Debug tab. RuneHelper reads the region once and writes what OCR saw to:
+When items are missed or misread, open the menu in the game and click **Create Bug Report** in the Debug tab. RuneHelper reads the region once and packs what OCR saw, the log, the settings and a few system details into a zip in the `reports` folder next to the config. **New GitHub Issue** opens the issue form; drag the zip into it.
+
+**Save OCR Debug** reads the region the same way and only writes the files, to:
 
 ```text
 Windows: %APPDATA%\Denz\RuneHelper\ocr_debug\latest

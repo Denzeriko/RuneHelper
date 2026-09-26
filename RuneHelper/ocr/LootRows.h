@@ -17,6 +17,7 @@ struct FrameRow
     int quantity = 1;
     int textTop = 0;
     int overlayY = 0;
+    bool missingPrice = false;
     ResolvedPrice price;
 };
 

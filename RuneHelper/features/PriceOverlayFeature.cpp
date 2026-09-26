@@ -1,24 +1,28 @@
 #include "features/PriceOverlayFeature.h"
 
+#include <algorithm>
 #include <string>
+#include <vector>
 
 #include "ocr/LootParser.h"
+#include "price/PriceColors.h"
 #include "ui/OverlayIcons.h"
 
 namespace
 {
-OverlayColor ColorForPrice(double priceEx, const AppConfig& config)
+constexpr const char* kNoPriceNote = "no price";
+
+double BestTotalEx(const std::vector<FrameRow>& rows)
 {
-    if (priceEx >= config.priceColorVeryHigh)
-        return OverlayRgb(255, 60, 60);
+    double best = 0.0;
 
-    if (priceEx >= config.priceColorHigh)
-        return OverlayRgb(255, 220, 80);
+    for (const FrameRow& row : rows)
+    {
+        if (row.price.unitEx)
+            best = std::max(best, row.price.totalEx);
+    }
 
-    if (priceEx >= config.priceColorMedium)
-        return OverlayRgb(80, 255, 80);
-
-    return OverlayRgb(160, 160, 160);
+    return best;
 }
 
 std::string UnitText(const OverlayIcon& icon, bool picture)
@@ -34,6 +38,7 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
 
     const std::string exalted = UnitText(kExaltedOrbIcon, frame.config.overlayIcons);
     const std::string divine = UnitText(kDivineOrbIcon, frame.config.overlayIcons);
+    const PriceTiers tiers = frame.config.autoPriceColors ? AutoPriceTiers(BestTotalEx(frame.rows)) : ManualPriceTiers(frame.config);
 
     for (size_t i = 0; i < frame.rows.size(); ++i)
     {
@@ -41,7 +46,12 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
         const ResolvedPrice& resolved = row.price;
 
         if (!resolved.unitEx)
+        {
+            if (row.missingPrice)
+                frame.rowOverlays[i].Append(kNoPriceNote);
+
             continue;
+        }
 
         if (i < frame.debug.lines.size())
         {
@@ -70,6 +80,6 @@ void PriceOverlayFeature::OnFrame(FrameContext& frame)
                 frame.rowOverlays[i].Append(LootParser::FormatAmount(divines, divine));
         }
 
-        frame.rowOverlays[i].SetColor(ColorForPrice(resolved.totalEx, frame.config));
+        frame.rowOverlays[i].SetColor(PriceColor(resolved.totalEx, tiers));
     }
 }

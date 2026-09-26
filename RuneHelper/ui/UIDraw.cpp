@@ -11,6 +11,7 @@
 #include "core/Feature.h"
 #include "core/Logger.h"
 #include "core/UpdateChecker.h"
+#include "platform/GameFocus.h"
 #include "platform/PlatformShell.h"
 #include "price/ResolvedPrice.h"
 #include "ui/UIManager.h"
@@ -29,6 +30,7 @@ constexpr ImVec4 kGreen{ 0.5f, 1.0f, 0.5f, 1.0f };
 constexpr ImVec4 kYellow{ 1.0f, 0.8f, 0.2f, 1.0f };
 constexpr ImVec4 kRed{ 1.0f, 0.3f, 0.3f, 1.0f };
 constexpr float kMinDebugTableHeight = 120.0f;
+constexpr const char* kNewIssueUrl = "https://github.com/Denzeriko/RuneHelper/issues/new?template=ocr-problem.yml";
 
 const std::vector<GameLanguage>& ReadableLanguages()
 {
@@ -126,9 +128,19 @@ void StatusRow(const char* name)
     ImGui::TableSetColumnIndex(1);
 }
 
-void DrawOcrStatus(OcrState state)
+void DrawOcrStatus(const OcrStatus& status)
 {
-    switch (state)
+    if (status.waitingForGame && status.state == OcrState::Ready)
+    {
+        ImGui::TextColored(kYellow, "Paused");
+
+        if (ImGui::IsItemHovered())
+            UiTooltip("Path of Exile is not the active window. This pause can be turned off in the Debug Menu.");
+
+        return;
+    }
+
+    switch (status.state)
     {
     case OcrState::Initializing: ImGui::TextColored(kYellow, "Initializing"); break;
     case OcrState::Failed: ImGui::TextColored(kRed, "Failed"); break;
@@ -184,7 +196,7 @@ bool DrawStatusSection(UIManager& ui)
     ImGui::TableSetupColumn("Value");
 
     StatusRow("OCR");
-    DrawOcrStatus(state.ocr.state);
+    DrawOcrStatus(state.ocr);
 
     StatusRow("Capture");
     if (state.ocr.captureFailing)
@@ -451,9 +463,17 @@ void DrawSettingsTab(UIManager& ui)
 
     ImGui::Spacing();
 
+    configChanged |= ImGui::Checkbox("Automatic colors", &config.autoPriceColors);
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Colors each price against the most valuable row on screen: red from half its value, yellow from a fifth, "
+                  "green from a twentieth. Turn it off to set the thresholds below yourself.");
+
+    ImGui::BeginDisabled(config.autoPriceColors);
     configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
     configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
     configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
+    ImGui::EndDisabled();
     configChanged |=
         ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
 
@@ -492,13 +512,85 @@ void DrawSettingsTab(UIManager& ui)
         ui.ApplyConfigDraft();
 }
 
+void DrawReportStatus(const UIState& state)
+{
+    switch (state.report)
+    {
+    case ReportState::None: return;
+    case ReportState::Collecting: ImGui::TextColored(kYellow, "Collecting the report..."); return;
+    case ReportState::Failed: ImGui::TextColored(kRed, "The report could not be written, see runehelper.log"); return;
+    case ReportState::Saved: break;
+    }
+
+    ImGui::TextColored(kGreen, "Report saved");
+    ImGui::SameLine();
+
+    if (ImGui::SmallButton("Open Folder"))
+    {
+        if (!OpenExternalUrl(state.reportFolder))
+            LOG_ERROR("Could not open the report folder");
+    }
+
+    if (ImGui::IsItemHovered())
+        UiTooltip(state.reportFolder.c_str());
+
+    ImGui::SameLine();
+
+    if (ImGui::SmallButton("New GitHub Issue"))
+    {
+        if (!OpenExternalUrl(kNewIssueUrl))
+            LOG_ERROR("Could not open the GitHub issue page in a browser");
+    }
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Opens a new issue on GitHub. Drag the report zip into it.");
+}
+
+void DrawPauseSwitch(UIManager& ui)
+{
+    AppConfig& config = ui.ConfigDraft();
+    const bool supported = GameFocusSupported();
+    bool unavailable = false;
+
+    ImGui::BeginDisabled(!supported);
+
+    if (ImGui::Checkbox("Pause while Path of Exile is not active", supported ? &config.pauseWhenGameInactive : &unavailable))
+        ui.ApplyConfigDraft();
+
+    ImGui::EndDisabled();
+
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        UiTooltip(
+            supported ? "Stops reading the screen and hides the overlay while another window is in front of the game."
+                      : "Unavailable for Wayland"
+        );
+}
+
 void DrawDebugTab(UIManager& ui)
 {
+    UIState& state = ui.State();
+
+    DrawPauseSwitch(ui);
+
     if (ImGui::Button("Save OCR Debug"))
-        ui.State().requests.saveOcrDebug = true;
+        state.requests.saveOcrDebug = true;
 
     if (ImGui::IsItemHovered())
         UiTooltip("Reads the region once and writes its crops and recognition logs into the ocr_debug/latest folder.");
+
+    ImGui::SameLine();
+    ImGui::BeginDisabled(state.report == ReportState::Collecting);
+
+    if (ImGui::Button("Create Bug Report"))
+        state.requests.createReport = true;
+
+    ImGui::EndDisabled();
+
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        UiTooltip("Reads the region once, like Save OCR Debug, then packs the crops, the log, the settings and system details "
+                  "into a zip to attach to a GitHub issue. Keep the menu open in the game while you press it.");
+
+    DrawReportStatus(state);
 
     ImGui::Spacing();
 

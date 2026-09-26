@@ -235,10 +235,12 @@ bool ConfigManager::Load()
     config_.priceColorMedium = JsonValue(j, "priceColorMedium", config_.priceColorMedium);
     config_.priceColorHigh = JsonValue(j, "priceColorHigh", config_.priceColorHigh);
     config_.priceColorVeryHigh = JsonValue(j, "priceColorVeryHigh", config_.priceColorVeryHigh);
+    config_.autoPriceColors = JsonValue(j, "autoPriceColors", config_.autoPriceColors);
 
     config_.priceRefreshMinutes = JsonValue(j, "priceRefreshMinutes", config_.priceRefreshMinutes);
     config_.priceLeague = JsonValue(j, "priceLeague", config_.priceLeague);
     config_.gameLanguage = JsonValue(j, "gameLanguage", config_.gameLanguage);
+    config_.pauseWhenGameInactive = JsonValue(j, "pauseWhenGameInactive", config_.pauseWhenGameInactive);
 
     Normalize(config_);
 
@@ -282,10 +284,12 @@ bool ConfigManager::Save() const
     j["priceColorMedium"] = config.priceColorMedium;
     j["priceColorHigh"] = config.priceColorHigh;
     j["priceColorVeryHigh"] = config.priceColorVeryHigh;
+    j["autoPriceColors"] = config.autoPriceColors;
 
     j["priceRefreshMinutes"] = config.priceRefreshMinutes;
     j["priceLeague"] = config.priceLeague;
     j["gameLanguage"] = config.gameLanguage;
+    j["pauseWhenGameInactive"] = config.pauseWhenGameInactive;
 
     return WriteFileAtomic(GetConfigPath(), j.dump(4));
 }

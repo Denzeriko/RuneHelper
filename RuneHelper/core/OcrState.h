@@ -12,4 +12,5 @@ struct OcrStatus
 {
     OcrState state = OcrState::Initializing;
     bool captureFailing = false;
+    bool waitingForGame = false;
 };

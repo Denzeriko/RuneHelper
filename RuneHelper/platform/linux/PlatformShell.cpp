@@ -2,15 +2,51 @@
 
 #include <fcntl.h>
 #include <spawn.h>
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <cstdlib>
+#include <fstream>
+#include <string_view>
 #include <thread>
 #include <vector>
 
 #include "core/Logger.h"
 
 extern char** environ;
+
+namespace
+{
+std::string OsName()
+{
+    constexpr std::string_view kKey = "PRETTY_NAME=";
+
+    std::ifstream file("/etc/os-release");
+    std::string line;
+
+    while (std::getline(file, line))
+    {
+        if (!line.starts_with(kKey))
+            continue;
+
+        std::string name = line.substr(kKey.size());
+
+        if (name.size() >= 2 && name.front() == '"' && name.back() == '"')
+            name = name.substr(1, name.size() - 2);
+
+        return name;
+    }
+
+    return "Linux";
+}
+
+std::string Environment(const char* name)
+{
+    const char* value = std::getenv(name);
+    return value && *value ? value : "-";
+}
+}
 
 bool OpenExternalUrl(const std::string& url)
 {
@@ -45,4 +81,18 @@ bool OpenExternalUrl(const std::string& url)
     std::thread([pid] { waitpid(pid, nullptr, 0); }).detach();
 
     return true;
+}
+
+std::string DescribeSystem()
+{
+    std::string text = "System: " + OsName() + "\n";
+
+    utsname kernel{};
+
+    if (uname(&kernel) == 0)
+        text += std::string("Kernel: ") + kernel.release + "\n";
+
+    text += "Session: " + Environment("XDG_SESSION_TYPE") + ", desktop " + Environment("XDG_CURRENT_DESKTOP") + "\n";
+
+    return text;
 }

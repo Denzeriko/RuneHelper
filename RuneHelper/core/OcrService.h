@@ -17,6 +17,7 @@
 #include "ocr/OcrFrameDiffer.h"
 #include "ocr/OcrRowCache.h"
 #include "ocr/OCR.h"
+#include "recipes/RecipeDatabase.h"
 #include "ui/OverlayState.h"
 
 class PriceService;
@@ -37,6 +38,7 @@ public:
     void RequestDebugDump();
 
     OcrStatus Status() const;
+    unsigned DebugDumpsWritten() const;
     bool ConsumeDebugData(DebugData& data);
 
     bool ConsumeOverlayFrame(OverlayFrame& frame);
@@ -47,6 +49,7 @@ private:
     void WorkerLoop();
 
     void ResetFrameState();
+    bool PauseForGame(const AppConfig& config, bool snapshot);
     void ProcessFrame(const cv::Rect& region, const AppConfig& config);
     bool NeedsOcr(const cv::Mat& gray);
     void PublishFrameResult(const std::vector<LootLine>& loot, const cv::Mat& gray, const cv::Rect& region, const AppConfig& config);
@@ -64,6 +67,7 @@ private:
     OCR ocr_;
     std::string language_;
     NameMatcher translations_;
+    RecipeDatabase recipes_;
     ScreenCaptureService screenCapture_;
     OcrFrameDiffer frameDiffer_;
     OcrRowCache rowCache_;
@@ -78,10 +82,12 @@ private:
     std::chrono::steady_clock::time_point singleSnapshotUntil_;
     int emptyOverlayFrames_ = 0;
     int captureFailures_ = 0;
+    std::atomic<unsigned> debugDumpsWritten_ = 0;
 
     std::atomic<OcrState> state_ = OcrState::Initializing;
     std::atomic<bool> running_ = false;
     std::atomic<bool> captureFailing_ = false;
+    std::atomic<bool> waitingForGame_ = false;
     std::atomic<bool> singleSnapshotRequested_ = false;
     std::atomic<bool> debugDumpRequested_ = false;
     std::atomic<bool> forceOcr_ = false;

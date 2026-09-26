@@ -1,5 +1,8 @@
 #pragma once
 
+#include <chrono>
+#include <string>
+
 #include "core/ConfigManager.h"
 #include "core/Feature.h"
 #include "core/OcrService.h"
@@ -23,6 +26,9 @@ private:
     void PublishStatus();
     void HandleRequests(const UIRequests& requests);
     void SelectRegion();
+    void StartBugReport();
+    void FinishBugReport();
+    std::string DescribeRun(bool freshDump);
     void UpdateOverlay();
     void UpdateRegionPreview(const AppConfig& config);
 
@@ -34,4 +40,8 @@ private:
     UIManager ui_{ configManager_, updateChecker_, features_ };
     OverlayWindow overlay_;
     OcrService ocrService_{ configManager_, features_, prices_ };
+
+    bool reportPending_ = false;
+    unsigned reportDumps_ = 0;
+    std::chrono::steady_clock::time_point reportStarted_;
 };

@@ -1,8 +1,10 @@
 set(RUNEHELPER_CORE_SOURCES
     RuneHelper/core/AtomicFile.cpp
+    RuneHelper/core/BugReport.cpp
     RuneHelper/core/ConfigManager.cpp
     RuneHelper/core/Logger.cpp
     RuneHelper/core/Text.cpp
+    RuneHelper/core/ZipWriter.cpp
     RuneHelper/ocr/LineReader.cpp
     RuneHelper/ocr/LootParser.cpp
     RuneHelper/ocr/LootRows.cpp
@@ -17,6 +19,7 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/ocr/TextStart.cpp
     RuneHelper/price/PoeNinjaPriceProvider.cpp
     RuneHelper/price/PriceCache.cpp
+    RuneHelper/price/PriceColors.cpp
     RuneHelper/price/PriceService.cpp
     RuneHelper/recipes/RecipeDatabase.cpp
     RuneHelper/recipes/RecipeUpdater.cpp
@@ -56,6 +59,7 @@ if(WIN32)
         RuneHelper/platform/windows/ScreenCapture.cpp
         RuneHelper/platform/windows/DesktopDuplication.cpp
         RuneHelper/platform/windows/RegionSelect.cpp
+        RuneHelper/platform/windows/GameFocus.cpp
     )
 elseif(UNIX AND NOT APPLE)
     set(RUNEHELPER_CORE_PLATFORM_SOURCES
@@ -77,6 +81,7 @@ elseif(UNIX AND NOT APPLE)
             RuneHelper/platform/linux/wayland/RegionSelect.cpp
             RuneHelper/platform/linux/wayland/ScreenCapture.cpp
             RuneHelper/platform/linux/wayland/WaylandSession.cpp
+            RuneHelper/platform/linux/wayland/GameFocus.cpp
         )
     else()
         list(APPEND RUNEHELPER_PLATFORM_SOURCES
@@ -84,6 +89,7 @@ elseif(UNIX AND NOT APPLE)
             RuneHelper/platform/linux/x11/OverlayBackend.cpp
             RuneHelper/platform/linux/x11/RegionSelect.cpp
             RuneHelper/platform/linux/x11/ScreenCapture.cpp
+            RuneHelper/platform/linux/x11/GameFocus.cpp
         )
     endif()
 endif()
