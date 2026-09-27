@@ -193,7 +193,7 @@ void DrawUpdate(UIManager& ui)
     const std::string label = "Update to " + updates.LatestVersion();
 
     if (ImGui::SmallButton(label.c_str()))
-        ui.State().requests.installUpdate = true;
+        ui.EnqueueCommand(UICommand::InstallUpdate);
 
     if (ImGui::IsItemHovered())
         UiTooltip("Downloads the new version and restarts RuneHelper");
@@ -273,13 +273,13 @@ bool DrawStatusSection(UIManager& ui)
     return true;
 }
 
-void DrawRegionSection(UIState& state, const AppConfig& config)
+void DrawRegionSection(UIManager& ui, const AppConfig& config)
 {
     ImGui::SeparatorText("REGION");
     if (ImGui::Button("Select Region"))
-        state.requests.selectRegion = true;
+        ui.EnqueueCommand(UICommand::SelectRegion);
 
-    state.regionHovered = ImGui::IsItemHovered();
+    ui.State().regionHovered = ImGui::IsItemHovered();
 
     ImGui::SameLine();
     if (config.regionW > 0)
@@ -308,7 +308,7 @@ bool DrawOcrSection(AppConfig& config)
     return changed;
 }
 
-bool DrawPriceSection(UIState& state, AppConfig& config)
+bool DrawPriceSection(UIManager& ui, AppConfig& config)
 {
     ImGui::SeparatorText("PRICES");
 
@@ -318,7 +318,7 @@ bool DrawPriceSection(UIState& state, AppConfig& config)
     {
         changed = true;
         if (config.priceSearchEnabled)
-            state.requests.refreshPrices = true;
+            ui.EnqueueCommand(UICommand::RefreshPrices);
     }
     if (ImGui::IsItemHovered())
         UiTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
@@ -327,7 +327,7 @@ bool DrawPriceSection(UIState& state, AppConfig& config)
         ImGui::BeginDisabled();
 
     if (ImGui::Button("Refresh Prices"))
-        state.requests.refreshPrices = true;
+        ui.EnqueueCommand(UICommand::RefreshPrices);
 
     if (!config.priceSearchEnabled)
         ImGui::EndDisabled();
@@ -370,10 +370,10 @@ void DrawMainTab(UIManager& ui)
     UIState& state = ui.State();
     AppConfig& config = ui.ConfigDraft();
 
-    DrawRegionSection(state, config);
+    DrawRegionSection(ui, config);
 
     bool configChanged = DrawOcrSection(config);
-    configChanged |= DrawPriceSection(state, config);
+    configChanged |= DrawPriceSection(ui, config);
 
     DrawFeatureControls(ui);
 
@@ -419,7 +419,7 @@ void DrawHotkeyButton(UIManager& ui, const char* label, int& key)
         state.waitingForHotkey = nullptr;
 
         ui.ApplyConfigDraft();
-        state.requests.registerHotkeys = true;
+        ui.EnqueueCommand(UICommand::RegisterHotkeys);
     }
 
     ImGui::PopID();
@@ -436,7 +436,7 @@ void DrawSettingsTab(UIManager& ui)
     constexpr const char* kPriceLeagues[] = { "Forbidden Rites",   "HC Forbidden Rites", "Runes of Aldur",
                                               "HC Runes of Aldur", "Standard",           "Hardcore" };
 
-    auto pickLeague = [&config, &configChanged, &state](std::string league)
+    auto pickLeague = [&config, &configChanged, &ui](std::string league)
     {
         if (league.empty() || league == config.priceLeague)
             return;
@@ -445,7 +445,7 @@ void DrawSettingsTab(UIManager& ui)
         configChanged = true;
 
         if (config.priceSearchEnabled)
-            state.requests.refreshPrices = true;
+            ui.EnqueueCommand(UICommand::RefreshPrices);
     };
 
     const bool leagueOpen = ImGui::BeginCombo("League", config.priceLeague.c_str());
@@ -615,7 +615,7 @@ void DrawDebugTab(UIManager& ui)
     DrawPauseSwitch(ui);
 
     if (ImGui::Button("Save OCR Debug"))
-        state.requests.saveOcrDebug = true;
+        ui.EnqueueCommand(UICommand::SaveOcrDebug);
 
     if (ImGui::IsItemHovered())
         UiTooltip("Reads the region once and writes its crops and recognition logs into the ocr_debug/latest folder.");
@@ -624,7 +624,7 @@ void DrawDebugTab(UIManager& ui)
     ImGui::BeginDisabled(state.report == ReportState::Collecting);
 
     if (ImGui::Button("Create Bug Report"))
-        state.requests.createReport = true;
+        ui.EnqueueCommand(UICommand::CreateReport);
 
     ImGui::EndDisabled();
 

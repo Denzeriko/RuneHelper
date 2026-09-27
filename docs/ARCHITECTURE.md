@@ -14,7 +14,7 @@ Features run on two threads. `Feature::OnFrame` is called by the OCR worker, `Dr
 
 ## From a key press to the config
 
-A hotkey sets a flag in `UIState::requests`: Windows through `RegisterHotKey`, X11 through `XGrabKey`, and Wayland through the control socket that `RuneHelper --toggle-ocr` and friends write to, because Wayland has no global key grabs. Clicks in the window set the same flags. Once per frame `RuneHelperApp::HandleRequests` takes all of them at once and acts: toggling OCR changes the config, a snapshot or a debug dump becomes an explicit `OcrService` command, and a region selection runs the platform selector.
+A hotkey or UI action enqueues a `UICommand` in `UIManager`: Windows through `RegisterHotKey`, X11 through `XGrabKey`, and Wayland through the control socket that `RuneHelper --toggle-ocr` and friends write to, because Wayland has no global key grabs. Once per frame `RuneHelperApp::HandleCommands` takes the queued commands and applies them: toggling OCR changes the config, a snapshot or a debug dump becomes an `OcrService` command, and a region selection runs the platform selector. Duplicate commands of the same kind are coalesced until the queue is drained.
 
 A bug report crosses both threads. The main thread asks `OcrService` for a debug dump, then checks every frame whether `DebugDumpsWritten` has moved, giving up after 5 s when the region cannot be read. It then flushes the config and zips the dump, the last megabyte of each log, `config.json` and `DescribeSystem` into `reports/` (`WriteBugReport`), which takes a few milliseconds on the main thread.
 

@@ -1,5 +1,6 @@
 #include "ui/UIManager.h"
 
+#include <algorithm>
 #include <utility>
 
 #include "core/ConfigManager.h"
@@ -46,6 +47,12 @@ void UIManager::Pump()
 bool UIManager::IsRunning() const
 {
     return state_.running && backend_->IsRunning();
+}
+
+void UIManager::EnqueueCommand(UICommand command)
+{
+    if (std::find(commands_.begin(), commands_.end(), command) == commands_.end())
+        commands_.push_back(command);
 }
 
 void UIManager::ApplyConfigDraft()

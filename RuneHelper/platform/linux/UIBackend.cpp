@@ -119,13 +119,11 @@ const char* SpecialKeyName(int key)
 
 void UIBackend::Impl::DispatchHotkeyAction(HotkeyAction action)
 {
-    UIRequests& requests = manager->State().requests;
-
     switch (action)
     {
-    case HotkeyAction::ToggleOcr: requests.toggleOcr = true; break;
-    case HotkeyAction::SingleSnapshot: requests.singleSnapshot = true; break;
-    case HotkeyAction::SelectRegion: requests.selectRegion = true; break;
+    case HotkeyAction::ToggleOcr: manager->EnqueueCommand(UICommand::ToggleOcr); break;
+    case HotkeyAction::SingleSnapshot: manager->EnqueueCommand(UICommand::SingleSnapshot); break;
+    case HotkeyAction::SelectRegion: manager->EnqueueCommand(UICommand::SelectRegion); break;
     }
 }
 

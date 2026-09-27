@@ -488,14 +488,12 @@ void UIBackend::Impl::RegisterHotkey(int id, int key, const char* label)
 
 void UIBackend::Impl::RequestFromHotkey(int id)
 {
-    UIRequests& requests = manager->State().requests;
-
     if (id == kToggleOcrHotkeyId)
-        requests.toggleOcr = true;
+        manager->EnqueueCommand(UICommand::ToggleOcr);
     else if (id == kSingleSnapshotHotkeyId)
-        requests.singleSnapshot = true;
+        manager->EnqueueCommand(UICommand::SingleSnapshot);
     else if (id == kSelectRegionHotkeyId)
-        requests.selectRegion = true;
+        manager->EnqueueCommand(UICommand::SelectRegion);
 }
 
 LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)

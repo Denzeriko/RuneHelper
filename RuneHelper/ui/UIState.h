@@ -5,18 +5,6 @@
 
 #include "core/OcrState.h"
 
-struct UIRequests
-{
-    bool selectRegion = false;
-    bool refreshPrices = false;
-    bool toggleOcr = false;
-    bool singleSnapshot = false;
-    bool saveOcrDebug = false;
-    bool createReport = false;
-    bool installUpdate = false;
-    bool registerHotkeys = false;
-};
-
 enum class ReportState
 {
     None,
@@ -37,7 +25,6 @@ struct UIState
     ReportState report = ReportState::None;
     std::string reportFolder;
 
-    UIRequests requests;
     bool regionHovered = false;
     bool debugTabOpen = false;
     bool featureTabOpen = false;

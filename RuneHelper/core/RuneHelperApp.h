@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <vector>
 
 #include "core/ConfigManager.h"
 #include "core/Feature.h"
@@ -27,7 +28,7 @@ private:
     void MainLoop();
 
     void PublishStatus();
-    void HandleRequests(const UIRequests& requests);
+    void HandleCommands(const std::vector<UICommand>& commands);
     void SelectRegion();
     void StartBugReport();
     void FinishBugReport();

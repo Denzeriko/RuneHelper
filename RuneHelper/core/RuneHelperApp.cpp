@@ -113,7 +113,7 @@ void RuneHelperApp::MainLoop()
         ui_.Pump();
         overlay_.PumpMessages();
 
-        HandleRequests(ui_.TakeRequests());
+        HandleCommands(ui_.TakeCommands());
         FinishBugReport();
 
         if (updateChecker_.Install() == UpdateInstall::Installed && !restartTarget_)
@@ -165,31 +165,22 @@ void RuneHelperApp::PublishStatus()
         ui_.SetDebugData(std::move(debugData));
 }
 
-void RuneHelperApp::HandleRequests(const UIRequests& requests)
+void RuneHelperApp::HandleCommands(const std::vector<UICommand>& commands)
 {
-    if (requests.toggleOcr)
-        configManager_.Update([](AppConfig& config) { config.ocrEnabled = !config.ocrEnabled; });
-
-    if (requests.singleSnapshot)
-        ocrService_.RequestSingleSnapshot();
-
-    if (requests.saveOcrDebug)
-        ocrService_.RequestDebugDump();
-
-    if (requests.createReport)
-        StartBugReport();
-
-    if (requests.installUpdate)
-        updateChecker_.StartInstall();
-
-    if (requests.refreshPrices)
-        prices_.ForceRefresh();
-
-    if (requests.selectRegion)
-        SelectRegion();
-
-    if (requests.registerHotkeys)
-        ui_.RegisterHotkeys();
+    for (const UICommand command : commands)
+    {
+        switch (command)
+        {
+        case UICommand::SelectRegion: SelectRegion(); break;
+        case UICommand::RefreshPrices: prices_.ForceRefresh(); break;
+        case UICommand::ToggleOcr: configManager_.Update([](AppConfig& config) { config.ocrEnabled = !config.ocrEnabled; }); break;
+        case UICommand::SingleSnapshot: ocrService_.RequestSingleSnapshot(); break;
+        case UICommand::SaveOcrDebug: ocrService_.RequestDebugDump(); break;
+        case UICommand::CreateReport: StartBugReport(); break;
+        case UICommand::InstallUpdate: updateChecker_.StartInstall(); break;
+        case UICommand::RegisterHotkeys: ui_.RegisterHotkeys(); break;
+        }
+    }
 }
 
 void RuneHelperApp::SelectRegion()

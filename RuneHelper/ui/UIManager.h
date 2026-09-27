@@ -4,9 +4,11 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "core/Config.h"
 #include "core/DebugData.h"
+#include "ui/UICommand.h"
 #include "ui/UIState.h"
 
 class ConfigManager;
@@ -31,7 +33,9 @@ public:
 
     UIState& State() { return state_; }
 
-    UIRequests TakeRequests() { return std::exchange(state_.requests, {}); }
+    void EnqueueCommand(UICommand command);
+
+    std::vector<UICommand> TakeCommands() { return std::exchange(commands_, {}); }
 
     AppConfig& ConfigDraft() { return configDraft_; }
 
@@ -64,6 +68,7 @@ private:
 
     AppConfig configDraft_;
     UIState state_;
+    std::vector<UICommand> commands_;
     DebugData debugData_;
     std::uint64_t debugDataVersion_ = 0;
 
