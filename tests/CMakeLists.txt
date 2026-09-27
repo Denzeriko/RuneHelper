@@ -46,6 +46,10 @@ runehelper_add_test(ocr_rune_tiles)
 runehelper_add_test(unit_tests)
 runehelper_add_test(ocr_service_cancel)
 runehelper_add_test(update_checker)
+runehelper_add_test(price_cache)
+
+add_test(NAME price_cache COMMAND price_cache)
+set_tests_properties(price_cache PROPERTIES TIMEOUT 60)
 
 target_sources(update_checker PRIVATE
     "${CMAKE_SOURCE_DIR}/RuneHelper/core/UpdateChecker.cpp"
@@ -116,7 +120,7 @@ add_test(
 )
 
 add_custom_target(runehelper_tests
-    DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests ocr_service_cancel update_checker
+    DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests ocr_service_cancel update_checker price_cache
 )
 
 set(RUNEHELPER_BLESS_COMMANDS

@@ -131,6 +131,7 @@ void PriceCache::SetLeague(std::string league)
             return;
 
         league_ = std::move(league);
+        ++leagueVersion_;
         prices_.clear();
         divineToEx_ = 0.0;
         dumpUpdatedAt_ = 0;
@@ -166,9 +167,11 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
 
     int64_t now = NowUnix();
     std::string league;
+    std::uint64_t leagueVersion = 0;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         league = league_;
+        leagueVersion = leagueVersion_;
     }
 
     PriceTable fresh;
@@ -187,6 +190,9 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
 
         {
             std::lock_guard<std::mutex> lock(mutex_);
+            if (leagueVersion_ != leagueVersion)
+                return;
+
             ++failureStreak_;
             lastFailureAt_ = NowUnix();
             attempt = failureStreak_;
@@ -204,10 +210,11 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
     const bool partial = !fresh.complete;
     int64_t retryIn = 0;
     int attempt = 0;
+    PriceDump dump;
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (league_ != league)
+        if (leagueVersion_ != leagueVersion)
         {
             LOG_INFO("PriceCache::RefreshWorker() -> stale league refresh ignored");
             return;
@@ -235,9 +242,11 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
             divineToEx_ = fresh.divineToEx;
 
         ++version_;
+        dump = { prices_, divineToEx_, dumpUpdatedAt_ };
     }
 
-    SaveDump();
+    if (!store_->Save(league, dump))
+        LOG_ERROR("PriceCache::RefreshWorker() -> failed to save prices");
 
     if (partial)
     {
@@ -258,38 +267,25 @@ int64_t PriceCache::NowUnix()
     return std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 }
 
-void PriceCache::SaveDump()
-{
-    PriceDump dump;
-    std::string league;
-    {
-        std::lock_guard<std::mutex> lock(mutex_);
-        league = league_;
-        dump.items = prices_;
-        dump.divineToEx = divineToEx_;
-        dump.updatedAt = dumpUpdatedAt_;
-    }
-
-    if (!store_->Save(league, dump))
-        LOG_ERROR("PriceCache::SaveDump() -> failed to write file");
-}
-
 void PriceCache::LoadDump()
 {
     std::string league;
+    std::uint64_t version = 0;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         league = league_;
+        version = version_;
     }
 
-    std::optional<PriceDump> dump = store_->Load(league);
+    std::optional<PriceDump> dump;
+    RunLoggingExceptions("PriceCache load dump", [&] { dump = store_->Load(league); });
 
     if (!dump)
         return;
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
-        if (league_ != league)
+        if (version_ != version)
             return;
 
         prices_ = std::move(dump->items);
