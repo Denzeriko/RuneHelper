@@ -82,12 +82,14 @@ void CancelCapture() {}
 int main()
 {
     ConfigManager config;
-    config.Update([](AppConfig& value)
-                  {
-                      value.regionW = 20;
-                      value.regionH = 20;
-                      value.pauseWhenGameInactive = false;
-                  });
+    config.Update(
+        [](AppConfig& value)
+        {
+            value.regionW = 20;
+            value.regionH = 20;
+            value.pauseWhenGameInactive = false;
+        }
+    );
 
     FeatureRegistry features;
     PriceService prices;

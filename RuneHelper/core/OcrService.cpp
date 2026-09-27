@@ -33,8 +33,7 @@ OcrService::OcrService(
     PriceService& prices,
     std::unique_ptr<IScreenCapture> screenCapture
 )
-    : configManager_(configManager),
-      pipeline_(features, prices),
+    : configManager_(configManager), pipeline_(features, prices),
       screenCapture_(screenCapture ? std::move(screenCapture) : CreateScreenCapture())
 {
 }
@@ -54,9 +53,8 @@ void OcrService::Start()
 
     ResetState(OcrState::Initializing);
 
-    workerThread_ = std::jthread(
-        [this](const std::stop_token& stop) { RunLoggingExceptions("OcrService worker thread", [&] { WorkerLoop(stop); }); }
-    );
+    workerThread_ = std::jthread([this](const std::stop_token& stop)
+                                 { RunLoggingExceptions("OcrService worker thread", [&] { WorkerLoop(stop); }); });
 }
 
 void OcrService::Stop()
