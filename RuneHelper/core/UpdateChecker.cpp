@@ -90,7 +90,7 @@ void UpdateChecker::StartInstall()
         [this](const std::stop_token& stop)
         {
             if (!RunLoggingExceptions("Update install thread", [&] { RunInstall(stop); }))
-                install_ = UpdateInstall::Failed;
+                install_ = stop.stop_requested() ? UpdateInstall::Idle : UpdateInstall::Failed;
         }
     );
 }
@@ -130,7 +130,6 @@ void UpdateChecker::Check(const std::stop_token& stop)
         return;
 
     std::optional<ReleaseInfo> fetched = releaseProvider_->LatestRelease(ReleaseAssetName(RUNEHELPER_BUILD_VARIANT), stop);
-    checking_ = false;
 
     if (!fetched || stop.stop_requested())
         return;
@@ -180,5 +179,5 @@ void UpdateChecker::RunInstall(const std::stop_token& stop)
 
     const std::filesystem::path executable = ExecutablePath();
     const bool installed = installer_->Install(asset, executable, install_, installPercent_, stop);
-    install_ = stop.stop_requested() ? UpdateInstall::Idle : installed ? UpdateInstall::Installed : UpdateInstall::Failed;
+    install_ = installed ? UpdateInstall::Installed : stop.stop_requested() ? UpdateInstall::Idle : UpdateInstall::Failed;
 }

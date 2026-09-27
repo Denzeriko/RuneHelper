@@ -45,6 +45,16 @@ runehelper_add_test(ocr_row_cache)
 runehelper_add_test(ocr_rune_tiles)
 runehelper_add_test(unit_tests)
 runehelper_add_test(ocr_service_cancel)
+runehelper_add_test(update_checker)
+
+target_sources(update_checker PRIVATE
+    "${CMAKE_SOURCE_DIR}/RuneHelper/core/UpdateChecker.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/core/UpdateInstaller.cpp"
+)
+target_compile_definitions(update_checker PRIVATE RUNEHELPER_BUILD_VARIANT="linux-${RUNEHELPER_LINUX_BACKEND}")
+
+add_test(NAME update_checker COMMAND update_checker)
+set_tests_properties(update_checker PROPERTIES TIMEOUT 60)
 
 target_sources(ocr_service_cancel PRIVATE
     "${CMAKE_SOURCE_DIR}/RuneHelper/core/OcrService.cpp"
@@ -106,7 +116,7 @@ add_test(
 )
 
 add_custom_target(runehelper_tests
-    DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests ocr_service_cancel
+    DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests ocr_service_cancel update_checker
 )
 
 set(RUNEHELPER_BLESS_COMMANDS
