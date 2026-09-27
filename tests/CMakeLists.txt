@@ -1,38 +1,37 @@
 list(TRANSFORM RUNEHELPER_CORE_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/" OUTPUT_VARIABLE RUNEHELPER_TEST_CORE)
 list(TRANSFORM RUNEHELPER_CORE_PLATFORM_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/" OUTPUT_VARIABLE RUNEHELPER_TEST_PLATFORM)
 
-set(RUNEHELPER_TEST_SOURCES
+foreach(object IN LISTS RUNEHELPER_EMBEDDED_OBJECTS)
+    set_source_files_properties("${object}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
+endforeach()
+
+add_library(runehelper_test_support STATIC
     ${RUNEHELPER_TEST_CORE}
     ${RUNEHELPER_TEST_PLATFORM}
     ${RUNEHELPER_EMBEDDED_SOURCES}
     "${CMAKE_SOURCE_DIR}/RuneHelper/core/Feature.cpp"
 )
 
-set(RUNEHELPER_TEST_LIBRARIES
+add_dependencies(runehelper_test_support runehelper_embedded_resources)
+
+target_include_directories(runehelper_test_support PUBLIC "${CMAKE_SOURCE_DIR}/RuneHelper" "${CMAKE_CURRENT_SOURCE_DIR}")
+target_compile_options(runehelper_test_support PUBLIC ${RUNEHELPER_WARNINGS})
+
+target_compile_definitions(runehelper_test_support PUBLIC
+    RUNEHELPER_VERSION="${PROJECT_VERSION}"
+    RUNEHELPER_VERSION_LABEL="${RUNEHELPER_VERSION_LABEL}"
+    RUNEHELPER_COMMIT="${RUNEHELPER_COMMIT}"
+)
+
+target_link_libraries(runehelper_test_support PUBLIC
     ${OpenCV_LIBS}
     cpr::cpr
     nlohmann_json::nlohmann_json
 )
 
-foreach(object IN LISTS RUNEHELPER_EMBEDDED_OBJECTS)
-    set_source_files_properties("${object}" PROPERTIES EXTERNAL_OBJECT TRUE GENERATED TRUE)
-endforeach()
-
 function(runehelper_add_program name source)
-    add_executable(${name} ${source} ${RUNEHELPER_TEST_SOURCES})
-
-    add_dependencies(${name} runehelper_embedded_resources)
-
-    target_include_directories(${name} PRIVATE "${CMAKE_SOURCE_DIR}/RuneHelper" "${CMAKE_CURRENT_SOURCE_DIR}")
-    target_compile_options(${name} PRIVATE ${RUNEHELPER_WARNINGS})
-
-    target_compile_definitions(${name} PRIVATE
-        RUNEHELPER_VERSION="${PROJECT_VERSION}"
-        RUNEHELPER_VERSION_LABEL="${RUNEHELPER_VERSION_LABEL}"
-        RUNEHELPER_COMMIT="${RUNEHELPER_COMMIT}"
-    )
-
-    target_link_libraries(${name} PRIVATE ${RUNEHELPER_TEST_LIBRARIES})
+    add_executable(${name} ${source})
+    target_link_libraries(${name} PRIVATE runehelper_test_support)
 endfunction()
 
 function(runehelper_add_test name)
