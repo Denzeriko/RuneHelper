@@ -364,6 +364,9 @@ int main(int argc, char** argv)
 {
     if (argc != 2)
         return 1;
+
+    cv::setNumThreads(1);
+
     std::string temporary = (std::filesystem::temp_directory_path() / "runehelper-ocr-service-XXXXXX").string();
     if (!mkdtemp(temporary.data()))
         return 1;
