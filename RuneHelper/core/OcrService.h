@@ -58,7 +58,7 @@ private:
     };
 
     bool InitOcr();
-    void WorkerLoop(std::stop_token stop);
+    void WorkerLoop(const std::stop_token& stop);
     void Enqueue(Command command);
     bool DrainCommands();
     void WaitForWork(int milliseconds);

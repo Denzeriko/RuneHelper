@@ -10,6 +10,12 @@
 #include "ocr/LootRows.h"
 #include "price/PriceService.h"
 
+#ifdef _WIN32
+#include "platform/windows/ResourceHelper.h"
+#else
+#include "platform/linux/ResourceHelper.h"
+#endif
+
 namespace
 {
 constexpr int kOverlayRowSpacing = 25;

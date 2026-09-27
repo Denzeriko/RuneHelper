@@ -52,7 +52,11 @@ const ScriptFont kThaiFonts[] = {
 };
 #endif
 
-ImVector<ImWchar> gItemNameGlyphs;
+ImVector<ImWchar>& ItemNameGlyphs()
+{
+    static ImVector<ImWchar> glyphs;
+    return glyphs;
+}
 
 void BuildItemNameGlyphs()
 {
@@ -74,7 +78,7 @@ void BuildItemNameGlyphs()
         }
     }
 
-    builder.BuildRanges(&gItemNameGlyphs);
+    builder.BuildRanges(&ItemNameGlyphs());
 }
 
 template <std::size_t N>
@@ -152,10 +156,12 @@ void ImGuiStyleSetup::AddFonts()
 
     BuildItemNameGlyphs();
 
-    if (gItemNameGlyphs.empty())
+    const ImVector<ImWchar>& itemNameGlyphs = ItemNameGlyphs();
+
+    if (itemNameGlyphs.empty())
         return;
 
-    MergeFirstFound(kHangulFonts, gItemNameGlyphs.Data);
-    MergeFirstFound(kJapaneseFonts, gItemNameGlyphs.Data);
-    MergeFirstFound(kThaiFonts, gItemNameGlyphs.Data);
+    MergeFirstFound(kHangulFonts, itemNameGlyphs.Data);
+    MergeFirstFound(kJapaneseFonts, itemNameGlyphs.Data);
+    MergeFirstFound(kThaiFonts, itemNameGlyphs.Data);
 }

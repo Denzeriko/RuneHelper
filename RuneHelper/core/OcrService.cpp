@@ -9,12 +9,6 @@
 #include "common/Logger.h"
 #include "platform/GameFocus.h"
 
-#ifdef _WIN32
-#include "platform/windows/ResourceHelper.h"
-#else
-#include "platform/linux/ResourceHelper.h"
-#endif
-
 namespace
 {
 constexpr int kPollIntervalMs = 100;
@@ -272,7 +266,7 @@ bool OcrService::NeedsOcr(const cv::Mat& gray)
     return frameDiffer_.IsSettled(gray) || sinceOcr >= std::chrono::milliseconds(kMaxOcrDelayMs);
 }
 
-void OcrService::WorkerLoop(std::stop_token stop)
+void OcrService::WorkerLoop(const std::stop_token& stop)
 {
     if (!InitOcr())
         return;

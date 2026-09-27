@@ -367,7 +367,6 @@ void DrawMainTab(UIManager& ui)
     if (!DrawStatusSection(ui))
         return;
 
-    UIState& state = ui.State();
     AppConfig& config = ui.ConfigDraft();
 
     DrawRegionSection(ui, config);
