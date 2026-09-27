@@ -14,7 +14,7 @@ add_library(runehelper_test_support STATIC
 
 add_dependencies(runehelper_test_support runehelper_embedded_resources)
 
-target_include_directories(runehelper_test_support PUBLIC "${CMAKE_SOURCE_DIR}/RuneHelper" "${CMAKE_CURRENT_SOURCE_DIR}")
+target_include_directories(runehelper_test_support PUBLIC "${CMAKE_SOURCE_DIR}/RuneHelper" "${CMAKE_CURRENT_SOURCE_DIR}/support")
 target_compile_options(runehelper_test_support PUBLIC ${RUNEHELPER_WARNINGS})
 
 target_compile_definitions(runehelper_test_support PUBLIC
@@ -34,18 +34,14 @@ function(runehelper_add_program name source)
     target_link_libraries(${name} PRIVATE runehelper_test_support)
 endfunction()
 
-function(runehelper_add_test name)
-    runehelper_add_program(${name} ${name}.cpp)
-endfunction()
-
-runehelper_add_test(ocr_golden)
-runehelper_add_test(ocr_robustness)
-runehelper_add_test(ocr_row_cache)
-runehelper_add_test(ocr_rune_tiles)
-runehelper_add_test(unit_tests)
-runehelper_add_test(ocr_service_cancel)
-runehelper_add_test(update_checker)
-runehelper_add_test(price_cache)
+runehelper_add_program(ocr_golden ocr/ocr_golden.cpp)
+runehelper_add_program(ocr_robustness ocr/ocr_robustness.cpp)
+runehelper_add_program(ocr_row_cache ocr/ocr_row_cache.cpp)
+runehelper_add_program(ocr_rune_tiles ocr/ocr_rune_tiles.cpp)
+runehelper_add_program(unit_tests unit_tests.cpp)
+runehelper_add_program(ocr_service_cancel services/ocr_service_cancel.cpp)
+runehelper_add_program(update_checker services/update_checker.cpp)
+runehelper_add_program(price_cache services/price_cache.cpp)
 
 add_test(NAME price_cache COMMAND price_cache)
 set_tests_properties(price_cache PROPERTIES TIMEOUT 60)
@@ -73,23 +69,23 @@ add_test(
 
 add_test(
     NAME ocr_service_cancel
-    COMMAND ocr_service_cancel "${CMAKE_CURRENT_SOURCE_DIR}/panels/2560/test00.png"
+    COMMAND ocr_service_cancel "${CMAKE_CURRENT_SOURCE_DIR}/data/en/panels/2560/test00.png"
 )
 set_tests_properties(ocr_service_cancel PROPERTIES TIMEOUT 120)
 
 add_test(
     NAME ocr_row_cache
     COMMAND ocr_row_cache
-        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/panels"
 )
 
 add_test(
     NAME ocr_golden
     COMMAND ocr_golden
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
-        "${CMAKE_CURRENT_SOURCE_DIR}/golden"
-        "${CMAKE_CURRENT_SOURCE_DIR}/truth"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/panels"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/golden"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/truth"
 )
 
 foreach(language IN LISTS RUNEHELPER_TEXT_MODEL_LANGUAGES)
@@ -97,9 +93,9 @@ foreach(language IN LISTS RUNEHELPER_TEXT_MODEL_LANGUAGES)
         NAME ocr_golden_${language}
         COMMAND ocr_golden
             "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/panels"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/golden"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/truth"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data/${language}/panels"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data/${language}/golden"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data/${language}/truth"
             --language ${language}
     )
 endforeach()
@@ -108,15 +104,15 @@ add_test(
     NAME ocr_rune_tiles
     COMMAND ocr_rune_tiles
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/panels"
 )
 
 add_test(
     NAME ocr_robustness
     COMMAND ocr_robustness
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
-        "${CMAKE_CURRENT_SOURCE_DIR}/truth"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/panels"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/truth"
 )
 
 add_custom_target(runehelper_tests
@@ -126,9 +122,9 @@ add_custom_target(runehelper_tests
 set(RUNEHELPER_BLESS_COMMANDS
     COMMAND ocr_golden
         "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-        "${CMAKE_CURRENT_SOURCE_DIR}/panels"
-        "${CMAKE_CURRENT_SOURCE_DIR}/golden"
-        "${CMAKE_CURRENT_SOURCE_DIR}/truth"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/panels"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/golden"
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/en/truth"
         --bless
 )
 
@@ -136,9 +132,9 @@ foreach(language IN LISTS RUNEHELPER_TEXT_MODEL_LANGUAGES)
     list(APPEND RUNEHELPER_BLESS_COMMANDS
         COMMAND ocr_golden
             "${CMAKE_SOURCE_DIR}/RuneHelper/resources/combinations.json"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/panels"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/golden"
-            "${CMAKE_CURRENT_SOURCE_DIR}/${language}/truth"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data/${language}/panels"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data/${language}/golden"
+            "${CMAKE_CURRENT_SOURCE_DIR}/data/${language}/truth"
             --bless
             --language ${language}
     )

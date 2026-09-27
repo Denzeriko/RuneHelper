@@ -9,9 +9,9 @@ usage()
     cat <<EOF
 usage: $(basename "$0") [--bless] [--tsan]
 
-  (no flags)  compare OCR output on tests/panels against tests/golden and
-              report accuracy against the labels in tests/truth
-  --bless     overwrite tests/golden with the current output
+  (no flags)  compare OCR output on tests/data/en/panels against tests/data/en/golden and
+              report accuracy against the labels in tests/data/en/truth
+  --bless     overwrite tests/data/en/golden with the current output
   --tsan      run the comparison under ThreadSanitizer
 
 The pinned dependency image is built from the Dockerfile deps stage on first

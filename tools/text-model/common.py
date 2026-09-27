@@ -15,7 +15,7 @@ ENGLISH = LANGUAGE.code == 'en'
 
 COMBINATIONS = REPO / 'RuneHelper' / 'resources' / 'combinations.json'
 MODEL = REPO / 'RuneHelper' / 'resources' / ('text_model.bin' if ENGLISH else f'text_model_{LANGUAGE.code}.bin')
-TESTS = REPO / 'tests' if ENGLISH else REPO / 'tests' / LANGUAGE.code
+TESTS = REPO / 'tests' / 'data' / LANGUAGE.code
 PANELS = TESTS / 'panels'
 TRUTH = TESTS / 'truth'
 REAL = (WORK if ENGLISH else WORK / LANGUAGE.code) / 'real'

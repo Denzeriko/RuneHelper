@@ -110,7 +110,7 @@ Each save replaces the folder:
 4. Fuzzy matching fixes OCR mistakes and translates localized names to English.
 5. Prices come from the cache or the API and are drawn next to the items.
 
-`docs/ARCHITECTURE.md` goes through the threads, each OCR stage and the reasons behind its thresholds, for anyone reading the code.
+`architecture.md` goes through the threads, each OCR stage and the reasons behind its thresholds, for anyone reading the code.
 
 ## Price API
 

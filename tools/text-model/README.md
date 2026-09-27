@@ -25,7 +25,7 @@ Pretraining takes 10 to 30 minutes per language on a CUDA GPU and several hours 
 
 ## Steps
 
-Run these from `tools/text-model` with the venv's `python`; every script takes `--help`. `RUNEHELPER_LANGUAGE=<code>` switches every step to that language: its panels and truth in `tests/<code>` (English uses `tests/panels` and `tests/truth`), its crops in the work folder, its checkpoints and its model file. The examples use English and its tag `synthetic`; other languages use `<code>_synthetic`, since the checkpoints share the work folder.
+Run these from `tools/text-model` with the venv's `python`; every script takes `--help`. `RUNEHELPER_LANGUAGE=<code>` switches every step to that language: its panels and truth in `tests/data/<code>` (including `en` for English), its crops in the work folder, its checkpoints and its model file. The examples use English and its tag `synthetic`; other languages use `<code>_synthetic`, since the checkpoints share the work folder.
 
 1. `./crops.sh` builds `text_model_crops` in the OCR test image and writes the row crops to `real/<scene>/` (`<code>/real/<scene>/` for other languages) in the work folder. It needs the image that `tools/ocr-test.sh` builds.
 2. `python labels.py` matches every crop to its row in the truth, using what the current model reads as the guide. A reading much shorter than its row comes from a crop that misses part of the text and stays unlabelled, so the model is never taught to invent the missing words.
@@ -89,7 +89,7 @@ What the clients write:
 A new language needs:
 
 * its font and an entry in `LANGUAGES` in `languages.py`, which holds both how the client writes rows and how synthetic lines are drawn;
-* panels from that client under `tests/<code>/panels` and checked truth in `tests/<code>/truth`;
+* panels from that client under `tests/data/<code>/panels` and checked truth in `tests/data/<code>/truth`;
 * its code in `RUNEHELPER_TEXT_MODEL_LANGUAGES` in `cmake/EmbedResources.cmake`, which embeds `text_model_<code>.bin` and adds its `ocr_golden_<code>` test, in `kGameLanguages` in `core/Config.h` and in the scraper's `LANGUAGES` and `TRADE_HOSTS`, and on Windows in `RuneHelper.rc`, `resource.h` and `kTextModels` in `platform/windows/ResourceHelper.cpp`.
 
 The model file stores its own symbol set as UTF-8, so a script with thousands of symbols fits the same format.

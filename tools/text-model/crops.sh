@@ -5,13 +5,12 @@ IMAGE="${RUNEHELPER_OCR_IMAGE:-runehelper-deps:ci}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 WORK="${RUNEHELPER_ML:-$HOME/.cache/runehelper-ml}"
 LANGUAGE="${RUNEHELPER_LANGUAGE:-en}"
+panels="tests/data/$LANGUAGE/panels"
 
 if [ "$LANGUAGE" = "en" ]; then
-    panels=tests/panels
     out=real
     model=/src/RuneHelper/resources/text_model.bin
 else
-    panels="tests/$LANGUAGE/panels"
     out="$LANGUAGE/real"
     model="/src/RuneHelper/resources/text_model_$LANGUAGE.bin"
 fi
