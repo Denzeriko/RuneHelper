@@ -4,6 +4,7 @@ on:
   push:
     branches: [ master ]
     paths:
+      - 'RuneHelper/common/**'
       - 'RuneHelper/ocr/**'
       - 'RuneHelper/core/**'
       - 'RuneHelper/price/**'
@@ -18,6 +19,7 @@ on:
   pull_request:
     branches: [ master ]
     paths:
+      - 'RuneHelper/common/**'
       - 'RuneHelper/ocr/**'
       - 'RuneHelper/core/**'
       - 'RuneHelper/price/**'
