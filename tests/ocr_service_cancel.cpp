@@ -11,8 +11,10 @@
 #include <stop_token>
 #include <string>
 #include <thread>
+#include <utility>
 
 #include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
 
 #include "core/ConfigManager.h"
 #include "core/Feature.h"
@@ -67,11 +69,13 @@ public:
             return lateFrame_ ? cv::Mat(region.size(), CV_8UC1, cv::Scalar(0)) : cv::Mat{};
         }
 
-        const Reply reply = replies_.front();
+        auto [reply, image] = std::move(replies_.front());
         replies_.pop_front();
         if (reply == Reply::Error)
             throw std::runtime_error("capture failed");
-        return reply == Reply::Frame ? cv::Mat(region.size(), CV_8UC1, cv::Scalar(0)) : cv::Mat{};
+        if (reply == Reply::Empty)
+            return {};
+        return image.empty() ? cv::Mat(region.size(), CV_8UC1, cv::Scalar(0)) : image;
     }
 
     void Cancel() override
@@ -88,10 +92,10 @@ public:
         replies_.clear();
     }
 
-    void Respond(Reply reply)
+    void Respond(Reply reply, cv::Mat image = {})
     {
         std::lock_guard lock(mutex_);
-        replies_.push_back(reply);
+        replies_.emplace_back(reply, std::move(image));
         condition_.notify_all();
     }
 
@@ -129,7 +133,7 @@ public:
 private:
     std::mutex mutex_;
     std::condition_variable condition_;
-    std::deque<Reply> replies_;
+    std::deque<std::pair<Reply, cv::Mat>> replies_;
     unsigned entered_ = 0;
     bool cancelled_ = false;
     bool returnedAfterCancel_ = false;
@@ -144,11 +148,14 @@ public:
     void OnFrame(FrameContext& frame) override
     {
         const std::string marker = std::to_string(++frames);
+        if (requireLoot && frame.rows.empty())
+            return;
         frame.overlay.texts.push_back({ marker });
         frame.debug.lines.push_back({ marker, {}, {} });
     }
 
     std::atomic<unsigned> frames = 0;
+    bool requireLoot = false;
 };
 
 struct Fixture
@@ -272,6 +279,55 @@ void TestDisabledCommands()
     Require(std::filesystem::exists(GetUserDataDir() / "ocr_debug/latest/source.png"), "debug image was not saved");
 }
 
+void TestMenuClose(const char* imagePath)
+{
+    const cv::Mat panel = cv::imread(imagePath, cv::IMREAD_GRAYSCALE);
+    Require(!panel.empty(), "test panel did not load");
+    Fixture fixture;
+    fixture.marker->requireLoot = true;
+    fixture.config.Update(
+        [&](AppConfig& value)
+        {
+            value.regionW = panel.cols;
+            value.regionH = panel.rows;
+        }
+    );
+    fixture.Start();
+    fixture.capture->WaitForCapture(1);
+    fixture.capture->Respond(Reply::Frame, panel);
+    fixture.capture->WaitForCapture(2);
+    OverlayFrame overlay;
+    Require(fixture.service->ConsumeOverlayFrame(overlay) && !overlay.Empty(), "loot overlay was not shown");
+
+    const auto closedAt = std::chrono::steady_clock::now();
+    fixture.capture->Respond(Reply::Frame);
+    fixture.capture->WaitForCapture(3);
+    if (fixture.service->ConsumeOverlayFrame(overlay))
+        Require(!overlay.Empty(), "one transient frame hid the overlay");
+
+    fixture.capture->Respond(Reply::Frame, cv::Mat(panel.size(), CV_8UC1, cv::Scalar(30)));
+    Wait([&] { return fixture.service->ConsumeOverlayFrame(overlay) && overlay.Empty(); }, "closed menu kept a stale overlay");
+    std::printf(
+        "menu clear after first closed frame: %.1f ms\n",
+        std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - closedAt).count()
+    );
+
+    fixture.capture->WaitForCapture(4);
+    fixture.capture->Respond(Reply::Frame);
+    fixture.capture->WaitForCapture(5);
+    if (fixture.service->ConsumeOverlayFrame(overlay))
+        Require(overlay.Empty(), "stale overlay reappeared over the game");
+
+    bool reopened = false;
+    for (unsigned capture = 5; capture < 17 && !reopened; ++capture)
+    {
+        fixture.capture->Respond(Reply::Frame, panel);
+        fixture.capture->WaitForCapture(capture + 1);
+        reopened = fixture.service->ConsumeOverlayFrame(overlay) && !overlay.Empty();
+    }
+    Require(reopened, "overlay did not return when the menu reopened");
+}
+
 void TestLateFrame()
 {
     Fixture fixture;
@@ -304,8 +360,10 @@ void CancelCapture() {}
 
 void ShutdownCapture() {}
 
-int main()
+int main(int argc, char** argv)
 {
+    if (argc != 2)
+        return 1;
     std::string temporary = (std::filesystem::temp_directory_path() / "runehelper-ocr-service-XXXXXX").string();
     if (!mkdtemp(temporary.data()))
         return 1;
@@ -329,6 +387,7 @@ int main()
     run("cancel active capture and discard late frame", TestLateFrame);
     run("restart clears commands and results", TestRestart);
     run("capture recovery", TestRecovery);
+    run("close and reopen loot menu", [&] { TestMenuClose(argv[1]); });
     run("snapshot and debug dump with disabled OCR", TestDisabledCommands);
     std::filesystem::remove_all(temporary);
     return failures == 0 ? 0 : 1;

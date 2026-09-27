@@ -226,7 +226,9 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, c
     captureFailures_ = 0;
     captureFailing_ = false;
 
-    if (NeedsOcr(gray))
+    const bool textDisappeared = frameDiffer_.OcrTextDisappeared(gray, lastLoot_);
+
+    if (NeedsOcr(gray) || textDisappeared)
     {
         const bool dump = std::exchange(debugDumpRequested_, false);
         lastLoot_ = pipeline_.RecognizeLoot(gray, rowCache_, dump);
@@ -238,7 +240,10 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, c
     }
 
     OcrPipelineResult result = pipeline_.BuildFrame(lastLoot_, gray, region, config, rowCache_);
-    PublishOverlayFrame(std::move(result.overlay));
+    if (textDisappeared && result.overlay.Empty())
+        ClearOverlayTexts();
+    else
+        PublishOverlayFrame(std::move(result.overlay));
 
     {
         std::lock_guard lock(debugMutex_);

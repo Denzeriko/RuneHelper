@@ -403,6 +403,21 @@ void TestFrameSimilarity()
     Check(!SimilarImages(base, resized), "a different size never matches");
 
     Check(!SimilarImages(base, cv::Mat()), "an empty image never matches");
+
+    OcrFrameDiffer differ;
+    const std::vector<LootLine> loot{ { "item", 20, 10, 80, 30, 100.0f }, { "item", 120, 10, 180, 30, 100.0f } };
+    const cv::Mat closed(base.size(), CV_8UC1, cv::Scalar(0));
+    differ.StoreOcrFrame(base);
+    differ.StoreFrame(base);
+    Check(!differ.OcrTextDisappeared(closed, loot), "one changed frame does not invalidate the text");
+    differ.StoreFrame(closed);
+    Check(differ.OcrTextDisappeared(closed, loot), "two frames without the old text invalidate it");
+    Check(!differ.OcrTextDisappeared(nudged, loot), "returning text cancels the disappearance");
+    differ.StoreFrame(changed);
+    Check(!differ.OcrTextDisappeared(changed, loot), "one unchanged row keeps the text visible");
+    Check(!differ.OcrTextDisappeared(closed, {}), "missing OCR results do not signal disappearing text");
+    differ.Reset();
+    Check(!differ.OcrTextDisappeared(closed, loot), "reset forgets the old text");
 }
 
 void TestRecipeDatabase()

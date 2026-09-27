@@ -73,7 +73,7 @@ add_test(
 
 add_test(
     NAME ocr_service_cancel
-    COMMAND ocr_service_cancel
+    COMMAND ocr_service_cancel "${CMAKE_CURRENT_SOURCE_DIR}/panels/2560/test00.png"
 )
 set_tests_properties(ocr_service_cancel PROPERTIES TIMEOUT 120)
 
