@@ -8,7 +8,7 @@
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/linux/x11/Session.h"
 
 namespace

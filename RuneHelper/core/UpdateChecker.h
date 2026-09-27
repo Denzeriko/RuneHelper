@@ -2,25 +2,21 @@
 
 #include <atomic>
 #include <filesystem>
+#include <memory>
 #include <mutex>
 #include <stop_token>
 #include <string>
 #include <thread>
 
 #include "core/ReleaseInfo.h"
-
-enum class UpdateInstall
-{
-    Idle,
-    Downloading,
-    Installing,
-    Installed,
-    Failed
-};
+#include "core/ReleaseProvider.h"
+#include "core/UpdateInstaller.h"
 
 class UpdateChecker
 {
 public:
+    UpdateChecker(std::unique_ptr<ReleaseProvider> releaseProvider = {}, std::unique_ptr<UpdateInstaller> installer = {});
+
     void Start();
     void Stop();
 
@@ -48,6 +44,8 @@ private:
     mutable std::mutex mutex_;
     ReleaseInfo release_;
     std::filesystem::path executable_;
+    std::unique_ptr<ReleaseProvider> releaseProvider_;
+    std::unique_ptr<UpdateInstaller> installer_;
 
     std::jthread thread_;
     std::jthread installThread_;

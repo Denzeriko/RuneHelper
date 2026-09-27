@@ -4,7 +4,7 @@
 #include <string>
 #include <string_view>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/linux/EmbeddedResources.h"
 
 namespace

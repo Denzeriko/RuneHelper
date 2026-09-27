@@ -12,7 +12,7 @@
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "resources/resource.h"
 #include "ui/ImGuiStyleSetup.h"
 #include "ui/UIDraw.h"

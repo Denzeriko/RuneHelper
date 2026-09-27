@@ -1,4 +1,4 @@
-#include "core/AtomicFile.h"
+#include "common/AtomicFile.h"
 
 #include <fstream>
 #include <system_error>

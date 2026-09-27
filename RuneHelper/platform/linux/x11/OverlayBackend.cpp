@@ -14,7 +14,7 @@
 #include <X11/Xutil.h>
 #include <X11/extensions/shape.h>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/linux/x11/Session.h"
 #include "ui/OverlayRenderer.h"
 #include "ui/OverlayState.h"

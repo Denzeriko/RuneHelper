@@ -13,7 +13,7 @@
 
 #include "core/BugReport.h"
 #include "core/DebugData.h"
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "features/ExpeditionFeature.h"
 #include "features/PriceOverlayFeature.h"
 #include "platform/GameFocus.h"

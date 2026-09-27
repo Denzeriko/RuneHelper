@@ -1,13 +1,15 @@
 set(RUNEHELPER_CORE_SOURCES
-    RuneHelper/core/AtomicFile.cpp
+    RuneHelper/common/AtomicFile.cpp
     RuneHelper/core/BugReport.cpp
     RuneHelper/core/ConfigManager.cpp
-    RuneHelper/core/Logger.cpp
+    RuneHelper/common/Logger.cpp
+    RuneHelper/core/OcrPipeline.cpp
     RuneHelper/core/ReleaseInfo.cpp
+    RuneHelper/core/ReleaseProvider.cpp
     RuneHelper/core/SelfUpdate.cpp
-    RuneHelper/core/Sha256.cpp
-    RuneHelper/core/Text.cpp
-    RuneHelper/core/ZipWriter.cpp
+    RuneHelper/common/Sha256.cpp
+    RuneHelper/common/Text.cpp
+    RuneHelper/common/ZipWriter.cpp
     RuneHelper/ocr/LineReader.cpp
     RuneHelper/ocr/LootParser.cpp
     RuneHelper/ocr/LootRows.cpp
@@ -24,6 +26,7 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/price/PriceCache.cpp
     RuneHelper/price/PriceColors.cpp
     RuneHelper/price/PriceService.cpp
+    RuneHelper/price/PriceStore.cpp
     RuneHelper/recipes/RecipeDatabase.cpp
     RuneHelper/recipes/RecipeUpdater.cpp
     RuneHelper/ui/OverlayIcons.cpp

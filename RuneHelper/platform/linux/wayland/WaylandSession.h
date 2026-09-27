@@ -46,6 +46,7 @@ public:
 
     bool Roundtrip();
     bool Dispatch();
+    bool DispatchFor(int timeoutMs);
     bool DispatchPending();
     bool DispatchNonBlocking();
     void Flush();

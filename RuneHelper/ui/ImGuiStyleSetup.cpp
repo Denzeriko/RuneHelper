@@ -8,7 +8,7 @@
 
 #include "nlohmann/json.hpp"
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "ui/TextRaster.h"
 

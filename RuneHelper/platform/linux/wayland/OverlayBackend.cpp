@@ -9,7 +9,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "WaylandSession.h"
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "ui/OverlayRenderer.h"
 #include "ui/OverlayState.h"
 

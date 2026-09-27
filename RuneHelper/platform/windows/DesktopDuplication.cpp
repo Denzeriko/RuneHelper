@@ -8,7 +8,7 @@
 
 #include <opencv2/imgproc.hpp>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "dxgi.lib")

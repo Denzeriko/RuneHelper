@@ -9,8 +9,8 @@
 #include <imgui.h>
 
 #include "core/ConfigManager.h"
-#include "core/JsonRead.h"
-#include "core/Logger.h"
+#include "common/JsonRead.h"
+#include "common/Logger.h"
 #include "ocr/LootParser.h"
 #include "ui/UIDraw.h"
 #include "ui/UIManager.h"

@@ -6,7 +6,7 @@
 #include <cwchar>
 #include <string>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 namespace
 {

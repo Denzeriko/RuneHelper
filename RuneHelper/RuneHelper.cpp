@@ -10,8 +10,8 @@
 #include <optional>
 #include <string_view>
 
-#include "core/ExceptionLogging.h"
-#include "core/Logger.h"
+#include "common/ExceptionLogging.h"
+#include "common/Logger.h"
 #include "core/RuneHelperApp.h"
 #include "platform/PlatformShell.h"
 

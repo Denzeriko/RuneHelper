@@ -1,6 +1,6 @@
 #include "RegionSelect.h"
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 #include <windows.h>
 #include <windowsx.h>

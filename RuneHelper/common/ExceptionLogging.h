@@ -4,7 +4,7 @@
 #include <string>
 #include <utility>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 template <typename Body>
 bool RunLoggingExceptions(const char* context, Body&& body)

@@ -3,8 +3,8 @@
 #include <cstdlib>
 #include <string>
 
-#include "core/Logger.h"
-#include "core/Text.h"
+#include "common/Logger.h"
+#include "common/Text.h"
 
 inline bool IsWaylandSession()
 {

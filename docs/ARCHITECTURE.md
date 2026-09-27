@@ -5,7 +5,7 @@ This file explains what the code cannot say by itself: which thread runs what, h
 ## Threads
 
 * **Main thread.** `RuneHelperApp::MainLoop` runs about 30 times a second. It copies the OCR and price status into `UIState`, draws the ImGui window (`UIManager::Pump`), pumps the overlay window, handles the requests collected during the frame, lets `ConfigManager` save, and hands the newest overlay frame from `OcrService` to `OverlayWindow`.
-* **OCR worker.** `OcrService::WorkerLoop` loads the text model for the game language first, then polls every 100 ms: capture the region, decide whether it needs reading, read it, parse and price the rows, run the features, and publish the overlay frame and the debug table. The two results cross to the main thread through mutex-guarded slots (`ConsumeOverlayFrame`, `ConsumeDebugData`).
+* **OCR worker.** `OcrService::WorkerLoop` loads the text model for the game language first, then polls every 100 ms: capture the region, decide whether it needs reading, and ask `OcrPipeline` to recognize loot and build the overlay and debug results. `IScreenCapture` isolates the platform capture implementation and accepts cancellation while a capture is in progress. Commands enter the worker through a mutex-protected queue; the overlay and debug results cross to the main thread through mutex-guarded slots (`ConsumeOverlayFrame`, `ConsumeDebugData`).
 * **Row readers.** `ReadRows` in `ocr/OCR.cpp` reads the rows of one panel on up to 8 threads (half the hardware threads). They share one `LineReader`; `Read` is const.
 * **Network jobs.** `PriceCache` refreshes prices, `UpdateChecker` asks GitHub for the latest release, and on request downloads and installs it on a second thread, and `RecipeUpdater` downloads a newer `combinations.json`, each on its own `std::jthread` that a stop token cancels.
 * **PipeWire.** On Wayland desktops without wlr-screencopy, frames arrive on PipeWire's own loop thread inside `PortalScreenCast`.
@@ -14,7 +14,7 @@ Features run on two threads. `Feature::OnFrame` is called by the OCR worker, `Dr
 
 ## From a key press to the config
 
-A hotkey sets a flag in `UIState::requests`: Windows through `RegisterHotKey`, X11 through `XGrabKey`, and Wayland through the control socket that `RuneHelper --toggle-ocr` and friends write to, because Wayland has no global key grabs. Clicks in the window set the same flags. Once per frame `RuneHelperApp::HandleRequests` takes all of them at once and acts: toggling OCR changes the config, a snapshot or a debug dump goes to `OcrService`, a region selection runs the platform selector.
+A hotkey sets a flag in `UIState::requests`: Windows through `RegisterHotKey`, X11 through `XGrabKey`, and Wayland through the control socket that `RuneHelper --toggle-ocr` and friends write to, because Wayland has no global key grabs. Clicks in the window set the same flags. Once per frame `RuneHelperApp::HandleRequests` takes all of them at once and acts: toggling OCR changes the config, a snapshot or a debug dump becomes an explicit `OcrService` command, and a region selection runs the platform selector.
 
 A bug report crosses both threads. The main thread asks `OcrService` for a debug dump, then checks every frame whether `DebugDumpsWritten` has moved, giving up after 5 s when the region cannot be read. It then flushes the config and zips the dump, the last megabyte of each log, `config.json` and `DescribeSystem` into `reports/` (`WriteBugReport`), which takes a few milliseconds on the main thread.
 
@@ -29,6 +29,8 @@ Before capturing, `OcrService::PauseForGame` asks which window is in front (`Que
 `OcrService::NeedsOcr` keeps the recognizer idle while nothing moves. A frame is read when a snapshot forces it, or when it differs from the last frame that was read, at least 600 ms have passed since that read, and the image is either settled (the same as the previous capture) or 1.5 s have passed. Two frames count as the same when fewer than 0.2% of their pixels differ by more than 8 levels (`SimilarImages`). A snapshot (F9 by default) keeps reading for 2 s even with OCR switched off. The overlay clears after three empty frames in a row, so one bad capture does not make it flicker.
 
 ## The OCR pipeline
+
+`OcrService` owns capture scheduling, pause and snapshot timing, frame comparison, and publication. `OcrPipeline` owns model and recipe loading, text recognition, row parsing, price resolution, feature execution, and construction of the overlay and debug results. The pipeline can be driven with images directly, independently of screen capture. `OcrService` remains the threaded adapter between `IScreenCapture` and the application.
 
 `OCR::RecognizeLoot` in `ocr/OCR.cpp` only orchestrates; each stage has its own file.
 
@@ -65,3 +67,5 @@ The training crops come from the OCR debug dump. `text_model_crops` runs `Recogn
 * **X11.** Capture uses MIT-SHM, about 14 times faster than `XGetImage`. The overlay is click-through through an empty `ShapeInput` region, and the shape mask's GC needs an explicit foreground, or the mask comes out inverted.
 * **GLFW on Wayland** starts with libdecor disabled; libdecor would load GTK and cost about 32 MB of memory.
 * **Price league migration.** `ConfigManager::Normalize` moves the league name `Hardcore Runes of Aldur`, which older configs can hold, to `HC Runes of Aldur`, the name the price data uses.
+* **Price storage.** `PriceCache` combines provider refreshes with a `PriceStore`; `JsonPriceStore` owns the existing per-league JSON cache format and atomic file writes.
+* **Updates.** `UpdateChecker` coordinates release lookup and installation through `ReleaseProvider` and `UpdateInstaller`. The GitHub API and binary installer remain the default implementations.

@@ -13,8 +13,8 @@
 
 #include "PortalScreenCast.h"
 #include "WaylandSession.h"
-#include "core/AtomicFile.h"
-#include "core/Logger.h"
+#include "common/AtomicFile.h"
+#include "common/Logger.h"
 #include "platform/PlatformPaths.h"
 
 namespace
@@ -171,7 +171,7 @@ const WaylandOutput* OutputForRegion(const WaylandSession& session, const cv::Re
     return best ? best : session.PrimaryOutput();
 }
 
-cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
+cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local, const std::stop_token& stop)
 {
     WaylandSession& session = Session();
 
@@ -195,10 +195,20 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
     }
 
     zwlr_screencopy_frame_v1_add_listener(capture.frame, &kFrameListener, &capture);
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
+    bool timedOut = false;
 
-    while (!capture.done && !capture.failed)
+    while (!capture.done && !capture.failed && !stop.stop_requested())
     {
-        if (!session.Dispatch())
+        if (std::chrono::steady_clock::now() >= deadline)
+        {
+            LOG_ERROR("Wayland screen capture failed: compositor did not finish the frame within 5 seconds");
+            capture.failed = true;
+            timedOut = true;
+            break;
+        }
+
+        if (!session.DispatchFor(100))
         {
             LOG_ERROR("Wayland screen capture failed: display dispatch error");
             CaptureBuffer().Destroy();
@@ -207,11 +217,17 @@ cv::Mat CaptureOutputRegion(const WaylandOutput& output, const cv::Rect& local)
         }
     }
 
+    if (stop.stop_requested())
+    {
+        zwlr_screencopy_frame_v1_destroy(capture.frame);
+        return {};
+    }
+
     cv::Mat result;
 
     if (!capture.failed && capture.buffer->IsValid())
         result = ToGray(*capture.buffer, capture.yInvert);
-    else
+    else if (!timedOut)
         LOG_ERROR("Wayland screen capture failed: compositor rejected the frame");
 
     zwlr_screencopy_frame_v1_destroy(capture.frame);
@@ -353,16 +369,16 @@ bool StartPortal(PortalScreenCast& portal)
     return false;
 }
 
-cv::Mat CaptureViaPortal(const cv::Rect& region)
+cv::Mat CaptureViaPortal(const cv::Rect& region, const std::stop_token& stop)
 {
     PortalScreenCast& portal = Portal();
 
-    if (!portal.IsRunning() && !StartPortal(portal))
+    if (stop.stop_requested() || (!portal.IsRunning() && !StartPortal(portal)))
         return {};
 
     cv::Mat frame;
 
-    for (int attempt = 0; attempt < kFrameWaitAttempts && frame.empty() && !portal.Cancelled(); ++attempt)
+    for (int attempt = 0; attempt < kFrameWaitAttempts && frame.empty() && !portal.Cancelled() && !stop.stop_requested(); ++attempt)
     {
         frame = portal.LatestFrame();
 
@@ -450,10 +466,13 @@ cv::Mat CaptureViaPortal(const cv::Rect& region)
     return result;
 }
 
-cv::Mat Capture(const cv::Rect& region)
+cv::Mat Capture(const cv::Rect& region, const std::stop_token& stop)
 {
     if (UsePortal())
-        return CaptureViaPortal(region);
+        return CaptureViaPortal(region, stop);
+
+    if (stop.stop_requested())
+        return {};
 
     WaylandSession& session = Session();
 
@@ -508,7 +527,7 @@ cv::Mat Capture(const cv::Rect& region)
         );
     }
 
-    cv::Mat result = CaptureOutputRegion(*output, local);
+    cv::Mat result = CaptureOutputRegion(*output, local, stop);
 
     if (!result.empty() && (result.cols != local.width || result.rows != local.height))
         cv::resize(result, result, cv::Size(local.width, local.height), 0, 0, cv::INTER_AREA);
@@ -517,9 +536,9 @@ cv::Mat Capture(const cv::Rect& region)
 }
 }
 
-cv::Mat CaptureRegion(const cv::Rect& region)
+cv::Mat CaptureRegion(const cv::Rect& region, const std::stop_token& stop)
 {
-    return Capture(region);
+    return Capture(region, stop);
 }
 
 void CancelCapture()

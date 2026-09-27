@@ -8,7 +8,7 @@
 #include <string>
 #include <string_view>
 
-#include "core/Text.h"
+#include "common/Text.h"
 
 namespace
 {

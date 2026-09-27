@@ -5,7 +5,7 @@
 
 #include <filesystem>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 const std::filesystem::path& GetUserDataDir()
 {

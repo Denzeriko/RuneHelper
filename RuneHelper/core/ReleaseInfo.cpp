@@ -4,8 +4,8 @@
 #include <sstream>
 #include <vector>
 
-#include "core/JsonRead.h"
-#include "core/Text.h"
+#include "common/JsonRead.h"
+#include "common/Text.h"
 
 namespace
 {

@@ -11,8 +11,8 @@
 
 #include <cpr/cpr.h>
 
-#include "core/JsonRead.h"
-#include "core/Logger.h"
+#include "common/JsonRead.h"
+#include "common/Logger.h"
 
 using json = nlohmann::json;
 

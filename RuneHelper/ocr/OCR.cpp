@@ -1,7 +1,7 @@
 #include "OCR.h"
 
-#include "core/Logger.h"
-#include "core/Text.h"
+#include "common/Logger.h"
+#include "common/Text.h"
 #include "ocr/OcrDebug.h"
 #include "ocr/OcrRowCache.h"
 #include "ocr/RowFinder.h"

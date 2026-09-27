@@ -12,7 +12,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include "WaylandSession.h"
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 namespace
 {

@@ -3,7 +3,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/PlatformPaths.h"
 
 #include <fstream>

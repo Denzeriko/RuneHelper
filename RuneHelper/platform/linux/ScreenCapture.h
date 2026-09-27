@@ -2,5 +2,7 @@
 
 #include <opencv2/core.hpp>
 
-cv::Mat CaptureRegion(const cv::Rect& region);
+#include <stop_token>
+
+cv::Mat CaptureRegion(const cv::Rect& region, const std::stop_token& stop);
 void CancelCapture();

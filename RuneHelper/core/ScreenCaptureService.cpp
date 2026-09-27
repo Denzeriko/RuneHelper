@@ -6,16 +6,26 @@
 #include "platform/linux/ScreenCapture.h"
 #endif
 
-cv::Mat ScreenCaptureService::CaptureRegion(const cv::Rect& region)
+cv::Mat ScreenCaptureService::CaptureRegion(const cv::Rect& region, const std::stop_token& stop)
 {
 #ifdef _WIN32
+    if (stop.stop_requested())
+        return {};
+
     cv::Mat img = desktopDuplication_.CaptureRegion(region);
 
     if (!img.empty())
         return img;
-#endif
 
     return ::CaptureRegion(region);
+#else
+    return ::CaptureRegion(region, stop);
+#endif
+}
+
+std::unique_ptr<IScreenCapture> CreateScreenCapture()
+{
+    return std::make_unique<ScreenCaptureService>();
 }
 
 void ScreenCaptureService::Cancel()

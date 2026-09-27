@@ -1,4 +1,4 @@
-#include "core/ZipWriter.h"
+#include "common/ZipWriter.h"
 
 #include <algorithm>
 #include <array>

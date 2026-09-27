@@ -1,7 +1,7 @@
 #include "core/Feature.h"
 
-#include "core/ExceptionLogging.h"
-#include "core/Logger.h"
+#include "common/ExceptionLogging.h"
+#include "common/Logger.h"
 
 void FeatureRegistry::Add(std::unique_ptr<Feature> feature)
 {

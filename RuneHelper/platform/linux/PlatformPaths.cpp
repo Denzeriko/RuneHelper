@@ -1,5 +1,5 @@
 #include "platform/PlatformPaths.h"
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 #include <cstdlib>
 #include <filesystem>

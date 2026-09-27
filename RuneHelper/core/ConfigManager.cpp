@@ -6,10 +6,10 @@
 #include <fstream>
 
 #include "nlohmann/json.hpp"
-#include "core/AtomicFile.h"
-#include "core/JsonRead.h"
-#include "core/Logger.h"
-#include "core/Text.h"
+#include "common/AtomicFile.h"
+#include "common/JsonRead.h"
+#include "common/Logger.h"
+#include "common/Text.h"
 #include "platform/PlatformPaths.h"
 
 using json = nlohmann::json;

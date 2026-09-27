@@ -9,7 +9,7 @@
 #include <imgui.h>
 
 #include "core/Feature.h"
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "core/UpdateChecker.h"
 #include "platform/GameFocus.h"
 #include "platform/PlatformShell.h"

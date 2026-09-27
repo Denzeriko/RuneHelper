@@ -9,7 +9,7 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/linux/LinuxHotkeys.h"
 #include "ui/ImGuiStyleSetup.h"
 #include "ui/UIDraw.h"

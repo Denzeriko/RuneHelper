@@ -6,8 +6,8 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include "core/Logger.h"
-#include "core/Text.h"
+#include "common/Logger.h"
+#include "common/Text.h"
 
 #ifdef _WIN32
 #include "platform/windows/ResourceHelper.h"

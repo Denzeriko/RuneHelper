@@ -16,11 +16,11 @@
 #include "core/BugReport.h"
 #include "core/Config.h"
 #include "core/ConfigManager.h"
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "core/ReleaseInfo.h"
 #include "core/SelfUpdate.h"
-#include "core/Sha256.h"
-#include "core/ZipWriter.h"
+#include "common/Sha256.h"
+#include "common/ZipWriter.h"
 #include "ocr/LootParser.h"
 #include "ocr/LootRows.h"
 #include "ocr/NameMatcher.h"
@@ -29,6 +29,7 @@
 #include "price/PoeNinjaPriceProvider.h"
 #include "price/PriceCache.h"
 #include "price/PriceColors.h"
+#include "price/PriceStore.h"
 #include "recipes/RecipeDatabase.h"
 #include "ui/OverlayIcons.h"
 
@@ -444,6 +445,45 @@ void TestPriceCacheDump()
     cache.SetLeague("Another League");
     Check(cache.Version() != version, "switching leagues bumps the version");
     CheckEqual(static_cast<int>(cache.GetPriceCount()), 0, "switching leagues clears the prices");
+}
+
+class MemoryPriceStore final : public PriceStore
+{
+public:
+    std::optional<PriceDump> Load(const std::string& league) override
+    {
+        loadedLeague = league;
+        return dump;
+    }
+
+    bool Save(const std::string& league, const PriceDump& value) override
+    {
+        savedLeague = league;
+        dump = value;
+        return true;
+    }
+
+    PriceDump dump;
+    std::string loadedLeague;
+    std::string savedLeague;
+};
+
+void TestPriceCacheInjectedStore()
+{
+    Section("PriceCache injected store");
+
+    auto store = std::make_unique<MemoryPriceStore>();
+    MemoryPriceStore* observed = store.get();
+    observed->dump.items.emplace("Runic Alloy", PriceInfo{ 12.5 });
+    observed->dump.divineToEx = 180.0;
+    observed->dump.updatedAt = 1234;
+
+    PriceCache cache({}, std::move(store));
+    cache.SetLeague("Memory League");
+
+    CheckEqual(observed->loadedLeague, "Memory League", "the selected league is sent to the injected store");
+    Check(cache.GetPrice("Runic Alloy") == 12.5, "the injected store supplies cached prices");
+    Check(cache.DivineRate() == 180.0, "the injected store supplies the currency rate");
 }
 
 void WriteText(const std::filesystem::path& path, const std::string& text)
@@ -960,6 +1000,7 @@ int main()
     TestFrameSimilarity();
     TestRecipeDatabase();
     TestPriceCacheDump();
+    TestPriceCacheInjectedStore();
     TestConfigLoadMalformed();
     TestConfigSaveLoad();
     TestRecipeDatabaseMalformedDownload();

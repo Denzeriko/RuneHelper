@@ -10,9 +10,9 @@
 #include <system_error>
 #include <vector>
 
-#include "core/AtomicFile.h"
-#include "core/Logger.h"
-#include "core/ZipWriter.h"
+#include "common/AtomicFile.h"
+#include "common/Logger.h"
+#include "common/ZipWriter.h"
 #include "platform/PlatformPaths.h"
 
 namespace

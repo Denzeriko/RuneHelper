@@ -8,7 +8,7 @@
 #include <string>
 #include <system_error>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "platform/PlatformShell.h"
 
@@ -137,4 +137,28 @@ bool ApplyUpdate(const ReleaseAsset& asset, const UpdatePaths& paths)
 
     LOG_INFO("Update: installed, the previous binary is kept as " + PathToUtf8(paths.backup));
     return true;
+}
+
+bool BinaryUpdateInstaller::Install(
+    const ReleaseAsset& asset,
+    const std::filesystem::path& executable,
+    std::atomic<UpdateInstall>& status,
+    std::atomic<int>& percent,
+    const std::stop_token& stop
+)
+{
+    const UpdatePaths paths = UpdatePathsFor(executable);
+
+    status = UpdateInstall::Downloading;
+
+    if (!DownloadUpdate(asset, paths, percent, stop))
+        return false;
+
+    status = UpdateInstall::Installing;
+    return ApplyUpdate(asset, paths);
+}
+
+std::unique_ptr<UpdateInstaller> CreateUpdateInstaller()
+{
+    return std::make_unique<BinaryUpdateInstaller>();
 }

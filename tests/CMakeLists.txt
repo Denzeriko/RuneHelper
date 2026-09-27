@@ -5,6 +5,7 @@ set(RUNEHELPER_TEST_SOURCES
     ${RUNEHELPER_TEST_CORE}
     ${RUNEHELPER_TEST_PLATFORM}
     ${RUNEHELPER_EMBEDDED_SOURCES}
+    "${CMAKE_SOURCE_DIR}/RuneHelper/core/Feature.cpp"
 )
 
 set(RUNEHELPER_TEST_LIBRARIES
@@ -43,12 +44,23 @@ runehelper_add_test(ocr_robustness)
 runehelper_add_test(ocr_row_cache)
 runehelper_add_test(ocr_rune_tiles)
 runehelper_add_test(unit_tests)
+runehelper_add_test(ocr_service_cancel)
+
+target_sources(ocr_service_cancel PRIVATE
+    "${CMAKE_SOURCE_DIR}/RuneHelper/core/OcrService.cpp"
+    "${CMAKE_SOURCE_DIR}/RuneHelper/core/ScreenCaptureService.cpp"
+)
 
 runehelper_add_program(text_model_crops "${CMAKE_SOURCE_DIR}/tools/text-model/crops.cpp")
 
 add_test(
     NAME unit_tests
     COMMAND unit_tests
+)
+
+add_test(
+    NAME ocr_service_cancel
+    COMMAND ocr_service_cancel
 )
 
 add_test(
@@ -94,7 +106,7 @@ add_test(
 )
 
 add_custom_target(runehelper_tests
-    DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests
+    DEPENDS ocr_golden ocr_robustness ocr_row_cache ocr_rune_tiles unit_tests ocr_service_cancel
 )
 
 set(RUNEHELPER_BLESS_COMMANDS

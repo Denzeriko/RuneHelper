@@ -1,19 +1,13 @@
 #include "UpdateChecker.h"
 
-#include "core/ExceptionLogging.h"
-#include "core/Logger.h"
+#include "common/ExceptionLogging.h"
+#include "common/Logger.h"
 #include "core/SelfUpdate.h"
-#include "core/UpdateInstaller.h"
 #include "platform/PlatformPaths.h"
 #include "platform/PlatformShell.h"
 
-#include <cpr/cpr.h>
-#include "nlohmann/json.hpp"
-
-#include <cstdint>
 #include <cstdlib>
-
-using json = nlohmann::json;
+#include <utility>
 
 namespace
 {
@@ -24,6 +18,12 @@ std::string CurrentVersion()
 
     return RUNEHELPER_VERSION;
 }
+}
+
+UpdateChecker::UpdateChecker(std::unique_ptr<ReleaseProvider> releaseProvider, std::unique_ptr<UpdateInstaller> installer)
+    : releaseProvider_(releaseProvider ? std::move(releaseProvider) : std::make_unique<GitHubReleaseProvider>()),
+      installer_(installer ? std::move(installer) : CreateUpdateInstaller())
+{
 }
 
 void UpdateChecker::Start()
@@ -113,15 +113,6 @@ std::filesystem::path UpdateChecker::ExecutablePath() const
 
 void UpdateChecker::Check(const std::stop_token& stop)
 {
-    auto r = cpr::Get(
-        cpr::Url{ "https://api.github.com/repos/Denzeriko/RuneHelper/releases/latest" },
-        cpr::Header{ { "User-Agent", "RuneHelper/" RUNEHELPER_VERSION }, { "Accept", "application/vnd.github+json" } },
-        cpr::Timeout{ 10000 },
-        cpr::ProgressCallback{ [&stop](auto, auto, auto, auto, std::intptr_t) { return !stop.stop_requested(); } }
-    );
-
-    checking_ = false;
-
     std::filesystem::path executable = CurrentExecutablePath();
 
     if (!executable.empty())
@@ -138,28 +129,13 @@ void UpdateChecker::Check(const std::stop_token& stop)
     if (stop.stop_requested())
         return;
 
-    if (r.error.code != cpr::ErrorCode::OK)
-    {
-        LOG_ERROR("UpdateChecker CPR error: " + r.error.message);
+    std::optional<ReleaseInfo> fetched = releaseProvider_->LatestRelease(ReleaseAssetName(RUNEHELPER_BUILD_VARIANT), stop);
+    checking_ = false;
+
+    if (!fetched || stop.stop_requested())
         return;
-    }
 
-    if (r.status_code != 200)
-    {
-        LOG_ERROR("UpdateChecker HTTP error: " + std::to_string(r.status_code));
-        return;
-    }
-
-    json j = json::parse(r.text, nullptr, false);
-
-    if (j.is_discarded())
-    {
-        LOG_ERROR("UpdateChecker JSON parse failed");
-
-        return;
-    }
-
-    ReleaseInfo release = ParseRelease(j, ReleaseAssetName(RUNEHELPER_BUILD_VARIANT));
+    ReleaseInfo release = std::move(*fetched);
     const std::string current = CurrentVersion();
 
     LOG_INFO("Current version: " + current + (current != RUNEHELPER_VERSION ? " (pretended)" : ""));
@@ -188,8 +164,6 @@ void UpdateChecker::Check(const std::stop_token& stop)
 void UpdateChecker::RunInstall(const std::stop_token& stop)
 {
     ReleaseAsset asset;
-    UpdatePaths paths;
-
     {
         std::lock_guard lock(mutex_);
 
@@ -200,17 +174,11 @@ void UpdateChecker::RunInstall(const std::stop_token& stop)
         }
 
         asset = *release_.asset;
-        paths = UpdatePathsFor(executable_);
     }
 
     LOG_INFO("Update: downloading " + asset.url);
 
-    if (!DownloadUpdate(asset, paths, installPercent_, stop))
-    {
-        install_ = stop.stop_requested() ? UpdateInstall::Idle : UpdateInstall::Failed;
-        return;
-    }
-
-    install_ = UpdateInstall::Installing;
-    install_ = ApplyUpdate(asset, paths) ? UpdateInstall::Installed : UpdateInstall::Failed;
+    const std::filesystem::path executable = ExecutablePath();
+    const bool installed = installer_->Install(asset, executable, install_, installPercent_, stop);
+    install_ = stop.stop_requested() ? UpdateInstall::Idle : installed ? UpdateInstall::Installed : UpdateInstall::Failed;
 }

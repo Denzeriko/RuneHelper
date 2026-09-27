@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 #include "resources/resource.h"
 
 namespace

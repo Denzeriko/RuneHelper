@@ -1,23 +1,14 @@
 #include "PriceCache.h"
 
-#include "core/AtomicFile.h"
 #include "core/Config.h"
-#include "core/ExceptionLogging.h"
-#include "core/JsonRead.h"
-#include "core/Logger.h"
-#include "platform/PlatformPaths.h"
+#include "common/ExceptionLogging.h"
+#include "common/Logger.h"
 #include "price/PoeNinjaPriceProvider.h"
 
 #include <chrono>
 #include <algorithm>
 #include <cstdint>
-#include <filesystem>
-#include <fstream>
 #include <utility>
-
-#include "nlohmann/json.hpp"
-
-using json = nlohmann::json;
 
 namespace
 {
@@ -27,37 +18,6 @@ struct RefreshGuard
 
     ~RefreshGuard() { flag.store(false); }
 };
-
-std::string DumpFileNameForLeague(const std::string& league)
-{
-    std::string suffix;
-    suffix.reserve(league.size());
-
-    for (unsigned char ch : league)
-    {
-        if ((ch >= 'A' && ch <= 'Z') || (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9'))
-        {
-            suffix.push_back(static_cast<char>(ch));
-        }
-        else if (suffix.empty() || suffix.back() != '_')
-        {
-            suffix.push_back('_');
-        }
-    }
-
-    while (!suffix.empty() && suffix.back() == '_')
-        suffix.pop_back();
-
-    if (suffix.empty())
-        suffix = "unknown";
-
-    return "prices_dump_" + suffix + ".json";
-}
-
-std::filesystem::path DumpPathForLeague(const std::string& league)
-{
-    return GetUserDataDir() / DumpFileNameForLeague(league);
-}
 
 int64_t BackoffSeconds(int failureStreak)
 {
@@ -73,7 +33,11 @@ int64_t BackoffSeconds(int failureStreak)
 }
 }
 
-PriceCache::PriceCache() : provider_(std::make_unique<PoeNinjaPriceProvider>()) {}
+PriceCache::PriceCache(std::unique_ptr<PriceProvider> provider, std::unique_ptr<PriceStore> store)
+    : provider_(provider ? std::move(provider) : std::make_unique<PoeNinjaPriceProvider>()),
+      store_(store ? std::move(store) : CreatePriceStore())
+{
+}
 
 PriceCache::~PriceCache()
 {
@@ -296,21 +260,17 @@ int64_t PriceCache::NowUnix()
 
 void PriceCache::SaveDump()
 {
-    json j;
-    j["items"] = json::object();
-
+    PriceDump dump;
     std::string league;
     {
         std::lock_guard<std::mutex> lock(mutex_);
         league = league_;
-        j["league"] = league;
-        j["dump_updated_at"] = dumpUpdatedAt_;
-        j["divine_to_ex"] = divineToEx_;
-        for (const auto& [name, info] : prices_)
-            j["items"][name] = info.ex;
+        dump.items = prices_;
+        dump.divineToEx = divineToEx_;
+        dump.updatedAt = dumpUpdatedAt_;
     }
 
-    if (!WriteFileAtomic(DumpPathForLeague(league), j.dump(4)))
+    if (!store_->Save(league, dump))
         LOG_ERROR("PriceCache::SaveDump() -> failed to write file");
 }
 
@@ -322,37 +282,19 @@ void PriceCache::LoadDump()
         league = league_;
     }
 
-    std::ifstream file(DumpPathForLeague(league));
-    if (!file)
+    std::optional<PriceDump> dump = store_->Load(league);
+
+    if (!dump)
         return;
-
-    json j = json::parse(file, nullptr, false);
-    if (j.is_discarded())
-    {
-        LOG_ERROR("PriceCache::LoadDump() -> JSON parse failed");
-        return;
-    }
-
-    if (!j.contains("items") || !j["items"].is_object())
-        return;
-
-    std::unordered_map<std::string, PriceInfo> loaded;
-    for (auto it = j["items"].begin(); it != j["items"].end(); ++it)
-    {
-        if (!it.value().is_number())
-            continue;
-
-        loaded[it.key()] = PriceInfo{ it.value().get<double>() };
-    }
 
     {
         std::lock_guard<std::mutex> lock(mutex_);
         if (league_ != league)
             return;
 
-        prices_ = std::move(loaded);
-        divineToEx_ = JsonValue(j, "divine_to_ex", 0.0);
-        dumpUpdatedAt_ = JsonValue<std::int64_t>(j, "dump_updated_at", 0);
+        prices_ = std::move(dump->items);
+        divineToEx_ = dump->divineToEx;
+        dumpUpdatedAt_ = dump->updatedAt;
         ++version_;
     }
 

@@ -2,12 +2,13 @@
 
 #include <poll.h>
 #include <algorithm>
+#include <cerrno>
 #include <string>
 
 #include <sys/mman.h>
 #include <unistd.h>
 
-#include "core/Logger.h"
+#include "common/Logger.h"
 
 const wl_registry_listener WaylandSession::kRegistryListener = { &WaylandSession::HandleGlobal, &WaylandSession::HandleGlobalRemove };
 
@@ -332,6 +333,44 @@ bool WaylandSession::Roundtrip()
 bool WaylandSession::Dispatch()
 {
     return display_ && wl_display_dispatch(display_) != -1;
+}
+
+bool WaylandSession::DispatchFor(int timeoutMs)
+{
+    if (!display_)
+        return false;
+
+    while (wl_display_prepare_read(display_) != 0)
+    {
+        if (wl_display_dispatch_pending(display_) == -1)
+            return false;
+    }
+
+    if (wl_display_flush(display_) == -1 && errno != EAGAIN)
+    {
+        wl_display_cancel_read(display_);
+        return false;
+    }
+
+    pollfd entry{};
+    entry.fd = wl_display_get_fd(display_);
+    entry.events = POLLIN;
+
+    const int ready = poll(&entry, 1, timeoutMs);
+
+    if (ready < 0)
+    {
+        wl_display_cancel_read(display_);
+        return errno == EINTR;
+    }
+
+    if (ready == 0 || !(entry.revents & POLLIN))
+    {
+        wl_display_cancel_read(display_);
+        return ready == 0 || !(entry.revents & (POLLERR | POLLHUP | POLLNVAL));
+    }
+
+    return wl_display_read_events(display_) != -1 && wl_display_dispatch_pending(display_) != -1;
 }
 
 bool WaylandSession::DispatchPending()

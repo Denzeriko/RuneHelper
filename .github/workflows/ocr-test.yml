@@ -5,6 +5,9 @@ on:
     branches: [ master ]
     paths:
       - 'RuneHelper/ocr/**'
+      - 'RuneHelper/core/**'
+      - 'RuneHelper/price/**'
+      - 'RuneHelper/recipes/**'
       - 'RuneHelper/core/Config.h'
       - 'RuneHelper/resources/**'
       - 'tests/**'
@@ -16,6 +19,9 @@ on:
     branches: [ master ]
     paths:
       - 'RuneHelper/ocr/**'
+      - 'RuneHelper/core/**'
+      - 'RuneHelper/price/**'
+      - 'RuneHelper/recipes/**'
       - 'RuneHelper/core/Config.h'
       - 'RuneHelper/resources/**'
       - 'tests/**'

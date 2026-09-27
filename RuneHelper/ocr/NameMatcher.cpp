@@ -4,7 +4,7 @@
 #include <array>
 #include <cmath>
 
-#include "core/Text.h"
+#include "common/Text.h"
 
 namespace
 {

@@ -1,4 +1,4 @@
-#include "core/Sha256.h"
+#include "common/Sha256.h"
 
 #include <cstdio>
 

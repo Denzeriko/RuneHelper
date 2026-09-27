@@ -1,4 +1,4 @@
-#include "core/Text.h"
+#include "common/Text.h"
 
 #include <cctype>
 

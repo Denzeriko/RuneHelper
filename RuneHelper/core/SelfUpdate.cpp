@@ -5,8 +5,8 @@
 #include <system_error>
 #include <vector>
 
-#include "core/Logger.h"
-#include "core/Sha256.h"
+#include "common/Logger.h"
+#include "common/Sha256.h"
 #include "platform/PlatformPaths.h"
 
 namespace

@@ -12,11 +12,12 @@
 #include <vector>
 
 #include "price/PriceProvider.h"
+#include "price/PriceStore.h"
 
 class PriceCache
 {
 public:
-    PriceCache();
+    PriceCache(std::unique_ptr<PriceProvider> provider = {}, std::unique_ptr<PriceStore> store = {});
     ~PriceCache();
 
     void RefreshIfNeeded();
@@ -53,6 +54,7 @@ private:
     int failureStreak_ = 0;
     std::string league_;
     std::unique_ptr<PriceProvider> provider_;
+    std::unique_ptr<PriceStore> store_;
 
     std::atomic<bool> refreshInProgress_ = false;
 

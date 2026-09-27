@@ -1,21 +1,13 @@
 #include "core/OcrService.h"
 
-#include <opencv2/imgproc.hpp>
-
 #include <algorithm>
-#include <cstdlib>
 #include <exception>
-#include <memory>
 #include <string>
-#include <thread>
 #include <utility>
 
-#include "core/ExceptionLogging.h"
-#include "core/Logger.h"
-#include "ocr/LootRows.h"
+#include "common/ExceptionLogging.h"
+#include "common/Logger.h"
 #include "platform/GameFocus.h"
-#include "price/PriceService.h"
-#include "recipes/RecipeDatabase.h"
 
 #ifdef _WIN32
 #include "platform/windows/ResourceHelper.h"
@@ -28,38 +20,22 @@ namespace
 constexpr int kPollIntervalMs = 100;
 constexpr int kMinOcrGapMs = 600;
 constexpr int kMaxOcrDelayMs = 1500;
-constexpr int kOcrSleepChunkMs = 50;
 constexpr int kEmptyOverlayFramesBeforeClear = 3;
 constexpr int kCaptureFailuresBeforeWarning = 3;
 constexpr int kOverlayYJitter = 3;
-constexpr int kOverlayRowSpacing = 25;
 constexpr std::chrono::seconds kSnapshotDuration{ 2 };
 
-void SleepOcrLoop(std::atomic<bool>& running, const std::atomic<bool>& singleSnapshotRequested, int sleepMs)
-{
-    int remainingMs = sleepMs;
-    while (running && remainingMs > 0 && !singleSnapshotRequested.load())
-    {
-        const int chunkMs = std::min(remainingMs, kOcrSleepChunkMs);
-        std::this_thread::sleep_for(std::chrono::milliseconds(chunkMs));
-        remainingMs -= chunkMs;
-    }
 }
 
-bool HasCloseOverlayText(const std::vector<OverlayText>& texts, int y, int minDistance)
-{
-    for (const auto& text : texts)
-    {
-        if (std::abs(text.y - y) < minDistance)
-            return true;
-    }
-
-    return false;
-}
-}
-
-OcrService::OcrService(ConfigManager& configManager, FeatureRegistry& features, PriceService& prices)
-    : configManager_(configManager), features_(features), prices_(prices)
+OcrService::OcrService(
+    ConfigManager& configManager,
+    FeatureRegistry& features,
+    PriceService& prices,
+    std::unique_ptr<IScreenCapture> screenCapture
+)
+    : configManager_(configManager),
+      pipeline_(features, prices),
+      screenCapture_(screenCapture ? std::move(screenCapture) : CreateScreenCapture())
 {
 }
 
@@ -78,7 +54,9 @@ void OcrService::Start()
 
     ResetState(OcrState::Initializing);
 
-    workerThread_ = std::jthread([this] { RunLoggingExceptions("OcrService worker thread", [this] { WorkerLoop(); }); });
+    workerThread_ = std::jthread(
+        [this](const std::stop_token& stop) { RunLoggingExceptions("OcrService worker thread", [&] { WorkerLoop(stop); }); }
+    );
 }
 
 void OcrService::Stop()
@@ -86,32 +64,70 @@ void OcrService::Stop()
     if (!running_.exchange(false) && !workerThread_.joinable())
         return;
 
-    screenCapture_.Cancel();
+    workerThread_.request_stop();
+    screenCapture_->Cancel();
+    commandCondition_.notify_all();
 
     if (workerThread_.joinable())
         workerThread_.join();
 
-    screenCapture_.Shutdown();
+    screenCapture_->Shutdown();
     ResetState(OcrState::Stopped);
 }
 
 void OcrService::RequestSingleSnapshot()
 {
-    if (!running_.load())
-        return;
-
-    forceOcr_ = true;
-    singleSnapshotRequested_ = true;
+    Enqueue(Command::SingleSnapshot);
 }
 
 void OcrService::RequestDebugDump()
 {
+    Enqueue(Command::DebugDump);
+}
+
+void OcrService::Enqueue(Command command)
+{
     if (!running_.load())
         return;
 
-    debugDumpRequested_ = true;
-    forceOcr_ = true;
-    singleSnapshotRequested_ = true;
+    {
+        std::lock_guard lock(commandMutex_);
+        if (!running_.load())
+            return;
+        if (std::find(commands_.begin(), commands_.end(), command) == commands_.end())
+            commands_.push_back(command);
+    }
+
+    commandCondition_.notify_one();
+}
+
+bool OcrService::DrainCommands()
+{
+    std::deque<Command> commands;
+
+    {
+        std::lock_guard lock(commandMutex_);
+        commands.swap(commands_);
+    }
+
+    bool snapshotRequested = false;
+
+    for (const Command command : commands)
+    {
+        snapshotRequested = true;
+        forceOcr_ = true;
+
+        if (command == Command::DebugDump)
+            debugDumpRequested_ = true;
+    }
+
+    return snapshotRequested;
+}
+
+void OcrService::WaitForWork(int milliseconds)
+{
+    std::unique_lock lock(commandMutex_);
+    commandCondition_.wait_for(lock, std::chrono::milliseconds(milliseconds), [this] { return !running_ || !commands_.empty(); });
 }
 
 OcrStatus OcrService::Status() const
@@ -150,7 +166,8 @@ bool OcrService::InitOcr()
     LOG_INFO("Initializing OCR");
 
     bool loaded = false;
-    RunLoggingExceptions("OcrService init", [&] { loaded = LoadLanguage(configManager_.Snapshot().gameLanguage); });
+    language_ = configManager_.Snapshot().gameLanguage;
+    RunLoggingExceptions("OcrService init", [&] { loaded = pipeline_.LoadLanguage(language_); });
 
     if (!loaded)
     {
@@ -164,35 +181,6 @@ bool OcrService::InitOcr()
     return true;
 }
 
-bool OcrService::LoadLanguage(const std::string& language)
-{
-    language_ = language;
-    translations_ = NameMatcher();
-
-    std::string_view model = EmbeddedTextModel(language);
-
-    if (model.empty())
-    {
-        LOG_ERROR("OCR: this build has no text model for game language '" + language + "', English text is read instead");
-        model = EmbeddedTextModel("en");
-    }
-
-    if (!ocr_.Init(model))
-        return false;
-
-    const bool recipesLoaded = recipes_.Load();
-
-    if (language == "en")
-        return true;
-
-    if (recipesLoaded)
-        translations_ = recipes_.Translations(language);
-
-    LOG_INFO("OCR: game language '" + language + "', " + std::to_string(translations_.Size()) + " item names to translate");
-
-    return true;
-}
-
 void OcrService::ResetFrameState()
 {
     frameDiffer_.Reset();
@@ -202,83 +190,6 @@ void OcrService::ResetFrameState()
     captureFailing_ = false;
     frameErrorReported_ = false;
     rowCache_.Reset();
-}
-
-void OcrService::PublishFrameResult(
-    const std::vector<LootLine>& loot,
-    const cv::Mat& gray,
-    const cv::Rect& region,
-    const AppConfig& config
-)
-{
-    std::vector<FrameRow> rows = ParseLootRows(loot, region, config, translations_.Empty() ? nullptr : &translations_);
-
-    const bool pricesLoaded = config.priceSearchEnabled && prices_.Status().priceCount > 0;
-
-    for (FrameRow& row : rows)
-    {
-        if (config.priceSearchEnabled)
-            row.price = prices_.Resolve(row.name, row.quantity);
-
-        row.missingPrice =
-            pricesLoaded && !row.price.unitEx && recipes_.Loaded() && recipes_.FindRecipe(row.name, row.quantity) != nullptr;
-    }
-
-    DebugData debug;
-    debug.lines.reserve(loot.size());
-
-    for (const auto& item : loot)
-    {
-        DebugLine line;
-        line.ocrText = item.text;
-        debug.lines.push_back(std::move(line));
-    }
-
-    std::vector<RowOverlay> rowOverlays(rows.size());
-    OverlayFrame overlay;
-
-    FrameContext frame{
-        gray,
-        region,
-        rows,
-        config,
-        prices_.DivineRate(),
-        rowOverlays,
-        overlay,
-        debug,
-        rowCache_.Panel().value_or(cv::Rect(0, 0, gray.cols, gray.rows)),
-        rowCache_.Levels(),
-    };
-
-    features_.RunFrame(frame);
-
-    for (size_t i = 0; i < rows.size(); ++i)
-    {
-        if (rowOverlays[i].note.empty())
-            continue;
-
-        const int y = rows[i].overlayY;
-
-        if (HasCloseOverlayText(overlay.texts, y, kOverlayRowSpacing))
-            continue;
-
-        OverlayText text;
-        text.text = rowOverlays[i].note;
-        text.color = rowOverlays[i].color;
-        text.x = OverlayTextX(region, rowCache_.Panel(), config);
-        text.y = y;
-
-        overlay.texts.push_back(std::move(text));
-    }
-
-    PublishOverlayFrame(std::move(overlay));
-
-    {
-        std::lock_guard lock(debugMutex_);
-        debugData_ = std::move(debug);
-    }
-
-    debugDirty_ = true;
 }
 
 bool OcrService::PauseForGame(const AppConfig& config, bool snapshot)
@@ -302,9 +213,9 @@ bool OcrService::PauseForGame(const AppConfig& config, bool snapshot)
     return pause;
 }
 
-void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
+void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, const std::stop_token& stop)
 {
-    cv::Mat gray = screenCapture_.CaptureRegion(region);
+    cv::Mat gray = screenCapture_->CaptureRegion(region, stop);
 
     if (gray.empty())
     {
@@ -322,8 +233,8 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
 
     if (NeedsOcr(gray))
     {
-        const bool dump = debugDumpRequested_.exchange(false);
-        lastLoot_ = ocr_.RecognizeLoot(gray, &rowCache_, dump);
+        const bool dump = std::exchange(debugDumpRequested_, false);
+        lastLoot_ = pipeline_.RecognizeLoot(gray, rowCache_, dump);
         frameDiffer_.StoreOcrFrame(gray);
         lastOcrAt_ = std::chrono::steady_clock::now();
 
@@ -331,15 +242,26 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config)
             ++debugDumpsWritten_;
     }
 
-    PublishFrameResult(lastLoot_, gray, region, config);
+    OcrPipelineResult result = pipeline_.BuildFrame(lastLoot_, gray, region, config, rowCache_);
+    PublishOverlayFrame(std::move(result.overlay));
+
+    {
+        std::lock_guard lock(debugMutex_);
+        debugData_ = std::move(result.debug);
+    }
+
+    debugDirty_ = true;
 
     frameDiffer_.StoreFrame(std::move(gray));
 }
 
 bool OcrService::NeedsOcr(const cv::Mat& gray)
 {
-    if (forceOcr_.exchange(false))
+    if (forceOcr_)
+    {
+        forceOcr_ = false;
         return true;
+    }
 
     if (!frameDiffer_.ChangedSinceOcr(gray))
         return false;
@@ -352,16 +274,16 @@ bool OcrService::NeedsOcr(const cv::Mat& gray)
     return frameDiffer_.IsSettled(gray) || sinceOcr >= std::chrono::milliseconds(kMaxOcrDelayMs);
 }
 
-void OcrService::WorkerLoop()
+void OcrService::WorkerLoop(std::stop_token stop)
 {
     if (!InitOcr())
         return;
 
-    while (running_)
+    while (running_ && !stop.stop_requested())
     {
         const AppConfig config = configManager_.Snapshot();
 
-        const bool snapshotRequested = singleSnapshotRequested_.exchange(false);
+        const bool snapshotRequested = DrainCommands();
 
         if (snapshotRequested)
             singleSnapshotUntil_ = std::chrono::steady_clock::now() + kSnapshotDuration;
@@ -372,7 +294,7 @@ void OcrService::WorkerLoop()
             waitingForGame_ = false;
             ResetFrameState();
             ClearOverlayTexts();
-            SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
+            WaitForWork(kPollIntervalMs);
 
             continue;
         }
@@ -381,21 +303,22 @@ void OcrService::WorkerLoop()
         {
             waitingForGame_ = false;
             ResetFrameState();
-            SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
+            WaitForWork(kPollIntervalMs);
 
             continue;
         }
 
         if (PauseForGame(config, snapshotRequested || keepSnapshot))
         {
-            SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
+            WaitForWork(kPollIntervalMs);
 
             continue;
         }
 
         if (config.gameLanguage != language_)
         {
-            LoadLanguage(config.gameLanguage);
+            pipeline_.LoadLanguage(config.gameLanguage);
+            language_ = config.gameLanguage;
             ResetFrameState();
         }
 
@@ -403,7 +326,7 @@ void OcrService::WorkerLoop()
 
         try
         {
-            ProcessFrame(region, config);
+            ProcessFrame(region, config, stop);
             frameErrorReported_ = false;
         }
         catch (const std::exception& error)
@@ -426,7 +349,7 @@ void OcrService::WorkerLoop()
             }
         }
 
-        SleepOcrLoop(running_, singleSnapshotRequested_, kPollIntervalMs);
+        WaitForWork(kPollIntervalMs);
     }
 }
 
@@ -434,7 +357,10 @@ void OcrService::ResetState(OcrState state)
 {
     state_ = state;
     waitingForGame_ = false;
-    singleSnapshotRequested_ = false;
+    {
+        std::lock_guard lock(commandMutex_);
+        commands_.clear();
+    }
     debugDumpRequested_ = false;
     singleSnapshotUntil_ = {};
     overlayDirty_ = false;

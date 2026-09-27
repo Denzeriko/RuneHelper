@@ -20,8 +20,8 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/core.hpp>
 
-#include "core/ExceptionLogging.h"
-#include "core/Logger.h"
+#include "common/ExceptionLogging.h"
+#include "common/Logger.h"
 
 namespace
 {

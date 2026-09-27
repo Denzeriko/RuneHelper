@@ -23,8 +23,8 @@
 #pragma GCC diagnostic pop
 #endif
 
-#include "core/Logger.h"
-#include "core/Text.h"
+#include "common/Logger.h"
+#include "common/Text.h"
 #include "ui/OverlayIcons.h"
 
 namespace

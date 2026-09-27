@@ -12,7 +12,9 @@
 
 #include <opencv2/imgproc.hpp>
 
-#include "core/Logger.h"
+#include <stop_token>
+
+#include "common/Logger.h"
 #include "platform/linux/x11/Session.h"
 
 namespace
@@ -395,8 +397,10 @@ cv::Mat CaptureRootRegion(Display* display, SharedImage& shared, const cv::Rect&
 }
 }
 
-cv::Mat CaptureRegion(const cv::Rect& region)
+cv::Mat CaptureRegion(const cv::Rect& region, const std::stop_token& stop)
 {
+    if (stop.stop_requested())
+        return {};
     if (IsWaylandSession())
     {
         LogWaylandBuildNeeded("capture the screen");

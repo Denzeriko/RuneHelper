@@ -9,9 +9,9 @@
 
 #include "nlohmann/json.hpp"
 
-#include "core/JsonRead.h"
-#include "core/Logger.h"
-#include "core/Text.h"
+#include "common/JsonRead.h"
+#include "common/Logger.h"
+#include "common/Text.h"
 #include "platform/PlatformPaths.h"
 
 #ifdef _WIN32
