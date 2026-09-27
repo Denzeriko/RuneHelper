@@ -209,6 +209,9 @@ void OcrService::ProcessFrame(const cv::Rect& region, const AppConfig& config, c
 {
     cv::Mat gray = screenCapture_->CaptureRegion(region, stop);
 
+    if (stop.stop_requested())
+        return;
+
     if (gray.empty())
     {
         if (captureFailures_ < kCaptureFailuresBeforeWarning)

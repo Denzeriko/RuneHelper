@@ -76,6 +76,7 @@ add_test(
     NAME ocr_service_cancel
     COMMAND ocr_service_cancel
 )
+set_tests_properties(ocr_service_cancel PROPERTIES TIMEOUT 120)
 
 add_test(
     NAME ocr_row_cache

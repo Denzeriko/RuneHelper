@@ -355,9 +355,10 @@ bool StartPortal(PortalScreenCast& portal)
         return true;
     }
 
+    const bool cancelled = portal.Cancelled();
     portal.Stop();
 
-    if (portal.Cancelled())
+    if (cancelled)
         return false;
 
     retry.delay = std::clamp(retry.delay * 2, kFirstPortalRetry, kMaxPortalRetry);
@@ -544,4 +545,10 @@ cv::Mat CaptureRegion(const cv::Rect& region, const std::stop_token& stop)
 void CancelCapture()
 {
     Portal().Cancel();
+}
+
+void ShutdownCapture()
+{
+    Portal().Stop();
+    Retry() = {};
 }

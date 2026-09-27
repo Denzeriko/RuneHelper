@@ -39,5 +39,7 @@ void ScreenCaptureService::Shutdown()
 {
 #ifdef _WIN32
     desktopDuplication_.Shutdown();
+#else
+    ShutdownCapture();
 #endif
 }

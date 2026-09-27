@@ -926,4 +926,16 @@ void PortalScreenCast::Stop()
         dbus_connection_unref(impl_->connection);
         impl_->connection = nullptr;
     }
+
+    {
+        std::lock_guard lock(impl_->frameMutex);
+        impl_->frame.release();
+    }
+
+    impl_->frameWantedAtMs = 0;
+    impl_->position = {};
+    impl_->hasPosition = false;
+    impl_->logicalSize = {};
+    impl_->format = {};
+    impl_->cancelled = false;
 }

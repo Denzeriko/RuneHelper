@@ -6,3 +6,4 @@
 
 cv::Mat CaptureRegion(const cv::Rect& region, const std::stop_token& stop);
 void CancelCapture();
+void ShutdownCapture();
