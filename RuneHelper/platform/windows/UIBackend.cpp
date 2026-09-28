@@ -4,6 +4,7 @@
 #include <tchar.h>
 #include <windows.h>
 #include <windowsx.h>
+#include <shellapi.h>
 
 #include <chrono>
 #include <string>
@@ -38,6 +39,10 @@ bool IsMouseVk(int vk)
 constexpr int kToggleOcrHotkeyId = 1;
 constexpr int kSingleSnapshotHotkeyId = 2;
 constexpr int kSelectRegionHotkeyId = 3;
+constexpr UINT kTrayMessage = WM_APP + 1;
+constexpr UINT kTrayIconId = 1;
+constexpr UINT kTrayOpenId = 1;
+constexpr UINT kTrayExitId = 2;
 
 constexpr int kUnfocusedFrameIntervalMs = 100;
 constexpr float kDefaultDpi = 96.0f;
@@ -78,6 +83,9 @@ struct UIBackend::Impl
     UIManager* manager = nullptr;
     bool running = false;
     bool hotkeysRegistered = false;
+    bool inTray = false;
+    NOTIFYICONDATAW trayIcon{};
+    UINT taskbarCreatedMessage = 0;
     std::chrono::steady_clock::time_point lastFrame{};
 
     float dpiScale = 1.0f;
@@ -93,6 +101,10 @@ struct UIBackend::Impl
     void CleanupRenderTarget();
     void RegisterHotkey(int id, int key, const char* label);
     void RequestFromHotkey(int id);
+    bool AddTrayIcon();
+    void RemoveTrayIcon();
+    void RestoreFromTray();
+    void ShowTrayMenu(POINT position);
 
     static LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp);
 };
@@ -176,6 +188,7 @@ void UIBackend::Shutdown()
 {
     impl_->running = false;
     UnregisterHotkeys();
+    impl_->RemoveTrayIcon();
 
     if (ImGui::GetCurrentContext())
     {
@@ -217,7 +230,7 @@ bool UIBackend::BeginFrame()
     if (!impl_->running)
         return false;
 
-    if (IsIconic(impl_->hwnd))
+    if (IsIconic(impl_->hwnd) || !IsWindowVisible(impl_->hwnd))
         return false;
 
     const auto now = std::chrono::steady_clock::now();
@@ -267,6 +280,81 @@ void UIBackend::RequestClose()
 
     if (impl_->hwnd)
         PostMessageW(impl_->hwnd, WM_CLOSE, 0, 0);
+}
+
+void UIBackend::MinimizeToTray()
+{
+    if (impl_->hwnd && !impl_->inTray && impl_->AddTrayIcon())
+    {
+        impl_->inTray = true;
+        ShowWindow(impl_->hwnd, SW_HIDE);
+    }
+}
+
+bool UIBackend::Impl::AddTrayIcon()
+{
+    trayIcon = {};
+    trayIcon.cbSize = sizeof(trayIcon);
+    trayIcon.hWnd = hwnd;
+    trayIcon.uID = kTrayIconId;
+    trayIcon.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
+    trayIcon.uCallbackMessage = kTrayMessage;
+    trayIcon.hIcon = windowClass.hIcon;
+    wcscpy_s(trayIcon.szTip, L"RuneHelper");
+
+    if (!Shell_NotifyIconW(NIM_ADD, &trayIcon))
+    {
+        LOG_ERROR("Windows UI: failed to add tray icon");
+        return false;
+    }
+
+    trayIcon.uVersion = NOTIFYICON_VERSION_4;
+    if (!Shell_NotifyIconW(NIM_SETVERSION, &trayIcon))
+    {
+        Shell_NotifyIconW(NIM_DELETE, &trayIcon);
+        LOG_ERROR("Windows UI: failed to configure tray icon");
+        return false;
+    }
+
+    return true;
+}
+
+void UIBackend::Impl::RemoveTrayIcon()
+{
+    if (inTray)
+        Shell_NotifyIconW(NIM_DELETE, &trayIcon);
+
+    inTray = false;
+}
+
+void UIBackend::Impl::RestoreFromTray()
+{
+    ShowWindow(hwnd, SW_RESTORE);
+    SetForegroundWindow(hwnd);
+    RemoveTrayIcon();
+}
+
+void UIBackend::Impl::ShowTrayMenu(POINT position)
+{
+    const HMENU menu = CreatePopupMenu();
+    if (!menu)
+        return;
+
+    AppendMenuW(menu, MF_STRING, kTrayOpenId, L"Open RuneHelper");
+    AppendMenuW(menu, MF_STRING, kTrayExitId, L"Exit");
+    SetMenuDefaultItem(menu, kTrayOpenId, FALSE);
+    SetForegroundWindow(hwnd);
+    const UINT command =
+        TrackPopupMenu(menu, TPM_RETURNCMD | TPM_NONOTIFY | TPM_RIGHTBUTTON, position.x, position.y, 0, hwnd, nullptr);
+    DestroyMenu(menu);
+    PostMessageW(hwnd, WM_NULL, 0, 0);
+
+    if (command == kTrayOpenId)
+        RestoreFromTray();
+    else if (command == kTrayExitId)
+        manager->Exit();
+    else
+        Shell_NotifyIconW(NIM_SETFOCUS, &trayIcon);
 }
 
 std::string UIBackend::HotkeyToString(int key) const
@@ -346,6 +434,7 @@ void UIBackend::Impl::ApplyScale()
 
 bool UIBackend::Impl::CreateWindowUI()
 {
+    taskbarCreatedMessage = RegisterWindowMessageW(L"TaskbarCreated");
     const HINSTANCE instance = GetModuleHandle(nullptr);
     const HICON icon = LoadIconW(instance, MAKEINTRESOURCEW(IDI_APP_ICON));
     const auto smallIcon = static_cast<HICON>(LoadImageW(
@@ -514,8 +603,25 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         self = reinterpret_cast<Impl*>(GetWindowLongPtrW(hwnd, GWLP_USERDATA));
     }
 
+    if (self && self->taskbarCreatedMessage != 0 && msg == self->taskbarCreatedMessage)
+    {
+        if (self->inTray && !self->AddTrayIcon())
+            self->RestoreFromTray();
+        return 0;
+    }
+
     switch (msg)
     {
+    case kTrayMessage:
+        if (self && self->inTray && HIWORD(lp) == kTrayIconId)
+        {
+            if (LOWORD(lp) == NIN_SELECT || LOWORD(lp) == NIN_KEYSELECT)
+                self->RestoreFromTray();
+            else if (LOWORD(lp) == WM_CONTEXTMENU)
+                self->ShowTrayMenu(POINT{ GET_X_LPARAM(wp), GET_Y_LPARAM(wp) });
+        }
+        return 0;
+
     case WM_HOTKEY:
         if (self)
             self->RequestFromHotkey(static_cast<int>(wp));
@@ -551,7 +657,10 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
 
     case WM_DESTROY:
         if (self)
+        {
+            self->RemoveTrayIcon();
             self->running = false;
+        }
         PostQuitMessage(0);
         return 0;
 

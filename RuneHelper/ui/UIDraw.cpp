@@ -100,8 +100,38 @@ void DrawTitleBar(UIManager& ui)
     ImGui::SameLine();
     ImGui::TextDisabled("v%s", RUNEHELPER_VERSION_LABEL);
 
+#ifdef _WIN32
+    ImGui::SameLine(ImGui::GetWindowWidth() - UiScaled(64.0f));
+#else
     ImGui::SameLine(ImGui::GetWindowWidth() - UiScaled(40.0f));
+#endif
     state.titleButtonsLeft = ImGui::GetCursorScreenPos().x;
+
+#ifdef _WIN32
+    if (ImGui::Button("##Tray", titleButton))
+        ui.MinimizeToTray();
+
+    const ImVec2 origin = ImGui::GetItemRectMin();
+    const ImU32 color = ImGui::GetColorU32(ImGuiCol_Text);
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    draw->AddTriangleFilled(
+        ImVec2(origin.x + UiScaled(4.0f), origin.y + UiScaled(5.0f)),
+        ImVec2(origin.x + UiScaled(12.0f), origin.y + UiScaled(5.0f)),
+        ImVec2(origin.x + UiScaled(8.0f), origin.y + UiScaled(10.0f)),
+        color
+    );
+    draw->AddLine(
+        ImVec2(origin.x + UiScaled(4.0f), origin.y + UiScaled(12.0f)),
+        ImVec2(origin.x + UiScaled(12.0f), origin.y + UiScaled(12.0f)),
+        color,
+        UiScaled(1.0f)
+    );
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Minimize to tray");
+
+    ImGui::SameLine();
+#endif
 
     if (ImGui::Button("_", titleButton))
         ui.Minimize();

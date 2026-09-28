@@ -100,3 +100,10 @@ void UIManager::Exit()
     state_.running = false;
     backend_->RequestClose();
 }
+
+#ifdef _WIN32
+void UIManager::MinimizeToTray()
+{
+    backend_->MinimizeToTray();
+}
+#endif

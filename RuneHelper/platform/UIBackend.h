@@ -22,6 +22,9 @@ public:
 
     bool IsRunning() const;
     void Minimize();
+#ifdef _WIN32
+    void MinimizeToTray();
+#endif
     void RequestClose();
 
     std::string HotkeyToString(int key) const;

@@ -59,6 +59,9 @@ public:
     void UnregisterHotkeys();
 
     void Minimize();
+#ifdef _WIN32
+    void MinimizeToTray();
+#endif
     void Exit();
 
 private:

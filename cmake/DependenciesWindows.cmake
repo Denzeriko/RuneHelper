@@ -10,6 +10,7 @@ set(RUNEHELPER_LIBRARIES
     imgui::imgui
     d3d11
     dxgi
+    shell32
 )
 
 set(RUNEHELPER_DEFINITIONS
