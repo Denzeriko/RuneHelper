@@ -40,7 +40,7 @@ void PriceService::ForceRefresh()
 
 PriceStatus PriceService::Status() const
 {
-    return { cache_.IsRefreshInProgress(), cache_.GetPriceCount() };
+    return cache_.Status();
 }
 
 void PriceService::RebuildNames()

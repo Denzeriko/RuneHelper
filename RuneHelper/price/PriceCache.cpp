@@ -154,6 +154,12 @@ size_t PriceCache::GetPriceCount() const
     return prices_.size();
 }
 
+PriceStatus PriceCache::Status() const
+{
+    std::lock_guard<std::mutex> lock(mutex_);
+    return { refreshInProgress_.load(), prices_.size(), dumpUpdatedAt_, failureStreak_ > 0 };
+}
+
 std::uint64_t PriceCache::Version() const
 {
     std::lock_guard<std::mutex> lock(mutex_);
@@ -165,7 +171,6 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
     RefreshGuard guard{ refreshInProgress_ };
     LOG_INFO("PriceCache::RefreshWorker() -> start");
 
-    int64_t now = NowUnix();
     std::string league;
     std::uint64_t leagueVersion = 0;
     {
@@ -233,7 +238,7 @@ void PriceCache::RefreshWorker(const std::stop_token& stop)
         else
         {
             prices_ = std::move(fresh.items);
-            dumpUpdatedAt_ = now;
+            dumpUpdatedAt_ = NowUnix();
             lastFailureAt_ = 0;
             failureStreak_ = 0;
         }

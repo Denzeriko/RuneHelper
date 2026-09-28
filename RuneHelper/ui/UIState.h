@@ -1,9 +1,9 @@
 #pragma once
 
-#include <cstddef>
 #include <string>
 
 #include "core/OcrState.h"
+#include "price/PriceCache.h"
 
 enum class ReportState
 {
@@ -19,8 +19,7 @@ struct UIState
 
     OcrStatus ocr;
     bool overlayAvailable = true;
-    bool priceDownloading = false;
-    std::size_t priceCount = 0;
+    PriceStatus prices;
 
     ReportState report = ReportState::None;
     std::string reportFolder;

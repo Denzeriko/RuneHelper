@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <ctime>
 #include <string>
 #include <utility>
 #include <vector>
@@ -225,6 +226,40 @@ void DrawVersion(UIManager& ui)
     DrawUpdate(ui);
 }
 
+void DrawPriceStatus(const PriceStatus& status)
+{
+    if (status.downloading)
+        ImGui::TextColored(kYellow, "Downloading (%zu items loaded)", status.priceCount);
+    else if (status.priceCount == 0)
+        ImGui::TextColored(kYellow, "No data for selected league");
+    else if (status.refreshFailed)
+        ImGui::TextColored(kYellow, "Using cached prices (%zu items)", status.priceCount);
+    else
+        ImGui::TextColored(kGreen, "%zu items loaded", status.priceCount);
+
+    if (ImGui::IsItemHovered() && status.refreshFailed)
+        UiTooltip("The last download failed or was incomplete. Available prices are kept. See runehelper.log for details.");
+
+    if (status.priceCount == 0)
+        return;
+
+    char updated[32]{};
+    const std::time_t timestamp = static_cast<std::time_t>(status.updatedAt);
+    std::tm local{};
+#ifdef _WIN32
+    const bool converted = localtime_s(&local, &timestamp) == 0;
+#else
+    const bool converted = localtime_r(&timestamp, &local) != nullptr;
+#endif
+    if (status.updatedAt > 0 && converted && std::strftime(updated, sizeof(updated), "%Y-%m-%d %H:%M", &local) > 0)
+        ImGui::TextDisabled("Updated: %s", updated);
+    else
+        ImGui::TextDisabled("Updated: unknown");
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Last complete price update, in your local time.");
+}
+
 bool DrawStatusSection(UIManager& ui)
 {
     const UIState& state = ui.State();
@@ -259,10 +294,7 @@ bool DrawStatusSection(UIManager& ui)
         UiTooltip("The overlay window could not be created, prices are shown in the Debug Menu only.");
 
     StatusRow("Prices");
-    if (state.priceDownloading)
-        ImGui::TextColored(kYellow, "Downloading");
-    else
-        ImGui::TextColored(kGreen, "%zu items loaded", state.priceCount);
+    DrawPriceStatus(state.prices);
 
     StatusRow("Version");
     DrawVersion(ui);

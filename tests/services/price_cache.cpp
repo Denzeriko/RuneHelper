@@ -238,6 +238,11 @@ void TestSuccessfulRefresh()
 {
     Fixture fixture;
     fixture.Begin();
+    const auto downloading = fixture.cache->Status();
+    Require(
+        downloading.downloading && downloading.priceCount == 2 && downloading.updatedAt == 1234 && !downloading.refreshFailed,
+        "refresh status lost cached metadata"
+    );
     fixture.cache->ForceRefreshAsync();
     fixture.provider->Respond(FreshPrices());
     fixture.Wait();
@@ -252,6 +257,11 @@ void TestSuccessfulRefresh()
     Require(
         saved && saved->items.at("Runic Alloy").ex == 30.0 && saved->divineToEx == 200.0 && saved->updatedAt > 1234,
         "fresh prices or metadata were not saved"
+    );
+    const auto status = fixture.cache->Status();
+    Require(
+        !status.downloading && status.priceCount == 2 && status.updatedAt == saved->updatedAt && !status.refreshFailed,
+        "successful refresh status is incorrect"
     );
     fixture.cache->RefreshIfNeeded();
     Require(!fixture.cache->IsRefreshInProgress(), "fresh complete cache was downloaded again");
@@ -271,6 +281,11 @@ void TestNetworkFailureAndRecovery()
             "failed download discarded working prices"
         );
         Require(fixture.cache->Version() == version && fixture.store->savedLeagues.empty(), "failed download published a dump");
+        const auto failed = fixture.cache->Status();
+        Require(
+            !failed.downloading && failed.refreshFailed && failed.priceCount == 2 && failed.updatedAt == 1234,
+            "failed refresh status lost cached metadata"
+        );
         fixture.cache->RefreshIfNeeded();
         Require(!fixture.cache->IsRefreshInProgress(), "failed request was retried without backoff");
         fixture.cache->ForceRefreshAsync();
@@ -278,6 +293,8 @@ void TestNetworkFailureAndRecovery()
         fixture.provider->Respond(FreshPrices());
         fixture.Wait();
         Require(fixture.cache->GetPrice("Runic Alloy") == 30.0, "forced refresh did not recover from failure");
+        const auto recovered = fixture.cache->Status();
+        Require(!recovered.refreshFailed && recovered.updatedAt > 1234, "recovered refresh kept a failed status");
     }
 }
 
@@ -292,6 +309,8 @@ void TestPartialRefresh()
         "partial refresh did not merge with cached prices"
     );
     Require(fixture.cache->DivineRate() == 100.0, "partial refresh discarded the known currency rate");
+    const auto status = fixture.cache->Status();
+    Require(status.refreshFailed && status.updatedAt == 1234, "partial refresh status claimed a complete update");
     const auto saved = fixture.store->Read("A");
     Require(
         saved && saved->items.at("Old Item").ex == 5.0 && saved->updatedAt == 1234,
@@ -329,6 +348,8 @@ void TestStoreWriteFailure()
             "failed save discarded downloaded prices"
         );
         Require(fixture.store->Read("A")->items.at("Runic Alloy").ex == 10.0, "failed save changed the stored prices");
+        const auto status = fixture.cache->Status();
+        Require(!status.refreshFailed && status.updatedAt > 1234, "failed save marked downloaded prices as stale");
         fixture.store->saveFailure = SaveFailure::None;
         fixture.cache->ForceRefreshAsync();
         fixture.provider->WaitForCalls(2);
@@ -367,6 +388,11 @@ void TestStaleFailure()
         fixture.cache->SetLeague("Missing");
         fixture.provider->Respond({}, throws);
         fixture.Wait();
+        const auto status = fixture.cache->Status();
+        Require(
+            !status.refreshFailed && status.priceCount == 0 && status.updatedAt == 0,
+            "new league status retained metadata from a stale request"
+        );
         fixture.cache->RefreshIfNeeded();
         Require(fixture.cache->IsRefreshInProgress(), "old league failure delayed the new league request");
         fixture.provider->WaitForCalls(2);

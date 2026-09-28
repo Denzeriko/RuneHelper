@@ -1,7 +1,6 @@
 #pragma once
 
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -12,12 +11,6 @@
 #include "ocr/NameMatcher.h"
 #include "price/PriceCache.h"
 #include "price/ResolvedPrice.h"
-
-struct PriceStatus
-{
-    bool downloading = false;
-    std::size_t priceCount = 0;
-};
 
 class PriceService
 {

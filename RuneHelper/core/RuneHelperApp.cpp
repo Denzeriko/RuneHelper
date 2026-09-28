@@ -152,9 +152,7 @@ void RuneHelperApp::PublishStatus()
     UIState& state = ui_.State();
     state.ocr = ocrService_.Status();
 
-    const PriceStatus priceStatus = prices_.Status();
-    state.priceDownloading = priceStatus.downloading;
-    state.priceCount = priceStatus.priceCount;
+    state.prices = prices_.Status();
 
     if (!ui_.NeedsDebugData())
         return;

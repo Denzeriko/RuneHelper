@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <mutex>
@@ -13,6 +14,14 @@
 
 #include "price/PriceProvider.h"
 #include "price/PriceStore.h"
+
+struct PriceStatus
+{
+    bool downloading = false;
+    std::size_t priceCount = 0;
+    std::int64_t updatedAt = 0;
+    bool refreshFailed = false;
+};
 
 class PriceCache
 {
@@ -27,6 +36,7 @@ public:
 
     bool IsRefreshInProgress() const;
     size_t GetPriceCount() const;
+    PriceStatus Status() const;
     std::uint64_t Version() const;
 
     std::optional<double> GetPrice(const std::string& itemName);
