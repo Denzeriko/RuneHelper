@@ -222,3 +222,10 @@ The runeshape combination database and the poe2db scraper behind it come from [i
 ## License
 
 MIT License.
+
+## Support
+
+If RuneHelper helps you, you can support its development with a BTC donation.
+
+**Bitcoin (BTC):**
+`bc1qkxfpyjv46uayg06qyznkgp7r0qw8zmk0lth33a`
