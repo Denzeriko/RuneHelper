@@ -586,7 +586,8 @@ void DrawSettingsTab(UIManager& ui)
 
     configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
     configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
-    configChanged |= ImGui::SliderInt("Font Size", &config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+    configChanged |= ImGui::SliderInt("Runeshape Font Size", &config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+    configChanged |= ImGui::SliderInt("Maps Font Size", &config.mapsFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
 
     configChanged |= ImGui::Checkbox("Background", &config.overlayBackground);
 
@@ -831,7 +832,10 @@ void UIDraw::Draw(UIManager& ui)
 
         if (ImGui::BeginTabItem("Settings"))
         {
-            DrawSettingsTab(ui);
+            if (ImGui::BeginChild("SettingsContent"))
+                DrawSettingsTab(ui);
+
+            ImGui::EndChild();
             ImGui::EndTabItem();
         }
 

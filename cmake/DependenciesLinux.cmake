@@ -57,6 +57,8 @@ if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
         "${WAYLAND_PROTOCOLS_DIR}/unstable/xdg-output/xdg-output-unstable-v1.xml"
         "${RUNEHELPER_WLR_PROTOCOLS_DIR}/unstable/wlr-screencopy-unstable-v1.xml"
         "${RUNEHELPER_WLR_PROTOCOLS_DIR}/unstable/wlr-layer-shell-unstable-v1.xml"
+        "${RUNEHELPER_WLR_PROTOCOLS_DIR}/unstable/wlr-data-control-unstable-v1.xml"
+        "${RUNEHELPER_EXTERNAL_DIR}/wayland-protocols/ext-data-control-v1.xml"
     )
 
     foreach(protocol_xml ${RUNEHELPER_WAYLAND_PROTOCOL_XMLS})
@@ -101,7 +103,11 @@ else()
         message(FATAL_ERROR "The X11 backend needs libXext for MIT-SHM screen capture, install libxext-dev")
     endif()
 
-    set(RUNEHELPER_PLATFORM_LIBRARIES ${X11_LIBRARIES} ${X11_Xext_LIB})
+    if(NOT X11_Xfixes_LIB)
+        message(FATAL_ERROR "The X11 backend needs libXfixes for clipboard notifications, install libxfixes-dev")
+    endif()
+
+    set(RUNEHELPER_PLATFORM_LIBRARIES ${X11_LIBRARIES} ${X11_Xext_LIB} ${X11_Xfixes_LIB})
 
     set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
     set(GLFW_BUILD_X11 ON CACHE BOOL "" FORCE)

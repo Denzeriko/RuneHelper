@@ -10,6 +10,8 @@ set(RUNEHELPER_CORE_SOURCES
     RuneHelper/common/Sha256.cpp
     RuneHelper/common/Text.cpp
     RuneHelper/common/ZipWriter.cpp
+    RuneHelper/items/ItemText.cpp
+    RuneHelper/items/MapItem.cpp
     RuneHelper/ocr/LineReader.cpp
     RuneHelper/ocr/LootParser.cpp
     RuneHelper/ocr/LootRows.cpp
@@ -42,6 +44,7 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/core/UpdateChecker.cpp
     RuneHelper/core/UpdateInstaller.cpp
     RuneHelper/features/ExpeditionFeature.cpp
+    RuneHelper/features/MapCheckFeature.cpp
     RuneHelper/features/PriceOverlayFeature.cpp
     RuneHelper/ui/ImGuiStyleSetup.cpp
     RuneHelper/ui/TextRaster.cpp
@@ -63,6 +66,7 @@ if(WIN32)
         RuneHelper/platform/windows/OverlayBackend.cpp
         RuneHelper/platform/windows/PlatformShell.cpp
         RuneHelper/platform/windows/UIBackend.cpp
+        RuneHelper/platform/windows/ClipboardWatcher.cpp
         RuneHelper/platform/windows/ScreenCapture.cpp
         RuneHelper/platform/windows/DesktopDuplication.cpp
         RuneHelper/platform/windows/RegionSelect.cpp
@@ -83,6 +87,7 @@ elseif(UNIX AND NOT APPLE)
     if(RUNEHELPER_LINUX_BACKEND STREQUAL "wayland")
         list(APPEND RUNEHELPER_PLATFORM_SOURCES
             RuneHelper/platform/linux/wayland/Hotkeys.cpp
+            RuneHelper/platform/linux/wayland/ClipboardWatcher.cpp
             RuneHelper/platform/linux/wayland/OverlayBackend.cpp
             RuneHelper/platform/linux/wayland/PortalScreenCast.cpp
             RuneHelper/platform/linux/wayland/RegionSelect.cpp
@@ -93,6 +98,7 @@ elseif(UNIX AND NOT APPLE)
     else()
         list(APPEND RUNEHELPER_PLATFORM_SOURCES
             RuneHelper/platform/linux/x11/Hotkeys.cpp
+            RuneHelper/platform/linux/x11/ClipboardWatcher.cpp
             RuneHelper/platform/linux/x11/OverlayBackend.cpp
             RuneHelper/platform/linux/x11/RegionSelect.cpp
             RuneHelper/platform/linux/x11/ScreenCapture.cpp

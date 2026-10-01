@@ -3,6 +3,7 @@
 #include <filesystem>
 #include <memory>
 #include <string>
+#include <vector>
 
 #include <opencv2/core.hpp>
 
@@ -37,3 +38,19 @@ private:
 };
 
 std::filesystem::path FindSystemFont();
+
+enum class FontScript
+{
+    Korean,
+    Japanese,
+    Thai
+};
+
+struct ScriptFont
+{
+    std::filesystem::path path;
+    int index = 0;
+    FontScript script = FontScript::Japanese;
+};
+
+std::vector<ScriptFont> FindScriptFonts();

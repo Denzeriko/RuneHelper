@@ -37,6 +37,31 @@ struct OverlayMark
     OverlayColor color = OverlayRgb(255, 220, 80);
 };
 
+struct OverlayPanelLine
+{
+    std::string text;
+    OverlayColor color = OverlayRgb(255, 255, 255);
+
+    bool operator==(const OverlayPanelLine&) const = default;
+};
+
+struct OverlayPanel
+{
+    int x = 0;
+    int y = 0;
+    int width = 0;
+    int height = 0;
+    int fontSize = 24;
+    std::vector<OverlayPanelLine> lines;
+
+    bool operator==(const OverlayPanel&) const = default;
+};
+
+inline bool ApproxEqual(const OverlayPanel& a, const OverlayPanel& b, int = 0)
+{
+    return a == b;
+}
+
 inline bool ApproxEqual(const OverlayText& a, const OverlayText& b, int yTolerance = 0)
 {
     return a.x == b.x && std::abs(a.y - b.y) <= yTolerance && a.color == b.color && a.text == b.text;
@@ -66,12 +91,14 @@ struct OverlayFrame
 {
     std::vector<OverlayText> texts;
     std::vector<OverlayMark> marks;
+    std::vector<OverlayPanel> panels;
 
-    bool Empty() const { return texts.empty() && marks.empty(); }
+    bool Empty() const { return texts.empty() && marks.empty() && panels.empty(); }
 
     bool ApproxEquals(const OverlayFrame& other, int yTolerance = 0) const
     {
-        return ApproxEqual(texts, other.texts, yTolerance) && ApproxEqual(marks, other.marks, yTolerance);
+        return ApproxEqual(texts, other.texts, yTolerance) && ApproxEqual(marks, other.marks, yTolerance) &&
+               ApproxEqual(panels, other.panels);
     }
 };
 
@@ -88,4 +115,5 @@ struct OverlayState
     bool outline = false;
 
     std::vector<OverlayText> texts;
+    std::vector<OverlayPanel> panels;
 };

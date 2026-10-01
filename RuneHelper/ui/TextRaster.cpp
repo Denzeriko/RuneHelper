@@ -62,6 +62,53 @@ const char* const kFontCandidates[] = {
 };
 #endif
 
+struct FontCandidate
+{
+    const char* path;
+    int index;
+};
+
+#ifdef _WIN32
+const FontCandidate kHangulFonts[] = { { "C:/Windows/Fonts/malgun.ttf", 0 }, { "C:/Windows/Fonts/gulim.ttc", 0 } };
+const FontCandidate kJapaneseFonts[] = { { "C:/Windows/Fonts/YuGothR.ttc", 0 },
+                                         { "C:/Windows/Fonts/meiryo.ttc", 0 },
+                                         { "C:/Windows/Fonts/msgothic.ttc", 0 } };
+const FontCandidate kThaiFonts[] = { { "C:/Windows/Fonts/LeelawUI.ttf", 0 }, { "C:/Windows/Fonts/tahoma.ttf", 0 } };
+#else
+const FontCandidate kHangulFonts[] = {
+    { "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 1 },
+    { "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 1 },
+    { "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", 1 },
+    { "/usr/share/fonts/truetype/nanum/NanumGothic.ttf", 0 },
+};
+const FontCandidate kJapaneseFonts[] = {
+    { "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 0 },
+    { "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0 },
+    { "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", 0 },
+    { "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf", 0 },
+};
+const FontCandidate kThaiFonts[] = {
+    { "/usr/share/fonts/noto/NotoSansThai-Regular.ttf", 0 },
+    { "/usr/share/fonts/truetype/noto/NotoSansThai-Regular.ttf", 0 },
+    { "/usr/share/fonts/truetype/tlwg/Loma.ttf", 0 },
+};
+#endif
+
+template <std::size_t N>
+void FindScriptFont(std::vector<ScriptFont>& result, const FontCandidate (&candidates)[N], FontScript script)
+{
+    std::error_code ec;
+
+    for (const auto& font : candidates)
+    {
+        if (std::filesystem::is_regular_file(font.path, ec))
+        {
+            result.push_back({ font.path, font.index, script });
+            return;
+        }
+    }
+}
+
 std::vector<unsigned char> ReadFile(const std::filesystem::path& path)
 {
     std::ifstream in(path, std::ios::binary | std::ios::ate);
@@ -110,6 +157,15 @@ std::filesystem::path ScanForFont(const std::filesystem::path& root)
     return {};
 }
 
+}
+
+std::vector<ScriptFont> FindScriptFonts()
+{
+    std::vector<ScriptFont> result;
+    FindScriptFont(result, kJapaneseFonts, FontScript::Japanese);
+    FindScriptFont(result, kHangulFonts, FontScript::Korean);
+    FindScriptFont(result, kThaiFonts, FontScript::Thai);
+    return result;
 }
 
 std::filesystem::path FindSystemFont()
@@ -277,6 +333,56 @@ struct TextRaster::Impl
     std::map<std::pair<int, char32_t>, cv::Mat> icons;
     bool iconsReady = false;
 
+    struct FallbackFont
+    {
+        std::vector<unsigned char> data;
+        stbtt_fontinfo info{};
+    };
+
+    std::map<FontScript, std::unique_ptr<FallbackFont>> fallbacks;
+
+    const stbtt_fontinfo* FontFor(char32_t codepoint)
+    {
+        if (stbtt_FindGlyphIndex(&info, static_cast<int>(codepoint)) != 0)
+            return &info;
+
+        FontScript script = FontScript::Japanese;
+
+        if (codepoint >= 0x0E00 && codepoint <= 0x0E7F)
+            script = FontScript::Thai;
+        else if ((codepoint >= 0x1100 && codepoint <= 0x11FF) || (codepoint >= 0x3130 && codepoint <= 0x318F) || (codepoint >= 0xAC00 && codepoint <= 0xD7AF))
+            script = FontScript::Korean;
+        else if (codepoint < 0x3000 || codepoint > 0xFFEF)
+            return &info;
+
+        auto [it, inserted] = fallbacks.try_emplace(script);
+
+        if (inserted)
+        {
+            for (const auto& candidate : FindScriptFonts())
+            {
+                if (candidate.script != script)
+                    continue;
+
+                auto face = std::make_unique<FallbackFont>();
+                face->data = ReadFile(candidate.path);
+
+                if (face->data.empty())
+                    continue;
+
+                const int offset = stbtt_GetFontOffsetForIndex(face->data.data(), candidate.index);
+
+                if (offset >= 0 && stbtt_InitFont(&face->info, face->data.data(), offset))
+                    it->second = std::move(face);
+            }
+        }
+
+        if (it->second && stbtt_FindGlyphIndex(&it->second->info, static_cast<int>(codepoint)) != 0)
+            return &it->second->info;
+
+        return &info;
+    }
+
     float capRatio = 0.0f;
 
     float ScaleFor(int pixelHeight)
@@ -307,20 +413,21 @@ struct TextRaster::Impl
         if (it != glyphs.end())
             return it->second;
 
-        const float scale = ScaleFor(pixelHeight);
+        const stbtt_fontinfo* face = FontFor(codepoint);
+        const float scale = face == &info ? ScaleFor(pixelHeight) : stbtt_ScaleForPixelHeight(face, pixelHeight * 1.4f);
 
         Glyph glyph;
 
         int advance = 0;
         int bearing = 0;
-        stbtt_GetCodepointHMetrics(&info, static_cast<int>(codepoint), &advance, &bearing);
+        stbtt_GetCodepointHMetrics(face, static_cast<int>(codepoint), &advance, &bearing);
         glyph.advance = static_cast<int>(std::lround(advance * scale));
 
         int x0 = 0;
         int y0 = 0;
         int x1 = 0;
         int y1 = 0;
-        stbtt_GetCodepointBitmapBox(&info, static_cast<int>(codepoint), scale, scale, &x0, &y0, &x1, &y1);
+        stbtt_GetCodepointBitmapBox(face, static_cast<int>(codepoint), scale, scale, &x0, &y0, &x1, &y1);
 
         glyph.width = x1 - x0;
         glyph.height = y1 - y0;
@@ -331,7 +438,7 @@ struct TextRaster::Impl
         {
             glyph.coverage.assign(static_cast<std::size_t>(glyph.width) * static_cast<std::size_t>(glyph.height), 0);
             stbtt_MakeCodepointBitmap(
-                &info,
+                face,
                 glyph.coverage.data(),
                 glyph.width,
                 glyph.height,
@@ -391,6 +498,9 @@ struct TextRaster::Impl
 
     int Kerning(char32_t first, char32_t second, float scale)
     {
+        if (stbtt_FindGlyphIndex(&info, static_cast<int>(first)) == 0 || stbtt_FindGlyphIndex(&info, static_cast<int>(second)) == 0)
+            return 0;
+
         const int kern = stbtt_GetCodepointKernAdvance(&info, static_cast<int>(first), static_cast<int>(second));
 
         return static_cast<int>(std::lround(kern * scale));

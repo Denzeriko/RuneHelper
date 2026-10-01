@@ -8,6 +8,7 @@
 
 #include "ui/OverlayIcons.h"
 #include "ui/TextRaster.h"
+#include "common/Text.h"
 
 namespace
 {
@@ -99,29 +100,9 @@ void Merge(cv::Rect& bounds, const cv::Rect& box)
 
     bounds = bounds.empty() ? box : (bounds | box);
 }
-}
 
-cv::Rect OverlayRenderer::ContentBounds(const OverlayState& state)
+void PaintTexts(cv::Mat& canvas, const cv::Point& origin, const OverlayState& state)
 {
-    cv::Rect bounds;
-
-    for (const OverlayText& text : state.texts)
-        Merge(bounds, BackdropBox(text, Measure(text, state), state));
-
-    for (const OverlayMark& mark : state.marks)
-        Merge(bounds, cv::Rect(mark.x, mark.y, mark.width, mark.height));
-
-    if (state.previewEnabled)
-        Merge(bounds, PreviewBox(state));
-
-    return bounds;
-}
-
-void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const OverlayState& state)
-{
-    if (canvas.empty() || canvas.type() != CV_8UC4)
-        return;
-
     const cv::Rect canvasBounds(0, 0, canvas.cols, canvas.rows);
 
     for (const OverlayText& text : state.texts)
@@ -171,6 +152,94 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
             cv::LINE_AA
         );
     }
+}
+
+OverlayState LayoutPanel(const OverlayPanel& panel, const OverlayState& state)
+{
+    OverlayState layout;
+    layout.fontSize = panel.fontSize;
+    layout.scale = state.scale;
+    layout.background = false;
+    layout.outline = state.outline;
+
+    const int padding = Scaled(10, state);
+    const int width = std::max(1, panel.width - 2 * padding);
+    const auto metrics = Measure({ "Ag", 0, 0 }, layout);
+    const int step = metrics.size.height + metrics.descent + Scaled(8, state);
+    const int rows = std::max(1, (panel.height - 2 * padding) / step);
+
+    for (const auto& line : panel.lines)
+    {
+        auto remaining = Trim(line.text);
+
+        while (!remaining.empty())
+        {
+            if (static_cast<int>(layout.texts.size()) >= rows)
+            {
+                layout.texts.back().text = "More in Maps...";
+                return layout;
+            }
+
+            std::size_t fit = 0;
+            std::size_t space = 0;
+
+            for (std::size_t end = 0; end < remaining.size();)
+            {
+                const auto start = end;
+                DecodeUtf8(remaining, end);
+
+                if (Measure({ std::string(remaining.substr(0, end)), 0, 0 }, layout).size.width > width)
+                    break;
+
+                fit = end;
+
+                if (remaining[start] == ' ')
+                    space = start;
+            }
+
+            if (fit == 0)
+                return layout;
+
+            if (fit < remaining.size() && space > 0)
+                fit = space;
+
+            const int y = panel.y + padding + metrics.size.height / 2 + static_cast<int>(layout.texts.size()) * step;
+            layout.texts.push_back({ std::string(Trim(remaining.substr(0, fit))), panel.x + padding, y, line.color });
+            remaining = Trim(remaining.substr(fit));
+        }
+    }
+
+    return layout;
+}
+}
+
+cv::Rect OverlayRenderer::ContentBounds(const OverlayState& state)
+{
+    cv::Rect bounds;
+
+    for (const OverlayText& text : state.texts)
+        Merge(bounds, BackdropBox(text, Measure(text, state), state));
+
+    for (const OverlayMark& mark : state.marks)
+        Merge(bounds, cv::Rect(mark.x, mark.y, mark.width, mark.height));
+
+    for (const OverlayPanel& panel : state.panels)
+        Merge(bounds, cv::Rect(panel.x, panel.y, panel.width, panel.height));
+
+    if (state.previewEnabled)
+        Merge(bounds, PreviewBox(state));
+
+    return bounds;
+}
+
+void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const OverlayState& state)
+{
+    if (canvas.empty() || canvas.type() != CV_8UC4)
+        return;
+
+    const cv::Rect canvasBounds(0, 0, canvas.cols, canvas.rows);
+
+    PaintTexts(canvas, origin, state);
 
     for (const OverlayMark& mark : state.marks)
     {
@@ -180,6 +249,18 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
             continue;
 
         cv::rectangle(canvas, box, ToScalar(mark.color, 255), Scaled(kMarkThickness, state), cv::LINE_AA);
+    }
+
+    for (const OverlayPanel& panel : state.panels)
+    {
+        const cv::Rect bounds = (cv::Rect(panel.x, panel.y, panel.width, panel.height) - origin) & canvasBounds;
+
+        if (bounds.empty())
+            continue;
+
+        cv::Mat card = canvas(bounds);
+        card.setTo(cv::Scalar(0, 0, 0, kBackdropAlpha));
+        PaintTexts(card, origin + bounds.tl(), LayoutPanel(panel, state));
     }
 
     if (!state.previewEnabled)

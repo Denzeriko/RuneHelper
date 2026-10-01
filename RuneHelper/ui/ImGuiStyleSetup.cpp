@@ -2,104 +2,12 @@
 
 #include <filesystem>
 #include <string>
-#include <system_error>
 
 #include <imgui.h>
-
-#include "nlohmann/json.hpp"
 
 #include "common/Logger.h"
 #include "platform/PlatformPaths.h"
 #include "ui/TextRaster.h"
-
-#ifdef _WIN32
-#include "platform/windows/ResourceHelper.h"
-#else
-#include "platform/linux/ResourceHelper.h"
-#endif
-
-namespace
-{
-struct ScriptFont
-{
-    const char* path;
-    int index;
-};
-
-#ifdef _WIN32
-const ScriptFont kHangulFonts[] = { { "C:/Windows/Fonts/malgun.ttf", 0 }, { "C:/Windows/Fonts/gulim.ttc", 0 } };
-const ScriptFont kJapaneseFonts[] = { { "C:/Windows/Fonts/YuGothR.ttc", 0 },
-                                      { "C:/Windows/Fonts/meiryo.ttc", 0 },
-                                      { "C:/Windows/Fonts/msgothic.ttc", 0 } };
-const ScriptFont kThaiFonts[] = { { "C:/Windows/Fonts/LeelawUI.ttf", 0 }, { "C:/Windows/Fonts/tahoma.ttf", 0 } };
-#else
-const ScriptFont kHangulFonts[] = {
-    { "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 1 },
-    { "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 1 },
-    { "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", 1 },
-    { "/usr/share/fonts/truetype/nanum/NanumGothic.ttf", 0 },
-};
-const ScriptFont kJapaneseFonts[] = {
-    { "/usr/share/fonts/noto-cjk/NotoSansCJK-Regular.ttc", 0 },
-    { "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc", 0 },
-    { "/usr/share/fonts/google-noto-cjk/NotoSansCJK-Regular.ttc", 0 },
-    { "/usr/share/fonts/opentype/ipafont-gothic/ipag.ttf", 0 },
-};
-const ScriptFont kThaiFonts[] = {
-    { "/usr/share/fonts/noto/NotoSansThai-Regular.ttf", 0 },
-    { "/usr/share/fonts/truetype/noto/NotoSansThai-Regular.ttf", 0 },
-    { "/usr/share/fonts/truetype/tlwg/Loma.ttf", 0 },
-};
-#endif
-
-ImVector<ImWchar>& ItemNameGlyphs()
-{
-    static ImVector<ImWchar> glyphs;
-    return glyphs;
-}
-
-void BuildItemNameGlyphs()
-{
-    ImFontGlyphRangesBuilder builder;
-    const nlohmann::json recipes = nlohmann::json::parse(LoadEmbeddedRecipeDatabase(), nullptr, false);
-
-    if (recipes.is_object() && recipes.contains("combinations") && recipes["combinations"].is_array())
-    {
-        for (const auto& entry : recipes["combinations"])
-        {
-            if (!entry.is_object() || !entry.contains("names") || !entry["names"].is_object())
-                continue;
-
-            for (const auto& name : entry["names"])
-            {
-                if (name.is_string())
-                    builder.AddText(name.get<std::string>().c_str());
-            }
-        }
-    }
-
-    builder.BuildRanges(&ItemNameGlyphs());
-}
-
-template <std::size_t N>
-void MergeFirstFound(const ScriptFont (&fonts)[N], const ImWchar* ranges)
-{
-    std::error_code ec;
-
-    for (const ScriptFont& font : fonts)
-    {
-        if (!std::filesystem::exists(font.path, ec))
-            continue;
-
-        ImFontConfig config;
-        config.MergeMode = true;
-        config.FontNo = font.index;
-
-        if (ImGui::GetIO().Fonts->AddFontFromFileTTF(font.path, 13.0f, &config, ranges))
-            return;
-    }
-}
-}
 
 void ImGuiStyleSetup::ApplyRuneHelperStyle()
 {
@@ -151,17 +59,27 @@ void ImGuiStyleSetup::AddFonts()
     ImFontConfig config;
     config.MergeMode = true;
 
-    if (!io.Fonts->AddFontFromFileTTF(PathToUtf8(font).c_str(), 13.0f, &config, io.Fonts->GetGlyphRangesCyrillic()))
+    static constexpr ImWchar kBaseRanges[] = { 0x20, 0x024F, 0x0400, 0x052F, 0x2000, 0x206F, 0x20A0, 0x20CF, 0 };
+
+    if (!io.Fonts->AddFontFromFileTTF(PathToUtf8(font).c_str(), 13.0f, &config, kBaseRanges))
         LOG_ERROR("UI: could not add Cyrillic glyphs from " + PathToUtf8(font));
 
-    BuildItemNameGlyphs();
+    for (const auto& fallback : FindScriptFonts())
+    {
+        const ImWchar* ranges = nullptr;
 
-    const ImVector<ImWchar>& itemNameGlyphs = ItemNameGlyphs();
+        switch (fallback.script)
+        {
+        case FontScript::Korean: ranges = io.Fonts->GetGlyphRangesKorean(); break;
+        case FontScript::Japanese: ranges = io.Fonts->GetGlyphRangesChineseFull(); break;
+        case FontScript::Thai: ranges = io.Fonts->GetGlyphRangesThai(); break;
+        }
 
-    if (itemNameGlyphs.empty())
-        return;
+        config.FontNo = fallback.index;
+        config.OversampleH = 1;
+        config.OversampleV = 1;
 
-    MergeFirstFound(kHangulFonts, itemNameGlyphs.Data);
-    MergeFirstFound(kJapaneseFonts, itemNameGlyphs.Data);
-    MergeFirstFound(kThaiFonts, itemNameGlyphs.Data);
+        if (!io.Fonts->AddFontFromFileTTF(PathToUtf8(fallback.path).c_str(), 13.0f, &config, ranges))
+            LOG_ERROR("UI: could not add glyphs from " + PathToUtf8(fallback.path));
+    }
 }

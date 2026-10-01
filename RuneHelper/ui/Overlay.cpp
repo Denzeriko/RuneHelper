@@ -52,11 +52,12 @@ void OverlayWindow::SetRegionPreview(bool enabled, const OverlayRect& rect)
 
 void OverlayWindow::SetFrame(OverlayFrame frame)
 {
-    if (ApproxEqual(state_.texts, frame.texts) && ApproxEqual(state_.marks, frame.marks))
+    if (ApproxEqual(state_.texts, frame.texts) && ApproxEqual(state_.marks, frame.marks) && ApproxEqual(state_.panels, frame.panels))
         return;
 
     state_.texts = std::move(frame.texts);
     state_.marks = std::move(frame.marks);
+    state_.panels = std::move(frame.panels);
     dirty_ = true;
 }
 

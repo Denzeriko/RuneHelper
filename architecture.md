@@ -4,13 +4,21 @@ This file explains what the code cannot say by itself: which thread runs what, h
 
 ## Threads
 
-* **Main thread.** `RuneHelperApp::MainLoop` runs about 30 times a second. It copies the OCR and price status into `UIState`, draws the ImGui window (`UIManager::Pump`), pumps the overlay window, handles the requests collected during the frame, lets `ConfigManager` save, and hands the newest overlay frame from `OcrService` to `OverlayWindow`.
+* **Main thread.** `RuneHelperApp::MainLoop` runs about 30 times a second. It copies the OCR and price status into `UIState`, draws the ImGui window (`UIManager::Pump`), pumps the overlay window, handles the requests collected during the frame, ticks features, lets `ConfigManager` save, and combines the latest OCR frame with feature overlays for `OverlayWindow`.
 * **OCR worker.** `OcrService::WorkerLoop` loads the text model for the game language first, then polls every 100 ms: capture the region, decide whether it needs reading, and ask `OcrPipeline` to recognize loot and build the overlay and debug results. `IScreenCapture` isolates the platform capture implementation and accepts cancellation while a capture is in progress. Commands enter the worker through a mutex-protected queue; the overlay and debug results cross to the main thread through mutex-guarded slots (`ConsumeOverlayFrame`, `ConsumeDebugData`).
 * **Row readers.** `ReadRows` in `ocr/OCR.cpp` reads the rows of one panel on up to 8 threads (half the hardware threads). They share one `LineReader`; `Read` is const.
 * **Network jobs.** `PriceCache` refreshes prices, `UpdateChecker` asks GitHub for the latest release, and on request downloads and installs it on a second thread, and `RecipeUpdater` downloads a newer `combinations.json`, each on its own `std::jthread` that a stop token cancels.
 * **PipeWire.** On Wayland desktops without wlr-screencopy, frames arrive on PipeWire's own loop thread inside `PortalScreenCast`.
 
-Features run on two threads. `Feature::OnFrame` is called by the OCR worker, `DrawTab` and `DrawMainControls` by the main thread. That is why `ExpeditionSettings` holds atomics; the rest of a feature's state belongs to one thread only (`tiles_` and the cached marks to the OCR worker, the tab rows to the main thread).
+Features run on two threads. `Feature::OnFrame` is called by the OCR worker; `Tick`, `AppendOverlay`, `DrawTab` and `DrawMainControls` run on the main thread. That is why `ExpeditionSettings` holds atomics; the rest of a feature's state belongs to one thread only (`tiles_` and the cached marks to the OCR worker, the tab rows to the main thread).
+
+## Copied Waystones and Tablets
+
+`MapCheckFeature` runs entirely on the main thread. When enabled, its `ClipboardWatcher` receives clipboard changes through Windows clipboard notifications, X11 XFixes, or Wayland ext-data-control with a wlr-data-control fallback. Linux transfers complete asynchronously with a one-second timeout and a 64 KiB text limit. An unchanged clipboard requires no text transfer. Clipboard contents are never logged or sent to a provider.
+
+`ParseItemText` in `items` detects the clipboard language and reads the class, rarity, name and raw sections for any item in the nine supported client languages. Its shared language dictionary is independent of Maps and the window system. `ParseMapItem` accepts Waystones and Tablets from that result. It separates properties, modifier details and displayed rolls; blacklist modifier patterns match any numeric roll and remain specific to the language in which they were selected. Numeric rules store a property or modifier pattern, comparator, threshold and list. Every whitelist rule must match; any blacklist rule flags the item. Rules, the overlay rectangle and the display duration live in the feature settings. Copying a valid item starts the display timer again, even if its text matches the previous item. Unsupported content clears the result.
+
+The map panel is appended to the last OCR frame on each main-loop iteration, so clipboard updates and expiry work while OCR is idle or disabled. The common overlay renderer wraps and clips panel text inside the chosen rectangle. The window remains click-through; the platform region selector sets its position.
 
 ## From a key press to the config
 

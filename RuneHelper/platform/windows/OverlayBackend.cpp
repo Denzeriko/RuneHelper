@@ -17,6 +17,9 @@ namespace
 {
 POINT ContentAnchor(const OverlayState& state)
 {
+    if (!state.panels.empty())
+        return POINT{ state.panels.front().x, state.panels.front().y };
+
     if (!state.texts.empty())
         return POINT{ state.texts.front().x, state.texts.front().y };
 

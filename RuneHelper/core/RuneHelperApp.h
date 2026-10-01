@@ -43,6 +43,7 @@ private:
 
     UIManager ui_{ configManager_, updateChecker_, features_ };
     OverlayWindow overlay_;
+    OverlayFrame ocrFrame_;
     OcrService ocrService_{ configManager_, features_, prices_ };
 
     std::optional<std::filesystem::path> restartTarget_;

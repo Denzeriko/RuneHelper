@@ -40,6 +40,7 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 * Fuzzy matching absorbs OCR mistakes.
 * Expedition advisor: reward value per monster wave, so you can compare combinations at equal risk.
 * Highlights rare runeshape tiles directly in the remnant panel.
+* Waystone and Tablet checks from copied item text in all 9 supported client languages, with configurable keep and avoid filters.
 * Offline database of every runeshape combination, refreshed from a proxy at startup.
 * League-specific price cache, updated automatically, which keeps API requests low.
 * Price colors that follow the most valuable row on screen, or thresholds of your own.
@@ -56,6 +57,14 @@ The jobs under **Actions** are build checks, not downloads. Their artifacts need
 ![Region selection guide](assets/howto.gif)
 
 F8 toggles OCR, F9 reads the region once and F10 starts a region selection. All three can be changed under **HOTKEYS**.
+
+### Waystones and Tablets
+
+Open **Maps**, enable **Automatic clipboard check**, and use **Choose overlay area** to select a rectangle on the game screen. Hover a Waystone or Tablet in the game and press **Ctrl+C**. A card shows its name and filter results for 7 seconds. Copying another item replaces the result; copying the same item again restarts the timer. The position and display duration are saved.
+
+Both plain and advanced item text are accepted in all 9 supported client languages. Maps detects the language from the clipboard independently of the OCR language setting. In **Maps**, add a modifier to Avoid to flag it at any value. Rules match text in the language in which they were selected; recreate them after changing the game language. Add numeric thresholds to either list with `>`, `>=`, `<`, `<=` or `=`. Every whitelist condition must match; any blacklist match flags the item. Matching lines appear green or red, respectively. Remove saved rules in the same tab. **Check clipboard** also reads an item manually. A clear blacklist means none of its rules matched; a passing whitelist means all its conditions matched. Japanese, Korean and Thai text requires the corresponding system fonts (for example, Noto Sans CJK and Noto Sans Thai on Linux).
+
+Automatic checking uses clipboard change notifications and works with the RuneHelper window minimized. On Wayland, the compositor must support `ext-data-control-v1` or `wlr-data-control-unstable-v1`; otherwise use the manual button. Unsupported clipboard contents clear the card. Clipboard contents are not written to logs or sent over the network.
 
 ### Hotkeys on Wayland
 
@@ -176,6 +185,7 @@ sudo apt install \
     libglfw3-dev \
     libgl1-mesa-dev \
     libx11-dev \
+    libxfixes-dev \
     libxext-dev
 ```
 

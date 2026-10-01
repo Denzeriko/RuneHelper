@@ -63,6 +63,10 @@ public:
 
     virtual void OnFrame(FrameContext&) {}
 
+    virtual void Tick() {}
+
+    virtual void AppendOverlay(OverlayFrame&, const AppConfig&) const {}
+
     virtual void DrawMainControls(UIManager&) {}
 
     virtual const char* TabTitle() const { return nullptr; }

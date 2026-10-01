@@ -140,6 +140,7 @@ void ConfigManager::Normalize(AppConfig& config)
     config.regionW = std::max(0, config.regionW);
     config.regionH = std::max(0, config.regionH);
     config.overlayFontSize = std::clamp(config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+    config.mapsFontSize = std::clamp(config.mapsFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
 
     for (const LeagueRename& rename : kRenamedLeagues)
@@ -229,6 +230,7 @@ bool ConfigManager::Load()
     config_.overlayOffsetX = JsonValue(j, "overlayOffsetX", config_.overlayOffsetX);
     config_.overlayOffsetY = JsonValue(j, "overlayOffsetY", config_.overlayOffsetY);
     config_.overlayFontSize = JsonValue(j, "overlayFontSize", config_.overlayFontSize);
+    config_.mapsFontSize = JsonValue(j, "mapsFontSize", config_.overlayFontSize);
 
     config_.priceUnit = PriceUnitFromInt(JsonValue(j, "priceUnit", static_cast<int>(config_.priceUnit)));
 
@@ -275,6 +277,7 @@ bool ConfigManager::Save() const
     j["overlayOffsetX"] = config.overlayOffsetX;
     j["overlayOffsetY"] = config.overlayOffsetY;
     j["overlayFontSize"] = config.overlayFontSize;
+    j["mapsFontSize"] = config.mapsFontSize;
 
     j["hotkeyToggleOCR"] = config.hotkeyToggleOCR;
     j["hotkeySingleSnapshot"] = config.hotkeySingleSnapshot;

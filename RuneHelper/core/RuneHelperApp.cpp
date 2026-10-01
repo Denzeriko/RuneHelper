@@ -15,6 +15,7 @@
 #include "core/DebugData.h"
 #include "common/Logger.h"
 #include "features/ExpeditionFeature.h"
+#include "features/MapCheckFeature.h"
 #include "features/PriceOverlayFeature.h"
 #include "platform/GameFocus.h"
 #include "platform/PlatformPaths.h"
@@ -91,6 +92,7 @@ bool RuneHelperApp::Init()
 
     features_.Add(std::make_unique<PriceOverlayFeature>());
     features_.Add(std::make_unique<ExpeditionFeature>());
+    features_.Add(std::make_unique<MapCheckFeature>());
     features_.InitAll(configManager_);
 
     ui_.RegisterHotkeys();
@@ -114,6 +116,10 @@ void RuneHelperApp::MainLoop()
         overlay_.PumpMessages();
 
         HandleCommands(ui_.TakeCommands());
+
+        for (const auto& feature : features_.All())
+            feature->Tick();
+
         FinishBugReport();
 
         if (updateChecker_.Install() == UpdateInstall::Installed && !restartTarget_)
@@ -255,10 +261,12 @@ std::string RuneHelperApp::DescribeRun(bool freshDump)
 
 void RuneHelperApp::UpdateOverlay()
 {
-    OverlayFrame frame;
+    ocrService_.ConsumeOverlayFrame(ocrFrame_);
+    OverlayFrame frame = ocrFrame_;
+    const auto config = configManager_.Snapshot();
 
-    if (!ocrService_.ConsumeOverlayFrame(frame))
-        return;
+    for (const auto& feature : features_.All())
+        feature->AppendOverlay(frame, config);
 
     overlay_.SetFrame(std::move(frame));
 }

@@ -32,6 +32,7 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         libx11-dev \
         libxcursor-dev \
         libxext-dev \
+        libxfixes-dev \
         libxi-dev \
         libxinerama-dev \
         libxkbcommon-dev \

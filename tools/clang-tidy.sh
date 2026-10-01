@@ -66,6 +66,8 @@ docker run --rm \
             wayland-protocols/wlr-screencopy-unstable-v1-client-protocol.h \
             wayland-protocols/wlr-layer-shell-unstable-v1-client-protocol.h \
             wayland-protocols/xdg-output-unstable-v1-client-protocol.h \
+            wayland-protocols/wlr-data-control-unstable-v1-client-protocol.h \
+            wayland-protocols/ext-data-control-v1-client-protocol.h \
             wayland-protocols/xdg-shell-client-protocol.h > /tmp/protocols.log 2>&1 ||
             { echo "could not generate the wayland protocol headers"; tail -20 /tmp/protocols.log; exit 1; }
 

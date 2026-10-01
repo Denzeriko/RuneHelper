@@ -37,6 +37,7 @@ jobs:
             libglfw3-dev \
             libgl1-mesa-dev \
             libx11-dev \
+            libxfixes-dev \
             libxext-dev
 
       - name: Install Wayland dependencies

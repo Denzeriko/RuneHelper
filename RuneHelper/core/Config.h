@@ -52,6 +52,7 @@ struct AppConfig
     int overlayOffsetX = 20;
     int overlayOffsetY = 0;
     int overlayFontSize = 24;
+    int mapsFontSize = 24;
     bool overlayBackground = true;
     bool overlayOutline = false;
     bool overlayIcons = true;
