@@ -142,26 +142,24 @@ bool IsUsesRemaining(std::string_view line, const ItemLanguage& language)
 }
 }
 
-std::optional<MapItem> ParseMapItem(std::string_view text)
+std::optional<MapItem> ParseMapItem(const ItemText& parsed)
 {
-    const auto parsed = ParseItemText(text);
-
-    if (!parsed)
+    if (!parsed.language)
         return std::nullopt;
 
-    const auto& language = *parsed->language;
+    const auto& language = *parsed.language;
 
-    if (parsed->itemClass != language.waystones && parsed->itemClass != language.tablets && parsed->itemClass != language.tabletAlias)
+    if (parsed.itemClass != language.waystones && parsed.itemClass != language.tablets && parsed.itemClass != language.tabletAlias)
         return std::nullopt;
 
     MapItem item;
-    item.name = parsed->name;
-    item.base = parsed->base;
-    item.rarity = parsed->rarity;
-    item.corrupted = parsed->corrupted;
+    item.name = parsed.name;
+    item.base = parsed.base;
+    item.rarity = parsed.rarity;
+    item.corrupted = parsed.corrupted;
     bool itemLevel = false;
 
-    for (const auto& section : parsed->sections)
+    for (const auto& section : parsed.sections)
     {
         std::string details;
 

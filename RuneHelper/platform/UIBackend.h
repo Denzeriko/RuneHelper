@@ -1,7 +1,13 @@
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <string>
+
+namespace cv
+{
+class Mat;
+}
 
 class UIManager;
 
@@ -19,6 +25,7 @@ public:
 
     bool BeginFrame();
     void EndFrame();
+    std::uintptr_t UpdatePreview(const cv::Mat& image);
 
     bool IsRunning() const;
     void Minimize();

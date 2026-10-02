@@ -6,6 +6,7 @@
 
 #include <GLFW/glfw3.h>
 #include <imgui.h>
+#include <opencv2/core.hpp>
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
@@ -18,6 +19,7 @@
 struct UIBackend::Impl
 {
     GLFWwindow* window = nullptr;
+    GLuint previewTexture = 0;
     UIManager* manager = nullptr;
     std::unique_ptr<LinuxHotkeys> hotkeys;
     bool running = false;
@@ -41,11 +43,11 @@ std::string UpperAscii(std::string text)
 std::string FunctionKeyName(int key)
 {
     if (key >= GLFW_KEY_F1 && key <= GLFW_KEY_F25)
-        return "F" + std::to_string(key - GLFW_KEY_F1 + 1);
+        return std::string("F").append(std::to_string(key - GLFW_KEY_F1 + 1));
 
     // Tolerate existing configs created with Win32 VK_F1..VK_F24 defaults.
     if (key >= 0x70 && key <= 0x87)
-        return "F" + std::to_string(key - 0x70 + 1);
+        return std::string("F").append(std::to_string(key - 0x70 + 1));
 
     return {};
 }
@@ -213,6 +215,13 @@ void UIBackend::Shutdown()
 
     UnregisterHotkeys();
 
+    if (impl_->previewTexture && impl_->window)
+    {
+        glfwMakeContextCurrent(impl_->window);
+        glDeleteTextures(1, &impl_->previewTexture);
+        impl_->previewTexture = 0;
+    }
+
     if (ImGui::GetCurrentContext())
     {
         ImGui_ImplOpenGL3_Shutdown();
@@ -364,4 +373,26 @@ void UIBackend::UnregisterHotkeys()
         return;
 
     impl_->hotkeys->Unregister();
+}
+
+std::uintptr_t UIBackend::UpdatePreview(const cv::Mat& image)
+{
+    if (!impl_->window || image.empty() || image.type() != CV_8UC4 || !image.isContinuous())
+        return 0;
+
+    glfwMakeContextCurrent(impl_->window);
+    GLint previous = 0;
+    glGetIntegerv(GL_TEXTURE_BINDING_2D, &previous);
+
+    if (!impl_->previewTexture)
+        glGenTextures(1, &impl_->previewTexture);
+
+    glBindTexture(GL_TEXTURE_2D, impl_->previewTexture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.cols, image.rows, 0, GL_BGRA, GL_UNSIGNED_BYTE, image.data);
+    glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(previous));
+    return static_cast<std::uintptr_t>(impl_->previewTexture);
 }

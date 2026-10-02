@@ -11,6 +11,7 @@
 #include "core/OcrService.h"
 #include "core/UpdateChecker.h"
 #include "price/PriceService.h"
+#include "platform/ClipboardWatcher.h"
 
 #include "ui/Overlay.h"
 #include "ui/UIManager.h"
@@ -34,12 +35,15 @@ private:
     void FinishBugReport();
     std::string DescribeRun(bool freshDump);
     void UpdateOverlay();
+    void UpdateClipboard();
     void UpdateRegionPreview(const AppConfig& config);
 
     ConfigManager configManager_;
     UpdateChecker updateChecker_;
     PriceService prices_;
     FeatureRegistry features_;
+    ClipboardWatcher clipboard_;
+    bool clipboardAttempted_ = false;
 
     UIManager ui_{ configManager_, updateChecker_, features_ };
     OverlayWindow overlay_;

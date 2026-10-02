@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
 #include <vector>
 
 #include <wayland-client.h>
@@ -17,6 +18,7 @@ struct WaylandOutput
     wl_output* output = nullptr;
     zxdg_output_v1* xdgOutput = nullptr;
     std::uint32_t globalName = 0;
+    std::string name;
     int x = 0;
     int y = 0;
     int width = 0;

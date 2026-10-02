@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
+#include <list>
 #include <string>
 
 #include <opencv2/imgproc.hpp>
@@ -14,9 +14,10 @@
 namespace
 {
 constexpr int kMarkThickness = 2;
-constexpr int kOutlineExtraThickness = 2;
+constexpr int kOutlineExtraThickness = 4;
 constexpr int kTextPadding = 6;
 constexpr int kBackdropAlpha = 208;
+constexpr std::size_t kPanelLayoutCacheSize = 8;
 
 struct TextLayout
 {
@@ -25,6 +26,18 @@ struct TextLayout
     double fontScale = 1.0;
     int thickness = 1;
     bool trueType = false;
+};
+
+struct PanelLayout
+{
+    int width = 0;
+    bool trueType = false;
+    std::vector<OverlayPanelLine> lines;
+    OverlayState state;
+    int padding = 0;
+    int step = 0;
+
+    int Height() const { return 2 * padding + static_cast<int>(state.texts.size()) * step; }
 };
 
 cv::Scalar ToScalar(OverlayColor color, int alpha)
@@ -155,19 +168,23 @@ void PaintTexts(cv::Mat& canvas, const cv::Point& origin, const OverlayState& st
     }
 }
 
-OverlayState LayoutPanel(const OverlayPanel& panel, const OverlayState& state)
+PanelLayout LayoutPanel(const OverlayPanel& panel, float scale)
 {
-    OverlayState layout;
+    PanelLayout result;
+    result.width = panel.width;
+    result.trueType = TextRaster::Instance().Ready();
+    result.lines = panel.lines;
+    OverlayState& layout = result.state;
     layout.fontSize = panel.fontSize;
-    layout.scale = state.scale;
+    layout.scale = scale;
     layout.background = false;
-    layout.outline = panel.outline;
 
-    const int padding = Scaled(10, state);
+    const int padding = Scaled(10, layout);
     const int width = std::max(1, panel.width - 2 * padding);
     const auto metrics = Measure({ "Ag", 0, 0 }, layout);
-    const int step = metrics.size.height + metrics.descent + Scaled(8, state);
-    const int rows = std::max(1, (panel.height - 2 * padding) / step);
+    const int step = metrics.size.height + metrics.descent + Scaled(8, layout);
+    result.padding = padding;
+    result.step = step;
 
     for (const auto& line : panel.lines)
     {
@@ -175,12 +192,6 @@ OverlayState LayoutPanel(const OverlayPanel& panel, const OverlayState& state)
 
         while (!remaining.empty())
         {
-            if (static_cast<int>(layout.texts.size()) >= rows)
-            {
-                layout.texts.back().text = "More in Maps...";
-                return layout;
-            }
-
             std::size_t fit = 0;
             std::size_t space = 0;
 
@@ -199,18 +210,44 @@ OverlayState LayoutPanel(const OverlayPanel& panel, const OverlayState& state)
             }
 
             if (fit == 0)
-                return layout;
+                return result;
 
             if (fit < remaining.size() && space > 0)
                 fit = space;
 
-            const int y = panel.y + padding + metrics.size.height / 2 + static_cast<int>(layout.texts.size()) * step;
-            layout.texts.push_back({ std::string(Trim(remaining.substr(0, fit))), panel.x + padding, y, line.color });
+            const int y = padding + metrics.size.height / 2 + static_cast<int>(layout.texts.size()) * step;
+            layout.texts.push_back({ std::string(Trim(remaining.substr(0, fit))), padding, y, line.color });
             remaining = Trim(remaining.substr(fit));
         }
     }
 
-    return layout;
+    return result;
+}
+
+const PanelLayout& CachedPanelLayout(const OverlayPanel& panel, float scale)
+{
+    thread_local std::list<PanelLayout> cache;
+    const bool trueType = TextRaster::Instance().Ready();
+    const auto found = std::find_if(
+        cache.begin(),
+        cache.end(),
+        [&](const PanelLayout& entry)
+        {
+            return entry.width == panel.width && entry.state.fontSize == panel.fontSize && entry.state.scale == scale &&
+                   entry.trueType == trueType && entry.lines == panel.lines;
+        }
+    );
+
+    if (found != cache.end())
+        cache.splice(cache.begin(), cache, found);
+    else
+    {
+        cache.push_front(LayoutPanel(panel, scale));
+        if (cache.size() > kPanelLayoutCacheSize)
+            cache.pop_back();
+    }
+
+    return cache.front();
 }
 }
 
@@ -233,22 +270,22 @@ cv::Rect OverlayRenderer::ContentBounds(const OverlayState& state)
     return bounds;
 }
 
-int OverlayRenderer::PanelContentHeight(const OverlayPanel& panel, float scale)
+int OverlayRenderer::PanelContentWidth(const OverlayPanel& panel, float scale)
 {
-    OverlayPanel measuredPanel = panel;
-    measuredPanel.height = std::numeric_limits<int>::max();
-
     OverlayState state;
     state.fontSize = panel.fontSize;
     state.scale = scale;
 
-    const OverlayState layout = LayoutPanel(measuredPanel, state);
-    const TextLayout metrics = Measure({ "Ag", 0, 0 }, state);
-    const int padding = Scaled(10, state);
-    const int step = metrics.size.height + metrics.descent + Scaled(8, state);
-    const int rows = static_cast<int>(layout.texts.size());
+    int width = 0;
+    for (const auto& line : panel.lines)
+        width = std::max(width, Measure({ std::string(Trim(line.text)), 0, 0 }, state).size.width);
 
-    return 2 * padding + rows * step;
+    return width + 2 * Scaled(10, state);
+}
+
+int OverlayRenderer::PanelContentHeight(const OverlayPanel& panel, float scale)
+{
+    return CachedPanelLayout(panel, scale).Height();
 }
 
 void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const OverlayState& state)
@@ -280,7 +317,16 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
         cv::Mat card = canvas(bounds);
         if (panel.background)
             card.setTo(cv::Scalar(0, 0, 0, kBackdropAlpha));
-        PaintTexts(card, origin + bounds.tl(), LayoutPanel(panel, state));
+        const PanelLayout& cached = CachedPanelLayout(panel, state.scale);
+        OverlayState layout = cached.state;
+        layout.outline = panel.outline;
+        const auto rows = static_cast<std::size_t>(std::max(1, (panel.height - 2 * cached.padding) / cached.step));
+        if (layout.texts.size() > rows)
+        {
+            layout.texts.resize(rows);
+            layout.texts.back().text = "More in Maps...";
+        }
+        PaintTexts(card, origin + bounds.tl() - cv::Point(panel.x, panel.y), layout);
     }
 
     if (!state.previewEnabled)

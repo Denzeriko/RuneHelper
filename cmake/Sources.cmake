@@ -52,6 +52,7 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/ui/Overlay.cpp
     RuneHelper/ui/OverlayRenderer.cpp
     RuneHelper/ui/UIDraw.cpp
+    RuneHelper/ui/UiWidgets.cpp
     RuneHelper/ui/UIManager.cpp
 )
 

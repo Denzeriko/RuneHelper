@@ -15,6 +15,7 @@
 
 class ConfigManager;
 class UIManager;
+struct CopiedItem;
 
 struct RowOverlay
 {
@@ -65,9 +66,11 @@ public:
 
     virtual void Tick() {}
 
+    virtual void OnCopiedItem(const CopiedItem&, const AppConfig&) {}
+
     virtual void AppendOverlay(OverlayFrame&, const AppConfig&) const {}
 
-    virtual const char* TabTitle() const { return nullptr; }
+    virtual void DrawTools(UIManager&) {}
 
     virtual void DrawSettings(UIManager&) {}
 

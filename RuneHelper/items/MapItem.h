@@ -2,8 +2,9 @@
 
 #include <optional>
 #include <string>
-#include <string_view>
 #include <vector>
+
+#include "items/ItemText.h"
 
 struct MapProperty
 {
@@ -32,4 +33,4 @@ struct MapItem
     bool corrupted = false;
 };
 
-std::optional<MapItem> ParseMapItem(std::string_view text);
+std::optional<MapItem> ParseMapItem(const ItemText& parsed);

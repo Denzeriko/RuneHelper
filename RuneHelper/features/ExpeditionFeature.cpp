@@ -13,6 +13,7 @@
 #include "common/Logger.h"
 #include "ocr/LootParser.h"
 #include "ui/UIDraw.h"
+#include "ui/UiWidgets.h"
 #include "ui/UIManager.h"
 #include "ui/UiScale.h"
 #include "ui/UiTooltip.h"
@@ -369,7 +370,7 @@ void ExpeditionFeature::DrawDebug(UIManager& manager)
 
     if (!settings_.enabled)
     {
-        ImGui::TextDisabled("Enable Pick Advisor in Settings > Expedition to show recipe matches.");
+        ImGui::TextDisabled("Enable Expedition advisor under Tools to show recipe matches.");
         return;
     }
 
@@ -389,20 +390,18 @@ void ExpeditionFeature::DrawDebug(UIManager& manager)
     DrawScreenRecipeTable();
 }
 
-void ExpeditionFeature::DrawAdvisorSettings()
+void ExpeditionFeature::DrawTools(UIManager&)
 {
-    bool changed = AtomicCheckbox("Enable Pick Advisor", settings_.enabled);
+    bool enabled = settings_.enabled.load();
 
-    ImGui::SameLine();
-    ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextDisabled("%s", DataStatus().c_str());
-    ImGui::PopTextWrapPos();
-
-    if (settings_.enabled)
-        changed |= AtomicCheckbox("Show rune names on the overlay", settings_.showRunes);
-
-    if (changed)
+    if (UiWidgets::Toggle("Expedition advisor", enabled))
+    {
+        settings_.enabled.store(enabled);
         StoreSettings();
+    }
+
+    if (enabled && !database_.Loaded())
+        ImGui::TextDisabled("%s", DataStatus().c_str());
 }
 
 void ExpeditionFeature::RefreshScreenRows(const UIManager& manager)
@@ -547,11 +546,12 @@ void ExpeditionFeature::DrawSettings(UIManager&)
         return;
     }
 
-    DrawAdvisorSettings();
+    if (AtomicCheckbox("Show rune names on the overlay", settings_.showRunes))
+        StoreSettings();
 
     if (AtomicCheckbox("Highlight rare runes", settings_.highlightRare))
         StoreSettings();
 
     if (ImGui::IsItemHovered())
-        UiTooltip("Frames the rare rune tiles in the remnant panel. Works without the Pick Advisor.");
+        UiTooltip("Frames the rare rune tiles in the remnant panel. Works without the Expedition advisor.");
 }

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <functional>
 #include <iomanip>
 #include <sstream>
 
@@ -13,6 +12,9 @@
 #include "common/Text.h"
 #include "platform/GameFocus.h"
 #include "ui/UIDraw.h"
+#include "ui/UIManager.h"
+#include "ui/UiWidgets.h"
+#include "ui/UiScale.h"
 #include "ui/OverlayPlacement.h"
 #include "ui/UiTooltip.h"
 
@@ -24,8 +26,8 @@
 
 namespace
 {
-constexpr ImVec4 kBlocked{ 1.0f, 0.3f, 0.3f, 1.0f };
-constexpr ImVec4 kMatch{ 0.35f, 0.9f, 0.55f, 1.0f };
+constexpr ImVec4 kBlocked{ 0.89f, 0.60f, 0.60f, 1.0f };
+constexpr ImVec4 kMatch{ 0.56f, 0.80f, 0.65f, 1.0f };
 constexpr const char* kComparisons[] = { ">", ">=", "<", "<=", "=" };
 constexpr int kCursorMoveThreshold = 15;
 constexpr int kPanelDurationSeconds = 7;
@@ -93,11 +95,11 @@ bool MapCheckFeature::Init(ConfigManager& configManager)
 {
     configManager_ = &configManager;
     const auto settings = configManager.FeatureSettings(Name());
-    cursorPosition_ = JsonValue(settings, "cursorPosition", false);
     overlayArea_.x = std::clamp(JsonValue(settings, "overlayX", 0), -100000, 100000);
     overlayArea_.y = std::clamp(JsonValue(settings, "overlayY", 0), -100000, 100000);
     overlayArea_.width = std::clamp(JsonValue(settings, "overlayWidth", 0), 0, 2048);
     overlayArea_.height = std::clamp(JsonValue(settings, "overlayHeight", 0), 0, 1440);
+    cursorPosition_ = JsonValue(settings, "cursorPosition", overlayArea_.empty());
     auto rules = settings.find("blacklistModifiers");
 
     if (rules == settings.end())
@@ -149,23 +151,8 @@ bool MapCheckFeature::Init(ConfigManager& configManager)
     return true;
 }
 
-void MapCheckFeature::Shutdown()
-{
-    clipboard_.Stop();
-}
-
 void MapCheckFeature::Tick()
 {
-    if (!configManager_->Snapshot().showMapsTab)
-    {
-        clipboard_.Stop();
-        watcherAttempted_ = false;
-        preview_ = false;
-        visibleUntil_ = {};
-        hasCursorAnchor_ = false;
-        return;
-    }
-
     if (chooseArea_)
     {
         chooseArea_ = false;
@@ -189,16 +176,15 @@ void MapCheckFeature::Tick()
         }
     }
 
-    if (!watcherAttempted_)
+    if (!configManager_->Snapshot().showMapsTab)
     {
-        watcherAttempted_ = true;
-        clipboard_.Start();
+        preview_ = false;
+        visibleUntil_ = {};
+        hasCursorAnchor_ = false;
+        return;
     }
 
-    if (const auto text = clipboard_.Poll())
-        ReadItem(*text);
-
-    if (cursorPosition_ && hasCursorAnchor_ && item_)
+    if (cursorPosition_ && hasCursorAnchor_ && item_ && std::chrono::steady_clock::now() < visibleUntil_)
     {
         if (const auto cursor = QueryCursorPosition())
         {
@@ -237,7 +223,7 @@ void MapCheckFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config
     {
         panel.lines.push_back({ "Map check preview", OverlayRgb(255, 220, 110) });
         panel.lines.push_back({ "Copied Waystones and Tablets will appear here." });
-        panel.lines.push_back({ "Whitelist matches are green; blacklist matches are red." });
+        panel.lines.push_back({ "Keep matches are green; avoid matches are red." });
     }
     else if (item_)
     {
@@ -318,11 +304,11 @@ void MapCheckFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config
         }
 
         if (hasWhitelist)
-            panel.lines.push_back({ whitelistPassed ? "Whitelist: PASS" : "Whitelist: FAIL",
+            panel.lines.push_back({ whitelistPassed ? "Keep: PASS" : "Keep: FAIL",
                                     whitelistPassed ? OverlayRgb(90, 225, 135) : OverlayRgb(255, 75, 75) });
 
         if (hasBlacklist)
-            panel.lines.push_back({ blacklistHit ? "Blacklist: HIT" : "Blacklist: CLEAR",
+            panel.lines.push_back({ blacklistHit ? "Avoid: HIT" : "Avoid: CLEAR",
                                     blacklistHit ? OverlayRgb(255, 75, 75) : OverlayRgb(90, 225, 135) });
 
         if (hasWhitelist || hasBlacklist)
@@ -344,9 +330,9 @@ void MapCheckFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config
         if (!matched.empty())
             panel.lines.insert(panel.lines.end(), matched.begin(), matched.end());
         else if (!hasWhitelist && !hasBlacklist)
-            panel.lines.push_back({ "No filters configured. Add whitelist or blacklist rules in Maps." });
+            panel.lines.push_back({ "No filters configured. Add Keep or Avoid conditions in Maps." });
         else if (!hasWhitelist && !blacklistHit)
-            panel.lines.push_back({ "No blacklist rules matched." });
+            panel.lines.push_back({ "No avoid conditions matched." });
     }
     else
         return;
@@ -399,9 +385,12 @@ void MapCheckFeature::StoreSettings()
     );
 }
 
-void MapCheckFeature::ReadItem(std::string_view text)
+void MapCheckFeature::OnCopiedItem(const CopiedItem& copied, const AppConfig& config)
 {
-    std::optional<MapItem> parsed = ParseMapItem(text);
+    if (!config.showMapsTab)
+        return;
+
+    std::optional<MapItem> parsed = copied.item ? ParseMapItem(*copied.item) : std::nullopt;
     preview_ = false;
     visibleUntil_ = {};
     hasCursorAnchor_ = false;
@@ -428,10 +417,13 @@ void MapCheckFeature::ReadItem(std::string_view text)
 
 void MapCheckFeature::DrawItem()
 {
+    UiWidgets::Section("LAST COPIED ITEM");
     if (!item_)
+    {
+        UIDraw::CellText("Hover a Waystone or Tablet in the game and press Ctrl+C. Its properties and modifiers will appear here.");
         return;
+    }
 
-    ImGui::Separator();
     UIDraw::CellText(item_->name.c_str());
 
     if (!item_->base.empty())
@@ -471,30 +463,33 @@ void MapCheckFeature::DrawItem()
         );
 
     if (hasWhitelist)
-        ImGui::TextColored(whitelistPassed ? kMatch : kBlocked, "Whitelist: %s", whitelistPassed ? "PASS" : "FAIL");
+        ImGui::TextColored(whitelistPassed ? kMatch : kBlocked, "Keep conditions: %s", whitelistPassed ? "all met" : "not all met");
 
     if (hasBlacklist)
-        ImGui::TextColored(blacklistHit ? kBlocked : kMatch, "Blacklist: %s", blacklistHit ? "HIT" : "CLEAR");
+        ImGui::TextColored(blacklistHit ? kBlocked : kMatch, "Avoid conditions: %s", blacklistHit ? "matched" : "none matched");
 
     if (hasWhitelist || hasBlacklist)
     {
         const bool accepted = whitelistPassed && !blacklistHit;
-        ImGui::TextColored(accepted ? kMatch : kBlocked, "Filter: %s", accepted ? "ACCEPT" : "REJECT");
+        ImGui::TextColored(accepted ? kMatch : kBlocked, "Result: %s", accepted ? "ACCEPT" : "REJECT");
     }
 
     if (!hasWhitelist && !hasBlacklist)
-        ImGui::TextUnformatted("Add conditions to the whitelist or blacklist below.");
+        ImGui::TextUnformatted("Add Keep or Avoid conditions from this item.");
 
-    ImGui::SeparatorText("ITEM PROPERTIES");
+    ImGui::SetNextItemWidth(-1.0f);
+    ImGui::InputTextWithHint("##modifierSearch", "Search properties or modifiers...", modifierSearch_.data(), modifierSearch_.size());
+    const std::string search = ToLowerAscii(modifierSearch_.data());
+    UiWidgets::Section("ITEM PROPERTIES");
 
     for (const auto& property : item_->properties)
     {
-        const auto* allowedRule = property.hasValue
-                                      ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Whitelist)
-                                      : nullptr;
-        const auto* blockedRule = property.hasValue
-                                      ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Blacklist)
-                                      : nullptr;
+        if (!search.empty() && ToLowerAscii(property.text).find(search) == std::string::npos)
+            continue;
+        const auto* allowedRule =
+            property.hasValue ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Whitelist) : nullptr;
+        const auto* blockedRule =
+            property.hasValue ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Blacklist) : nullptr;
         const bool allowed = allowedRule && Matches(*allowedRule, property.value);
         const bool blocked = blockedRule && Matches(*blockedRule, property.value);
 
@@ -514,14 +509,10 @@ void MapCheckFeature::DrawItem()
         }
     }
 
-    ImGui::SeparatorText("MODIFIERS");
+    UiWidgets::Section("MODIFIERS");
 
     if (item_->modifiers.empty())
         ImGui::TextWrapped("No modifier lines found in the copied item.");
-
-    ImGui::SetNextItemWidth(-1.0f);
-    ImGui::InputTextWithHint("##modifierSearch", "Search modifiers...", modifierSearch_.data(), modifierSearch_.size());
-    const std::string search = ToLowerAscii(modifierSearch_.data());
 
     for (std::size_t i = 0; i < item_->modifiers.size(); ++i)
     {
@@ -575,10 +566,9 @@ void MapCheckFeature::DrawItem()
 
 void MapCheckFeature::DrawNumericCondition(std::string_view pattern, MapRuleTarget target, double currentValue)
 {
-    ImGui::PushID(static_cast<int>(std::hash<std::string_view>{}(pattern)&0x7fffffffU));
-    ImGui::PushID(static_cast<int>(target));
-
     const std::string key(pattern);
+    ImGui::PushID(key.c_str());
+    ImGui::PushID(static_cast<int>(target));
 
     for (const MapRuleList list : { MapRuleList::Whitelist, MapRuleList::Blacklist })
     {
@@ -594,6 +584,7 @@ void MapCheckFeature::DrawNumericCondition(std::string_view pattern, MapRuleTarg
                 StoreSettings();
             }
 
+            focusRules_ = true;
             editingPattern_ = key;
             editingTarget_ = target;
             editingList_ = list;
@@ -603,239 +594,211 @@ void MapCheckFeature::DrawNumericCondition(std::string_view pattern, MapRuleTarg
             ImGui::SameLine();
     }
 
-    if (editingPattern_ == pattern && editingTarget_ == target)
-    {
-        auto it = std::find_if(
-            numericRules_.begin(),
-            numericRules_.end(),
-            [this](const MapNumericRule& rule)
-            { return rule.pattern == editingPattern_ && rule.target == editingTarget_ && rule.list == editingList_; }
-        );
-
-        if (it != numericRules_.end())
-        {
-            ImGui::Indent();
-            ImGui::TextUnformatted(editingList_ == MapRuleList::Whitelist ? "Keep this item when:" : "Avoid this item when:");
-
-            for (int i = 0; i < static_cast<int>(std::size(kComparisons)); ++i)
-            {
-                if (i > 0)
-                    ImGui::SameLine();
-
-                const bool selected = static_cast<int>(it->comparison) == i;
-
-                if (ImGui::RadioButton(kComparisons[i], selected))
-                {
-                    it->comparison = static_cast<MapComparison>(i);
-                    StoreSettings();
-                }
-            }
-
-            double value = it->value;
-            if (ImGui::InputDouble("Value", &value, 1.0, 10.0, "%.2f"))
-            {
-                it->value = std::clamp(value, -1000000.0, 1000000.0);
-                StoreSettings();
-            }
-
-            if (target == MapRuleTarget::Modifier && editingList_ == MapRuleList::Blacklist)
-            {
-                bool avoidAny = std::find(blacklistModifiers_.begin(), blacklistModifiers_.end(), key) != blacklistModifiers_.end();
-
-                if (ImGui::Checkbox("Avoid at any value", &avoidAny))
-                {
-                    if (avoidAny)
-                        blacklistModifiers_.push_back(key);
-                    else
-                        std::erase(blacklistModifiers_, key);
-
-                    StoreSettings();
-                }
-            }
-
-            if (ImGui::SmallButton("Done"))
-                editingPattern_.clear();
-
-            ImGui::SameLine();
-
-            if (ImGui::SmallButton("Remove condition"))
-            {
-                numericRules_.erase(it);
-                StoreSettings();
-                editingPattern_.clear();
-            }
-
-            ImGui::Unindent();
-        }
-        else
-            editingPattern_.clear();
-    }
-
     ImGui::PopID();
     ImGui::PopID();
 }
 
 void MapCheckFeature::DrawRules()
 {
-    ImGui::SeparatorText("ACTIVE FILTERS");
-    ImGui::SeparatorText("KEEP");
-
-    for (std::size_t i = 0; i < numericRules_.size();)
+    UiWidgets::Section("ACTIVE FILTERS");
+    if (focusRules_)
     {
-        if (numericRules_[i].list != MapRuleList::Whitelist)
-        {
-            ++i;
-            continue;
-        }
-
-        ImGui::PushID(static_cast<int>(i));
-        const bool remove = ImGui::SmallButton("Remove");
-        ImGui::SameLine();
-        UIDraw::CellText(RuleText(numericRules_[i]).c_str());
-        ImGui::PopID();
-
-        if (remove)
-        {
-            if (editingPattern_ == numericRules_[i].pattern && editingList_ == MapRuleList::Whitelist)
-                editingPattern_.clear();
-
-            numericRules_.erase(numericRules_.begin() + static_cast<std::ptrdiff_t>(i));
-            StoreSettings();
-        }
-        else
-            ++i;
+        ImGui::SetScrollY(0.0f);
+        focusRules_ = false;
     }
 
-    if (std::none_of(
-            numericRules_.begin(),
-            numericRules_.end(),
-            [](const MapNumericRule& rule) { return rule.list == MapRuleList::Whitelist; }
-        ))
-        ImGui::TextDisabled("No keep conditions. Add one from an item property or modifier.");
-
-    ImGui::SeparatorText("AVOID");
-
-    for (std::size_t i = 0; i < blacklistModifiers_.size();)
+    for (const MapRuleList list : { MapRuleList::Blacklist, MapRuleList::Whitelist })
     {
-        ImGui::PushID(static_cast<int>(i + 2048));
-        const bool remove = ImGui::SmallButton("Remove");
-        ImGui::SameLine();
-        UIDraw::CellText(blacklistModifiers_[i].c_str());
-        ImGui::PopID();
-
-        if (remove)
+        ImGui::PushID(static_cast<int>(list));
+        ImGui::PushStyleColor(ImGuiCol_Text, list == MapRuleList::Blacklist ? kBlocked : kMatch);
+        ImGui::SeparatorText(list == MapRuleList::Blacklist ? "Avoid - any match" : "Keep - all conditions");
+        ImGui::PopStyleColor();
+        bool any = false;
+        if (ImGui::BeginTable("Rules", 3, ImGuiTableFlags_SizingFixedFit | ImGuiTableFlags_BordersInnerH))
         {
-            blacklistModifiers_.erase(blacklistModifiers_.begin() + static_cast<std::ptrdiff_t>(i));
-            StoreSettings();
+            ImGui::TableSetupColumn("Condition", ImGuiTableColumnFlags_WidthStretch);
+            ImGui::TableSetupColumn("Value", ImGuiTableColumnFlags_WidthFixed, UiScaled(114));
+            ImGui::TableSetupColumn("Remove", ImGuiTableColumnFlags_WidthFixed, UiScaled(22));
+            if (list == MapRuleList::Blacklist)
+            {
+                ImGui::PushID("any");
+                for (std::size_t i = 0; i < blacklistModifiers_.size();)
+                {
+                    any = true;
+                    ImGui::PushID(blacklistModifiers_[i].c_str());
+                    ImGui::TableNextRow();
+                    ImGui::TableSetColumnIndex(0);
+                    UIDraw::CellText(blacklistModifiers_[i].c_str());
+                    ImGui::TableSetColumnIndex(1);
+                    ImGui::TextDisabled("Any value");
+                    ImGui::TableSetColumnIndex(2);
+                    const bool remove = ImGui::SmallButton("x");
+                    ImGui::PopID();
+                    if (remove)
+                    {
+                        blacklistModifiers_.erase(blacklistModifiers_.begin() + static_cast<std::ptrdiff_t>(i));
+                        StoreSettings();
+                    }
+                    else
+                        ++i;
+                }
+                ImGui::PopID();
+            }
+            for (std::size_t i = 0; i < numericRules_.size();)
+            {
+                auto& rule = numericRules_[i];
+                if (rule.list != list)
+                {
+                    ++i;
+                    continue;
+                }
+                any = true;
+                ImGui::PushID(rule.pattern.c_str());
+                ImGui::PushID(static_cast<int>(rule.target));
+                ImGui::TableNextRow();
+                ImGui::TableSetColumnIndex(0);
+                UIDraw::CellText(rule.pattern.c_str());
+                ImGui::TableSetColumnIndex(1);
+                if (ImGui::Button(kComparisons[static_cast<int>(rule.comparison)], ImVec2(UiScaled(34), 0)))
+                {
+                    editingPattern_ = rule.pattern;
+                    editingTarget_ = rule.target;
+                    editingList_ = rule.list;
+                }
+                ImGui::SameLine(0, UiScaled(4));
+                ImGui::SetNextItemWidth(UiScaled(74));
+                double value = rule.value;
+                if (ImGui::InputDouble("##value", &value, 0, 0, "%.6g") && std::isfinite(value))
+                {
+                    rule.value = std::clamp(value, -1000000.0, 1000000.0);
+                    StoreSettings();
+                }
+                ImGui::TableSetColumnIndex(2);
+                const bool remove = ImGui::SmallButton("x");
+                ImGui::PopID();
+                ImGui::PopID();
+                if (remove)
+                {
+                    if (editingPattern_ == rule.pattern && editingTarget_ == rule.target && editingList_ == rule.list)
+                        editingPattern_.clear();
+                    numericRules_.erase(numericRules_.begin() + static_cast<std::ptrdiff_t>(i));
+                    StoreSettings();
+                }
+                else
+                    ++i;
+            }
+            ImGui::EndTable();
         }
-        else
-            ++i;
+        if (!any)
+            ImGui::TextDisabled("Add a condition from an item below.");
+        ImGui::Spacing();
+        ImGui::PopID();
     }
 
-    for (std::size_t i = 0; i < numericRules_.size();)
+    if (editingPattern_.empty())
+        return;
+    auto it = std::find_if(
+        numericRules_.begin(),
+        numericRules_.end(),
+        [this](const MapNumericRule& rule)
+        { return rule.pattern == editingPattern_ && rule.target == editingTarget_ && rule.list == editingList_; }
+    );
+    if (it == numericRules_.end())
     {
-        if (numericRules_[i].list != MapRuleList::Blacklist)
+        editingPattern_.clear();
+        return;
+    }
+    ImGui::PushID("EditCondition");
+    ImGui::TextDisabled("%s", editingList_ == MapRuleList::Whitelist ? "Keep when:" : "Avoid when:");
+    UIDraw::CellText(editingPattern_.c_str());
+    for (int i = 0; i < static_cast<int>(std::size(kComparisons)); ++i)
+    {
+        if (i)
+            ImGui::SameLine();
+        if (ImGui::RadioButton(kComparisons[i], static_cast<int>(it->comparison) == i))
         {
-            ++i;
-            continue;
-        }
-
-        ImGui::PushID(static_cast<int>(i + 4096));
-        const bool remove = ImGui::SmallButton("Remove");
-        ImGui::SameLine();
-        UIDraw::CellText(RuleText(numericRules_[i]).c_str());
-        ImGui::PopID();
-
-        if (remove)
-        {
-            if (editingPattern_ == numericRules_[i].pattern && editingList_ == MapRuleList::Blacklist)
-                editingPattern_.clear();
-
-            numericRules_.erase(numericRules_.begin() + static_cast<std::ptrdiff_t>(i));
+            it->comparison = static_cast<MapComparison>(i);
             StoreSettings();
         }
-        else
-            ++i;
     }
-
-    if (blacklistModifiers_.empty() && std::none_of(
-                                           numericRules_.begin(),
-                                           numericRules_.end(),
-                                           [](const MapNumericRule& rule) { return rule.list == MapRuleList::Blacklist; }
-                                       ))
-        ImGui::TextDisabled("No avoid conditions.");
+    if (it->list == MapRuleList::Blacklist && it->target == MapRuleTarget::Modifier)
+    {
+        if (ImGui::SmallButton("Avoid at any value"))
+        {
+            if (std::find(blacklistModifiers_.begin(), blacklistModifiers_.end(), it->pattern) == blacklistModifiers_.end())
+                blacklistModifiers_.push_back(it->pattern);
+            numericRules_.erase(it);
+            editingPattern_.clear();
+            StoreSettings();
+        }
+        ImGui::SameLine();
+    }
+    if (ImGui::SmallButton("Done"))
+        editingPattern_.clear();
+    ImGui::PopID();
 }
 
-void MapCheckFeature::DrawTab(UIManager&)
+void MapCheckFeature::DrawClipboardStatus(UIManager& manager)
 {
-    ImGui::BeginChild("MapCheckContent");
-    DrawItem();
+    if (manager.State().clipboardUnavailable)
+    {
+        UIDraw::CellText("Clipboard access is unavailable. Check desktop support and retry.");
+        if (ImGui::SmallButton("Retry clipboard access"))
+            manager.EnqueueCommand(UICommand::RetryClipboard);
+    }
+}
+
+void MapCheckFeature::DrawTools(UIManager& manager)
+{
+    const auto keep = std::count_if(
+        numericRules_.begin(),
+        numericRules_.end(),
+        [](const MapNumericRule& rule) { return rule.list == MapRuleList::Whitelist; }
+    );
+    const auto avoid = blacklistModifiers_.size() + numericRules_.size() - static_cast<std::size_t>(keep);
+    ImGui::AlignTextToFramePadding();
+    ImGui::TextDisabled("%zu avoid rules / %zu keep rules", avoid, static_cast<std::size_t>(keep));
+    ImGui::SameLine(ImGui::GetCursorPosX() + ImGui::GetContentRegionAvail().x - UiScaled(90));
+    if (ImGui::Button("Edit filters", ImVec2(UiScaled(90), 0)))
+        manager.State().page = UIPage::Maps;
+    DrawClipboardStatus(manager);
+}
+
+void MapCheckFeature::DrawTab(UIManager& manager)
+{
+    if (!manager.ConfigDraft().showMapsTab)
+        ImGui::TextDisabled("Checking is off. Enable Maps & Tablets in Tools.");
+    DrawClipboardStatus(manager);
     DrawRules();
-    ImGui::EndChild();
+    UiWidgets::Divider();
+    DrawItem();
 }
 
 void MapCheckFeature::DrawSettings(UIManager&)
 {
-    const char* positionModes[] = { "Selected area", "Upper-right of cursor" };
-    int positionMode = cursorPosition_ ? 1 : 0;
-
-    if (ImGui::Combo("Panel position", &positionMode, positionModes, IM_ARRAYSIZE(positionModes)))
+    const float width = (ImGui::GetContentRegionAvail().x - ImGui::GetStyle().ItemSpacing.x) * 0.5f;
+    bool cursor = cursorPosition_;
+    if (UiWidgets::Tab("Beside cursor", cursorPosition_, width))
+        cursor = true;
+    ImGui::SameLine();
+    if (UiWidgets::Tab("Selected area", !cursorPosition_, width))
+        cursor = false;
+    if (cursor != cursorPosition_)
     {
-        cursorPosition_ = positionMode == 1;
+        cursorPosition_ = cursor;
         hasCursorAnchor_ = false;
-
-        if (cursorPosition_ && (item_ || preview_))
-        {
-            if (const auto cursor = QueryCursorPosition())
-            {
-                cursorAnchorX_ = cursor->x;
-                cursorAnchorY_ = cursor->y;
-                screenX_ = cursor->screenX;
-                screenY_ = cursor->screenY;
-                screenWidth_ = cursor->screenWidth;
-                screenHeight_ = cursor->screenHeight;
-                hasCursorAnchor_ = true;
-            }
-        }
-
+        visibleUntil_ = {};
         StoreSettings();
     }
-
-    if (ImGui::Button("Choose overlay area"))
-        chooseArea_ = true;
-
-    if (!overlayArea_.empty() || cursorPosition_)
-    {
-        ImGui::SameLine();
-
-        if (ImGui::Button("Preview"))
-        {
-            preview_ = true;
-            visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(kPanelDurationSeconds);
-
-            if (cursorPosition_)
-            {
-                if (const auto cursor = QueryCursorPosition())
-                {
-                    cursorAnchorX_ = cursor->x;
-                    cursorAnchorY_ = cursor->y;
-                    screenX_ = cursor->screenX;
-                    screenY_ = cursor->screenY;
-                    screenWidth_ = cursor->screenWidth;
-                    screenHeight_ = cursor->screenHeight;
-                    hasCursorAnchor_ = true;
-                }
-            }
-        }
-    }
+    if (cursorPosition_)
+        UIDraw::CellText("Above and to the right, kept inside the screen.");
     else
-        ImGui::TextDisabled("Choose an area on the game screen to show copied items.");
-
-    if (watcherAttempted_ && !clipboard_.Running())
     {
-        ImGui::TextWrapped("Background clipboard access is unavailable. Check desktop support and retry.");
-
-        if (ImGui::Button("Retry clipboard access"))
-            watcherAttempted_ = false;
+        if (ImGui::Button(overlayArea_.empty() ? "Choose area" : "Change area"))
+            chooseArea_ = true;
+        if (overlayArea_.empty())
+            UIDraw::CellText("Choose an area on the game screen to show copied items.");
     }
+    if (!error_.empty())
+        UIDraw::CellText(error_.c_str());
 }

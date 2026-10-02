@@ -8,7 +8,6 @@
 
 #include "core/Feature.h"
 #include "items/MapItem.h"
-#include "platform/ClipboardWatcher.h"
 #include "platform/CursorPosition.h"
 
 enum class MapRuleTarget
@@ -47,25 +46,22 @@ public:
     std::string Name() const override { return "map_check"; }
 
     bool Init(ConfigManager& configManager) override;
-    void Shutdown() override;
     void Tick() override;
+    void OnCopiedItem(const CopiedItem& copied, const AppConfig& config) override;
     void AppendOverlay(OverlayFrame& frame, const AppConfig& config) const override;
 
-    const char* TabTitle() const override { return "Maps"; }
-
     void DrawTab(UIManager& manager) override;
+    void DrawTools(UIManager& manager) override;
     void DrawSettings(UIManager& manager) override;
 
 private:
-    void ReadItem(std::string_view text);
     void DrawItem();
+    void DrawClipboardStatus(UIManager& manager);
     void DrawRules();
     void DrawNumericCondition(std::string_view pattern, MapRuleTarget target, double currentValue);
     void StoreSettings();
 
     ConfigManager* configManager_ = nullptr;
-    ClipboardWatcher clipboard_;
-    bool watcherAttempted_ = false;
     bool chooseArea_ = false;
     bool preview_ = false;
     bool cursorPosition_ = false;
@@ -82,6 +78,7 @@ private:
     std::string error_;
     std::vector<std::string> blacklistModifiers_;
     std::vector<MapNumericRule> numericRules_;
+    bool focusRules_ = false;
     std::string editingPattern_;
     MapRuleTarget editingTarget_ = MapRuleTarget::Modifier;
     MapRuleList editingList_ = MapRuleList::Whitelist;

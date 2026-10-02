@@ -4,15 +4,12 @@
 #include <cstddef>
 #include <optional>
 #include <string>
-#include <string_view>
 
 #include "core/Feature.h"
-#include "platform/ClipboardWatcher.h"
 #include "price/PriceService.h"
 
 struct ItemPriceDiagnostic
 {
-    bool attempted = false;
     bool parsed = false;
     std::string clipboardHeader;
     std::string itemClass;
@@ -39,18 +36,14 @@ public:
     std::string Name() const override { return "currency_price"; }
 
     bool Init(ConfigManager& configManager) override;
-    void Shutdown() override;
     void Tick() override;
+    void OnCopiedItem(const CopiedItem& copied, const AppConfig& config) override;
     void AppendOverlay(OverlayFrame& frame, const AppConfig& config) const override;
     void DrawDebug(UIManager& manager) override;
 
 private:
-    void ReadClipboard(std::string_view text, const AppConfig& config);
-
     PriceService& prices_;
     ConfigManager* configManager_ = nullptr;
-    ClipboardWatcher clipboard_;
-    bool watcherAttempted_ = false;
     std::string itemName_;
     std::string itemBase_;
     std::optional<ItemPriceDiagnostic> lastDiagnostic_;

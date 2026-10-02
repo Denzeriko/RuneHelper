@@ -12,7 +12,7 @@ void PriceService::Apply(const AppConfig& config)
     cache_.SetRefreshMinutes(config.priceRefreshMinutes);
     cache_.SetLeague(config.priceLeague);
 
-    if (config.priceSearchEnabled)
+    if ((config.ocrEnabled && config.priceSearchEnabled) || config.currencyClipboardPriceEnabled)
         cache_.RefreshIfNeeded();
 }
 
@@ -21,7 +21,7 @@ void PriceService::Tick(const AppConfig& config)
     cache_.SetRefreshMinutes(config.priceRefreshMinutes);
     cache_.SetLeague(config.priceLeague);
 
-    if (!config.priceSearchEnabled)
+    if (!(config.ocrEnabled && config.priceSearchEnabled) && !config.currencyClipboardPriceEnabled)
         return;
 
     const auto now = std::chrono::steady_clock::now();
@@ -33,8 +33,10 @@ void PriceService::Tick(const AppConfig& config)
     cache_.RefreshIfNeeded();
 }
 
-void PriceService::ForceRefresh()
+void PriceService::ForceRefresh(const AppConfig& config)
 {
+    cache_.SetRefreshMinutes(config.priceRefreshMinutes);
+    cache_.SetLeague(config.priceLeague);
     cache_.ForceRefreshAsync();
 }
 

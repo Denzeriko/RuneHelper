@@ -2,6 +2,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -10,11 +11,18 @@
 #include "core/DebugData.h"
 #include "ui/UICommand.h"
 #include "ui/UIState.h"
+#include "ui/OverlayState.h"
 
 class ConfigManager;
 class FeatureRegistry;
 class UIBackend;
 class UpdateChecker;
+
+struct OverlayPreview
+{
+    std::uintptr_t texture = 0;
+    int height = 0;
+};
 
 class UIManager
 {
@@ -40,6 +48,7 @@ public:
     AppConfig& ConfigDraft() { return configDraft_; }
 
     void ApplyConfigDraft();
+    OverlayPreview PreviewImage(const OverlayPanel& panel, bool textRows);
 
     const UpdateChecker& Updates() const { return updates_; }
 
@@ -51,7 +60,7 @@ public:
 
     std::uint64_t DebugDataVersion() const { return debugDataVersion_; }
 
-    bool NeedsDebugData() const { return state_.debugTabOpen || state_.featureTabOpen; }
+    bool NeedsDebugData() const { return state_.page == UIPage::Diagnostics; }
 
     std::string HotkeyToString(int key) const;
     bool CaptureNextHotkey(int& key);
@@ -75,5 +84,8 @@ private:
     DebugData debugData_;
     std::uint64_t debugDataVersion_ = 0;
 
+    std::optional<OverlayPanel> previewPanel_;
+    bool previewTextRows_ = false;
+    OverlayPreview previewImage_;
     std::unique_ptr<UIBackend> backend_;
 };

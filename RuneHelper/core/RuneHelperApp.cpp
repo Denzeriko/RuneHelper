@@ -18,6 +18,7 @@
 #include "features/CurrencyPriceFeature.h"
 #include "features/MapCheckFeature.h"
 #include "features/PriceOverlayFeature.h"
+#include "items/ItemText.h"
 #include "platform/GameFocus.h"
 #include "platform/PlatformPaths.h"
 #include "platform/PlatformShell.h"
@@ -119,6 +120,8 @@ void RuneHelperApp::MainLoop()
 
         HandleCommands(ui_.TakeCommands());
 
+        UpdateClipboard();
+
         for (const auto& feature : features_.All())
             feature->Tick();
 
@@ -178,7 +181,11 @@ void RuneHelperApp::HandleCommands(const std::vector<UICommand>& commands)
         switch (command)
         {
         case UICommand::SelectRegion: SelectRegion(); break;
-        case UICommand::RefreshPrices: prices_.ForceRefresh(); break;
+        case UICommand::RefreshPrices: prices_.ForceRefresh(configManager_.Snapshot()); break;
+        case UICommand::RetryClipboard:
+            clipboard_.Stop();
+            clipboardAttempted_ = false;
+            break;
         case UICommand::ToggleOcr: configManager_.Update([](AppConfig& config) { config.ocrEnabled = !config.ocrEnabled; }); break;
         case UICommand::SingleSnapshot: ocrService_.RequestSingleSnapshot(); break;
         case UICommand::SaveOcrDebug: ocrService_.RequestDebugDump(); break;
@@ -261,6 +268,36 @@ std::string RuneHelperApp::DescribeRun(bool freshDump)
     return text;
 }
 
+void RuneHelperApp::UpdateClipboard()
+{
+    const AppConfig config = configManager_.Snapshot();
+
+    if (!config.showMapsTab && !config.currencyClipboardPriceEnabled)
+    {
+        clipboard_.Stop();
+        clipboardAttempted_ = false;
+        ui_.State().clipboardUnavailable = false;
+        return;
+    }
+
+    if (!clipboardAttempted_)
+    {
+        clipboardAttempted_ = true;
+        clipboard_.Start();
+    }
+
+    if (auto text = clipboard_.Poll())
+    {
+        CopiedItem copied{ std::move(*text), std::nullopt };
+        copied.item = ParseItemText(copied.text);
+
+        for (const auto& feature : features_.All())
+            feature->OnCopiedItem(copied, config);
+    }
+
+    ui_.State().clipboardUnavailable = !clipboard_.Running();
+}
+
 void RuneHelperApp::UpdateOverlay()
 {
     ocrService_.ConsumeOverlayFrame(ocrFrame_);
@@ -288,6 +325,7 @@ void RuneHelperApp::UpdateRegionPreview(const AppConfig& config)
 
 void RuneHelperApp::Shutdown()
 {
+    clipboard_.Stop();
     ocrService_.Stop();
     ui_.UnregisterHotkeys();
     updateChecker_.Stop();

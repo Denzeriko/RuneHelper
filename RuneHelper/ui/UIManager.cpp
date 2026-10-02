@@ -6,6 +6,7 @@
 #include "core/ConfigManager.h"
 #include "platform/UIBackend.h"
 #include "ui/UIDraw.h"
+#include "ui/OverlayRenderer.h"
 
 UIManager::UIManager(ConfigManager& config, const UpdateChecker& updates, FeatureRegistry& features)
     : config_(config), updates_(updates), features_(features), backend_(std::make_unique<UIBackend>())
@@ -27,6 +28,8 @@ bool UIManager::Init()
 void UIManager::Shutdown()
 {
     state_.running = false;
+    previewPanel_.reset();
+    previewImage_ = {};
     backend_->Shutdown();
 }
 
@@ -107,3 +110,40 @@ void UIManager::MinimizeToTray()
     backend_->MinimizeToTray();
 }
 #endif
+
+OverlayPreview UIManager::PreviewImage(const OverlayPanel& panel, bool textRows)
+{
+    if (previewPanel_ && *previewPanel_ == panel && previewTextRows_ == textRows)
+        return previewImage_;
+
+    OverlayPanel fitted = panel;
+    if (!textRows)
+        fitted.width = std::min(panel.width, OverlayRenderer::PanelContentWidth(panel));
+    fitted.height = OverlayRenderer::PanelContentHeight(fitted);
+    const int height = std::max(panel.height, fitted.height);
+
+    OverlayState preview;
+    preview.fontSize = panel.fontSize;
+    preview.background = panel.background;
+    preview.outline = panel.outline;
+
+    if (textRows)
+    {
+        int y = panel.fontSize;
+
+        for (const auto& line : panel.lines)
+        {
+            preview.texts.push_back({ line.text, 12, y, line.color });
+            y += panel.fontSize * 3 / 2 + 8;
+        }
+    }
+    else
+        preview.panels.push_back(std::move(fitted));
+
+    cv::Mat image(height, panel.width, CV_8UC4, cv::Scalar(0, 0, 0, 0));
+    OverlayRenderer::Paint(image, cv::Point(), preview);
+    previewImage_ = { backend_->UpdatePreview(image), height };
+    previewPanel_ = panel;
+    previewTextRows_ = textRows;
+    return previewImage_;
+}

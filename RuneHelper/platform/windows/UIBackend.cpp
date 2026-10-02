@@ -10,6 +10,7 @@
 #include <string>
 
 #include <imgui.h>
+#include <opencv2/core.hpp>
 #include <imgui_impl_dx11.h>
 #include <imgui_impl_win32.h>
 
@@ -76,6 +77,7 @@ struct UIBackend::Impl
     WNDCLASSEXW windowClass = {};
 
     ID3D11Device* device = nullptr;
+    ID3D11ShaderResourceView* previewTexture = nullptr;
     ID3D11DeviceContext* deviceContext = nullptr;
     IDXGISwapChain* swapChain = nullptr;
     ID3D11RenderTargetView* renderTargetView = nullptr;
@@ -195,6 +197,12 @@ void UIBackend::Shutdown()
         ImGui_ImplDX11_Shutdown();
         ImGui_ImplWin32_Shutdown();
         ImGui::DestroyContext();
+    }
+
+    if (impl_->previewTexture)
+    {
+        impl_->previewTexture->Release();
+        impl_->previewTexture = nullptr;
     }
 
     impl_->CleanupDeviceD3D();
@@ -689,4 +697,40 @@ LRESULT CALLBACK UIBackend::Impl::WndProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
     }
     default: return DefWindowProcW(hwnd, msg, wp, lp);
     }
+}
+
+std::uintptr_t UIBackend::UpdatePreview(const cv::Mat& image)
+{
+    if (!impl_->device || image.empty() || image.type() != CV_8UC4)
+        return 0;
+
+    D3D11_TEXTURE2D_DESC description{};
+    description.Width = static_cast<UINT>(image.cols);
+    description.Height = static_cast<UINT>(image.rows);
+    description.MipLevels = 1;
+    description.ArraySize = 1;
+    description.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    description.SampleDesc.Count = 1;
+    description.Usage = D3D11_USAGE_IMMUTABLE;
+    description.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    D3D11_SUBRESOURCE_DATA data{};
+    data.pSysMem = image.data;
+    data.SysMemPitch = static_cast<UINT>(image.step[0]);
+    ID3D11Texture2D* texture = nullptr;
+
+    if (FAILED(impl_->device->CreateTexture2D(&description, &data, &texture)))
+        return 0;
+
+    ID3D11ShaderResourceView* view = nullptr;
+    const HRESULT result = impl_->device->CreateShaderResourceView(texture, nullptr, &view);
+    texture->Release();
+
+    if (FAILED(result))
+        return 0;
+
+    if (impl_->previewTexture)
+        impl_->previewTexture->Release();
+
+    impl_->previewTexture = view;
+    return reinterpret_cast<std::uintptr_t>(view);
 }

@@ -37,6 +37,7 @@ jobs:
             libglfw3-dev \
             libgl1-mesa-dev \
             libx11-dev \
+            libxrandr-dev \
             libxfixes-dev \
             libxext-dev
 

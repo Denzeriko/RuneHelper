@@ -31,5 +31,11 @@ struct ItemText
     bool corrupted = false;
 };
 
+struct CopiedItem
+{
+    std::string text;
+    std::optional<ItemText> item;
+};
+
 std::optional<ItemText> ParseItemText(std::string_view text);
 std::string_view ItemPropertyValue(std::string_view line, std::string_view label);

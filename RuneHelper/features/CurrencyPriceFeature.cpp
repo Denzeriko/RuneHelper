@@ -81,19 +81,12 @@ bool CurrencyPriceFeature::Init(ConfigManager& configManager)
     return true;
 }
 
-void CurrencyPriceFeature::Shutdown()
-{
-    clipboard_.Stop();
-}
-
 void CurrencyPriceFeature::Tick()
 {
     const AppConfig config = configManager_->Snapshot();
 
-    if (!config.priceSearchEnabled || !config.currencyClipboardPriceEnabled)
+    if (!config.currencyClipboardPriceEnabled)
     {
-        clipboard_.Stop();
-        watcherAttempted_ = false;
         itemName_.clear();
         itemBase_.clear();
         unitEx_.reset();
@@ -101,15 +94,6 @@ void CurrencyPriceFeature::Tick()
         hasCursorAnchor_ = false;
         return;
     }
-
-    if (!watcherAttempted_)
-    {
-        watcherAttempted_ = true;
-        clipboard_.Start();
-    }
-
-    if (const auto text = clipboard_.Poll())
-        ReadClipboard(*text, config);
 
     if (!hasCursorAnchor_ || itemName_.empty() || std::chrono::steady_clock::now() >= visibleUntil_)
         return;
@@ -131,8 +115,11 @@ void CurrencyPriceFeature::Tick()
     }
 }
 
-void CurrencyPriceFeature::ReadClipboard(std::string_view text, const AppConfig& config)
+void CurrencyPriceFeature::OnCopiedItem(const CopiedItem& copied, const AppConfig& config)
 {
+    if (!config.currencyClipboardPriceEnabled)
+        return;
+
     itemName_.clear();
     itemBase_.clear();
     unitEx_.reset();
@@ -141,16 +128,15 @@ void CurrencyPriceFeature::ReadClipboard(std::string_view text, const AppConfig&
     hasCursorAnchor_ = false;
 
     ItemPriceDiagnostic diagnostic;
-    diagnostic.attempted = true;
     diagnostic.league = config.priceLeague;
     const PriceStatus status = prices_.Status();
     diagnostic.priceCount = status.priceCount;
     diagnostic.priceDataDownloading = status.downloading;
     diagnostic.priceRefreshFailed = status.refreshFailed;
-    const std::size_t lineEnd = text.find_first_of("\r\n");
-    diagnostic.clipboardHeader = std::string(text.substr(0, std::min<std::size_t>(lineEnd, 160)));
+    const std::size_t lineEnd = copied.text.find_first_of("\r\n");
+    diagnostic.clipboardHeader = copied.text.substr(0, std::min<std::size_t>(lineEnd, 160));
 
-    const auto item = ParseItemText(text);
+    const auto& item = copied.item;
 
     if (!item)
     {
@@ -265,19 +251,13 @@ void CurrencyPriceFeature::DrawDebug(UIManager& manager)
 {
     const AppConfig& config = manager.ConfigDraft();
 
-    if (!config.priceSearchEnabled)
-    {
-        ImGui::TextDisabled("Enable Price Search on the RuneHelper tab to load lookup data.");
-        return;
-    }
-
     if (!config.currencyClipboardPriceEnabled)
     {
-        ImGui::TextDisabled("Enable Show copied item prices in Settings > Item Prices to inspect clipboard items.");
+        ImGui::TextDisabled("Enable Item Price Lookup under Tools to inspect copied items.");
         return;
     }
 
-    if (!lastDiagnostic_ || !lastDiagnostic_->attempted)
+    if (!lastDiagnostic_)
     {
         ImGui::TextDisabled("Copy an item with Ctrl+C to inspect parsing and price lookup details.");
         return;
@@ -332,8 +312,7 @@ void CurrencyPriceFeature::DrawDebug(UIManager& manager)
 
 void CurrencyPriceFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config) const
 {
-    if (!config.priceSearchEnabled || !config.currencyClipboardPriceEnabled || itemName_.empty() ||
-        std::chrono::steady_clock::now() >= visibleUntil_)
+    if (!config.currencyClipboardPriceEnabled || itemName_.empty() || std::chrono::steady_clock::now() >= visibleUntil_)
         return;
 
     if (config.pauseWhenGameInactive && QueryGameFocus() == GameFocus::Inactive)

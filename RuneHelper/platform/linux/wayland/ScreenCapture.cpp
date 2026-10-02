@@ -142,7 +142,8 @@ std::string DescribeOutputs(const WaylandSession& session)
 
     for (const WaylandOutput& output : session.Outputs())
     {
-        text += " " + DescribeRect(cv::Rect(output.x, output.y, output.LogicalWidth(), output.LogicalHeight()));
+        text.push_back(' ');
+        text += DescribeRect(cv::Rect(output.x, output.y, output.LogicalWidth(), output.LogicalHeight()));
     }
 
     return text + ")";

@@ -17,7 +17,7 @@ class PriceService
 public:
     void Apply(const AppConfig& config);
     void Tick(const AppConfig& config);
-    void ForceRefresh();
+    void ForceRefresh(const AppConfig& config);
 
     PriceStatus Status() const;
 

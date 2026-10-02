@@ -198,7 +198,11 @@ void WaylandSession::HandleOutputScale(void* data, wl_output* output, std::int32
         entry->scale = factor > 0 ? factor : 1;
 }
 
-void WaylandSession::HandleOutputName(void*, wl_output*, const char*) {}
+void WaylandSession::HandleOutputName(void* data, wl_output* output, const char* name)
+{
+    if (WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(output))
+        entry->name = name ? name : "";
+}
 
 void WaylandSession::HandleOutputDescription(void*, wl_output*, const char*) {}
 
@@ -223,7 +227,11 @@ void WaylandSession::HandleXdgOutputSize(void* data, zxdg_output_v1* xdgOutput, 
 
 void WaylandSession::HandleXdgOutputDone(void*, zxdg_output_v1*) {}
 
-void WaylandSession::HandleXdgOutputName(void*, zxdg_output_v1*, const char*) {}
+void WaylandSession::HandleXdgOutputName(void* data, zxdg_output_v1* xdgOutput, const char* name)
+{
+    if (WaylandOutput* entry = static_cast<WaylandSession*>(data)->FindOutput(xdgOutput))
+        entry->name = name ? name : "";
+}
 
 void WaylandSession::HandleXdgOutputDescription(void*, zxdg_output_v1*, const char*) {}
 

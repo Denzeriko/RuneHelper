@@ -4,6 +4,7 @@ enum class UICommand
 {
     SelectRegion,
     RefreshPrices,
+    RetryClipboard,
     ToggleOcr,
     SingleSnapshot,
     SaveOcrDebug,

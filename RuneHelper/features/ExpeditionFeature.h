@@ -42,6 +42,7 @@ public:
     void OnRegionChanged() override;
     void OnFrame(FrameContext& frame) override;
 
+    void DrawTools(UIManager& manager) override;
     void DrawSettings(UIManager& manager) override;
     void DrawDebug(UIManager& manager) override;
 
@@ -52,7 +53,6 @@ private:
     void HighlightRareRunes(FrameContext& frame, const std::vector<ScreenRecipe>& found);
     void ForgetMarks();
 
-    void DrawAdvisorSettings();
     void RefreshScreenRows(const UIManager& manager);
     void RebuildScreenRows(const DebugData& debug);
     void DrawPlacedRunes() const;

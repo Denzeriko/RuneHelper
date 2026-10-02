@@ -31,6 +31,7 @@ namespace
 {
 constexpr int kMinPixelHeight = 6;
 constexpr int kMaxPixelHeight = 256;
+constexpr int kOutlineRadius = 2;
 constexpr double kIconHeightPerCap = 1.4;
 
 #ifdef _WIN32
@@ -267,11 +268,11 @@ void BlendOutline(cv::Mat& canvas, const Glyph& glyph, int penX, int penY)
 {
     const cv::Scalar black(0, 0, 0, 255);
 
-    for (int dy = -1; dy <= 1; ++dy)
+    for (int dy = -kOutlineRadius; dy <= kOutlineRadius; ++dy)
     {
-        for (int dx = -1; dx <= 1; ++dx)
+        for (int dx = -kOutlineRadius; dx <= kOutlineRadius; ++dx)
         {
-            if (dx != 0 || dy != 0)
+            if ((dx != 0 || dy != 0) && dx * dx + dy * dy <= kOutlineRadius * kOutlineRadius)
                 BlendGlyph(canvas, glyph, penX + dx, penY + dy, black);
         }
     }
@@ -625,28 +626,32 @@ void TextRaster::Draw(
     const float scale = impl_->ScaleFor(height);
     const std::u32string points = impl_->CodePoints(utf8);
 
-    int pen = baseline.x;
-
-    for (std::size_t i = 0; i < points.size(); ++i)
+    for (int pass = outline ? 0 : 1; pass < 2; ++pass)
     {
-        if (FindOverlayIcon(points[i]))
+        int pen = baseline.x;
+
+        for (std::size_t i = 0; i < points.size(); ++i)
         {
-            const cv::Mat& icon = impl_->GetIcon(points[i], height);
-            BlendImage(canvas, icon, pen, baseline.y - (height + icon.rows) / 2);
-            pen += icon.cols;
-            continue;
+            if (FindOverlayIcon(points[i]))
+            {
+                const cv::Mat& icon = impl_->GetIcon(points[i], height);
+                if (pass == 1)
+                    BlendImage(canvas, icon, pen, baseline.y - (height + icon.rows) / 2);
+                pen += icon.cols;
+                continue;
+            }
+
+            const Glyph& glyph = impl_->GetGlyph(points[i], height);
+
+            if (pass == 0)
+                BlendOutline(canvas, glyph, pen, baseline.y);
+            else
+                BlendGlyph(canvas, glyph, pen, baseline.y, color);
+
+            pen += glyph.advance;
+
+            if (i + 1 < points.size())
+                pen += impl_->Kerning(points[i], points[i + 1], scale);
         }
-
-        const Glyph& glyph = impl_->GetGlyph(points[i], height);
-
-        if (outline)
-            BlendOutline(canvas, glyph, pen, baseline.y);
-
-        BlendGlyph(canvas, glyph, pen, baseline.y, color);
-
-        pen += glyph.advance;
-
-        if (i + 1 < points.size())
-            pen += impl_->Kerning(points[i], points[i + 1], scale);
     }
 }
