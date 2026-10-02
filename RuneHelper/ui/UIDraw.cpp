@@ -115,18 +115,20 @@ void DrawTitleBar(UIManager& ui)
     if (ImGui::Button("##Tray", titleButton))
         ui.MinimizeToTray();
 
-    const ImVec2 origin = ImGui::GetItemRectMin();
+    const ImVec2 minimum = ImGui::GetItemRectMin();
+    const ImVec2 maximum = ImGui::GetItemRectMax();
+    const ImVec2 center((minimum.x + maximum.x) * 0.5f, (minimum.y + maximum.y) * 0.5f);
     const ImU32 color = ImGui::GetColorU32(ImGuiCol_Text);
     ImDrawList* draw = ImGui::GetWindowDrawList();
     draw->AddTriangleFilled(
-        ImVec2(origin.x + UiScaled(4.0f), origin.y + UiScaled(5.0f)),
-        ImVec2(origin.x + UiScaled(12.0f), origin.y + UiScaled(5.0f)),
-        ImVec2(origin.x + UiScaled(8.0f), origin.y + UiScaled(10.0f)),
+        ImVec2(center.x - UiScaled(4.0f), center.y - UiScaled(4.0f)),
+        ImVec2(center.x + UiScaled(4.0f), center.y - UiScaled(4.0f)),
+        ImVec2(center.x, center.y + UiScaled(1.0f)),
         color
     );
     draw->AddLine(
-        ImVec2(origin.x + UiScaled(4.0f), origin.y + UiScaled(12.0f)),
-        ImVec2(origin.x + UiScaled(12.0f), origin.y + UiScaled(12.0f)),
+        ImVec2(center.x - UiScaled(4.0f), center.y + UiScaled(4.0f)),
+        ImVec2(center.x + UiScaled(4.0f), center.y + UiScaled(4.0f)),
         color,
         UiScaled(1.0f)
     );

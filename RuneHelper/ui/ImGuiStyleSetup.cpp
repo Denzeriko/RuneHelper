@@ -58,7 +58,11 @@ void ImGuiStyleSetup::ApplyRuneHelperStyle()
     colors[ImGuiCol_TextSelectedBg] = ImVec4(0.55f, 0.49f, 0.38f, 0.45f);
 
     style.WindowPadding = ImVec2(12, 8);
+#ifdef _WIN32
+    style.FramePadding = ImVec2(8, 2);
+#else
     style.FramePadding = ImVec2(8, 5);
+#endif
     style.ItemSpacing = ImVec2(8, 8);
     style.ItemInnerSpacing = ImVec2(6, 4);
     style.CellPadding = ImVec2(4, 6);
@@ -79,13 +83,15 @@ void ImGuiStyleSetup::AddFonts()
     const std::filesystem::path font = FindSystemFont();
     static constexpr ImWchar kBaseRanges[] = { 0x20, 0x024F, 0x0400, 0x052F, 0x2000, 0x206F, 0x20A0, 0x20CF, 0x2713, 0x2713, 0 };
 
-    if (font.empty() || !io.Fonts->AddFontFromFileTTF(PathToUtf8(font).c_str(), 13.0f, nullptr, kBaseRanges))
+    ImFontConfig config;
+    config.SizePixels = kBaseFontSize;
+
+    if (font.empty() || !io.Fonts->AddFontFromFileTTF(PathToUtf8(font).c_str(), kBaseFontSize, &config, kBaseRanges))
     {
-        io.Fonts->AddFontDefault();
+        io.Fonts->AddFontDefault(&config);
         LOG_INFO("UI: using the default font; some scripts may be unavailable");
     }
 
-    ImFontConfig config;
     config.MergeMode = true;
 
     for (const auto& fallback : FindScriptFonts())
@@ -103,7 +109,7 @@ void ImGuiStyleSetup::AddFonts()
         config.OversampleH = 1;
         config.OversampleV = 1;
 
-        if (!io.Fonts->AddFontFromFileTTF(PathToUtf8(fallback.path).c_str(), 13.0f, &config, ranges))
+        if (!io.Fonts->AddFontFromFileTTF(PathToUtf8(fallback.path).c_str(), kBaseFontSize, &config, ranges))
             LOG_ERROR("UI: could not add glyphs from " + PathToUtf8(fallback.path));
     }
 }

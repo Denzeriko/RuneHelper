@@ -2,9 +2,9 @@
 
 #include <imgui.h>
 
+#include "ui/ImGuiStyleSetup.h"
+
 inline float UiScaled(float pixels)
 {
-    constexpr float kBaseFontSize = 13.0f;
-
-    return pixels * ImGui::GetFontSize() / kBaseFontSize;
+    return pixels * ImGui::GetFontSize() / ImGuiStyleSetup::kBaseFontSize;
 }
