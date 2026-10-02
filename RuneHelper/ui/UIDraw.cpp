@@ -372,7 +372,7 @@ bool DrawOcrSection(AppConfig& config)
 
 bool DrawPriceSection(UIManager& ui, AppConfig& config)
 {
-    ImGui::SeparatorText("PRICES");
+    ImGui::SeparatorText("RUNESHAPE PRICES");
 
     bool changed = false;
 
@@ -383,7 +383,7 @@ bool DrawPriceSection(UIManager& ui, AppConfig& config)
             ui.EnqueueCommand(UICommand::RefreshPrices);
     }
     if (ImGui::IsItemHovered())
-        UiTooltip("Matches OCR loot text against the price cache and shows prices on the overlay.");
+        UiTooltip("Loads prices for the RuneShape overlay and Item Prices popup.");
 
     if (!config.priceSearchEnabled)
         ImGui::BeginDisabled();
@@ -399,14 +399,36 @@ bool DrawPriceSection(UIManager& ui, AppConfig& config)
     return changed;
 }
 
-void DrawFeatureControls(UIManager& ui)
+bool DrawFeatureControls(UIManager& ui)
 {
     ImGui::SeparatorText("FEATURES");
+    AppConfig& config = ui.ConfigDraft();
+    bool changed = false;
 
-    for (const auto& feature : ui.Features().All())
-        feature->DrawMainControls(ui);
+    changed |= ImGui::Checkbox("Waystone and Tablet Check", &config.showMapsTab);
+    ImGui::Indent();
+    ImGui::TextWrapped(
+        "Copy a Waystone or Tablet with Ctrl+C to check its modifiers against your Maps rules. Results appear in the Maps tab."
+    );
+    ImGui::Unindent();
+
+    changed |= ImGui::Checkbox("Item Price Lookup", &config.currencyClipboardPriceEnabled);
+    ImGui::Indent();
+    ImGui::TextWrapped("Copy currency or another supported item with Ctrl+C to show its market price beside the cursor.");
+    ImGui::Unindent();
 
     ImGui::Spacing();
+    return changed;
+}
+
+bool FeatureTabVisible(const Feature& feature, const AppConfig& config)
+{
+    const std::string name = feature.Name();
+
+    if (name == "map_check")
+        return config.showMapsTab;
+
+    return true;
 }
 
 void DrawSignature()
@@ -436,7 +458,7 @@ void DrawMainTab(UIManager& ui)
     bool configChanged = DrawOcrSection(config);
     configChanged |= DrawPriceSection(ui, config);
 
-    DrawFeatureControls(ui);
+    configChanged |= DrawFeatureControls(ui);
 
     if (configChanged)
         ui.ApplyConfigDraft();
@@ -492,122 +514,147 @@ void DrawSettingsTab(UIManager& ui)
     AppConfig& config = ui.ConfigDraft();
     bool configChanged = false;
 
-    ImGui::SeparatorText("PRICES");
-
-    constexpr const char* kPriceLeagues[] = { "Forbidden Rites",   "HC Forbidden Rites", "Runes of Aldur",
-                                              "HC Runes of Aldur", "Standard",           "Hardcore" };
-
-    auto pickLeague = [&config, &configChanged, &ui](std::string league)
     {
-        if (league.empty() || league == config.priceLeague)
-            return;
+        constexpr const char* kPriceLeagues[] = { "Forbidden Rites",   "HC Forbidden Rites", "Runes of Aldur",
+                                                  "HC Runes of Aldur", "Standard",           "Hardcore" };
 
-        config.priceLeague = std::move(league);
-        configChanged = true;
-
-        if (config.priceSearchEnabled)
-            ui.EnqueueCommand(UICommand::RefreshPrices);
-    };
-
-    const bool leagueOpen = ImGui::BeginCombo("League", config.priceLeague.c_str());
-    const bool leagueHovered = ImGui::IsItemHovered();
-
-    if (leagueOpen)
-    {
-        for (const char* league : kPriceLeagues)
+        auto pickLeague = [&config, &configChanged, &ui](std::string league)
         {
-            const bool selected = config.priceLeague == league;
+            if (league.empty() || league == config.priceLeague)
+                return;
 
-            if (ImGui::Selectable(league, selected))
-                pickLeague(league);
+            config.priceLeague = std::move(league);
+            configChanged = true;
 
-            if (selected)
-                ImGui::SetItemDefaultFocus();
+            if (config.priceSearchEnabled)
+                ui.EnqueueCommand(UICommand::RefreshPrices);
+        };
+
+        const bool leagueOpen =
+            ImGui::BeginCombo("League##price_league_combo", config.priceLeague.c_str(), ImGuiComboFlags_HeightLargest);
+        const bool leagueHovered = ImGui::IsItemHovered();
+
+        if (leagueOpen)
+        {
+            for (const char* league : kPriceLeagues)
+            {
+                const bool selected = config.priceLeague == league;
+
+                if (ImGui::Selectable(league, selected))
+                    pickLeague(league);
+
+                if (selected)
+                    ImGui::SetItemDefaultFocus();
+            }
+
+            ImGui::Separator();
+
+            if (ImGui::IsWindowAppearing())
+                std::snprintf(state.customLeague, sizeof(state.customLeague), "%s", config.priceLeague.c_str());
+
+            ImGui::SetNextItemWidth(-1.0f);
+
+            if (ImGui::InputTextWithHint(
+                    "##custom_league",
+                    "another league, then Enter",
+                    state.customLeague,
+                    sizeof(state.customLeague),
+                    ImGuiInputTextFlags_EnterReturnsTrue
+                ))
+            {
+                pickLeague(state.customLeague);
+                ImGui::CloseCurrentPopup();
+            }
+
+            ImGui::EndCombo();
         }
 
-        ImGui::Separator();
+        if (leagueHovered)
+            UiTooltip("A league missing from the list can be typed in. New leagues work as soon as the price proxy carries them.");
+    }
 
-        if (ImGui::IsWindowAppearing())
-            std::snprintf(state.customLeague, sizeof(state.customLeague), "%s", config.priceLeague.c_str());
+    if (ImGui::CollapsingHeader("RuneShape", ImGuiTreeNodeFlags_DefaultOpen))
+    {
+        configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
+        configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
+        configChanged |=
+            ImGui::SliderInt("Font Size##runeshape_font_size", &config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+        configChanged |= ImGui::Checkbox("Background##runeshape_background", &config.overlayBackground);
+        configChanged |= ImGui::Checkbox("Outline##runeshape_outline", &config.overlayOutline);
+        configChanged |= ImGui::Checkbox("Currency icons", &config.overlayIcons);
+    }
 
-        ImGui::SetNextItemWidth(-1.0f);
-
-        if (ImGui::InputTextWithHint(
-                "##custom_league",
-                "another league, then Enter",
-                state.customLeague,
-                sizeof(state.customLeague),
-                ImGuiInputTextFlags_EnterReturnsTrue
-            ))
+    if (ImGui::CollapsingHeader("Expedition"))
+    {
+        for (const auto& feature : ui.Features().All())
         {
-            pickLeague(state.customLeague);
-            ImGui::CloseCurrentPopup();
+            if (feature->Name() == "expedition")
+                feature->DrawSettings(ui);
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Maps"))
+    {
+        configChanged |= ImGui::SliderInt("Font Size##maps_font_size", &config.mapsFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+        configChanged |= ImGui::Checkbox("Background##maps_background", &config.mapsPanelBackground);
+        configChanged |= ImGui::Checkbox("Outline##maps_outline", &config.mapsPanelOutline);
+
+        for (const auto& feature : ui.Features().All())
+        {
+            if (feature->Name() == "map_check")
+                feature->DrawSettings(ui);
+        }
+    }
+
+    if (ImGui::CollapsingHeader("Item Prices"))
+    {
+        configChanged |= ImGui::SliderInt(
+            "Font Size##item_price_font_size",
+            &config.currencyPriceFontSize,
+            kMinCurrencyPriceFontSize,
+            kMaxCurrencyPriceFontSize
+        );
+        configChanged |= ImGui::Checkbox("Background##item_price_background", &config.pricePanelBackground);
+        configChanged |= ImGui::Checkbox("Outline##item_price_outline", &config.pricePanelOutline);
+    }
+
+    if (ImGui::CollapsingHeader("RuneShape Prices"))
+    {
+        ImGui::TextDisabled("Market data used by RuneShape and Item Prices.");
+
+        constexpr const char* kPriceUnits[] = { "Exalted", "Exalted + divine", "Divine" };
+
+        int priceUnit = static_cast<int>(config.priceUnit);
+
+        if (ImGui::Combo("Units", &priceUnit, kPriceUnits, IM_ARRAYSIZE(kPriceUnits)))
+        {
+            config.priceUnit = static_cast<PriceUnit>(priceUnit);
+            configChanged = true;
         }
 
-        ImGui::EndCombo();
+        if (ImGui::IsItemHovered())
+            UiTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows "
+                      "every price in divine orbs.");
+
+        ImGui::Spacing();
+
+        configChanged |= ImGui::Checkbox("Automatic colors", &config.autoPriceColors);
+
+        if (ImGui::IsItemHovered())
+            UiTooltip("Colors each price against the most valuable row on screen: red from half its value, yellow from a fifth, "
+                      "green from a twentieth. Turn it off to set the thresholds below yourself.");
+
+        ImGui::BeginDisabled(config.autoPriceColors);
+        configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
+        configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
+        configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
+        ImGui::EndDisabled();
+        configChanged |=
+            ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
     }
 
-    if (leagueHovered)
-        UiTooltip("A league missing from the list can be typed in. New leagues work as soon as the price proxy carries them.");
-
-    constexpr const char* kPriceUnits[] = { "Exalted", "Exalted + divine", "Divine" };
-
-    int priceUnit = static_cast<int>(config.priceUnit);
-
-    if (ImGui::Combo("Units", &priceUnit, kPriceUnits, IM_ARRAYSIZE(kPriceUnits)))
-    {
-        config.priceUnit = static_cast<PriceUnit>(priceUnit);
-        configChanged = true;
-    }
-
-    if (ImGui::IsItemHovered())
-        UiTooltip("Exalted + divine adds the divine value to rows worth at least one divine. Divine shows "
-                  "every price in divine orbs.");
-
     ImGui::Spacing();
-
-    configChanged |= ImGui::Checkbox("Automatic colors", &config.autoPriceColors);
-
-    if (ImGui::IsItemHovered())
-        UiTooltip("Colors each price against the most valuable row on screen: red from half its value, yellow from a fifth, "
-                  "green from a twentieth. Turn it off to set the thresholds below yourself.");
-
-    ImGui::BeginDisabled(config.autoPriceColors);
-    configChanged |= ImGui::InputInt("Green >= ex", &config.priceColorMedium);
-    configChanged |= ImGui::InputInt("Yellow >= ex", &config.priceColorHigh);
-    configChanged |= ImGui::InputInt("Red >= ex", &config.priceColorVeryHigh);
-    ImGui::EndDisabled();
-    configChanged |=
-        ImGui::SliderInt("Refresh minutes", &config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
-
-    ImGui::Spacing();
-
-    ImGui::SeparatorText("OVERLAY");
-
-    configChanged |= ImGui::SliderInt("Offset X", &config.overlayOffsetX, -300, 500);
-    configChanged |= ImGui::SliderInt("Offset Y", &config.overlayOffsetY, -200, 200);
-    configChanged |= ImGui::SliderInt("Runeshape Font Size", &config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
-    configChanged |= ImGui::SliderInt("Maps Font Size", &config.mapsFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
-
-    configChanged |= ImGui::Checkbox("Background", &config.overlayBackground);
-
-    if (ImGui::IsItemHovered())
-        UiTooltip("Draws a dark plate behind the overlay text. Turn it off for bare text over the game.");
-
-    configChanged |= ImGui::Checkbox("Outline", &config.overlayOutline);
-
-    if (ImGui::IsItemHovered())
-        UiTooltip("Traces the text in black so it stays readable without a background plate.");
-
-    configChanged |= ImGui::Checkbox("Currency icons", &config.overlayIcons);
-
-    if (ImGui::IsItemHovered())
-        UiTooltip("Shows the Exalted and Divine Orb pictures instead of ex and div.");
-
-    ImGui::Spacing();
-
     ImGui::SeparatorText("HOTKEYS");
-
     DrawHotkeyButton(ui, "Toggle OCR", config.hotkeyToggleOCR);
     DrawHotkeyButton(ui, "Single Snapshot", config.hotkeySingleSnapshot);
     DrawHotkeyButton(ui, "Select Region", config.hotkeySelectRegion);
@@ -670,37 +717,9 @@ void DrawPauseSwitch(UIManager& ui)
         );
 }
 
-void DrawDebugTab(UIManager& ui)
+void DrawOcrDebugData(const DebugData& debug)
 {
-    UIState& state = ui.State();
-
-    DrawPauseSwitch(ui);
-
-    if (ImGui::Button("Save OCR Debug"))
-        ui.EnqueueCommand(UICommand::SaveOcrDebug);
-
-    if (ImGui::IsItemHovered())
-        UiTooltip("Reads the region once and writes its crops and recognition logs into the ocr_debug/latest folder.");
-
-    ImGui::SameLine();
-    ImGui::BeginDisabled(state.report == ReportState::Collecting);
-
-    if (ImGui::Button("Create Bug Report"))
-        ui.EnqueueCommand(UICommand::CreateReport);
-
-    ImGui::EndDisabled();
-
-    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
-        UiTooltip("Reads the region once, like Save OCR Debug, then packs the crops, the log, the settings and system details "
-                  "into a zip to attach to a GitHub issue. Keep the menu open in the game while you press it.");
-
-    DrawReportStatus(state);
-
-    ImGui::Spacing();
-
     ImGui::SeparatorText("OCR DEBUG");
-
-    const DebugData& debug = ui.GetDebugData();
 
     if (debug.lines.empty())
     {
@@ -779,6 +798,77 @@ void DrawDebugTab(UIManager& ui)
 
     ImGui::EndTable();
 }
+
+void DrawDebugTab(UIManager& ui)
+{
+    UIState& state = ui.State();
+
+    DrawPauseSwitch(ui);
+
+    if (ImGui::Button("Save OCR Debug"))
+        ui.EnqueueCommand(UICommand::SaveOcrDebug);
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Reads the region once and writes its crops and recognition logs into the ocr_debug/latest folder.");
+
+    ImGui::SameLine();
+    ImGui::BeginDisabled(state.report == ReportState::Collecting);
+
+    if (ImGui::Button("Create Bug Report"))
+        ui.EnqueueCommand(UICommand::CreateReport);
+
+    ImGui::EndDisabled();
+
+    if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+        UiTooltip("Reads the region once, like Save OCR Debug, then packs the crops, the log, the settings and system details "
+                  "into a zip to attach to a GitHub issue. Keep the menu open in the game while you press it.");
+
+    DrawReportStatus(state);
+
+    ImGui::Spacing();
+    ImGui::SeparatorText("IMGUI DEBUG");
+    ImGui::Checkbox("Metrics / Debugger", &state.showImGuiMetrics);
+    ImGui::SameLine();
+    ImGui::Checkbox("Debug Log", &state.showImGuiDebugLog);
+
+    if (ImGui::IsItemHovered())
+        UiTooltip("Shows Dear ImGui input, focus and popup events in a separate window.");
+
+    ImGui::Spacing();
+
+    if (!ImGui::BeginTabBar("DebugSections"))
+        return;
+
+    if (ImGui::BeginTabItem("OCR"))
+    {
+        DrawOcrDebugData(ui.GetDebugData());
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Expedition"))
+    {
+        for (const auto& feature : ui.Features().All())
+        {
+            if (feature->Name() == "expedition")
+                feature->DrawDebug(ui);
+        }
+
+        ImGui::EndTabItem();
+    }
+
+    if (ImGui::BeginTabItem("Item Prices"))
+    {
+        for (const auto& feature : ui.Features().All())
+        {
+            if (feature->Name() == "currency_price")
+                feature->DrawDebug(ui);
+        }
+
+        ImGui::EndTabItem();
+    }
+
+    ImGui::EndTabBar();
+}
 }
 
 void UIDraw::CellText(const char* text)
@@ -795,12 +885,13 @@ void UIDraw::Draw(UIManager& ui)
     ImGui::SetNextWindowPos(ImVec2(0.0f, 0.0f), ImGuiCond_Always);
     ImGui::SetNextWindowSize(ImGui::GetIO().DisplaySize, ImGuiCond_Always);
 
-    ImGui::Begin(
-        "RuneHelper",
-        nullptr,
-        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar |
-            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse
-    );
+    ImGuiWindowFlags windowFlags =
+        ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar;
+
+    if (state.showImGuiMetrics || state.showImGuiDebugLog)
+        windowFlags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+
+    ImGui::Begin("RuneHelper", nullptr, windowFlags);
 
     DrawTitleBar(ui);
 
@@ -815,11 +906,13 @@ void UIDraw::Draw(UIManager& ui)
             ImGui::EndTabItem();
         }
 
+        const AppConfig& config = ui.ConfigDraft();
+
         for (const auto& feature : ui.Features().All())
         {
             const char* title = feature->TabTitle();
 
-            if (!title)
+            if (!title || !FeatureTabVisible(*feature, config))
                 continue;
 
             if (ImGui::BeginTabItem(title))
@@ -832,7 +925,7 @@ void UIDraw::Draw(UIManager& ui)
 
         if (ImGui::BeginTabItem("Settings"))
         {
-            if (ImGui::BeginChild("SettingsContent"))
+            if (ImGui::BeginChild("SettingsContent", ImVec2(0.0f, 0.0f), false))
                 DrawSettingsTab(ui);
 
             ImGui::EndChild();
@@ -850,4 +943,10 @@ void UIDraw::Draw(UIManager& ui)
     }
 
     ImGui::End();
+
+    if (state.showImGuiMetrics)
+        ImGui::ShowMetricsWindow(&state.showImGuiMetrics);
+
+    if (state.showImGuiDebugLog)
+        ImGui::ShowDebugLogWindow(&state.showImGuiDebugLog);
 }

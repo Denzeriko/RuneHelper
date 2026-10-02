@@ -75,11 +75,12 @@ OcrPipelineResult OcrPipeline::BuildFrame(
 )
 {
     std::vector<FrameRow> rows = ParseLootRows(loot, region, config, translations_.Empty() ? nullptr : &translations_);
-    const bool pricesLoaded = config.priceSearchEnabled && prices_.Status().priceCount > 0;
+    const bool priceSearchEnabled = config.priceSearchEnabled;
+    const bool pricesLoaded = priceSearchEnabled && prices_.Status().priceCount > 0;
 
     for (FrameRow& row : rows)
     {
-        if (config.priceSearchEnabled)
+        if (priceSearchEnabled)
             row.price = prices_.Resolve(row.name, row.quantity);
 
         row.missingPrice =

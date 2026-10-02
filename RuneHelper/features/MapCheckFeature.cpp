@@ -13,6 +13,7 @@
 #include "common/Text.h"
 #include "platform/GameFocus.h"
 #include "ui/UIDraw.h"
+#include "ui/OverlayPlacement.h"
 #include "ui/UiTooltip.h"
 
 #ifdef _WIN32
@@ -26,6 +27,8 @@ namespace
 constexpr ImVec4 kBlocked{ 1.0f, 0.3f, 0.3f, 1.0f };
 constexpr ImVec4 kMatch{ 0.35f, 0.9f, 0.55f, 1.0f };
 constexpr const char* kComparisons[] = { ">", ">=", "<", "<=", "=" };
+constexpr int kCursorMoveThreshold = 15;
+constexpr int kPanelDurationSeconds = 7;
 
 const MapNumericRule* FindRule(
     const std::vector<MapNumericRule>& rules,
@@ -90,8 +93,7 @@ bool MapCheckFeature::Init(ConfigManager& configManager)
 {
     configManager_ = &configManager;
     const auto settings = configManager.FeatureSettings(Name());
-    enabled_ = JsonValue(settings, "enabled", false);
-    durationSeconds_ = std::clamp(JsonValue(settings, "durationSeconds", 7), 2, 30);
+    cursorPosition_ = JsonValue(settings, "cursorPosition", false);
     overlayArea_.x = std::clamp(JsonValue(settings, "overlayX", 0), -100000, 100000);
     overlayArea_.y = std::clamp(JsonValue(settings, "overlayY", 0), -100000, 100000);
     overlayArea_.width = std::clamp(JsonValue(settings, "overlayWidth", 0), 0, 2048);
@@ -154,6 +156,16 @@ void MapCheckFeature::Shutdown()
 
 void MapCheckFeature::Tick()
 {
+    if (!configManager_->Snapshot().showMapsTab)
+    {
+        clipboard_.Stop();
+        watcherAttempted_ = false;
+        preview_ = false;
+        visibleUntil_ = {};
+        hasCursorAnchor_ = false;
+        return;
+    }
+
     if (chooseArea_)
     {
         chooseArea_ = false;
@@ -170,18 +182,11 @@ void MapCheckFeature::Tick()
                 overlayArea_.width = std::min(overlayArea_.width, 2048);
                 overlayArea_.height = std::min(overlayArea_.height, 1440);
                 preview_ = true;
-                visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(durationSeconds_);
+                visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(kPanelDurationSeconds);
                 error_.clear();
                 StoreSettings();
             }
         }
-    }
-
-    if (!enabled_)
-    {
-        clipboard_.Stop();
-        watcherAttempted_ = false;
-        return;
     }
 
     if (!watcherAttempted_)
@@ -191,12 +196,29 @@ void MapCheckFeature::Tick()
     }
 
     if (const auto text = clipboard_.Poll())
-        ReadItem(*text, false);
+        ReadItem(*text);
+
+    if (cursorPosition_ && hasCursorAnchor_ && item_)
+    {
+        if (const auto cursor = QueryCursorPosition())
+        {
+            const int dx = cursor->x - cursorAnchorX_;
+            const int dy = cursor->y - cursorAnchorY_;
+
+            if (dx * dx + dy * dy >= kCursorMoveThreshold * kCursorMoveThreshold)
+            {
+                visibleUntil_ = {};
+                hasCursorAnchor_ = false;
+            }
+        }
+    }
 }
 
 void MapCheckFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config) const
 {
-    if ((!enabled_ && !preview_) || overlayArea_.empty() || std::chrono::steady_clock::now() >= visibleUntil_)
+    const bool useCursor = cursorPosition_ && hasCursorAnchor_ && screenWidth_ > 0 && screenHeight_ > 0;
+
+    if (!config.showMapsTab || (!useCursor && overlayArea_.empty()) || std::chrono::steady_clock::now() >= visibleUntil_)
         return;
 
     if (!preview_ && config.pauseWhenGameInactive && QueryGameFocus() == GameFocus::Inactive)
@@ -208,6 +230,8 @@ void MapCheckFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config
     panel.width = overlayArea_.width;
     panel.height = overlayArea_.height;
     panel.fontSize = config.mapsFontSize;
+    panel.background = config.mapsPanelBackground;
+    panel.outline = config.mapsPanelOutline;
 
     if (preview_)
     {
@@ -327,6 +351,25 @@ void MapCheckFeature::AppendOverlay(OverlayFrame& frame, const AppConfig& config
     else
         return;
 
+    if (useCursor)
+    {
+        panel.width = std::min(720, std::max(1, screenWidth_ - 2 * kOverlayPanelMargin));
+        const int desiredHeight = std::max(180, static_cast<int>(panel.lines.size()) * (panel.fontSize * 3 / 2 + 8) + 24);
+        panel.height = std::min(desiredHeight, std::max(1, screenHeight_ - 2 * kOverlayPanelMargin));
+        const OverlayPosition position = PositionOverlayNearCursor(
+            cursorAnchorX_,
+            cursorAnchorY_,
+            screenX_,
+            screenY_,
+            screenWidth_,
+            screenHeight_,
+            panel.width,
+            panel.height
+        );
+        panel.x = position.x;
+        panel.y = position.y;
+    }
+
     frame.panels.push_back(std::move(panel));
 }
 
@@ -348,8 +391,7 @@ void MapCheckFeature::StoreSettings()
         { { "blacklistModifiers", blacklistModifiers_ },
           { "warnings", blacklistModifiers_ },
           { "numericRules", numericRules },
-          { "enabled", enabled_ },
-          { "durationSeconds", durationSeconds_ },
+          { "cursorPosition", cursorPosition_ },
           { "overlayX", overlayArea_.x },
           { "overlayY", overlayArea_.y },
           { "overlayWidth", overlayArea_.width },
@@ -357,39 +399,31 @@ void MapCheckFeature::StoreSettings()
     );
 }
 
-void MapCheckFeature::ReadItem(std::string_view text, bool manual)
+void MapCheckFeature::ReadItem(std::string_view text)
 {
-    item_ = ParseMapItem(text);
-    error_.clear();
+    std::optional<MapItem> parsed = ParseMapItem(text);
     preview_ = false;
     visibleUntil_ = {};
+    hasCursorAnchor_ = false;
 
-    if (item_)
-        visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(durationSeconds_);
-    else if (manual)
-        error_ = "No complete Waystone or Tablet found. Hover the item in the game and copy it again.";
-}
-
-void MapCheckFeature::ReadClipboard()
-{
-    item_.reset();
-    error_.clear();
-    preview_ = false;
-    visibleUntil_ = {};
-    const char* text = ImGui::GetClipboardText();
-
-    if (!text || *text == '\0')
+    if (parsed)
     {
-        error_ = "Clipboard is empty or unavailable. Copy an item in the game first.";
-        return;
+        item_ = std::move(parsed);
+        visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(kPanelDurationSeconds);
+        if (cursorPosition_)
+        {
+            if (const auto cursor = QueryCursorPosition())
+            {
+                cursorAnchorX_ = cursor->x;
+                cursorAnchorY_ = cursor->y;
+                screenX_ = cursor->screenX;
+                screenY_ = cursor->screenY;
+                screenWidth_ = cursor->screenWidth;
+                screenHeight_ = cursor->screenHeight;
+                hasCursorAnchor_ = true;
+            }
+        }
     }
-
-    std::size_t length = 0;
-
-    while (length <= kMaxClipboardText && text[length] != '\0')
-        ++length;
-
-    ReadItem(std::string_view(text, length), true);
 }
 
 void MapCheckFeature::DrawItem()
@@ -451,36 +485,33 @@ void MapCheckFeature::DrawItem()
     if (!hasWhitelist && !hasBlacklist)
         ImGui::TextUnformatted("Add conditions to the whitelist or blacklist below.");
 
-    if (ImGui::TreeNode("Item properties"))
+    ImGui::SeparatorText("ITEM PROPERTIES");
+
+    for (const auto& property : item_->properties)
     {
-        for (const auto& property : item_->properties)
+        const auto* allowedRule = property.hasValue
+                                      ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Whitelist)
+                                      : nullptr;
+        const auto* blockedRule = property.hasValue
+                                      ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Blacklist)
+                                      : nullptr;
+        const bool allowed = allowedRule && Matches(*allowedRule, property.value);
+        const bool blocked = blockedRule && Matches(*blockedRule, property.value);
+
+        if (allowed || blocked)
+            ImGui::PushStyleColor(ImGuiCol_Text, blocked ? kBlocked : kMatch);
+
+        UIDraw::CellText(property.text.c_str());
+
+        if (allowed || blocked)
+            ImGui::PopStyleColor();
+
+        if (property.hasValue)
         {
-            const auto* allowedRule = property.hasValue
-                                          ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Whitelist)
-                                          : nullptr;
-            const auto* blockedRule = property.hasValue
-                                          ? FindRule(numericRules_, MapRuleTarget::Property, property.pattern, MapRuleList::Blacklist)
-                                          : nullptr;
-            const bool allowed = allowedRule && Matches(*allowedRule, property.value);
-            const bool blocked = blockedRule && Matches(*blockedRule, property.value);
-
-            if (allowed || blocked)
-                ImGui::PushStyleColor(ImGuiCol_Text, blocked ? kBlocked : kMatch);
-
-            UIDraw::CellText(property.text.c_str());
-
-            if (allowed || blocked)
-                ImGui::PopStyleColor();
-
-            if (property.hasValue)
-            {
-                ImGui::Indent();
-                DrawNumericCondition(property.pattern, MapRuleTarget::Property, property.value);
-                ImGui::Unindent();
-            }
+            ImGui::Indent();
+            DrawNumericCondition(property.pattern, MapRuleTarget::Property, property.value);
+            ImGui::Unindent();
         }
-
-        ImGui::TreePop();
     }
 
     ImGui::SeparatorText("MODIFIERS");
@@ -646,10 +677,7 @@ void MapCheckFeature::DrawNumericCondition(std::string_view pattern, MapRuleTarg
 
 void MapCheckFeature::DrawRules()
 {
-    if (!ImGui::CollapsingHeader("Active filters"))
-        return;
-
-    ImGui::TextWrapped("Keep: every condition must match. Avoid: any match flags the item.");
+    ImGui::SeparatorText("ACTIVE FILTERS");
     ImGui::SeparatorText("KEEP");
 
     for (std::size_t i = 0; i < numericRules_.size();)
@@ -741,53 +769,73 @@ void MapCheckFeature::DrawRules()
 void MapCheckFeature::DrawTab(UIManager&)
 {
     ImGui::BeginChild("MapCheckContent");
-    ImGui::TextWrapped("Whitelist rules must all match; any blacklist match flags the item. Rules use the language of the copied item."
-    );
-    ImGui::TextWrapped("Copy a Waystone or Tablet with Ctrl+C in the game. Language is detected automatically.");
+    DrawItem();
+    DrawRules();
+    ImGui::EndChild();
+}
 
-    if (ImGui::Checkbox("Automatic clipboard check", &enabled_))
+void MapCheckFeature::DrawSettings(UIManager&)
+{
+    const char* positionModes[] = { "Selected area", "Upper-right of cursor" };
+    int positionMode = cursorPosition_ ? 1 : 0;
+
+    if (ImGui::Combo("Panel position", &positionMode, positionModes, IM_ARRAYSIZE(positionModes)))
     {
-        visibleUntil_ = {};
-        preview_ = false;
+        cursorPosition_ = positionMode == 1;
+        hasCursorAnchor_ = false;
+
+        if (cursorPosition_ && (item_ || preview_))
+        {
+            if (const auto cursor = QueryCursorPosition())
+            {
+                cursorAnchorX_ = cursor->x;
+                cursorAnchorY_ = cursor->y;
+                screenX_ = cursor->screenX;
+                screenY_ = cursor->screenY;
+                screenWidth_ = cursor->screenWidth;
+                screenHeight_ = cursor->screenHeight;
+                hasCursorAnchor_ = true;
+            }
+        }
+
         StoreSettings();
-    }
-
-    if (enabled_ && watcherAttempted_ && !clipboard_.Running())
-    {
-        ImGui::TextWrapped("Background clipboard access is unavailable. Use Check clipboard, or retry after checking desktop support."
-        );
-
-        if (ImGui::Button("Retry clipboard access"))
-            watcherAttempted_ = false;
     }
 
     if (ImGui::Button("Choose overlay area"))
         chooseArea_ = true;
 
-    if (!overlayArea_.empty())
+    if (!overlayArea_.empty() || cursorPosition_)
     {
         ImGui::SameLine();
 
         if (ImGui::Button("Preview"))
         {
             preview_ = true;
-            visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(durationSeconds_);
+            visibleUntil_ = std::chrono::steady_clock::now() + std::chrono::seconds(kPanelDurationSeconds);
+
+            if (cursorPosition_)
+            {
+                if (const auto cursor = QueryCursorPosition())
+                {
+                    cursorAnchorX_ = cursor->x;
+                    cursorAnchorY_ = cursor->y;
+                    screenX_ = cursor->screenX;
+                    screenY_ = cursor->screenY;
+                    screenWidth_ = cursor->screenWidth;
+                    screenHeight_ = cursor->screenHeight;
+                    hasCursorAnchor_ = true;
+                }
+            }
         }
     }
     else
-        ImGui::TextWrapped("Choose an area on the game screen to show copied items.");
+        ImGui::TextDisabled("Choose an area on the game screen to show copied items.");
 
-    if (ImGui::SliderInt("Show for", &durationSeconds_, 2, 30, "%d seconds"))
-        StoreSettings();
+    if (watcherAttempted_ && !clipboard_.Running())
+    {
+        ImGui::TextWrapped("Background clipboard access is unavailable. Check desktop support and retry.");
 
-    if (ImGui::Button("Check clipboard"))
-        ReadClipboard();
-
-    if (!error_.empty())
-        UIDraw::CellText(error_.c_str());
-
-    DrawItem();
-    ImGui::Separator();
-    DrawRules();
-    ImGui::EndChild();
+        if (ImGui::Button("Retry clipboard access"))
+            watcherAttempted_ = false;
+    }
 }

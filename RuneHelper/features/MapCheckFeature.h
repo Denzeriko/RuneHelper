@@ -9,6 +9,7 @@
 #include "core/Feature.h"
 #include "items/MapItem.h"
 #include "platform/ClipboardWatcher.h"
+#include "platform/CursorPosition.h"
 
 enum class MapRuleTarget
 {
@@ -53,10 +54,10 @@ public:
     const char* TabTitle() const override { return "Maps"; }
 
     void DrawTab(UIManager& manager) override;
+    void DrawSettings(UIManager& manager) override;
 
 private:
-    void ReadClipboard();
-    void ReadItem(std::string_view text, bool manual);
+    void ReadItem(std::string_view text);
     void DrawItem();
     void DrawRules();
     void DrawNumericCondition(std::string_view pattern, MapRuleTarget target, double currentValue);
@@ -64,13 +65,19 @@ private:
 
     ConfigManager* configManager_ = nullptr;
     ClipboardWatcher clipboard_;
-    bool enabled_ = false;
     bool watcherAttempted_ = false;
     bool chooseArea_ = false;
     bool preview_ = false;
-    int durationSeconds_ = 7;
+    bool cursorPosition_ = false;
     cv::Rect overlayArea_;
     std::chrono::steady_clock::time_point visibleUntil_{};
+    int cursorAnchorX_ = 0;
+    int cursorAnchorY_ = 0;
+    int screenX_ = 0;
+    int screenY_ = 0;
+    int screenWidth_ = 0;
+    int screenHeight_ = 0;
+    bool hasCursorAnchor_ = false;
     std::optional<MapItem> item_;
     std::string error_;
     std::vector<std::string> blacklistModifiers_;

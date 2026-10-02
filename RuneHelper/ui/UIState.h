@@ -27,6 +27,8 @@ struct UIState
     bool regionHovered = false;
     bool debugTabOpen = false;
     bool featureTabOpen = false;
+    bool showImGuiMetrics = false;
+    bool showImGuiDebugLog = false;
 
     float titleBarBottom = 0.0f;
     float titleButtonsLeft = 0.0f;

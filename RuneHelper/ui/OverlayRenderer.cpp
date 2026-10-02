@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <string>
 
 #include <opencv2/imgproc.hpp>
@@ -160,7 +161,7 @@ OverlayState LayoutPanel(const OverlayPanel& panel, const OverlayState& state)
     layout.fontSize = panel.fontSize;
     layout.scale = state.scale;
     layout.background = false;
-    layout.outline = state.outline;
+    layout.outline = panel.outline;
 
     const int padding = Scaled(10, state);
     const int width = std::max(1, panel.width - 2 * padding);
@@ -232,6 +233,24 @@ cv::Rect OverlayRenderer::ContentBounds(const OverlayState& state)
     return bounds;
 }
 
+int OverlayRenderer::PanelContentHeight(const OverlayPanel& panel, float scale)
+{
+    OverlayPanel measuredPanel = panel;
+    measuredPanel.height = std::numeric_limits<int>::max();
+
+    OverlayState state;
+    state.fontSize = panel.fontSize;
+    state.scale = scale;
+
+    const OverlayState layout = LayoutPanel(measuredPanel, state);
+    const TextLayout metrics = Measure({ "Ag", 0, 0 }, state);
+    const int padding = Scaled(10, state);
+    const int step = metrics.size.height + metrics.descent + Scaled(8, state);
+    const int rows = static_cast<int>(layout.texts.size());
+
+    return 2 * padding + rows * step;
+}
+
 void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const OverlayState& state)
 {
     if (canvas.empty() || canvas.type() != CV_8UC4)
@@ -259,7 +278,8 @@ void OverlayRenderer::Paint(cv::Mat& canvas, const cv::Point& origin, const Over
             continue;
 
         cv::Mat card = canvas(bounds);
-        card.setTo(cv::Scalar(0, 0, 0, kBackdropAlpha));
+        if (panel.background)
+            card.setTo(cv::Scalar(0, 0, 0, kBackdropAlpha));
         PaintTexts(card, origin + bounds.tl(), LayoutPanel(panel, state));
     }
 

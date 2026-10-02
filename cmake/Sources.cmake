@@ -46,6 +46,7 @@ set(RUNEHELPER_COMMON_SOURCES
     RuneHelper/features/ExpeditionFeature.cpp
     RuneHelper/features/MapCheckFeature.cpp
     RuneHelper/features/PriceOverlayFeature.cpp
+    RuneHelper/features/CurrencyPriceFeature.cpp
     RuneHelper/ui/ImGuiStyleSetup.cpp
     RuneHelper/ui/TextRaster.cpp
     RuneHelper/ui/Overlay.cpp
@@ -67,6 +68,7 @@ if(WIN32)
         RuneHelper/platform/windows/PlatformShell.cpp
         RuneHelper/platform/windows/UIBackend.cpp
         RuneHelper/platform/windows/ClipboardWatcher.cpp
+        RuneHelper/platform/windows/CursorPosition.cpp
         RuneHelper/platform/windows/ScreenCapture.cpp
         RuneHelper/platform/windows/DesktopDuplication.cpp
         RuneHelper/platform/windows/RegionSelect.cpp
@@ -88,6 +90,7 @@ elseif(UNIX AND NOT APPLE)
         list(APPEND RUNEHELPER_PLATFORM_SOURCES
             RuneHelper/platform/linux/wayland/Hotkeys.cpp
             RuneHelper/platform/linux/wayland/ClipboardWatcher.cpp
+            RuneHelper/platform/linux/wayland/CursorPosition.cpp
             RuneHelper/platform/linux/wayland/OverlayBackend.cpp
             RuneHelper/platform/linux/wayland/PortalScreenCast.cpp
             RuneHelper/platform/linux/wayland/RegionSelect.cpp
@@ -99,6 +102,7 @@ elseif(UNIX AND NOT APPLE)
         list(APPEND RUNEHELPER_PLATFORM_SOURCES
             RuneHelper/platform/linux/x11/Hotkeys.cpp
             RuneHelper/platform/linux/x11/ClipboardWatcher.cpp
+            RuneHelper/platform/linux/x11/CursorPosition.cpp
             RuneHelper/platform/linux/x11/OverlayBackend.cpp
             RuneHelper/platform/linux/x11/RegionSelect.cpp
             RuneHelper/platform/linux/x11/ScreenCapture.cpp

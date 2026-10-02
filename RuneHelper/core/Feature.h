@@ -67,9 +67,11 @@ public:
 
     virtual void AppendOverlay(OverlayFrame&, const AppConfig&) const {}
 
-    virtual void DrawMainControls(UIManager&) {}
-
     virtual const char* TabTitle() const { return nullptr; }
+
+    virtual void DrawSettings(UIManager&) {}
+
+    virtual void DrawDebug(UIManager&) {}
 
     virtual void DrawTab(UIManager&) {}
 };

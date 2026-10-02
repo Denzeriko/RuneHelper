@@ -24,6 +24,8 @@ inline constexpr std::array<GameLanguage, 9> kGameLanguages = { {
 
 inline constexpr int kMinOverlayFontSize = 8;
 inline constexpr int kMaxOverlayFontSize = 48;
+inline constexpr int kMinCurrencyPriceFontSize = 8;
+inline constexpr int kMaxCurrencyPriceFontSize = 48;
 inline constexpr int kMinPriceRefreshMinutes = 5;
 inline constexpr int kMaxPriceRefreshMinutes = 360;
 inline constexpr std::string_view kDefaultPriceLeague = "Forbidden Rites";
@@ -53,9 +55,16 @@ struct AppConfig
     int overlayOffsetY = 0;
     int overlayFontSize = 24;
     int mapsFontSize = 24;
+    bool currencyClipboardPriceEnabled = true;
+    int currencyPriceFontSize = 24;
     bool overlayBackground = true;
     bool overlayOutline = false;
     bool overlayIcons = true;
+    bool mapsPanelBackground = true;
+    bool mapsPanelOutline = false;
+    bool pricePanelBackground = true;
+    bool pricePanelOutline = false;
+    bool showMapsTab = true;
 
     PriceUnit priceUnit = PriceUnit::ExaltedWithDivine;
 

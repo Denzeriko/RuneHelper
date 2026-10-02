@@ -15,6 +15,7 @@
 #include "core/DebugData.h"
 #include "common/Logger.h"
 #include "features/ExpeditionFeature.h"
+#include "features/CurrencyPriceFeature.h"
 #include "features/MapCheckFeature.h"
 #include "features/PriceOverlayFeature.h"
 #include "platform/GameFocus.h"
@@ -93,6 +94,7 @@ bool RuneHelperApp::Init()
     features_.Add(std::make_unique<PriceOverlayFeature>());
     features_.Add(std::make_unique<ExpeditionFeature>());
     features_.Add(std::make_unique<MapCheckFeature>());
+    features_.Add(std::make_unique<CurrencyPriceFeature>(prices_));
     features_.InitAll(configManager_);
 
     ui_.RegisterHotkeys();

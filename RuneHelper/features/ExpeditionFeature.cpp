@@ -358,7 +358,7 @@ void ExpeditionFeature::ForgetMarks()
     cachedMarks_.clear();
 }
 
-void ExpeditionFeature::DrawTab(UIManager& manager)
+void ExpeditionFeature::DrawDebug(UIManager& manager)
 {
     if (!database_.Loaded())
     {
@@ -367,25 +367,26 @@ void ExpeditionFeature::DrawTab(UIManager& manager)
         return;
     }
 
-    DrawAdvisorSettings();
-
     if (!settings_.enabled)
+    {
+        ImGui::TextDisabled("Enable Pick Advisor in Settings > Expedition to show recipe matches.");
         return;
+    }
 
-    ImGui::SeparatorText("ON SCREEN");
+    ImGui::SeparatorText("PICK ADVISOR DATA");
 
-    RefreshTabRows(manager);
+    RefreshScreenRows(manager);
 
-    if (tabRows_.empty())
+    if (screenRows_.empty())
     {
         ImGui::PushTextWrapPos(0.0f);
-        ImGui::TextDisabled("No combinations recognised. Point the region at the remnant panel.");
+        ImGui::TextDisabled("No recipe lines recognised. Point the region at the remnant panel.");
         ImGui::PopTextWrapPos();
         return;
     }
 
     DrawPlacedRunes();
-    DrawRecipeTable();
+    DrawScreenRecipeTable();
 }
 
 void ExpeditionFeature::DrawAdvisorSettings()
@@ -404,22 +405,22 @@ void ExpeditionFeature::DrawAdvisorSettings()
         StoreSettings();
 }
 
-void ExpeditionFeature::RefreshTabRows(const UIManager& manager)
+void ExpeditionFeature::RefreshScreenRows(const UIManager& manager)
 {
     const std::uint64_t version = manager.DebugDataVersion();
 
-    if (tabBuilt_ && tabVersion_ == version)
+    if (screenBuilt_ && screenVersion_ == version)
         return;
 
-    RebuildTabRows(manager.GetDebugData());
-    tabVersion_ = version;
-    tabBuilt_ = true;
+    RebuildScreenRows(manager.GetDebugData());
+    screenVersion_ = version;
+    screenBuilt_ = true;
 }
 
-void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
+void ExpeditionFeature::RebuildScreenRows(const DebugData& debug)
 {
-    tabRows_.clear();
-    tabPlaced_.clear();
+    screenRows_.clear();
+    screenPlaced_.clear();
 
     for (const auto& line : debug.lines)
     {
@@ -435,30 +436,31 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
         if (line.priceEx > 0.0)
             perWave = line.priceEx * parsed.quantity / static_cast<double>(recipe->runes.size());
 
-        tabRows_.push_back({ recipe, perWave });
+        screenRows_.push_back({ recipe, perWave });
     }
 
-    if (tabRows_.empty())
+    if (screenRows_.empty())
         return;
 
-    tabPlaced_ = tabRows_.front().recipe->runes;
+    screenPlaced_ = screenRows_.front().recipe->runes;
 
-    for (const auto& entry : tabRows_)
+    for (const auto& entry : screenRows_)
     {
         size_t common = 0;
 
-        while (common < tabPlaced_.size() && common < entry.recipe->runes.size() && tabPlaced_[common] == entry.recipe->runes[common])
+        while (common < screenPlaced_.size() && common < entry.recipe->runes.size() &&
+               screenPlaced_[common] == entry.recipe->runes[common])
         {
             ++common;
         }
 
-        tabPlaced_.resize(common);
+        screenPlaced_.resize(common);
     }
 
     std::sort(
-        tabRows_.begin(),
-        tabRows_.end(),
-        [](const ExpeditionTabRow& a, const ExpeditionTabRow& b)
+        screenRows_.begin(),
+        screenRows_.end(),
+        [](const ExpeditionScreenRow& a, const ExpeditionScreenRow& b)
         {
             if (a.perWave != b.perWave)
                 return a.perWave > b.perWave;
@@ -470,7 +472,7 @@ void ExpeditionFeature::RebuildTabRows(const DebugData& debug)
 
 void ExpeditionFeature::DrawPlacedRunes() const
 {
-    if (tabPlaced_.empty())
+    if (screenPlaced_.empty())
     {
         ImGui::TextDisabled("Nothing placed yet");
         return;
@@ -479,11 +481,11 @@ void ExpeditionFeature::DrawPlacedRunes() const
     ImGui::TextDisabled("Already placed:");
     ImGui::SameLine();
     ImGui::PushTextWrapPos(0.0f);
-    ImGui::TextColored(kGreen, "%s", JoinRunes(tabPlaced_, 0, " + ").c_str());
+    ImGui::TextColored(kGreen, "%s", JoinRunes(screenPlaced_, 0, " + ").c_str());
     ImGui::PopTextWrapPos();
 }
 
-void ExpeditionFeature::DrawRecipeTable() const
+void ExpeditionFeature::DrawScreenRecipeTable() const
 {
     const float available = ImGui::GetContentRegionAvail().y;
     const float minimumHeight = UiScaled(kMinTableHeight);
@@ -511,7 +513,7 @@ void ExpeditionFeature::DrawRecipeTable() const
 
     bool first = true;
 
-    for (const auto& entry : tabRows_)
+    for (const auto& entry : screenRows_)
     {
         ImGui::TableNextRow();
 
@@ -529,7 +531,7 @@ void ExpeditionFeature::DrawRecipeTable() const
         DrawPerWave(entry.perWave, first);
 
         ImGui::TableSetColumnIndex(3);
-        UIDraw::CellText(JoinRunes(entry.recipe->runes, tabPlaced_.size(), ", ").c_str());
+        UIDraw::CellText(JoinRunes(entry.recipe->runes, screenPlaced_.size(), ", ").c_str());
 
         first = false;
     }
@@ -537,13 +539,15 @@ void ExpeditionFeature::DrawRecipeTable() const
     ImGui::EndTable();
 }
 
-void ExpeditionFeature::DrawMainControls(UIManager&)
+void ExpeditionFeature::DrawSettings(UIManager&)
 {
     if (!database_.Loaded())
     {
-        ImGui::TextDisabled("Expedition: no combination database");
+        ImGui::TextDisabled("Expedition data is unavailable.");
         return;
     }
+
+    DrawAdvisorSettings();
 
     if (AtomicCheckbox("Highlight rare runes", settings_.highlightRare))
         StoreSettings();

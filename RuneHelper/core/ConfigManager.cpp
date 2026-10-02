@@ -141,6 +141,7 @@ void ConfigManager::Normalize(AppConfig& config)
     config.regionH = std::max(0, config.regionH);
     config.overlayFontSize = std::clamp(config.overlayFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
     config.mapsFontSize = std::clamp(config.mapsFontSize, kMinOverlayFontSize, kMaxOverlayFontSize);
+    config.currencyPriceFontSize = std::clamp(config.currencyPriceFontSize, kMinCurrencyPriceFontSize, kMaxCurrencyPriceFontSize);
     config.priceRefreshMinutes = std::clamp(config.priceRefreshMinutes, kMinPriceRefreshMinutes, kMaxPriceRefreshMinutes);
 
     for (const LeagueRename& rename : kRenamedLeagues)
@@ -221,7 +222,14 @@ bool ConfigManager::Load()
     config_.overlayBackground = JsonValue(j, "overlayBackground", config_.overlayBackground);
     config_.overlayOutline = JsonValue(j, "overlayOutline", config_.overlayOutline);
     config_.overlayIcons = JsonValue(j, "overlayIcons", config_.overlayIcons);
+    config_.mapsPanelBackground = JsonValue(j, "mapsPanelBackground", config_.mapsPanelBackground);
+    config_.mapsPanelOutline = JsonValue(j, "mapsPanelOutline", config_.overlayOutline);
+    config_.pricePanelBackground = JsonValue(j, "pricePanelBackground", config_.pricePanelBackground);
+    config_.pricePanelOutline = JsonValue(j, "pricePanelOutline", config_.overlayOutline);
     config_.priceSearchEnabled = JsonValue(j, "priceSearchEnabled", config_.priceSearchEnabled);
+    config_.currencyClipboardPriceEnabled =
+        JsonValue(j, "currencyClipboardPriceEnabled", config_.currencyClipboardPriceEnabled) && JsonValue(j, "showPriceTab", true);
+    config_.showMapsTab = JsonValue(j, "showMapsTab", config_.showMapsTab);
 
     config_.hotkeyToggleOCR = JsonValue(j, "hotkeyToggleOCR", config_.hotkeyToggleOCR);
     config_.hotkeySingleSnapshot = JsonValue(j, "hotkeySingleSnapshot", config_.hotkeySingleSnapshot);
@@ -231,6 +239,7 @@ bool ConfigManager::Load()
     config_.overlayOffsetY = JsonValue(j, "overlayOffsetY", config_.overlayOffsetY);
     config_.overlayFontSize = JsonValue(j, "overlayFontSize", config_.overlayFontSize);
     config_.mapsFontSize = JsonValue(j, "mapsFontSize", config_.overlayFontSize);
+    config_.currencyPriceFontSize = JsonValue(j, "currencyPriceFontSize", config_.currencyPriceFontSize);
 
     config_.priceUnit = PriceUnitFromInt(JsonValue(j, "priceUnit", static_cast<int>(config_.priceUnit)));
 
@@ -272,12 +281,19 @@ bool ConfigManager::Save() const
     j["overlayBackground"] = config.overlayBackground;
     j["overlayOutline"] = config.overlayOutline;
     j["overlayIcons"] = config.overlayIcons;
+    j["mapsPanelBackground"] = config.mapsPanelBackground;
+    j["mapsPanelOutline"] = config.mapsPanelOutline;
+    j["pricePanelBackground"] = config.pricePanelBackground;
+    j["pricePanelOutline"] = config.pricePanelOutline;
     j["priceSearchEnabled"] = config.priceSearchEnabled;
+    j["showMapsTab"] = config.showMapsTab;
 
     j["overlayOffsetX"] = config.overlayOffsetX;
     j["overlayOffsetY"] = config.overlayOffsetY;
     j["overlayFontSize"] = config.overlayFontSize;
     j["mapsFontSize"] = config.mapsFontSize;
+    j["currencyClipboardPriceEnabled"] = config.currencyClipboardPriceEnabled;
+    j["currencyPriceFontSize"] = config.currencyPriceFontSize;
 
     j["hotkeyToggleOCR"] = config.hotkeyToggleOCR;
     j["hotkeySingleSnapshot"] = config.hotkeySingleSnapshot;

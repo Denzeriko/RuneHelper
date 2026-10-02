@@ -52,6 +52,8 @@ struct OverlayPanel
     int width = 0;
     int height = 0;
     int fontSize = 24;
+    bool background = true;
+    bool outline = false;
     std::vector<OverlayPanelLine> lines;
 
     bool operator==(const OverlayPanel&) const = default;

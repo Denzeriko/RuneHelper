@@ -18,7 +18,7 @@ struct ExpeditionSettings
     std::atomic<bool> highlightRare = false;
 };
 
-struct ExpeditionTabRow
+struct ExpeditionScreenRow
 {
     const Recipe* recipe = nullptr;
     double perWave = 0.0;
@@ -42,11 +42,8 @@ public:
     void OnRegionChanged() override;
     void OnFrame(FrameContext& frame) override;
 
-    void DrawMainControls(UIManager& manager) override;
-
-    const char* TabTitle() const override { return "Expedition"; }
-
-    void DrawTab(UIManager& manager) override;
+    void DrawSettings(UIManager& manager) override;
+    void DrawDebug(UIManager& manager) override;
 
 private:
     std::string DataStatus() const;
@@ -56,10 +53,10 @@ private:
     void ForgetMarks();
 
     void DrawAdvisorSettings();
-    void RefreshTabRows(const UIManager& manager);
-    void RebuildTabRows(const DebugData& debug);
+    void RefreshScreenRows(const UIManager& manager);
+    void RebuildScreenRows(const DebugData& debug);
     void DrawPlacedRunes() const;
-    void DrawRecipeTable() const;
+    void DrawScreenRecipeTable() const;
 
     ConfigManager* configManager_ = nullptr;
     ExpeditionSettings settings_;
@@ -71,8 +68,8 @@ private:
     std::string markSignature_;
     std::vector<OverlayMark> cachedMarks_;
 
-    bool tabBuilt_ = false;
-    std::uint64_t tabVersion_ = 0;
-    std::vector<ExpeditionTabRow> tabRows_;
-    std::vector<std::string> tabPlaced_;
+    bool screenBuilt_ = false;
+    std::uint64_t screenVersion_ = 0;
+    std::vector<ExpeditionScreenRow> screenRows_;
+    std::vector<std::string> screenPlaced_;
 };
